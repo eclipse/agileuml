@@ -4122,9 +4122,9 @@ public abstract class ASTTerm
                             ASTTerm var, ASTTerm expr)
   { // expr is coef*var where coef does not involve var
 
-    boolean isIn = ASTTerm.isSubterm(var,expr); 
-    if (!isIn)
-    { return "0"; } 
+    // boolean isIn = ASTTerm.isSubterm(var,expr); 
+    // if (!isIn)
+    // { return "0"; } 
 
     Vector powers = ASTTerm.powersOf(var,expr);
     if (VectorUtil.containsEqualString("1", powers) ||
@@ -4136,7 +4136,8 @@ public abstract class ASTTerm
     String v = var.literalForm(); 
     String thisLiteral = expr.literalForm(); 
 
-    if (v.equals(thisLiteral))
+    if (v.equals(thisLiteral) || 
+        thisLiteral.equals("(" + v + ")"))
     { return "1"; } 
 
     if (expr instanceof ASTCompositeTerm)
@@ -4196,7 +4197,7 @@ public abstract class ASTTerm
             ASTTerm t2 = (ASTTerm) subterms.get(2); 
             String coef1 = ASTTerm.coefficientOf(var, t1); 
             String coef2 = ASTTerm.coefficientOf(var, t2); 
-            if ("0".equals(coef2))
+            if ("0".equals(coef2) || "0.0".equals(coef2))
             { return coef1; }
             if ("0".equals(coef1) && "-".equals(opr))
             { return "-(" + coef2 + ")"; } 
@@ -4235,7 +4236,7 @@ public abstract class ASTTerm
             { return "-1"; } 
   
             String coef1 = ASTTerm.coefficientOf(var, tt); 
-            if (coef1.equals("0"))
+            if (coef1.equals("0") || coef1.equals("0.0"))
             { return coef1; } 
             return "-(" + coef1 + ")"; 
           } 
@@ -4277,6 +4278,11 @@ public abstract class ASTTerm
             if (coef1.equals("0") || coef2.equals("0"))
             { return "0"; } 
 
+            if (coef1.equals("1") || coef1.equals("1.0"))
+            { return coef2; } 
+
+            if (coef2.equals("1") || coef2.equals("1.0"))
+            { return coef1; } 
 
             if (AuxMath.isNumeric(coef1) &&
                 AuxMath.isNumeric(coef2))
@@ -4296,7 +4302,8 @@ public abstract class ASTTerm
             String coef1 = t1.literalForm(); 
             if (isIn1)
             { coef1 = ASTTerm.coefficientOf(var, t1); }
-            String coef2 = t2.literalForm(); 
+            String coef2 = t2.literalForm();
+ 
             if (isIn2)
             { JOptionPane.showMessageDialog(null, 
                  "!! Cannot determine coefficients for " + thisLiteral + ". It needs to be put in polynomial form",   "",
@@ -4304,9 +4311,16 @@ public abstract class ASTTerm
               coef2 = ASTTerm.coefficientOf(var, t2); 
             }
 
-            if ("0".equals(coef1))
+            if ("0".equals(coef1) || "0.0".equals(coef1))
             { return "0"; }  
-            return "(" + coef1 + ") " + opr + " (" + coef2 + ")"; 
+
+            if (coef1.equals("1") || coef1.equals("1.0"))
+            { return "1/(" + coef2 + ")"; } 
+
+            if (coef2.equals("1") || coef2.equals("1.0"))
+            { return coef1; } 
+
+            return "(" + coef1 + ")/(" + coef2 + ")"; 
           } 
           else if ("=".equals(opr))
           { ASTTerm t1 = (ASTTerm) subterms.get(0);  
@@ -4314,9 +4328,9 @@ public abstract class ASTTerm
             String coef1 = ASTTerm.coefficientOf(var, t1); 
             String coef2 = ASTTerm.coefficientOf(var, t2);
  
-            if ("0".equals(coef2))
+            if ("0".equals(coef2) || "0.0".equals(coef2))
             { return coef1; }
-            if ("0".equals(coef1))
+            if ("0".equals(coef1) || "0.0".equals(coef1))
             { return "-(" + coef2 + ")"; } 
              
             if (AuxMath.isNumeric(coef1) &&
@@ -4739,13 +4753,19 @@ public abstract class ASTTerm
 
   public static String coefficientOfSquare(
                             ASTTerm var, ASTTerm expr)
-  { // expr is coef*var*var
+  { // expr is coef*var*var or coef*var^{2}
 
-    boolean isIn = ASTTerm.isSubterm(var,expr); 
-    if (!isIn)
-    { return "0"; } 
+    // boolean isIn = ASTTerm.isSubterm(var,expr); 
+    // if (!isIn)
+    // { return "0"; } 
 
     Vector powers = ASTTerm.powersOf(var, expr);
+
+    /* JOptionPane.showMessageDialog(null, 
+           ">>> Powers of : " + var + " in " + expr +  
+           " are " + powers, 
+           "", 
+           JOptionPane.INFORMATION_MESSAGE); */ 
 
     if (VectorUtil.containsEqualString("2", powers) ||
         VectorUtil.containsEqualString("2.0", powers))
@@ -4760,8 +4780,16 @@ public abstract class ASTTerm
     String vpow = v + "^{2}"; 
     String vpow2 = v + "^{2.0}"; 
 
+    String vsqrb = "(" + v + "*" + v + ")"; 
+    String vpowb = "(" + v + ")^{2}"; 
+    String vpow2b = "(" + v + ")^{2.0}"; 
+
     if (vsqr.equals(elit) || vpow.equals(elit) || 
         vpow2.equals(elit))
+    { return "1"; } 
+
+    if (vsqrb.equals(elit) || vpowb.equals(elit) || 
+        vpow2b.equals(elit))
     { return "1"; } 
 
     if (expr instanceof ASTCompositeTerm)
@@ -4901,9 +4929,19 @@ public abstract class ASTTerm
                 vsqr.equals(coef2))
             { return coef1; }
 
+            if (vpowb.equals(coef2) ||
+                vpow2b.equals(coef2) ||
+                vsqrb.equals(coef2))
+            { return coef1; }
+
             if (vpow.equals(coef1) ||
                 vpow2.equals(coef1) ||
                 vsqr.equals(coef1))
+            { return coef2; }
+
+            if (vpowb.equals(coef1) ||
+                vpow2b.equals(coef1) ||
+                vsqrb.equals(coef1))
             { return coef2; }
 
             Vector powers1 = ASTTerm.powersOf(var,t1); 
@@ -4979,7 +5017,7 @@ public abstract class ASTTerm
                          Vector vars, ASTTerm expr)
   { // The parts of expr which do not involve any vars.
 
-    System.out.println(">>> Constant terms in: " + expr); 
+    // System.out.println(">>> Constant terms in: " + expr); 
 
     if (expr instanceof ASTCompositeTerm)
     { // (factorExpression _1 * _2)
@@ -5488,7 +5526,7 @@ public abstract class ASTTerm
                 "0.0".equals(mult2))
             { return "0"; } 
             if ("1".equals(mult2) || 
-                "1.1".equals(mult2)) 
+                "1.0".equals(mult2)) 
             { return coef1; } 
             
             return "(" + coef1 + ")*(" + mult2 + ")"; 
@@ -5507,7 +5545,7 @@ public abstract class ASTTerm
                 "0.0".equals(coef1)) 
             { return "0"; } 
             if ("1".equals(coef2) || 
-                "1.1".equals(coef2)) 
+                "1.0".equals(coef2)) 
             { return coef1; } 
             return "(" + coef1 + ")" + opr + "(" + coef2 + ")"; 
           } 
@@ -5533,9 +5571,9 @@ public abstract class ASTTerm
     { return expr.literalForm(); } 
 
     Vector coefs = new Vector(); 
-    Vector pows = constructNPowers(
-                     powers, var, expr, 
-                     coefs);
+    Vector pows = ASTTerm.constructNPowers(
+                                powers, var, expr, 
+                                coefs);
 
     String res = ""; 
     String cnsts = 
@@ -5548,7 +5586,7 @@ public abstract class ASTTerm
     } 
   
     return res + cnsts; 
-  } 
+  } // Normalises a polynomial
 
 
   public static boolean isMathOCLConjunction(ASTTerm trm)
@@ -5570,43 +5608,63 @@ public abstract class ASTTerm
         "&".equals(args.get(1) + ""))
     { return true; } 
 
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 2 && 
+        "not".equals(args.get(0) + "") && 
+        ASTTerm.isMathOCLDisjunction((ASTTerm) args.get(1)))
+    { return true; }  // and at least 2 disjuncts
+
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { return true; } 
+
+
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a/b < c
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(2)))
-    { return true; } 
+    { return true; } // a < b/c
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         ">".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a/b > c
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         ">".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(2)))
-    { return true; } 
+    { return true; } // a > b/c
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
         ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a*b < 0
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLZero((ASTTerm) args.get(0)) && 
         ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(2)))
-    { return true; } 
+    { return true; } // 0 < a*b
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "=".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { return true; } // a*b = 0
 
     if (args.size() == 1) 
     { ASTTerm arg0 = (ASTTerm) args.get(0); 
@@ -5637,9 +5695,42 @@ public abstract class ASTTerm
         args.size() == 3 && 
         "&".equals(args.get(1) + ""))
     { Vector res = new Vector(); 
-      res.add(args.get(0)); 
-      res.add(args.get(2)); 
+      ASTTerm t1 = (ASTTerm) args.get(0); 
+      ASTTerm t2 = (ASTTerm) args.get(2);
+      res.addAll(ASTTerm.mathOCLConjuncts(t1)); 
+      res.addAll(ASTTerm.mathOCLConjuncts(t2)); 
+ 
       return res; 
+    } 
+
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 2 && 
+        "not".equals(args.get(0) + "") && 
+        ASTTerm.isMathOCLDisjunction((ASTTerm) args.get(1)))
+    { ASTTerm conj = (ASTTerm) args.get(1); 
+      Vector conjs = ASTTerm.mathOCLDisjuncts(conj); 
+      if (conjs.size() > 1)
+      { Vector res = new Vector(); 
+        for (int i = 0; i < conjs.size(); i++) 
+        { ASTTerm conji = (ASTTerm) conjs.get(i);
+          Vector nargs = new Vector(); 
+          nargs.add(new ASTSymbolTerm("not")); 
+          nargs.add(conji);  
+          ASTTerm disji = 
+             new ASTCompositeTerm("logicalExpression", 
+                                  nargs); 
+          res.add(disji); 
+        }
+        return res; 
+      } 
+    }  
+
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { ASTTerm arg = (ASTTerm) args.get(1); 
+      return ASTTerm.mathOCLConjuncts(arg); 
     } 
 
     if ("equalityExpression".equals(tg) &&
@@ -5649,8 +5740,8 @@ public abstract class ASTTerm
     { // a/b < c is (b < 0 => b*c < a) & (0 < b => a < b*c)
 
       ASTTerm divis = (ASTTerm) args.get(0); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a 
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(denom);
@@ -5658,8 +5749,9 @@ public abstract class ASTTerm
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // b < 0
 
-      ASTTerm rhs = (ASTTerm) args.get(2); 
+      ASTTerm rhs = (ASTTerm) args.get(2); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -5667,6 +5759,7 @@ public abstract class ASTTerm
       newargs2.add(rhs);
       ASTTerm multDenomRhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(multDenomRhs);
@@ -5674,6 +5767,7 @@ public abstract class ASTTerm
       newargs3.add(numer);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // b*c < a
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -5681,6 +5775,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // b < 0 => b*c < a
 
       Vector newargs5 = new Vector();
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
@@ -5688,6 +5783,7 @@ public abstract class ASTTerm
       newargs5.add(denom);
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // 0 < b
       
       Vector newargs6 = new Vector();
       newargs6.add(numer);
@@ -5695,6 +5791,7 @@ public abstract class ASTTerm
       newargs6.add(multDenomRhs);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // a < b*c
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -5702,6 +5799,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // 0 < b => a < b*c
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -5716,8 +5814,8 @@ public abstract class ASTTerm
     { // a/b > c is (0 < b => b*c < a) & (b < 0 => a < b*c)
 
       ASTTerm divis = (ASTTerm) args.get(0); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a 
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
@@ -5725,8 +5823,9 @@ public abstract class ASTTerm
       newargs1.add(denom);
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // 0 < b
 
-      ASTTerm rhs = (ASTTerm) args.get(2); 
+      ASTTerm rhs = (ASTTerm) args.get(2); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -5734,6 +5833,7 @@ public abstract class ASTTerm
       newargs2.add(rhs);
       ASTTerm multDenomRhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(multDenomRhs);
@@ -5741,6 +5841,7 @@ public abstract class ASTTerm
       newargs3.add(numer);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // b*c < a
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -5748,6 +5849,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // 0 < b => b*c < a
 
       Vector newargs5 = new Vector();
       newargs5.add(denom);
@@ -5755,6 +5857,7 @@ public abstract class ASTTerm
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // b < 0
       
       Vector newargs6 = new Vector();
       newargs6.add(numer);
@@ -5762,6 +5865,7 @@ public abstract class ASTTerm
       newargs6.add(multDenomRhs);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // a < b*c
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -5769,6 +5873,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // b < 0 => a < b*c
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -5783,8 +5888,8 @@ public abstract class ASTTerm
     { // c < a/b is (b < 0 => a < b*c) & (0 < b => b*c < a)
 
       ASTTerm divis = (ASTTerm) args.get(2); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a 
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(denom);
@@ -5792,8 +5897,9 @@ public abstract class ASTTerm
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // b < 0
 
-      ASTTerm lhs = (ASTTerm) args.get(0); 
+      ASTTerm lhs = (ASTTerm) args.get(0); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -5801,6 +5907,7 @@ public abstract class ASTTerm
       newargs2.add(lhs);
       ASTTerm multDenomLhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(numer);
@@ -5808,6 +5915,7 @@ public abstract class ASTTerm
       newargs3.add(multDenomLhs);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // a < b*c
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -5815,6 +5923,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // b < 0 => a < b*c
 
       Vector newargs5 = new Vector();
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
@@ -5822,6 +5931,7 @@ public abstract class ASTTerm
       newargs5.add(denom);
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // 0 < b
       
       Vector newargs6 = new Vector();
       newargs6.add(multDenomLhs);
@@ -5829,6 +5939,7 @@ public abstract class ASTTerm
       newargs6.add(numer);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // b*c < a
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -5836,6 +5947,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // 0 < b => b*c < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -5850,8 +5962,8 @@ public abstract class ASTTerm
     { // c > a/b is (0 < b => a < b*c) & (b < 0 => b*c < a)
 
       ASTTerm divis = (ASTTerm) args.get(2); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis);  // a
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
@@ -5859,8 +5971,9 @@ public abstract class ASTTerm
       newargs1.add(denom);
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // 0 < b
 
-      ASTTerm lhs = (ASTTerm) args.get(0); 
+      ASTTerm lhs = (ASTTerm) args.get(0); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -5868,6 +5981,7 @@ public abstract class ASTTerm
       newargs2.add(lhs);
       ASTTerm multDenomLhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(numer);
@@ -5875,6 +5989,7 @@ public abstract class ASTTerm
       newargs3.add(multDenomLhs);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // a < b*c
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -5882,6 +5997,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // 0 < b => a < b*c
 
       Vector newargs5 = new Vector();
       newargs5.add(denom);
@@ -5889,6 +6005,7 @@ public abstract class ASTTerm
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // b < 0
       
       Vector newargs6 = new Vector();
       newargs6.add(multDenomLhs);
@@ -5896,6 +6013,7 @@ public abstract class ASTTerm
       newargs6.add(numer);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // b*c < a
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -5903,6 +6021,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // b < 0 => b*c < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -5929,6 +6048,7 @@ public abstract class ASTTerm
       newargs1.add(zz);
       ASTTerm aalessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // a < 0
 
       Vector newargs2 = new Vector();
       newargs2.add(zz);
@@ -5936,6 +6056,7 @@ public abstract class ASTTerm
       newargs2.add(bb);
       ASTTerm zerolessThanbb = 
          new ASTCompositeTerm("equalityExpression", newargs2); 
+      // 0 < b
 
       Vector newargs3 = new Vector();
       newargs3.add(aalessThanZero);
@@ -5943,6 +6064,7 @@ public abstract class ASTTerm
       newargs3.add(zerolessThanbb);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs3); 
+      // a < 0 => 0 < b
 
       Vector newargs4 = new Vector();
       newargs4.add(bb);
@@ -5950,6 +6072,7 @@ public abstract class ASTTerm
       newargs4.add(zz);
       ASTTerm bblessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs4); 
+      // b < 0
 
       Vector newargs5 = new Vector();
       newargs5.add(zz);
@@ -5957,6 +6080,7 @@ public abstract class ASTTerm
       newargs5.add(aa);
       ASTTerm zerolessThanaa = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // 0 < a
 
       Vector newargs6 = new Vector();
       newargs6.add(bblessThanZero);
@@ -5964,6 +6088,7 @@ public abstract class ASTTerm
       newargs6.add(zerolessThanaa);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs6); 
+      // b < 0 => 0 < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -5990,6 +6115,7 @@ public abstract class ASTTerm
       newargs1.add(aa);
       ASTTerm zerolessThanA = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // 0 < a
 
       Vector newargs2 = new Vector();
       newargs2.add(zz);
@@ -5997,6 +6123,7 @@ public abstract class ASTTerm
       newargs2.add(bb);
       ASTTerm zerolessThanB = 
          new ASTCompositeTerm("equalityExpression", newargs2); 
+      // 0 < b
 
       Vector newargs3 = new Vector();
       newargs3.add(zerolessThanA);
@@ -6004,6 +6131,7 @@ public abstract class ASTTerm
       newargs3.add(zerolessThanB);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs3); 
+      // 0 < a => 0 < b
 
       Vector newargs4 = new Vector();
       newargs4.add(bb);
@@ -6011,6 +6139,7 @@ public abstract class ASTTerm
       newargs4.add(zz);
       ASTTerm bblessThan0 = 
          new ASTCompositeTerm("equalityExpression", newargs4); 
+      // b < 0
 
       Vector newargs5 = new Vector();
       newargs5.add(aa);
@@ -6018,6 +6147,7 @@ public abstract class ASTTerm
       newargs5.add(zz);
       ASTTerm aalessThan0 = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // a < 0
 
       Vector newargs6 = new Vector();
       newargs6.add(bblessThan0);
@@ -6025,6 +6155,74 @@ public abstract class ASTTerm
       newargs6.add(aalessThan0);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs6); 
+      // b < 0 => a < 0
+
+      Vector res = new Vector(); 
+      res.add(conj1);   
+      res.add(conj2); 
+      return res; 
+    } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "=".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { // a*b = 0 is (a /= 0 => b = 0) & (b /= 0 => a = 0)
+
+      ASTTerm mult = (ASTTerm) args.get(0); 
+      ASTTerm aa = ASTTerm.mathOCLArgument(mult,0); 
+      ASTTerm bb = ASTTerm.mathOCLArgument(mult,2); 
+
+      ASTTerm zz = new ASTBasicTerm("basicExpression", "0"); 
+
+      Vector newargs1 = new Vector();
+      newargs1.add(aa);
+      newargs1.add(new ASTSymbolTerm("/="));
+      newargs1.add(zz);
+      ASTTerm aaNeqZero = 
+         new ASTCompositeTerm("equalityExpression", newargs1); 
+      // a /= 0
+
+      Vector newargs2 = new Vector();
+      newargs2.add(bb);
+      newargs2.add(new ASTSymbolTerm("="));
+      newargs2.add(zz);
+      ASTTerm zeroEqbb = 
+         new ASTCompositeTerm("equalityExpression", newargs2); 
+      // b = 0
+
+      Vector newargs3 = new Vector();
+      newargs3.add(aaNeqZero);
+      newargs3.add(new ASTSymbolTerm("=>"));
+      newargs3.add(zeroEqbb);
+      ASTTerm conj1 = 
+         new ASTCompositeTerm("logicalExpression", newargs3); 
+      // a /= 0 => b = 0
+
+      Vector newargs4 = new Vector();
+      newargs4.add(bb);
+      newargs4.add(new ASTSymbolTerm("/="));
+      newargs4.add(zz);
+      ASTTerm bbNeqZero = 
+         new ASTCompositeTerm("equalityExpression", newargs4); 
+      // b /= 0
+
+      Vector newargs5 = new Vector();
+      newargs5.add(aa);
+      newargs5.add(new ASTSymbolTerm("="));
+      newargs5.add(zz);
+      ASTTerm zeroEqaa = 
+         new ASTCompositeTerm("equalityExpression", newargs5); 
+      // a = 0
+
+      Vector newargs6 = new Vector();
+      newargs6.add(bbNeqZero);
+      newargs6.add(new ASTSymbolTerm("=>"));
+      newargs6.add(zeroEqaa);
+      ASTTerm conj2 = 
+         new ASTCompositeTerm("logicalExpression", newargs6); 
+      // b /= 0 => a = 0
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6050,7 +6248,17 @@ public abstract class ASTTerm
     { return true; } 
 
     return false; 
-  } // Also case of (a/b)
+  } 
+
+  public static boolean isMathOCLOne(ASTTerm trm)
+  { String lit = trm.literalForm(); 
+ 
+    if ("1".equals(lit) || 
+        "1.0".equals(lit))
+    { return true; } 
+
+    return false; 
+  } 
 
   public static boolean isMathOCLMultiplication(ASTTerm trm)
   { String tg = trm.getTag();
@@ -6084,7 +6292,7 @@ public abstract class ASTTerm
     }
 
     return false; 
-  } // Also case of (a/b)
+  } 
 
   public static ASTTerm mathOCLNumerator(ASTTerm trm)
   { String tg = trm.getTag();
@@ -6101,7 +6309,7 @@ public abstract class ASTTerm
     }
 
     return null; 
-  } // Also case of (a/b)
+  } 
 
   public static ASTTerm mathOCLDenominator(ASTTerm trm)
   { String tg = trm.getTag();
@@ -6118,7 +6326,7 @@ public abstract class ASTTerm
     }
 
     return null; 
-  } // Also case of (a/b)
+  } 
 
   public static ASTTerm mathOCLArgument(ASTTerm trm, int i)
   { // For i-th argument of binary or higher expressions
@@ -6126,7 +6334,7 @@ public abstract class ASTTerm
     // String tg = trm.getTag();
     Vector args = trm.getTerms(); 
 
-    if (args.size() >= 3)
+    if (args.size() >= 3 && i <= 2)
     { return (ASTTerm) args.get(i); } 
 
     if (args.size() == 1) 
@@ -6142,65 +6350,79 @@ public abstract class ASTTerm
   { String tg = trm.getTag();
     Vector args = trm.getTerms(); 
 
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { ASTTerm tt = (ASTTerm) args.get(1);
+      return ASTTerm.isMathOCLDisjunction(tt);
+    } // ( expr )
+
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<=".equals(args.get(1) + ""))
-    { return true; } 
+    { return true; } // a <= b
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         ">=".equals(args.get(1) + ""))
-    { return true; } 
+    { return true; } // a >= b
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a/b < c
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(2)))
-    { return true; } 
+    { return true; } // c < a/b
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         ">".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a/b > c
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         ">".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(2)))
-    { return true; } 
+    { return true; } // c > a/b
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
         ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a*b < 0
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "<".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLZero((ASTTerm) args.get(0)) && 
         ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(2)))
-    { return true; } 
+    { return true; } // 0 < a*b
 
     if ("equalityExpression".equals(tg) &&
         args.size() == 3 && 
         "=".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
         ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
-    { return true; } 
+    { return true; } // a*b = 0 
  
     if ("logicalExpression".equals(tg) &&
         args.size() == 3 && 
         "or".equals(args.get(1) + ""))
     { return true; } 
+
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 2 && 
+        "not".equals(args.get(0) + "") && 
+        ASTTerm.isMathOCLConjunction((ASTTerm) args.get(1)))
+    { return true; } // at least 2 conjuncts
 
     if ("logicalExpression".equals(tg) && 
         args.size() == 1) 
@@ -6231,16 +6453,16 @@ public abstract class ASTTerm
         args.size() == 3 && 
         "<=".equals(args.get(1) + ""))
     { Vector newargs1 = new Vector();
-      newargs1.add(args.get(0));
+      newargs1.add(args.get(0)); // a
       newargs1.add(new ASTSymbolTerm("<"));
-      newargs1.add(args.get(2));
+      newargs1.add(args.get(2)); // b
        
       ASTTerm d1 = new ASTCompositeTerm(tg, newargs1); 
       
       Vector newargs2 = new Vector();
-      newargs2.add(args.get(0));
+      newargs2.add(args.get(0)); // a
       newargs2.add(new ASTSymbolTerm("="));
-      newargs2.add(args.get(2));
+      newargs2.add(args.get(2)); // b
       
       ASTTerm d2 = new ASTCompositeTerm(tg, newargs2);
       Vector res = new Vector(); 
@@ -6252,16 +6474,16 @@ public abstract class ASTTerm
         args.size() == 3 && 
         ">=".equals(args.get(1) + ""))
     { Vector newargs1 = new Vector();
-      newargs1.add(args.get(2));
+      newargs1.add(args.get(2)); // b
       newargs1.add(new ASTSymbolTerm("<"));
-      newargs1.add(args.get(0));
+      newargs1.add(args.get(0)); // a
        
       ASTTerm d1 = new ASTCompositeTerm(tg, newargs1); 
       
       Vector newargs2 = new Vector();
-      newargs2.add(args.get(0));
+      newargs2.add(args.get(0)); // a
       newargs2.add(new ASTSymbolTerm("="));
-      newargs2.add(args.get(2));
+      newargs2.add(args.get(2)); // b
       
       ASTTerm d2 = new ASTCompositeTerm(tg, newargs2);
       Vector res = new Vector(); 
@@ -6276,8 +6498,8 @@ public abstract class ASTTerm
     { // a/b < c is (b < 0 & b*c < a) or (0 < b & a < b*c)
 
       ASTTerm divis = (ASTTerm) args.get(0); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a 
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(denom);
@@ -6285,8 +6507,10 @@ public abstract class ASTTerm
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // b < 0
 
       ASTTerm rhs = (ASTTerm) args.get(2); 
+      // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -6294,6 +6518,7 @@ public abstract class ASTTerm
       newargs2.add(rhs);
       ASTTerm multDenomRhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(multDenomRhs);
@@ -6301,6 +6526,7 @@ public abstract class ASTTerm
       newargs3.add(numer);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // b*c < a
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -6308,6 +6534,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // b < 0 & b*c < a
 
       Vector newargs5 = new Vector();
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
@@ -6315,6 +6542,7 @@ public abstract class ASTTerm
       newargs5.add(denom);
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // 0 < b
       
       Vector newargs6 = new Vector();
       newargs6.add(numer);
@@ -6322,6 +6550,7 @@ public abstract class ASTTerm
       newargs6.add(multDenomRhs);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // a < b*c
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -6329,6 +6558,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // 0 < b & a < b*c
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6343,8 +6573,8 @@ public abstract class ASTTerm
     { // a/b > c is (b < 0 & a < b*c) or (0 < b & b*c < a)
 
       ASTTerm divis = (ASTTerm) args.get(0); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(denom);
@@ -6352,8 +6582,9 @@ public abstract class ASTTerm
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // b < 0
 
-      ASTTerm rhs = (ASTTerm) args.get(2); 
+      ASTTerm rhs = (ASTTerm) args.get(2); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -6361,6 +6592,7 @@ public abstract class ASTTerm
       newargs2.add(rhs);
       ASTTerm multDenomRhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(numer);
@@ -6368,6 +6600,7 @@ public abstract class ASTTerm
       newargs3.add(multDenomRhs);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // a < b*c
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -6375,6 +6608,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // b < 0 & a < b*c
 
       Vector newargs5 = new Vector();
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
@@ -6382,13 +6616,15 @@ public abstract class ASTTerm
       newargs5.add(denom);
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
-      
+      // 0 < b
+
       Vector newargs6 = new Vector();
       newargs6.add(multDenomRhs);
       newargs6.add(new ASTSymbolTerm("<"));
       newargs6.add(numer);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // b*c < a
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -6396,6 +6632,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // 0 < b & b*c < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6410,8 +6647,8 @@ public abstract class ASTTerm
     { // c < a/b is (b < 0 & a < b*c) or (0 < b & b*c < a)
 
       ASTTerm divis = (ASTTerm) args.get(2); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(denom);
@@ -6419,8 +6656,9 @@ public abstract class ASTTerm
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // b < 0
 
-      ASTTerm lhs = (ASTTerm) args.get(0); 
+      ASTTerm lhs = (ASTTerm) args.get(0); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -6428,6 +6666,7 @@ public abstract class ASTTerm
       newargs2.add(lhs);
       ASTTerm multDenomLhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(numer);
@@ -6435,6 +6674,7 @@ public abstract class ASTTerm
       newargs3.add(multDenomLhs);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // a < b*c
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -6442,13 +6682,15 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // b < 0 & a < b*c
 
       Vector newargs5 = new Vector();
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
       newargs5.add(new ASTSymbolTerm("<"));
       newargs5.add(denom);
       ASTTerm greaterThanZero = 
-         new ASTCompositeTerm("equalityExpression", newargs5); 
+         new ASTCompositeTerm("equalityExpression", newargs5);
+      // 0 < b 
       
       Vector newargs6 = new Vector();
       newargs6.add(multDenomLhs);
@@ -6456,6 +6698,7 @@ public abstract class ASTTerm
       newargs6.add(numer);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // b*c < a
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -6463,6 +6706,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // 0 < b & b*c < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6477,8 +6721,8 @@ public abstract class ASTTerm
     { // c > a/b is (0 < b & a < b*c) or (b < 0 & b*c < a)
 
       ASTTerm divis = (ASTTerm) args.get(2); 
-      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); 
-      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); 
+      ASTTerm numer = ASTTerm.mathOCLNumerator(divis); // a
+      ASTTerm denom = ASTTerm.mathOCLDenominator(divis); // b
 
       Vector newargs1 = new Vector();
       newargs1.add(new ASTBasicTerm("basicExpression", "0"));
@@ -6486,8 +6730,9 @@ public abstract class ASTTerm
       newargs1.add(denom);
       ASTTerm lessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // 0 < b
 
-      ASTTerm lhs = (ASTTerm) args.get(0); 
+      ASTTerm lhs = (ASTTerm) args.get(0); // c
 
       Vector newargs2 = new Vector();
       newargs2.add(denom);
@@ -6495,6 +6740,7 @@ public abstract class ASTTerm
       newargs2.add(lhs);
       ASTTerm multDenomLhs = 
          new ASTCompositeTerm("factorExpression", newargs2); 
+      // b*c
 
       Vector newargs3 = new Vector();
       newargs3.add(numer);
@@ -6502,6 +6748,7 @@ public abstract class ASTTerm
       newargs3.add(multDenomLhs);
       ASTTerm lessThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs3); 
+      // a < b*c
 
       Vector newargs4 = new Vector();
       newargs4.add(lessThanZero);
@@ -6509,6 +6756,7 @@ public abstract class ASTTerm
       newargs4.add(lessThanNum);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs4); 
+      // 0 < b & a < b*c
 
       Vector newargs5 = new Vector();
       newargs5.add(denom);
@@ -6516,13 +6764,15 @@ public abstract class ASTTerm
       newargs5.add(new ASTBasicTerm("basicExpression", "0"));
       ASTTerm greaterThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
-      
+      // b < 0
+
       Vector newargs6 = new Vector();
       newargs6.add(multDenomLhs);
       newargs6.add(new ASTSymbolTerm("<"));
       newargs6.add(numer);
       ASTTerm greaterThanNum = 
          new ASTCompositeTerm("equalityExpression", newargs6); 
+      // b*c < a
 
       Vector newargs7 = new Vector();
       newargs7.add(greaterThanZero);
@@ -6530,6 +6780,7 @@ public abstract class ASTTerm
       newargs7.add(greaterThanNum);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs7); 
+      // b < 0 & b*c < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6556,6 +6807,7 @@ public abstract class ASTTerm
       newargs1.add(zz);
       ASTTerm aalessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // a < 0
 
       Vector newargs2 = new Vector();
       newargs2.add(zz);
@@ -6563,6 +6815,7 @@ public abstract class ASTTerm
       newargs2.add(bb);
       ASTTerm zerolessThanbb = 
          new ASTCompositeTerm("equalityExpression", newargs2); 
+      // 0 < b
 
       Vector newargs3 = new Vector();
       newargs3.add(aalessThanZero);
@@ -6570,6 +6823,7 @@ public abstract class ASTTerm
       newargs3.add(zerolessThanbb);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs3); 
+      // a < 0 & 0 < b
 
       Vector newargs4 = new Vector();
       newargs4.add(bb);
@@ -6577,6 +6831,7 @@ public abstract class ASTTerm
       newargs4.add(zz);
       ASTTerm bblessThanZero = 
          new ASTCompositeTerm("equalityExpression", newargs4); 
+      // b < 0
 
       Vector newargs5 = new Vector();
       newargs5.add(zz);
@@ -6584,6 +6839,7 @@ public abstract class ASTTerm
       newargs5.add(aa);
       ASTTerm zerolessThanaa = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // 0 < a
 
       Vector newargs6 = new Vector();
       newargs6.add(bblessThanZero);
@@ -6591,6 +6847,7 @@ public abstract class ASTTerm
       newargs6.add(zerolessThanaa);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs6); 
+      // b < 0 & 0 < a
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6617,6 +6874,7 @@ public abstract class ASTTerm
       newargs1.add(aa);
       ASTTerm zerolessThanA = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // 0 < a
 
       Vector newargs2 = new Vector();
       newargs2.add(zz);
@@ -6624,6 +6882,7 @@ public abstract class ASTTerm
       newargs2.add(bb);
       ASTTerm zerolessThanB = 
          new ASTCompositeTerm("equalityExpression", newargs2); 
+      // 0 < b
 
       Vector newargs3 = new Vector();
       newargs3.add(zerolessThanA);
@@ -6631,6 +6890,7 @@ public abstract class ASTTerm
       newargs3.add(zerolessThanB);
       ASTTerm conj1 = 
          new ASTCompositeTerm("logicalExpression", newargs3); 
+      // 0 < a & 0 < b
 
       Vector newargs4 = new Vector();
       newargs4.add(bb);
@@ -6638,6 +6898,7 @@ public abstract class ASTTerm
       newargs4.add(zz);
       ASTTerm bblessThan0 = 
          new ASTCompositeTerm("equalityExpression", newargs4); 
+      // b < 0
 
       Vector newargs5 = new Vector();
       newargs5.add(aa);
@@ -6645,6 +6906,7 @@ public abstract class ASTTerm
       newargs5.add(zz);
       ASTTerm aalessThan0 = 
          new ASTCompositeTerm("equalityExpression", newargs5); 
+      // a < 0
 
       Vector newargs6 = new Vector();
       newargs6.add(bblessThan0);
@@ -6652,6 +6914,7 @@ public abstract class ASTTerm
       newargs6.add(aalessThan0);
       ASTTerm conj2 = 
          new ASTCompositeTerm("logicalExpression", newargs6); 
+      // b < 0 & a < 0
 
       Vector res = new Vector(); 
       res.add(conj1);   
@@ -6678,6 +6941,7 @@ public abstract class ASTTerm
       newargs1.add(zz);
       ASTTerm aaEqZero = 
          new ASTCompositeTerm("equalityExpression", newargs1); 
+      // a = 0
 
       Vector newargs2 = new Vector();
       newargs2.add(bb);
@@ -6685,6 +6949,7 @@ public abstract class ASTTerm
       newargs2.add(zz);
       ASTTerm bbEqZero = 
          new ASTCompositeTerm("equalityExpression", newargs2); 
+      // b = 0
 
       Vector res = new Vector(); 
       res.add(aaEqZero); 
@@ -6702,6 +6967,37 @@ public abstract class ASTTerm
       res.addAll(ASTTerm.mathOCLDisjuncts(rhs)); 
       return res; 
     } 
+
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 2 && 
+        "not".equals(args.get(0) + "") && 
+        ASTTerm.isMathOCLConjunction((ASTTerm) args.get(1)))
+    { ASTTerm conj = (ASTTerm) args.get(1); 
+      Vector conjs = ASTTerm.mathOCLConjuncts(conj); 
+      if (conjs.size() > 1)
+      { Vector res = new Vector(); 
+        for (int i = 0; i < conjs.size(); i++) 
+        { ASTTerm conji = (ASTTerm) conjs.get(i);
+          Vector nargs = new Vector(); 
+          nargs.add(new ASTSymbolTerm("not")); 
+          nargs.add(conji);  
+          ASTTerm disji = 
+             new ASTCompositeTerm("logicalExpression", 
+                                  nargs); 
+          res.add(disji); 
+        }
+        return res; 
+      } 
+    }  
+
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { ASTTerm tt = (ASTTerm) args.get(1); 
+      return ASTTerm.mathOCLDisjuncts(tt); 
+    } 
+ 
 
     if ("logicalExpression".equals(tg) && 
         args.size() == 1) 
@@ -6734,6 +7030,14 @@ public abstract class ASTTerm
         args.size() == 3 && 
         "=>".equals(args.get(1) + ""))
     { return true; } 
+
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { ASTTerm tt = (ASTTerm) args.get(1); 
+      return ASTTerm.isMathOCLImplication(tt);
+    } 
 
     if ("logicalExpression".equals(tg) && 
         args.size() == 1) 
@@ -6771,6 +7075,14 @@ public abstract class ASTTerm
       return ASTTerm.mathOCLAntecedent(arg0); 
     } 
 
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { ASTTerm tt = (ASTTerm) args.get(1); 
+      return ASTTerm.mathOCLAntecedent(tt);
+    } 
+
     return null; 
   } 
 
@@ -6795,13 +7107,70 @@ public abstract class ASTTerm
       return ASTTerm.mathOCLSuccedent(arg0); 
     } 
 
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { ASTTerm tt = (ASTTerm) args.get(1); 
+      return ASTTerm.mathOCLSuccedent(tt);
+    } 
+
     return null; 
   } 
+
+  public static boolean mathOCLContradiction(ASTTerm xx, ASTTerm yy)
+  { int n = xx.arity(); 
+    int m = yy.arity(); 
+
+    String xlit = xx.literalForm(); 
+    String ylit = yy.literalForm(); 
+
+    if (n == 2 && "not".equals(xx.getTerm(0) + ""))
+    { ASTTerm arg = xx.getTerm(1); 
+      if (ylit.equals(arg.literalForm()))
+      { return true; } 
+    } // not P, P 
+
+    if (m == 2 && "not".equals(yy.getTerm(0) + ""))
+    { ASTTerm arg = yy.getTerm(1); 
+      if (xlit.equals(arg.literalForm()))
+      { return true; } 
+    } // P, not P 
+
+    if (n == 3 && m == 3)
+    { ASTTerm arg1x = xx.getTerm(0); 
+      String opx = "" + xx.getTerm(1); 
+      ASTTerm arg2x = xx.getTerm(2); 
+      ASTTerm arg1y = yy.getTerm(0); 
+      String opy = "" + yy.getTerm(1); 
+      ASTTerm arg2y = yy.getTerm(2); 
+
+      if (arg1x.equals(arg1y) && arg2x.equals(arg2y) && 
+          opy.equals(Expression.negateOp(opx)))
+      { return true; } 
+    } // a opr b, a neg_op b
+
+    return false; 
+  } 
        
+  public static boolean containsContradictions(Vector aterms)
+  { // an expression and its negation are in aterms
+
+    for (int i = 0; i < aterms.size(); i++) 
+    { ASTTerm xx = (ASTTerm) aterms.get(i); 
+      for (int j = i+1; j < aterms.size(); j++) 
+      { ASTTerm yy = (ASTTerm) aterms.get(j); 
+        if (ASTTerm.mathOCLContradiction(xx,yy))
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+
   public static String attemptProof(ASTTerm succ, ASTTerm ante)
   { // Try to prove  ante => succ
-    String slit = succ.literalForm(); 
-    String alist = ante.literalForm(); 
+    String slit = succ.literalFormSpaces(); 
+    String alist = ante.literalFormSpaces(); // has , instead of &
 
     String alit = ""; 
     Vector aterms = ante.getTerms(); 
@@ -6810,14 +7179,14 @@ public abstract class ASTTerm
       if (",".equals(atermi + ""))
       { alit = alit + " & "; } 
       else 
-      { alit = alit + atermi.literalForm(); } 
+      { alit = alit + atermi.literalFormSpaces(); } 
     } 
        
     Vector assumptions = ASTTerm.mathOCLConjuncts(ante); 
     Vector assumptionlits = new Vector(); 
     for (int i = 0; i < assumptions.size(); i++) 
     { ASTTerm assump = (ASTTerm) assumptions.get(i); 
-      assumptionlits.add(assump.literalForm()); 
+      assumptionlits.add(assump.literalFormSpaces()); 
     } 
 
     Vector thms = ASTTerm.mathocltheorems;
@@ -6845,6 +7214,9 @@ public abstract class ASTTerm
     if (assumptionlits.contains(slit))
     { return "  Simplify true\n"; } 
 
+    if (ASTTerm.containsContradictions(assumptions))
+    { return "  Simplify true\n"; } 
+
     for (int i = 0; i < thms.size(); i++) 
     { Vector thm = (Vector) thms.get(i); // [concl,premise]
       ASTTerm concl = (ASTTerm) thm.get(0); 
@@ -6857,7 +7229,8 @@ public abstract class ASTTerm
     /*  JOptionPane.showMessageDialog(null, 
           "### Binding: " + binds + " for " + 
           succ + " " + concl,   "",
-          JOptionPane.INFORMATION_MESSAGE); */ 
+          JOptionPane.INFORMATION_MESSAGE); 
+       Let user choose if to apply this inference */ 
 
       if (binds != null) // replace succ by premise[binds]
       { ASTTerm newsucc = 
@@ -6880,24 +7253,30 @@ public abstract class ASTTerm
          "", 
          JOptionPane.INFORMATION_MESSAGE); */ 
 
-      String res = ""; 
-      for (int i = 0; i < conjs.size(); i++) 
-      { ASTTerm conj = (ASTTerm) conjs.get(i); 
-        res = res + 
-          "  Prove " + conj.literalFormSpaces() + " if " + alist + "\n"; 
+      if (conjs.size() > 1)
+      { 
+        String res = ""; 
+        for (int i = 0; i < conjs.size(); i++) 
+        { ASTTerm conj = (ASTTerm) conjs.get(i); 
+          res = res + 
+            "  Prove " + conj.literalFormSpaces() + " if " + alist + "\n"; 
+        } 
+        return res; 
       } 
-      return res; 
     }  
  
     if (ASTTerm.isMathOCLDisjunction(ante))
     { Vector disjs = ASTTerm.mathOCLDisjuncts(ante);
-      String res = ""; 
-      for (int i = 0; i < disjs.size(); i++) 
-      { ASTTerm disj = (ASTTerm) disjs.get(i); 
-        res = res + 
-          "  Prove " + slit + " if " + disj.literalFormSpaces() + "\n"; 
+
+      if (disjs.size() > 1)
+      { String res = ""; 
+        for (int i = 0; i < disjs.size(); i++) 
+        { ASTTerm disj = (ASTTerm) disjs.get(i); 
+          res = res + 
+            "  Prove " + slit + " if " + disj.literalFormSpaces() + "\n"; 
+        }
+        return res;
       } 
-      return res; 
     } // also case of (A or B), C  
 
     // If succ is a disjunction, it holds if any disjunct is 
@@ -7006,10 +7385,10 @@ public abstract class ASTTerm
     }  
 
 
-    String alitspaces = ante.literalFormSpaces(); 
+    // String alitspaces = ante.literalFormSpaces(); 
     String slitspaces = succ.literalFormSpaces(); 
 
-    return "  Simplify " + alitspaces + " => " + slitspaces; 
+    return "  Simplify " + alit + " => " + slitspaces; 
   } 
 
   public static String solveEquations(ASTTerm exprs, ASTTerm vars)
@@ -7029,21 +7408,27 @@ public abstract class ASTTerm
 
       ASTTerm var0 = (ASTTerm) varTerms.get(0); 
       ASTTerm expr0 = (ASTTerm) exprTerms.get(0); 
-      String vx0 = var0.literalForm(); 
+      String vx0 = var0.literalForm();
+
+      ASTTerm xterm = new ASTBasicTerm("identifier", "x"); 
+      boolean hasX = 
+        ASTTerm.isSubterm(xterm, expr0);  
           
       Vector powers = ASTTerm.powersOf(var0,expr0);
+      Vector powersR = VectorUtil.removeDuplicates(powers);
 
       double minp = VectorUtil.vectorMinimum(powers); 
       double maxp = VectorUtil.vectorMaximum(powers); 
  
       Vector diffs = ASTTerm.differentialsOf(var0,expr0);
-      Vector diffsR = VectorUtil.removeDuplicates(diffs); 
+      Vector diffsR = VectorUtil.removeDuplicates(diffs);
+ 
       double maxdp = VectorUtil.vectorMaximum(diffsR); 
       double mindp = VectorUtil.vectorMinimum(diffsR); 
           
       JOptionPane.showMessageDialog(null, 
          ">>> Var powers of " + vx0 + " are: " +  
-         powers + " from: " + minp + " to: " + maxp + 
+         powersR + " from: " + minp + " to: " + maxp + 
          " Differentials: " + diffsR + " highest: " + maxdp, 
          "", 
          JOptionPane.INFORMATION_MESSAGE); 
@@ -7054,7 +7439,7 @@ public abstract class ASTTerm
         String cnsts = 
               ASTTerm.constantTerms(varTerms,expr0);
         JOptionPane.showMessageDialog(null, 
-            ">>> This is a quadratic formula, solving using quadratic solver " + coefsq + "; " + coefvar + "; " + cnsts, 
+            ">>> This is a quadratic formula, solving using quadratic solver. Coefficients: " + coefsq + " ; " + coefvar + " ; " + cnsts, 
             "", 
             JOptionPane.INFORMATION_MESSAGE);
 
@@ -7079,8 +7464,9 @@ public abstract class ASTTerm
       { } 
       else if (maxdp == 0 && 
                maxp > 0 && 
-               minp == 0 && powers.size() == 2)
-      { // direct solution vx0 = (coef0/coefmaxp)^{1/maxp} 
+               minp == 0 && powersR.size() == 2)
+      { // direct solution vx0 = (coef0/coefmaxp)^{1/maxp}
+ 
         ASTTerm vpow; 
         if (ASTTerm.isIntegerValued(maxp))
         { vpow = ASTTerm.constructNPower(((int) maxp) + "", var0); }
@@ -7099,12 +7485,12 @@ public abstract class ASTTerm
               " " + ncoef + " " + dcnst, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
-         return "  Simplify " + vx0 + " = (-" + dcnst + "/" + 
+         return "  Simplify " + vx0 + " = (-(" + dcnst + ")/" + 
                                    ncoef + ")^{1/" + maxp + "}\n"; 
       } 
       else if (maxdp == 0 && 
                maxp == 0 && 
-               minp < 0 && powers.size() == 2)
+               minp < 0 && powersR.size() == 2)
       { // direct solution vx0 = (coef0/coefminp)^{1/minp} 
         ASTTerm vpow; 
 
@@ -7120,18 +7506,19 @@ public abstract class ASTTerm
         String dcnst = ASTTerm.constantTerms(dvars,expr0);
 
         JOptionPane.showMessageDialog(null, 
-              ">>> This is an explicit n-power equation: " + 
+              ">>> This is an explicit n-power equation in " + 
               vpow + 
-              " " + ncoef + " " + dcnst, 
+              " Coefficient: " + ncoef + " Constant: " + dcnst, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
-         return "  Simplify " + vx0 + " = (-" + dcnst + "/" + 
+         return "  Simplify " + vx0 + " = (-(" + dcnst + ")/" + 
                                    ncoef + ")^{1/" + minp + "}\n"; 
       } 
       else if (maxdp > 0 && diffsR.size() <= 2 && 
                (mindp == 0 || mindp == maxdp) && 
                maxp == 0)
-      { // Linear differential eqn with only one diff term
+      { // 1st-order differential eqn with only one diff term
+        // a(x)*vdiff + b(x) = 0 or other polynomial in vdiff
 
         ASTTerm vdiff =
           ASTTerm.constructNDifferential((int) maxdp, var0); 
@@ -7146,30 +7533,59 @@ public abstract class ASTTerm
         double mindpp = VectorUtil.vectorMinimum(dpowers); 
         double maxdpp = VectorUtil.vectorMaximum(dpowers); 
 
+        ASTTerm maxDpow = ASTTerm.constructNPower(((int) maxdpp) + "", var0);
+ 
+        String dMcoef = ASTTerm.coefficientOf(maxDpow,expr0); 
+
         JOptionPane.showMessageDialog(null, 
-           ">>> This is differential equation with one differential term: " + 
+           ">>> This is differential equation with one differential term: Differentials: " + 
            diffsR + 
-           " " + dpowers + " " + vdiff + 
-           " " + dcoef + " " + dcnst + 
-           " " + mindpp + " " + maxdpp, 
+           " Powers: " + dpowers + " of: " + vdiff + 
+           " Contains x: " + hasX + " Constant: " + dcnst + 
+           " Min power: " + mindpp + " Max power: " + maxdpp, 
            "", 
            JOptionPane.INFORMATION_MESSAGE);
 
-          // Homogenous if dcnst does not have x
-
+        
         if (maxdpp == 1 && mindpp >= 0) // linear
-        { if (maxdp == 1) // f'
+        { if (maxdp == 1) // dcoef*(f') + dcnst = 0
           { return "  Define " + vx0 + 
                      " = - ‡ " + 
-                     "((" + dcnst + ")/" + dcoef + ") dx\n";
+                     "(" + dcnst + ")/(" + dcoef + ") dx\n";
           } 
           else // f'' or higher occurs
           { ASTTerm vdiffpar1 = vdiff.getTerm(0); 
             return "  Solve " + vdiffpar1.literalForm() + 
                      " = - ‡ " + 
-                     "((" + dcnst + ")/" + dcoef + 
+                     "(" + dcnst + ")/(" + dcoef + 
                      ") dx for " + vx0 + "\n"; 
           }  
+        }
+        else if (maxdpp == 2 && mindpp >= 0) // quadratic
+        { String d2coef = 
+            ASTTerm.coefficientOfSquare(vdiff,expr0); 
+
+         /* JOptionPane.showMessageDialog(null, 
+           ">>> Coeffiecient of square of : " + vdiff + " in " + expr0 +  
+           " is " + d2coef, 
+           "", 
+           JOptionPane.INFORMATION_MESSAGE); */ 
+
+          String d1coef = 
+            ASTTerm.coefficientOf(vdiff,expr0); 
+
+          String quadf1 = 
+              AuxMath.quadraticFormula1(d2coef, d1coef, 
+                                        dcnst); 
+          String quadf2 = 
+              AuxMath.quadraticFormula2(d2coef, d1coef, 
+                                        dcnst);
+ 
+          return "  Solve " + vx0 + "1´ = " + quadf1 + " for " + vx0 + "1\n" + 
+               "  Solve " + vx0 + "2´ = " + quadf2 + " for " + vx0 + "2\n" + 
+               "  Define " + vx0 + "\n" + 
+               "  Constraint on " + vx0 + " | (" + vx0 + " = " + vx0 + "1) or (" + vx0 + " = " + vx0 + "2)\n"; 
+
         }
 
         return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
@@ -7181,13 +7597,26 @@ public abstract class ASTTerm
           ASTTerm.constructNDifferentials((int) maxdp, var0,
                                       expr0, alldcoefs); 
           
+
+        ASTTerm vdiff =
+          ASTTerm.constructNDifferential((int) maxdp, var0); 
+ 
+        Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+        String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
+
+        Vector ddvars = new Vector(); 
+        ddvars.add(var0); 
+        ddvars.add(vdiff); 
+        String dcnst = ASTTerm.constantTerms(ddvars,expr0);
+
         JOptionPane.showMessageDialog(null, 
            ">>> General differential equation " + 
-           vdiffs + " " + alldcoefs, 
+           "Differentials: " + vdiffs + " Coefficients: " + alldcoefs + " Has x: " + hasX + " Constant: " + dcnst, 
            "", 
            JOptionPane.INFORMATION_MESSAGE);
 
-        if (maxdp == 1 && vdiffs.size() == 2) 
+        if (maxdp == 1 && vdiffs.size() == 2 && 
+            hasX == false) 
         { // Linear homogenous equation 
 
           String coeff = "" + alldcoefs.get(0); 
@@ -7200,7 +7629,8 @@ public abstract class ASTTerm
             "  Define A\n" + 
             "  Define " + vx0 + " = A*e^{" + frac + "*x}\n"; 
         } 
-        else if (maxdp == 2 && vdiffs.size() == 3) 
+        else if (maxdp == 2 && vdiffs.size() == 3 && 
+                 hasX == false) 
         { // Quadratic homogenous equation 
 
           String coeff = "" + alldcoefs.get(0); 
@@ -7565,10 +7995,11 @@ public abstract class ASTTerm
     if (defn instanceof ASTCompositeTerm)
     { ASTCompositeTerm trm = (ASTCompositeTerm) defn; 
       if ("formula".equals(trm.getTag()) && 
-          "Define".equals(trm.getTerm(1) + "") && 
-          trm.getTerms().size() > 3)
-      { String var = trm.getTerm(2) + ""; 
-        ASTTerm expr = trm.getTerm(4); 
+          trm.getTerms().size() > 3 &&        
+          "Define".equals(trm.getTerm(0) + "") && 
+          "=".equals(trm.getTerm(2) + ""))
+      { String var = trm.getTerm(1) + ""; 
+        ASTTerm expr = trm.getTerm(3); 
         Vector invars = ASTTerm.mathOCLidentifiers(expr); 
 
         res = "  operation " + var + "Definition("; 

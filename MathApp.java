@@ -141,16 +141,19 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       JButton bsum = new JButton("" + mSigma); 
       bsum.addActionListener(this); 
       bsum.setToolTipText(
-        "Sum of expressions: " + mSigma + '\u2092' + '\u207F' + " expr");
+        "Sum of expressions: " + mSigma + '\u2096' + '\u208C' + '\u2092' + '\u207F' + " expr");
       JButton bprd = new JButton("" + mPi); 
       bprd.addActionListener(this); 
       bprd.setToolTipText(
-        "Product of expressions: " + mPi + '\u2092' + '\u207F' + " expr");
+        "Product of expressions: " + mPi + '\u2096' + '\u208C' + '\u2092' + '\u207F' + " expr");
       JButton bsqrt = new JButton("" + mSqrt); 
+      bsqrt.setToolTipText("Square root"); 
       bsqrt.addActionListener(this); 
       JButton binfty = new JButton("" + mInfinity); 
+      binfty.setToolTipText("Positive infinity: Math_PINFINITY"); 
       binfty.addActionListener(this); 
       JButton bintegral = new JButton("" + mIntegral); 
+      bintegral.setToolTipText("Integral, definite & indefinite: " + mIntegral + "expr dx"); 
       bintegral.addActionListener(this); 
       
       JButton bdiff = new JButton("" + mDifferential); 
@@ -175,8 +178,13 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       
       JButton bin = new JButton("" + mIn); 
       bin.addActionListener(this); 
+      bin.setToolTipText(
+        "Set membership: x " + mIn + " s");
+
       JButton bnotin = new JButton("" + mNotIn); 
       bnotin.addActionListener(this); 
+      bnotin.setToolTipText(
+        "Set exclusion: x " + mNotIn + " s");
 
       JButton bempty = new JButton("" + emptySet); 
       bempty.addActionListener(this); 
@@ -1110,8 +1118,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    Simplify expr\n\n" + 
         "5. Prove clauses:\n" + 
         "    Prove expr if expr\n\n" + 
-        "6. Theorem clauses:\n" + 
-        "    Theorem expr when expr\n\n" + 
+        "6. Theorem/rewrite rule clauses:\n" + 
+        "    Theorem expr when expr\n" + 
+        "    Rewrite expr to expr\n\n" + 
         "Instructions can be one of:\n" + 
         "    Factor expr by expr\n" + 
         "    Cancel expr in expr\n" + 
@@ -1120,7 +1129,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    Expand expr to N terms\n\n" + 
         "Distributions are:\n" + 
         "    N(mu,sigma^2), Bernoulli(mu), Binom(n,p),\n" + 
-        "    U(), U(a,b), Poisson(mu)\n"); 
+        "    U(), U(a,b), Poisson(mu), LogNorm(mu,sigma^2)\n"); 
 
         helpPane.repaint(); 
         repaint();  
@@ -1225,9 +1234,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "   Powers and exponents are written with superscripts.\n\n" +
         "   Boolean values are true, false, with operators\n" + 
         "   &, or, =>, not\n" + 
-        "   " + '\u018E' + " x : s " + '\u2219' + " expr is \n" + 
+        "   " + '\u018E' + " x : s " + '\u2219' + " expr expresses \n" + 
         "   s->exists( x | expr )\n" + 
-        "   " + '\u2200' + " x : s " + '\u2219' + " expr is \n" + 
+        "   " + '\u2200' + " x : s " + '\u2219' + " expr expresses \n" + 
         "   s->forAll( x | expr )\n\n"
         ); 
 
