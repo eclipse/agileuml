@@ -1634,27 +1634,27 @@ public class AuxMath
       System.out.println(">> minima = " + mincount);
       
       if (maxcount == 1 && mincount == 0 && diffs[0] > 0 && diffs[endpoint] < 0)
-      { System.out.println("Could be -ve quadratic"); 
-	    return true; 
+      { System.out.println(">>> Could be -ve quadratic"); 
+        return true; 
       } 
       else if (mincount == 1 && maxcount == 0 && diffs[0] < 0 && diffs[endpoint] > 0)
-      { System.out.println("Could be +ve quadratic");
-	    return true; 
+      { System.out.println(">>> Could be +ve quadratic");
+        return true; 
       }
       else if (mincount == 1 && maxcount == 1 & diffs[0] < 0 && diffs[endpoint] < 0)
-      { System.out.println("Could be -ve cubic");
-	    return true; 
+      { System.out.println(">>> Could be -ve cubic");
+        return true; 
       }
       else if (mincount == 1 && maxcount == 1 && diffs[0] > 0 && diffs[endpoint] > 0)
-      { System.out.println("Could be +ve cubic");
-	    return true; 
+      { System.out.println(">>> Could be +ve cubic");
+        return true; 
       }
       else if (mincount == 0 && maxcount == 0)
       { // analyse the slope to see if polynomial or exponential 
-        System.out.println("Increasing/decreasing function with no minima/maxima"); 
+        System.out.println(">>> Increasing/decreasing function with no minima/maxima"); 
       }	
       else if (mincount > 1 && maxcount > 1) 
-      { System.out.println("Multiple maxima and minima, could be trignometric"); } 
+      { System.out.println(">>> Multiple maxima and minima, could be trignometric"); } 
 
 	 return false;  
     }
@@ -3032,30 +3032,49 @@ public class AuxMath
        { return "" + 
            (-bval/(2*aval));
        } 
+
+       if (bval == 0) 
+       { double sdiscrim = (-4)*aval*cval; 
+
+         return "(†(" + sdiscrim + "))/" + (2*aval);
+       } 
+          
        return 
-         "(" + -bval + " + †(" + discrim + "))/" + (2*aval);
+         "(" + -bval + " + (†(" + discrim + ")))/" + (2*aval);
      } 
      else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
      { Double aval = Double.parseDouble("" + a); 
        Double bval = Double.parseDouble("" + b); 
+
+       if (bval == 0) 
+       { return 
+           "(†(" + ((-4)*aval) + "*" + c + "))/" + (2*aval); 
+       } 
+
        return 
-          "(" + (-bval) + " + †(" + (bval*bval) + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
+          "(" + (-bval) + " + (†(" + (bval*bval) + " - " + 4*aval + "*" + c + ")))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(c))
      { Double aval = Double.parseDouble("" + a); 
        Double cval = Double.parseDouble("" + c); 
        return 
-          "(-" + b + " + †(" + b + "*" + b + " - " + (4*aval*cval) + "))/" + 2*aval; 
+          "(-" + b + " + (†(" + b + "*" + b + " - " + (4*aval*cval) + ")))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(b) && AuxMath.isNumeric(c))
      { Double bval = Double.parseDouble("" + b); 
        Double cval = Double.parseDouble("" + c); 
-       return 
-          "(-" + bval + " + †(" + (bval*bval) + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
-     } 
+
+       if (bval == 0) 
+       { return 
+          "(†(" + (-4*cval) + "*" + a + ")))/(2*" + a + ")"; 
+       } 
 
        return 
-         "(-" + b + " + †(" + b + "*" + b + " - 4*" + a + "*" + c + "))/(2*" + a + ")"; 
+          "(-" + bval + " + (†(" + (bval*bval) + " - " + (4*cval) + "*" + a + ")))/(2*" + a + ")"; 
+     } 
+
+     return 
+         "(-" + b + " + (†(" + b + "*" + b + " - 4*" + a + "*" + c + ")))/(2*" + a + ")"; 
    } 
 
    public static String quadraticFormula2(String a, String b, String c)
@@ -3068,35 +3087,56 @@ public class AuxMath
        Double cval = Double.parseDouble("" + c); 
 
        double discrim = bval*bval - 4*aval*cval; 
+
        if (discrim > 0)
        { return "" + 
            ((-bval - 
              Math.sqrt(discrim))/(2*aval));
        } 
+
        if (discrim == 0) 
        { return "" + 
            (-bval/(2*aval));
+       }
+
+       if (bval == 0) 
+       { double sdiscrim = (-4)*aval*cval; 
+
+         return "- (†(" + sdiscrim + "))/" + (2*aval);
        } 
+ 
        return 
-         "(" + -bval + " - †(" + discrim + "))/" + (2*aval);
+         "(" + -bval + " - (†(" + discrim + ")))/" + (2*aval);
      } 
      else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
      { Double aval = Double.parseDouble("" + a); 
        Double bval = Double.parseDouble("" + b); 
+
+       if (bval == 0) 
+       { return 
+           "- (†(" + ((-4)*aval) + "*" + c + "))/" + (2*aval); 
+       } 
+
        return 
-          "(" + (-bval) + " - †(" + (bval*bval) + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
+          "(" + (-bval) + " - (†(" + (bval*bval) + " - " + (4*aval) + "*" + c + ")))/" + (2*aval); 
      } 
      else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(c))
      { Double aval = Double.parseDouble("" + a); 
        Double cval = Double.parseDouble("" + c); 
        return 
-          "(-" + b + " - †(" + b + "*" + b + " - " + (4*aval*cval) + "))/" + 2*aval; 
+          "(-" + b + " - (†(" + b + "*" + b + " - " + (4*aval*cval) + ")))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(b) && AuxMath.isNumeric(c))
      { Double bval = Double.parseDouble("" + b); 
        Double cval = Double.parseDouble("" + c); 
+
+       if (bval == 0) 
+       { return 
+          "- (†(" + (-4*cval) + "*" + a + ")))/(2*" + a + ")"; 
+       } 
+
        return 
-          "(-" + bval + " - †(" + (bval*bval) + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
+          "(-" + bval + " - (†(" + (bval*bval) + " - " + (4*cval) + "*" + a + ")))/(2*" + a + ")"; 
      } 
 
        return 

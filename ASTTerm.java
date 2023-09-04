@@ -592,6 +592,13 @@ public abstract class ASTTerm
       return ASTTerm.symbolicMultiplication(e1,e2); 
     } 
 
+    if ("symbolicNegateMultiplication".equals(opname) && 
+        eargs.size() == 2)
+    { ASTTerm e1 = (ASTTerm) eargs.get(0); 
+      ASTTerm e2 = (ASTTerm) eargs.get(1); 
+      return ASTTerm.symbolicNegateMultiplication(e1,e2); 
+    } 
+
     if ("symbolicLess".equals(opname) && 
         eargs.size() == 2)
     { ASTTerm e1 = (ASTTerm) eargs.get(0); 
@@ -5370,6 +5377,9 @@ public abstract class ASTTerm
     else if (e1.getTag().equals("additiveExpression") && 
         "-".equals(e1.getTerm(1) + ""))
     { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+    else if (e1.getTag().equals("factorExpression") && 
+             "-".equals(e1.getTerm(0) + ""))
+    { a = symbolicNegative(e1.getTerm(1)); } 
 
     // a*c/a is c: 
 
@@ -5388,6 +5398,9 @@ public abstract class ASTTerm
     else if (e2.getTag().equals("additiveExpression") && 
         "-".equals(e2.getTerm(1) + ""))
     { b = symbolicSubtraction(e2.getTerm(0), e2.getTerm(2)); } 
+    else if (e2.getTag().equals("factorExpression") && 
+             "-".equals(e2.getTerm(0) + ""))
+    { b = symbolicNegative(e2.getTerm(1)); } 
 
     if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
     { Double aval = Double.parseDouble("" + a); 
@@ -5400,6 +5413,55 @@ public abstract class ASTTerm
     return "(" + a + ")*(" + b + ")"; 
   }  
 
+  public static String symbolicNegateMultiplication(
+                              ASTTerm e1, 
+                              ASTTerm e2)
+  { String a = e1.literalForm(); 
+    String b = e2.literalForm();
+
+    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+    { Double aval = Double.parseDouble("" + a); 
+      Double bval = Double.parseDouble("" + b); 
+      return "" + (-aval*bval); 
+    }
+
+    if ("0".equals(a) || "0".equals(b)) 
+    { return "0"; } 
+
+    if ("1".equals(a)) 
+    { return "-" + b; } 
+
+    if ("1".equals(b)) 
+    { return "-" + a; } 
+    
+    return "-" + a + "*" + b; 
+  }  
+     
+  
+  public static String symbolicNegative(ASTTerm e1) 
+  { // for -x 
+    String a = e1.literalForm(); 
+
+    if (e1.getTag().equals("additiveExpression") && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (e1.getTag().equals("additiveExpression") && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+    else if (e1.getTag().equals("factorExpression") && 
+             "*".equals(e1.getTerm(1) + ""))
+    { a = symbolicMultiplication(
+                    e1.getTerm(0), e1.getTerm(2)); 
+    }
+
+    if (AuxMath.isNumeric(a))
+    { Double aval = Double.parseDouble("" + a); 
+      return "" + (-aval); 
+    }
+    
+    return "(-" + a + ")"; 
+  }  
+    
   public static String symbolicDivision(ASTTerm e1, ASTTerm e2)
   { String a = e1.literalForm(); 
     String b = e2.literalForm(); 
