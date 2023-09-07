@@ -293,7 +293,7 @@ _1 / _2 |-->_1`firstArgument<when> _1`isMultiplication true, _1`secondArgument _
 _1 / _2 |-->_1`secondArgument<when> _1`isMultiplication true, _1`firstArgument _2
 _1 / _2 |-->1.0/_2`firstArgument<when> _2`isMultiplication true, _2`secondArgument _1
 _1 / _2 |-->1.0/_2`secondArgument<when> _2`isMultiplication true, _2`firstArgument _1
-_1 / _2 |-->_1/_2
+_1 / _2 |-->_0`symbolicDivision
 
 - 0 |-->0
 - 0.0 |-->0
@@ -730,13 +730,13 @@ _1 * -1 |-->_1
 -1 * _1 |-->_1
 _1 * 1 |-->_1`negate
 1 * _1 |-->_1`negate
-_1 * _2 |-->(_1`negate)*_2
+_1 * _2 |-->_0`symbolicNegateMultiplication
 
 _1 / 1 |-->_1`negate
 _1 / -1 |-->_1
 -1 / _2 |-->1/_2
 1 / _2 |-->1/(_2`negate)
-_1 / _2 |-->(_1`negate)/_2
+_1 / _2 |-->-(_1/_2)
 
 _1 ^{ _2 } |-->-(_1^{_2})
 
@@ -916,6 +916,7 @@ e ^{ x } |-->e^{x}
 
 _1 ^{ _2 } |-->‡ _1^{_2} dx
 
+
 ( _1 ) |-->(_1`integrate)
 
 exp ( x ) |-->e^{x}
@@ -934,6 +935,16 @@ sech ( x ) |-->2*atan(e^{x})
 cosech ( x ) |-->-2*acoth(e^{x})
 
 log ( x ) |-->x*log(x) - x
+
+asin ( x ) |-->x*asin(x) + †(1 - x*x)
+atan ( x ) |-->x*atan(x) - 0.5*log(1 + x*x)
+acos ( x ) |-->x*acos(x) - †(1 - x*x)
+acot ( x ) |-->x*acot(x) + 0.5*log(1 + x*x)
+
+asinh ( x ) |-->x*asinh(x) - †(x*x + 1)
+acosh ( x ) |-->x*acosh(x) - †(x*x - 1)
+atanh ( x ) |-->x*atanh(x) + 0.5*log(1 - x*x)
+acoth ( x ) |-->x*acoth(x) + 0.5*log(x*x - 1)
 
 _1 ( _2 ) |-->‡ _1(_2) dx
 
@@ -960,6 +971,16 @@ _1 - _2 |-->_1`integrate - _2`integrate
 _1 = _2 |-->Real.Sum(_1 = _2)
 _1 /= _2 |-->Real.Sum(_1 /= _2)
 
+0 * _1 |-->0
+_1 * 0 |-->0
+_1 * _2 |-->0<when> _1 matches \(0\)
+_1 * _2 |-->0<when> _2 matches \(0\)
+
+1 * _1 |-->_1`integrate
+_1 * 1 |-->_1`integrate
+_1 * _2 |-->_2`integrate<when> _1 matches \(1\)
+_1 * _2 |-->_1`integrate<when> _2 matches \(1\)
+
 x * x |-->x^{3}/3
 
 _1 * x |-->_1*(x^{2}/2)<when> _1 real
@@ -967,15 +988,15 @@ _1 * x |-->_1*(x^{2}/2)<when> _1 integer
 
 _1 * _2 |-->_1*(_2`integrate)<when> _1 real
 _1 * _2 |-->_1*(_2`integrate)<when> _1 integer
-_1 * _2 |-->‡ (_1*_2) dx
+_1 * _2 |-->_1*(_2`integrate) - ‡ (_1`differentiate)*(_2`integrate) dx
 
 1 / x |-->log(x)
 
 _1 / x |-->_1*log(x)<when> _1 real
 
 _1 / _2 |-->(_1`integrate)/_2<when> _2 real
-_1 / _2 |-->(_1`integrate)/_2<when> _2 integer
-_1 / _2 |-->‡ (_1/_2) dx
+
+_1 / _2 |-->‡ _1/_2 dx
 
 _1 |-->_1*x<when> _1 real
 _1 |-->_1*x<when> _1 integer
@@ -1107,7 +1128,7 @@ differentiate::
 sin ( x ) |-->cos(x)
 sin ( _1 ) |-->(_1`differentiate) * cos(_1)
 cos ( x ) |-->-1*sin(x)
-cos ( _1 ) |-->(_1`differentiate)*-1*sin(_1)
+cos ( _1 ) |-->-1*(_1`differentiate)*sin(_1)
 tan ( x ) |-->sec(sec(x))
 tan ( _1 ) |-->(_1`differentiate)*sec(sec(_1))
 
@@ -1176,8 +1197,8 @@ _1 ´ |-->_1`diff2
 Ð _{ x } _1 |-->_1`diff2
 Ð _{ _1 } _2 |-->(_2`partialDiff)´<action> _95 _1
 
-† x |-->0.5/†x
-† _1 |-->(0.5/†_1)*(_1`differentiate)
+† x |-->0.5/(†x)
+† _1 |-->(0.5/(†_1))*(_1`differentiate)
  
 - _1 |-->-(_1`differentiate)
 + _1 |-->_1`differentiate
@@ -1377,14 +1398,17 @@ _1 |-->_1
 squareRoot::
 0 |-->0
 1 |-->1
+4 |-->2
 0.0 |-->0
 1.0 |-->1
+4.0 |-->2
 … |-->…
 
 _1 * _1 |-->_1
-_1 * _2 |-->(_1`squareRoot)*(_2`squareRoot)
+_1 * _2 |-->†(_1 * _2)
 
-_1 / _2 |-->(_1`squareRoot)/(_2`squareRoot)
+_1 / _1 |-->1
+_1 / _2 |-->†(_1 / _2)
 
 exp ( _1 ) |-->exp(_1/2)
  
@@ -1395,7 +1419,7 @@ _1 ( _2 ) |-->†(_1(_2))
 _1 ´ |-->†(_1´)
 Ð _{ _1 } _2 |-->†(Ð_{_1} _2)
 
-- _1 |-->-(_1`squareRoot)
+- _1 |-->†(-_1)
 + _1 |-->_1`squareRoot
 _1 + _2 |-->†(_1 + _2)
 _1 - _2 |-->†(_1 - _2)
