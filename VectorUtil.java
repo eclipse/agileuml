@@ -775,6 +775,21 @@ class VectorUtil
     return res; 
   } 
 
+  public static Vector vectorDivide(Vector v1, double z)
+  { Vector res = new Vector(); 
+    if (v1.size() == 0) 
+    { return res; } 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double d = Double.parseDouble("" + x); 
+        res.add(d/z);  
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
   public static Vector vectorMax(Vector v1, Vector v2)
   { // max(Set{x, y}) for x in v1, y in v2
 

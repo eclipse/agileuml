@@ -592,6 +592,13 @@ public abstract class ASTTerm
       return ASTTerm.symbolicMultiplication(e1,e2); 
     } 
 
+    if ("symbolicDivision".equals(opname) && 
+        eargs.size() == 2)
+    { ASTTerm e1 = (ASTTerm) eargs.get(0); 
+      ASTTerm e2 = (ASTTerm) eargs.get(1); 
+      return ASTTerm.symbolicDivision(e1,e2); 
+    } 
+
     if ("symbolicNegateMultiplication".equals(opname) && 
         eargs.size() == 2)
     { ASTTerm e1 = (ASTTerm) eargs.get(0); 
@@ -4133,6 +4140,20 @@ public abstract class ASTTerm
     // if (!isIn)
     // { return "0"; } 
 
+    if (expr instanceof ASTCompositeTerm)
+    { ASTCompositeTerm ct = (ASTCompositeTerm) expr;
+      if ("factorExpression".equals(ct.getTag()) && 
+          "†".equals(ct.getTerm(0) + ""))
+      { String sq = coefficientOfSquare(var, ct.getTerm(1));
+        if ("1.0".equals(sq) || "1".equals(sq))
+        { return "1"; }
+        if ("0.0".equals(sq) || "0".equals(sq))
+        { return "0"; }
+        else 
+        { return "†(" + sq + ")"; } 
+      }  
+    } 
+
     Vector powers = ASTTerm.powersOf(var,expr);
     if (VectorUtil.containsEqualString("1", powers) ||
         VectorUtil.containsEqualString("1.0", powers))
@@ -4386,6 +4407,12 @@ public abstract class ASTTerm
       { return ASTTerm.powersOf(var, 
                                 (ASTTerm) subterms.get(0)); 
       } 
+
+      if ("factorExpression".equals(ct.getTag()) && 
+          "†".equals(ct.getTerm(0) + ""))
+      { Vector sqrtpowers = powersOf(var, ct.getTerm(1));
+        return VectorUtil.vectorDivide(sqrtpowers,2);  
+      }  
 
       if ("basicExpression".equals(ct.tag))
       { if (subterms.size() == 3 && 
@@ -5317,9 +5344,15 @@ public abstract class ASTTerm
     { Double aval = Double.parseDouble("" + a); 
       Double bval = Double.parseDouble("" + b); 
       return "" + (aval+bval); 
-    }
+    } // also case of (n) for number n
 
-    // Group by powers of x? 
+    // Group by powers of x?
+
+    if (a.equals("0") || a.equals("0.0"))
+    { return b; } 
+
+    if (b.equals("0") || b.equals("0.0"))
+    { return a; }  
     
     return a + " + (" + b + ")"; 
   }  
@@ -5353,6 +5386,12 @@ public abstract class ASTTerm
       Double bval = Double.parseDouble("" + b); 
       return "" + (aval-bval); 
     }
+
+    if (a.equals("0") || a.equals("0.0"))
+    { return "-(" + b + ")"; } 
+
+    if (b.equals("0") || b.equals("0.0"))
+    { return a; }  
     
     return a + " - (" + b + ")"; 
   }  
@@ -5402,14 +5441,33 @@ public abstract class ASTTerm
              "-".equals(e2.getTerm(0) + ""))
     { b = symbolicNegative(e2.getTerm(1)); } 
 
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && 
+        AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue(a); 
+      double bval = AuxMath.generalNumericValue(b); 
       return "" + (aval*bval); 
     }
 
-    // Group by powers of x? 
-    
+    // Group by powers of x?
+
+    if (AuxMath.isGeneralNumeric(a))
+    { a = "" + AuxMath.generalNumericValue(a); } 
+
+    if (AuxMath.isGeneralNumeric(b))
+    { b = "" + AuxMath.generalNumericValue(b); } 
+
+    if (a.equals("0") || a.equals("0.0") || 
+        b.equals("0") || b.equals("0.0"))
+    { return "0"; } 
+
+    if (b.equals("1") || b.equals("1.0") ||
+        b.equals("(1)") || b.equals("(1.0)"))
+    { return a; }  
+
+    if (a.equals("1") || a.equals("1.0") ||
+        a.equals("(1)") || a.equals("(1.0)"))
+    { return b; }  
+ 
     return "(" + a + ")*(" + b + ")"; 
   }  
 
@@ -5419,19 +5477,27 @@ public abstract class ASTTerm
   { String a = e1.literalForm(); 
     String b = e2.literalForm();
 
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && 
+        AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue(a); 
+      double bval = AuxMath.generalNumericValue(b); 
       return "" + (-aval*bval); 
     }
 
-    if ("0".equals(a) || "0".equals(b)) 
+    if (AuxMath.isGeneralNumeric(a))
+    { a = "" + AuxMath.generalNumericValue(a); } 
+
+    if (AuxMath.isGeneralNumeric(b))
+    { b = "" + AuxMath.generalNumericValue(b); } 
+
+    if ("0".equals(a) || a.equals("0.0") || 
+        "0".equals(b) || b.equals("0.0")) 
     { return "0"; } 
 
-    if ("1".equals(a)) 
+    if ("1".equals(a) || a.equals("1.0")) 
     { return "-" + b; } 
 
-    if ("1".equals(b)) 
+    if ("1".equals(b) || b.equals("1.0")) 
     { return "-" + a; } 
     
     return "-" + a + "*" + b; 
@@ -5454,10 +5520,13 @@ public abstract class ASTTerm
                     e1.getTerm(0), e1.getTerm(2)); 
     }
 
-    if (AuxMath.isNumeric(a))
-    { Double aval = Double.parseDouble("" + a); 
+    if (AuxMath.isGeneralNumeric(a))
+    { double aval = AuxMath.generalNumericValue(a); 
       return "" + (-aval); 
     }
+
+    if (a.equals("0") || a.equals("0.0"))
+    { return "0"; } 
     
     return "(-" + a + ")"; 
   }  
@@ -5472,20 +5541,52 @@ public abstract class ASTTerm
     else if (e1.getTag().equals("additiveExpression") && 
         "-".equals(e1.getTerm(1) + ""))
     { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+    else if (e1.getTag().equals("factorExpression") && 
+             "*".equals(e1.getTerm(1) + ""))
+    { a = symbolicMultiplication(
+                    e1.getTerm(0), e1.getTerm(2)); 
+    }
 
     if (e2.getTag().equals("additiveExpression") && 
         "+".equals(e2.getTerm(1) + ""))
     { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
+    else if (e2.getTag().equals("additiveExpression") && 
+        "-".equals(e2.getTerm(1) + ""))
+    { b = symbolicSubtraction(e2.getTerm(0), e2.getTerm(2)); }
+    else if (e2.getTag().equals("factorExpression") && 
+             "*".equals(e2.getTerm(1) + ""))
+    { b = symbolicMultiplication(
+                    e2.getTerm(0), e2.getTerm(2)); 
+    }
 
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && 
+        AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue(a); 
+      double bval = AuxMath.generalNumericValue(b); 
       if (bval != 0)
       { return "" + (aval/bval); } 
       return aval + "/0"; 
     }
 
     // Group by powers of x? 
+
+    if (AuxMath.isGeneralNumeric(a))
+    { a = "" + AuxMath.generalNumericValue(a); }  
+
+    if (AuxMath.isGeneralNumeric(b))
+    { b = "" + AuxMath.generalNumericValue(b); }  
+
+    if (a.equals("0") || a.equals("0.0"))
+    { return "0"; } 
+
+    if (b.equals("1") || b.equals("1.0"))
+    { return a; }  
+
+    if (b.equals("-1") || b.equals("-1.0"))
+    { return "-(" + a + ")"; }  
+
+    if (a.equals("1") || a.equals("1.0"))
+    { return "1/(" + b + ")"; }  
     
     return "(" + a + ")/(" + b + ")"; 
   }  
@@ -7654,16 +7755,19 @@ public abstract class ASTTerm
       }
       else if (maxdp > 0)
       { // Differential eqn with several diff terms
-        Vector alldcoefs = new Vector(); 
+
+        Vector alldcoefs = new Vector();
+        Vector alldpowers = new Vector();  
         Vector vdiffs =
-          ASTTerm.constructNDifferentials((int) maxdp, var0,
-                                      expr0, alldcoefs); 
+          ASTTerm.constructNDifferentialsPowers(
+                              (int) maxdp, var0,
+                              expr0, alldcoefs, alldpowers); 
           
 
         ASTTerm vdiff =
           ASTTerm.constructNDifferential((int) maxdp, var0); 
  
-        Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+        Vector vdiffpowers = ASTTerm.powersOf(vdiff,expr0);
         String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
 
         Vector ddvars = new Vector(); 
@@ -7673,27 +7777,73 @@ public abstract class ASTTerm
 
         JOptionPane.showMessageDialog(null, 
            ">>> General differential equation " + 
-           "Differentials: " + vdiffs + " Coefficients: " + alldcoefs + " Has x: " + hasX + " Constant: " + dcnst, 
+           "Differentials: " + vdiffs + " All coefficients: " + alldcoefs + " All powers: " + alldpowers + 
+           " Max diff: " + vdiff + " Coef: " + dcoef + 
+           " Powers: " + vdiffpowers + " Has x: " + hasX + " Constant: " + dcnst, 
            "", 
            JOptionPane.INFORMATION_MESSAGE);
 
+        double maxvdiffp = 
+           VectorUtil.vectorMaximum(vdiffpowers); 
+
+
         if (maxdp == 1 && vdiffs.size() == 2 && 
-            hasX == false) 
-        { // Linear homogenous equation 
+            hasX == false && maxvdiffp <= 1) 
+        { // 1st order linear homogenous equation 
 
           String coeff = "" + alldcoefs.get(0); 
           String coefd1 = "" + alldcoefs.get(1); 
+
+          ASTTerm be1 = 
+            new ASTBasicTerm("basicExpression", coeff); 
+          ASTTerm be2 = 
+            new ASTBasicTerm("basicExpression", coefd1); 
+
           
           // Solution is 
-          String frac = "-(" + coeff + ")/(" + coefd1 + ")"; 
+          // String frac = "-(" + coeff + ")/(" + coefd1 + ")"; 
+
+          String frac = 
+             "-(" + ASTTerm.symbolicDivision(be1,be2) + ")"; 
 
           return 
             "  Define A\n" + 
-            "  Define " + vx0 + " = A*e^{" + frac + "*x}\n"; 
+            "  Define " + vx0 + " = A*e^{(" + frac + ")*x}\n"; 
+        } 
+        else if (maxdp == 1 && vdiffs.size() == 2 && 
+            hasX == false && maxvdiffp == 2) 
+        { // 1st order quadratic homogenous equation 
+
+          String dd2coef2 = 
+            ASTTerm.coefficientOfSquare(vdiff,expr0); 
+
+          String dd2coef1 = 
+            ASTTerm.coefficientOf(vdiff,expr0); 
+
+          Vector dd2vars = new Vector(); 
+          dd2vars.add(vdiff); 
+          String dd2cnst = ASTTerm.constantTerms(dd2vars,expr0);
+
+          JOptionPane.showMessageDialog(null, 
+           ">>> Coeffiecient of square of : " + vdiff + " in " + expr0 +  
+           " = " + dd2coef2 + " Of " + vdiff + " = " + dd2coef1 + 
+           " Constant: " + dd2cnst, 
+           "", 
+           JOptionPane.INFORMATION_MESSAGE); 
+
+          String quadf1 = 
+              AuxMath.quadraticFormula1(dd2coef2, dd2coef1, 
+                                        dd2cnst); 
+          String quadf2 = 
+              AuxMath.quadraticFormula2(dd2coef2, dd2coef1, 
+                                        dd2cnst);
+ 
+          return "  Solve " + vx0 + "´ - " + quadf1 + " = 0 for " + vx0 + "\n" + 
+               "  Solve " + vx0 + "´ - " + quadf2 + " = 0 for " + vx0 + "\n\n"; 
         } 
         else if (maxdp == 2 && vdiffs.size() == 3 && 
-                 hasX == false) 
-        { // Quadratic homogenous equation 
+                 hasX == false && maxvdiffp <= 1) 
+        { // 2nd order linear homogenous equation 
 
           String coeff = "" + alldcoefs.get(0); 
           String coefd1 = "" + alldcoefs.get(1); 
@@ -7714,7 +7864,7 @@ public abstract class ASTTerm
           } 
           return 
             "  Define A\n" + 
-            "  Define " + vx0 + " = A*e^{" + quadf1 + "*x} + B*e^{" + quadf2 + "*x}"; 
+            "  Define " + vx0 + " = A*e^{(" + quadf1 + ")*x} + B*e^{(" + quadf2 + ")*x}"; 
         } 
 
         return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
@@ -8034,6 +8184,39 @@ public abstract class ASTTerm
       res.add(vdiff); 
       coefs.add(dcoef); 
     } 
+    return res; 
+  } 
+
+  public static Vector constructNDifferentialsPowers(
+            int n, ASTTerm v, ASTTerm expr0, 
+            Vector coefs, Vector powers)
+  { // for i = 1 upto n, find if i-th diff of v
+    // occurs in expr0 and what its coefficient and powers are
+    
+    Vector res = new Vector(); 
+
+    String vcoef = ASTTerm.coefficientOf(v,expr0);
+    res.add(v); 
+    coefs.add(vcoef); 
+
+    Vector pwrs = ASTTerm.powersOf(v,expr0); 
+    powers.add(pwrs); 
+
+    for (int i = 1; i <= n; i++) 
+    {  
+      ASTTerm vdiff =
+          ASTTerm.constructNDifferential(i, v); 
+ 
+      // Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+      String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
+
+      res.add(vdiff); 
+      coefs.add(dcoef);
+
+      Vector dpwrs = ASTTerm.powersOf(vdiff, expr0); 
+      powers.add(dpwrs);  
+    } 
+
     return res; 
   } 
 

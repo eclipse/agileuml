@@ -2779,6 +2779,34 @@ public class AuxMath
      return true; 
    } 
 
+   public static boolean isGeneralNumeric(String val)
+   { if (val.startsWith("(") && 
+         val.endsWith(")"))
+     { String vtrim = val.substring(1,val.length()-1); 
+       return AuxMath.isGeneralNumeric(vtrim); 
+     } 
+
+     try
+     { Double dd = Double.parseDouble(val); } 
+     catch (Exception e) { return false; } 
+     return true; 
+   } 
+
+   public static double generalNumericValue(String val)
+   { if (val.startsWith("(") && 
+         val.endsWith(")"))
+     { String vtrim = val.substring(1,val.length()-1); 
+       return AuxMath.generalNumericValue(vtrim); 
+     } 
+
+     try
+     { Double dd = Double.parseDouble(val); 
+       return dd; 
+     } 
+     catch (Exception e) 
+     { return Double.NaN; } 
+   } 
+
    public static boolean isNumericMatrix(Vector matrix)
    { // all values are numbers
 
@@ -3401,6 +3429,12 @@ public class AuxMath
 
       String r = AuxMath.quadraticFormula1("3", "2", "-1.0"); 
       System.out.println(r); 
+
+      System.out.println(isGeneralNumeric("(55)")); 
+      System.out.println(isGeneralNumeric("((55))")); 
+      System.out.println(isGeneralNumeric("(55))")); 
+
+      System.out.println(generalNumericValue("((55))")); 
    }
  }
    
