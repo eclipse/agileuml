@@ -821,6 +821,19 @@ public abstract class ASTTerm
 
   public abstract boolean isIdentifier(); 
 
+  public static boolean isMathOCLIdentifier(String str)
+  { int n = str.length(); 
+    if (n > 0 && Character.isJavaIdentifierStart(str.charAt(0))) 
+    { for (int i = 1; i < n; i++)
+      { if (Character.isJavaIdentifierPart(str.charAt(i))) { } 
+        else 
+        { return false; } 
+      } 
+      return true; 
+    } 
+    return false; 
+  } // also g{p} etc. 
+ 
   public abstract String preSideEffect(); 
 
   public abstract String postSideEffect(); 
@@ -5205,6 +5218,66 @@ public abstract class ASTTerm
     return expr.literalForm(); 
   }  
 
+  public static String symbolicEvaluation(ASTTerm e1)
+  { String a = e1.literalForm(); 
+
+    if (e1 instanceof ASTSymbolTerm) 
+    { return a; } 
+
+    if (e1 instanceof ASTBasicTerm) 
+    { return a; } 
+
+    String tg = e1.getTag(); 
+    int n = e1.arity(); 
+
+    if (n == 1) 
+    { ASTTerm trm = e1.getTerm(0); 
+      return ASTTerm.symbolicEvaluation(trm); 
+    } 
+
+    if (tg.equals("additiveExpression") && 
+        n > 2 && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (tg.equals("additiveExpression") && 
+        n > 2 && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+    else if (tg.equals("factorExpression") && 
+             "*".equals(e1.getTerm(1) + ""))
+    { a = symbolicMultiplication(e1.getTerm(0), e1.getTerm(2)); }
+    else if (tg.equals("factorExpression") && 
+             "/".equals(e1.getTerm(1) + ""))
+    { a = symbolicDivision(e1.getTerm(0), e1.getTerm(2)); }
+    else if (tg.equals("factorExpression") && 
+             "-".equals(e1.getTerm(0) + ""))
+    { a = symbolicNegative(e1.getTerm(1)); } 
+    else if (tg.equals("basicExpression") && 
+             "(".equals(e1.getTerm(0) + "") && 
+             ")".equals(e1.getTerm(2) + ""))
+    { String apart = ASTTerm.symbolicEvaluation(e1.getTerm(1)); 
+      if (AuxMath.isGeneralNumeric(apart))
+      { return "" + AuxMath.generalNumericValue(apart); } 
+      if (ASTTerm.isMathOCLIdentifier(apart))
+      { return apart; }
+      a = "(" + apart + ")"; 
+    } 
+
+    if (AuxMath.isGeneralNumeric(a))
+    { a = "" + AuxMath.generalNumericValue(a);
+      return a; 
+    }
+
+    if ("(".equals(a.charAt(0) + "") && 
+        ")".equals(a.charAt(a.length()-1) + ""))
+    { String apart = a.substring(1,a.length()-1); 
+      if (ASTTerm.isMathOCLIdentifier(apart))
+      { return apart; } 
+    } 
+
+    return a; 
+  } 
+
   public static String symbolicLess(ASTTerm e1, ASTTerm e2)
   { String a = e1.literalForm(); 
     String b = e2.literalForm(); 
@@ -5228,15 +5301,15 @@ public abstract class ASTTerm
       String b1 = t1.literalForm(); 
       String b2 = t2.literalForm(); 
   
-      if (a.equals(b1) && AuxMath.isNumeric(b2))
-      { Double r2 = Double.parseDouble("" + b2); 
+      if (a.equals(b1) && AuxMath.isGeneralNumeric(b2))
+      { double r2 = AuxMath.generalNumericValue("" + b2); 
         if (r2 > 0)
         { return "true"; } 
         return "false"; 
       } 
 
-      if (a.equals(b2) && AuxMath.isNumeric(b1))
-      { Double r1 = Double.parseDouble("" + b1); 
+      if (a.equals(b2) && AuxMath.isGeneralNumeric(b1))
+      { double r1 = AuxMath.generalNumericValue("" + b1); 
         if (r1 > 0)
         { return "true"; } 
         return "false"; 
@@ -5251,9 +5324,9 @@ public abstract class ASTTerm
         "*".equals(e2.getTerm(1) + ""))
     { b = symbolicMultiplication(e2.getTerm(0), e2.getTerm(2)); } 
 
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue("" + a); 
+      double bval = AuxMath.generalNumericValue("" + b); 
       if (aval < bval) 
       { return "true"; } 
       return "false"; 
@@ -5285,15 +5358,15 @@ public abstract class ASTTerm
       String b1 = t1.literalForm(); 
       String b2 = t2.literalForm(); 
   
-      if (a.equals(b1) && AuxMath.isNumeric(b2))
-      { Double r2 = Double.parseDouble("" + b2); 
+      if (a.equals(b1) && AuxMath.isGeneralNumeric(b2))
+      { double r2 = AuxMath.generalNumericValue("" + b2); 
         if (r2 >= 0)
         { return "true"; } 
         return "false"; 
       } 
 
-      if (a.equals(b2) && AuxMath.isNumeric(b1))
-      { Double r1 = Double.parseDouble("" + b1); 
+      if (a.equals(b2) && AuxMath.isGeneralNumeric(b1))
+      { double r1 = AuxMath.generalNumericValue("" + b1); 
         if (r1 >= 0)
         { return "true"; } 
         return "false"; 
@@ -5308,9 +5381,9 @@ public abstract class ASTTerm
         "*".equals(e2.getTerm(1) + ""))
     { b = symbolicMultiplication(e2.getTerm(0), e2.getTerm(2)); } 
 
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue("" + a); 
+      double bval = AuxMath.generalNumericValue("" + b); 
       if (aval <= bval) 
       { return "true"; } 
       return "false"; 
@@ -5320,31 +5393,21 @@ public abstract class ASTTerm
   }  
 
   public static String symbolicAddition(ASTTerm e1, ASTTerm e2)
-  { String a = e1.literalForm(); 
-    String b = e2.literalForm(); 
+  { String a = ASTTerm.symbolicEvaluation(e1); 
+    String b = ASTTerm.symbolicEvaluation(e2); 
 
-    if (e1.getTag().equals("additiveExpression") && 
-        "+".equals(e1.getTerm(1) + ""))
-    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
-    else if (e1.getTag().equals("additiveExpression") && 
-        "-".equals(e1.getTerm(1) + ""))
-    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
-    else if (e1.getTag().equals("factorExpression") && 
-             "*".equals(e1.getTerm(1) + ""))
-    { a = symbolicMultiplication(e1.getTerm(0), e1.getTerm(2)); }
-
-    if (e2.getTag().equals("additiveExpression") && 
-        "+".equals(e2.getTerm(1) + ""))
-    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
-    else if (e2.getTag().equals("factorExpression") && 
-        "*".equals(e2.getTerm(1) + ""))
-    { b = symbolicMultiplication(e2.getTerm(0), e2.getTerm(2)); } 
-
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && 
+        AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue(a); 
+      double bval = AuxMath.generalNumericValue(b); 
       return "" + (aval+bval); 
-    } // also case of (n) for number n
+    }
+
+    if (AuxMath.isGeneralNumeric(a))
+    { a = "" + AuxMath.generalNumericValue(a); }
+
+    if (AuxMath.isGeneralNumeric(b))
+    { b = "" + AuxMath.generalNumericValue(b); }
 
     // Group by powers of x?
 
@@ -5354,37 +5417,26 @@ public abstract class ASTTerm
     if (b.equals("0") || b.equals("0.0"))
     { return a; }  
     
-    return a + " + (" + b + ")"; 
+    return a + " + " + b; 
   }  
      
   public static String symbolicSubtraction(ASTTerm e1, ASTTerm e2)
-  { String a = e1.literalForm(); 
-    String b = e2.literalForm(); 
+  { String a = ASTTerm.symbolicEvaluation(e1); 
+    String b = ASTTerm.symbolicEvaluation(e2); 
 
-    if (e1.getTag().equals("additiveExpression") && 
-        "+".equals(e1.getTerm(1) + ""))
-    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
-    else if (e1.getTag().equals("additiveExpression") && 
-        "-".equals(e1.getTerm(1) + ""))
-    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
-    else if (e1.getTag().equals("factorExpression") && 
-             "*".equals(e1.getTerm(1) + ""))
-    { a = symbolicMultiplication(e1.getTerm(0), e1.getTerm(2)); }
-
-    if (e2.getTag().equals("additiveExpression") && 
-        "+".equals(e2.getTerm(1) + ""))
-    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
-    else if (e2.getTag().equals("additiveExpression") && 
-        "-".equals(e2.getTerm(1) + ""))
-    { b = symbolicSubtraction(e2.getTerm(0), e2.getTerm(2)); }
-    else if (e2.getTag().equals("factorExpression") && 
-             "*".equals(e2.getTerm(1) + ""))
-    { b = symbolicMultiplication(e2.getTerm(0), e2.getTerm(2)); }
-
-    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
-    { Double aval = Double.parseDouble("" + a); 
-      Double bval = Double.parseDouble("" + b); 
+    if (AuxMath.isGeneralNumeric(a) && 
+        AuxMath.isGeneralNumeric(b))
+    { double aval = AuxMath.generalNumericValue(a); 
+      double bval = AuxMath.generalNumericValue(b); 
       return "" + (aval-bval); 
+    }
+
+    if (AuxMath.isGeneralNumeric(a))
+    { a = "" + AuxMath.generalNumericValue(a); }
+
+    if (AuxMath.isGeneralNumeric(b))
+    { b = "" + AuxMath.generalNumericValue(b);
+      return a + " - " + b; 
     }
 
     if (a.equals("0") || a.equals("0.0"))
@@ -5397,8 +5449,8 @@ public abstract class ASTTerm
   }  
      
   public static String symbolicMultiplication(ASTTerm e1, ASTTerm e2)
-  { String a = e1.literalForm(); 
-    String b = e2.literalForm(); 
+  { String a = ASTTerm.symbolicEvaluation(e1); 
+    String b = ASTTerm.symbolicEvaluation(e2); 
 
     // a/c * c is a: 
     if (ASTTerm.isMathOCLDivision(e1))
@@ -5410,15 +5462,6 @@ public abstract class ASTTerm
 
       a = ASTTerm.symbolicDivision(numer,denom);  
     } 
-    else if (e1.getTag().equals("additiveExpression") && 
-        "+".equals(e1.getTerm(1) + ""))
-    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
-    else if (e1.getTag().equals("additiveExpression") && 
-        "-".equals(e1.getTerm(1) + ""))
-    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
-    else if (e1.getTag().equals("factorExpression") && 
-             "-".equals(e1.getTerm(0) + ""))
-    { a = symbolicNegative(e1.getTerm(1)); } 
 
     // a*c/a is c: 
 
@@ -5431,15 +5474,6 @@ public abstract class ASTTerm
 
       b = ASTTerm.symbolicDivision(numer,denom);  
     } 
-    else if (e2.getTag().equals("additiveExpression") && 
-        "+".equals(e2.getTerm(1) + ""))
-    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
-    else if (e2.getTag().equals("additiveExpression") && 
-        "-".equals(e2.getTerm(1) + ""))
-    { b = symbolicSubtraction(e2.getTerm(0), e2.getTerm(2)); } 
-    else if (e2.getTag().equals("factorExpression") && 
-             "-".equals(e2.getTerm(0) + ""))
-    { b = symbolicNegative(e2.getTerm(1)); } 
 
     if (AuxMath.isGeneralNumeric(a) && 
         AuxMath.isGeneralNumeric(b))
@@ -5467,8 +5501,24 @@ public abstract class ASTTerm
     if (a.equals("1") || a.equals("1.0") ||
         a.equals("(1)") || a.equals("(1.0)"))
     { return b; }  
+
+    String abrack = a; 
+    String bbrack = b; 
+
+    if (AuxMath.isNumeric(a) || 
+        ASTTerm.isMathOCLIdentifier(a))
+    { } 
+    else 
+    { abrack = "(" + a + ")"; } 
+
+    if (AuxMath.isNumeric(b) || 
+        ASTTerm.isMathOCLIdentifier(b))
+    { } 
+    else 
+    { bbrack = "(" + b + ")"; } 
+
  
-    return "(" + a + ")*(" + b + ")"; 
+    return abrack + "*" + bbrack; 
   }  
 
   public static String symbolicNegateMultiplication(
@@ -5506,19 +5556,7 @@ public abstract class ASTTerm
   
   public static String symbolicNegative(ASTTerm e1) 
   { // for -x 
-    String a = e1.literalForm(); 
-
-    if (e1.getTag().equals("additiveExpression") && 
-        "+".equals(e1.getTerm(1) + ""))
-    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
-    else if (e1.getTag().equals("additiveExpression") && 
-        "-".equals(e1.getTerm(1) + ""))
-    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
-    else if (e1.getTag().equals("factorExpression") && 
-             "*".equals(e1.getTerm(1) + ""))
-    { a = symbolicMultiplication(
-                    e1.getTerm(0), e1.getTerm(2)); 
-    }
+    String a = ASTTerm.symbolicEvaluation(e1); 
 
     if (AuxMath.isGeneralNumeric(a))
     { double aval = AuxMath.generalNumericValue(a); 
@@ -5571,7 +5609,11 @@ public abstract class ASTTerm
     // Group by powers of x? 
 
     if (AuxMath.isGeneralNumeric(a))
-    { a = "" + AuxMath.generalNumericValue(a); }  
+    { a = "" + AuxMath.generalNumericValue(a); 
+      if ("…".equals(b) || "(…)".equals(b) || 
+          "-…".equals(b) || "(-…)".equals(b))
+      { return "0"; } 
+    }  
 
     if (AuxMath.isGeneralNumeric(b))
     { b = "" + AuxMath.generalNumericValue(b); }  
@@ -5586,9 +5628,9 @@ public abstract class ASTTerm
     { return "-(" + a + ")"; }  
 
     if (a.equals("1") || a.equals("1.0"))
-    { return "1/(" + b + ")"; }  
+    { return "1/" + b; }  
     
-    return "(" + a + ")/(" + b + ")"; 
+    return a + "/" + b; 
   }  
 
 
@@ -7790,28 +7832,50 @@ public abstract class ASTTerm
         if (maxdp == 1 && vdiffs.size() == 2 && 
             hasX == false && maxvdiffp <= 1) 
         { // 1st order linear homogenous equation 
+          // coefd1*f' + coeff*f = 0
 
           String coeff = "" + alldcoefs.get(0); 
           String coefd1 = "" + alldcoefs.get(1); 
-
+          
           ASTTerm be1 = 
             new ASTBasicTerm("basicExpression", coeff); 
           ASTTerm be2 = 
             new ASTBasicTerm("basicExpression", coefd1); 
 
-          
-          // Solution is 
-          // String frac = "-(" + coeff + ")/(" + coefd1 + ")"; 
-
           String frac = 
-             "-(" + ASTTerm.symbolicDivision(be1,be2) + ")"; 
+               "-(" + ASTTerm.symbolicDivision(be1,be2) + ")"; 
 
-          return 
-            "  Define A\n" + 
-            "  Define " + vx0 + " = A*e^{(" + frac + ")*x}\n"; 
+          if ("0".equals(dcnst) || "0.0".equals(dcnst))         
+          { // Solution is 
+            // "A*e^{-(" + coeff + ")/(" + coefd1 + ")}"; 
+
+            return 
+              "  Define A\n" + 
+              "  Define " + vx0 + 
+                   " = A*e^{(" + frac + ")*x}\n";
+          } 
+          else 
+          { // Solution is above + g
+            // for g = -dcnst/coeff or g = -dcnst*x/coefd1
+ 
+            if ("0".equals(coeff) || "0.0".equals(coeff))
+            { return 
+                "  Define A\n" + 
+                "  Define " + vx0 + 
+                   " = A*e^{(" + frac + ")*x} - " + 
+                        dcnst + "*x/(" + coefd1 + ")\n";
+            }  
+            else 
+            { return 
+                "  Define A\n" + 
+                "  Define " + vx0 + 
+                   " = A*e^{(" + frac + ")*x} - " + 
+                        dcnst + "/(" + coeff + ")\n";
+            }  
+          } 
         } 
         else if (maxdp == 1 && vdiffs.size() == 2 && 
-            hasX == false && maxvdiffp == 2) 
+                 hasX == false && maxvdiffp == 2) 
         { // 1st order quadratic homogenous equation 
 
           String dd2coef2 = 
@@ -7822,7 +7886,8 @@ public abstract class ASTTerm
 
           Vector dd2vars = new Vector(); 
           dd2vars.add(vdiff); 
-          String dd2cnst = ASTTerm.constantTerms(dd2vars,expr0);
+          String dd2cnst = 
+             ASTTerm.constantTerms(dd2vars,expr0);
 
           JOptionPane.showMessageDialog(null, 
            ">>> Coeffiecient of square of : " + vdiff + " in " + expr0 +  
@@ -7849,24 +7914,81 @@ public abstract class ASTTerm
           String coefd1 = "" + alldcoefs.get(1); 
           String coefd2 = "" + alldcoefs.get(2); 
 
+          ASTTerm vdiff1 =
+            ASTTerm.constructNDifferential(1, var0); 
+
+          Vector dd3vars = new Vector(); 
+          dd3vars.add(var0); 
+          dd3vars.add(vdiff1); 
+          dd3vars.add(vdiff); 
+          String dd3cnst = 
+            ASTTerm.constantTerms(dd3vars,expr0);
+
           String quadf1 = 
               AuxMath.quadraticFormula1(coefd2, coefd1, 
                                         coeff); 
           String quadf2 = 
               AuxMath.quadraticFormula2(coefd2, coefd1, 
                                         coeff); 
+
+          String specialSolution = ""; 
+          if ("0".equals(dd3cnst) || "0.0".equals(dd3cnst))         
+          { } 
+          else 
+          { // Solution is above + g
+            // for g = -dd3cnst/coeff or g = -dd3cnst*x/coefd1
+ 
+            if ("0".equals(coeff) || "0.0".equals(coeff))
+            { specialSolution = " - " + 
+                        dd3cnst + "*x/(" + coefd1 + ")\n";
+            }  
+            else 
+            { specialSolution = " - " + 
+                        dd3cnst + "/(" + coeff + ")\n";
+            }  
+          } 
           
           if (quadf1.equals(quadf2))
           { return 
               "  Define A\n" + 
               "  Define B\n" + 
-              "  Define " + vx0 + " = (A + B*x)*e^{" + quadf1 + "*x}";
+              "  Define " + vx0 + " = (A + B*x)*e^{" + quadf1 + "*x}" + specialSolution;
           } 
           return 
             "  Define A\n" + 
-            "  Define " + vx0 + " = A*e^{(" + quadf1 + ")*x} + B*e^{(" + quadf2 + ")*x}"; 
+            "  Define B\n" + 
+            "  Define " + vx0 + " = A*e^{(" + quadf1 + ")*x} + B*e^{(" + quadf2 + ")*x}" + specialSolution; 
         } 
+        else if (maxdp == 1 && vdiffs.size() == 2 && 
+                 maxvdiffp <= 1) 
+        { // 1st order, 1st degree inhomogenous:
+          // a*f' + b*f - c = 0 where a, b, c can involve x
+           
+          String coeff = "" + alldcoefs.get(0); // b 
+          String coefd1 = "" + alldcoefs.get(1); // a
+          String cc = dcnst; // c
 
+          // Solution is 
+          // f = (1/J)*(‡ (c/a)*J dx) + A/J   where
+          // J = exp(‡ b/a dx)
+
+          if ("1".equals(coefd1) || "1.0".equals(coefd1)) { } 
+          else 
+          { cc = "(" + cc + ")/" + coefd1; 
+            coeff = "(" + coeff + ")/" + coefd1; 
+          } 
+
+          String J = "e^{‡ " + coeff + " dx}";
+          String integralTerm = 
+            "(1/J)*(‡ (" + cc + ")*J dx) +"; 
+          if ("0".equals(cc) || "0.0".equals(cc))
+          { integralTerm = ""; } 
+
+          return "  Define J = " + J + "\n" +
+            "  Define A\n" + 
+            "  Define " + vx0 + " = " + integralTerm + " A/J\n";   
+        } 
+ 
         return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
       } 
       else 

@@ -201,11 +201,24 @@ public class CGRule
   public static boolean hasDefaultRule(Vector rules)
   { for (int i = 0; i < rules.size(); i++) 
     { CGRule rr = (CGRule) rules.get(i); 
-      if ("_0".equals(rr.lhs.trim()) && 
-          "_0".equals(rr.rhs.trim())) 
+      if ("_0".equals(rr.lhs.trim()))
+          // && 
+          // "_0".equals(rr.rhs.trim())) 
       { return true; } 
     } 
     return false; 
+  } // Could add conditions. 
+
+  public static String applyDefaultRule(Vector rules, 
+                                        String str)
+  { for (int i = 0; i < rules.size(); i++) 
+    { CGRule rr = (CGRule) rules.get(i); 
+      if ("_0".equals(rr.lhs.trim()))
+          // && 
+          // "_0".equals(rr.rhs.trim())) 
+      { return rr.applyDefaultRule(str); } 
+    } 
+    return str; 
   } // Could add conditions. 
 
   public Vector getVariables()
@@ -562,6 +575,16 @@ public class CGRule
     }
     return res;
   }
+
+  public String applyDefaultRule(String arg)
+  { // substitute _0 by arg in rhs
+    String res = rhs + "";
+    String arg1 = correctNewlines(arg); 
+    res = res.replace("_0",arg1); 
+    return res;
+  }
+
+  
 
   public static String applyMetafeature(String mffeat, 
                                         ASTTerm term,

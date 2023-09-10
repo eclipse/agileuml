@@ -585,6 +585,8 @@ public class ASTCompositeTerm extends ASTTerm
   { if (rules == null) 
     { return this + ""; }
  
+    // Try to find a matching rule r
+
     for (int i = 0; i < rules.size(); i++) 
     { CGRule r = (CGRule) rules.get(i);
       Vector tokens = r.lhsTokens; 
@@ -730,9 +732,9 @@ public class ASTCompositeTerm extends ASTTerm
             k++; 
           } 
           else 
-          { System.err.println("!! Same variable " + tok + 
-                               " assigned different terms: " + 
-                              oldterm + " " + tm); 
+          { // System.err.println("!! Same variable " + tok + 
+            //                    " assigned different terms: " + 
+            //                   oldterm + " " + tm); 
             failed = true; 
           } 
         } 
@@ -802,16 +804,23 @@ public class ASTCompositeTerm extends ASTTerm
       }
     }  
 
+    // No rule in the given ruleset explicitly matches this term, 
+    // instead if there is a rule _0 |-->RHS[_0] 
+    // try the ruleset named by the tag of this term 
+    // and substitute the result for _0 in the RHS. 
+
     System.out.println(); 
     if (CGRule.hasDefaultRule(rules))
     { Vector tagrules = cgs.getRulesForCategory(tag);
       if (tagrules.equals(rules)) 
-      { return toString(); }
+      { return literalFormSpaces(); }
+
       System.out.println(">> Applying default rule _0 |-->_0 to " + this);  
-      return this.cgRules(cgs,tagrules); 
+      String res = this.cgRules(cgs,tagrules);
+      return CGRule.applyDefaultRule(rules,res); 
     } 
 
-    return toString(); 
+    return toString(); // failed to process it
   }
 
   public ASTTerm instantiate( 
@@ -43496,7 +43505,7 @@ public class ASTCompositeTerm extends ASTTerm
       Object olddef = ASTTerm.mathoclvars.get(vname); 
       if (olddef != null) 
       { JOptionPane.showMessageDialog(null, 
-          "!! Warning: " + vname + " is being re-defined: old definition: " + olddef, 
+          "!! Warning: " + vname + " is being re-defined", 
           "", 
           JOptionPane.WARNING_MESSAGE);
       } 

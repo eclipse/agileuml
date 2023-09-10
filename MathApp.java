@@ -278,14 +278,14 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       omega.addActionListener(this); 
 
       charMap.put('\u03B1', "g{a}"); 
-      charMap.put('\u03B2', "g{b}"); 
+      charMap.put('\u03B2', "g{b}"); // ß
       charMap.put('\u03B3', "g{g}"); 
       charMap.put('\u03B4', "g{d}"); 
       charMap.put('\u03B5', "g{e}"); 
       charMap.put('\u03B6', "g{z}"); 
       charMap.put('\u03B8', "g{f}"); 
       charMap.put('\u03BB', "g{l}"); 
-      charMap.put('\u03BC', "g{m}"); 
+      charMap.put('\u03BC', "g{m}"); // µ
       charMap.put('\u03BD', "g{n}"); 
       charMap.put('\u03C0', "g{p}"); 
       charMap.put('\u03C1', "g{r}");      
@@ -560,6 +560,10 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             { thisLabel.setText("Poisson distribution Poisson(p)"); }
             else if ("LogNorm".equals(insertedText))
             { thisLabel.setText("Log-normal distribution LogNorm(mu,var) based on N(mu,var)"); }
+            else if ("N(".equals(insertedText))
+            { thisLabel.setText("Normal distribution N(mu,var)"); }
+            else if ("U(".equals(insertedText))
+            { thisLabel.setText("Uniform distribution U() or U(lower,upper)"); }
             else if ("lim".equals(insertedText))
             { thisLabel.setText("Limit: lim_{x » v} expr"); }
           } 
