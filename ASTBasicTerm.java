@@ -178,14 +178,13 @@ public class ASTBasicTerm extends ASTTerm
   } 
 
   public String literalForm()
-  { String res = value; 
-    return res; 
-  } 
+  { return value; } 
 
   public String literalFormSpaces()
-  { String res = value; 
-    return res; 
-  } 
+  { return value; } 
+
+  public String evaluationLiteralForm()
+  { return value; } 
 
   public Vector tokenSequence()
   { Vector res = new Vector(); 
@@ -2869,6 +2868,10 @@ public class ASTBasicTerm extends ASTTerm
     if ("identifier".equals(tag))
     { ASTTerm t1 = getTerm(0); 
       String vv = t1.literalForm(); 
+
+      if ("e".equals(vv))
+      { return; } 
+
       Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 

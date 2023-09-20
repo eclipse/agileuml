@@ -204,6 +204,9 @@ public class ASTSymbolTerm extends ASTTerm
   public String literalFormSpaces()
   { return symbol; } 
 
+  public String evaluationLiteralForm()
+  { return symbol; } 
+
   public int arity()
   { return 0; } 
 

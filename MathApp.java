@@ -246,37 +246,67 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
       JButton alpha = new JButton("\u03B1"); 
       alpha.addActionListener(this); 
+      alpha.setToolTipText("alpha"); 
       JButton beta = new JButton("\u03B2"); // ß
-      beta.addActionListener(this); 
+      beta.addActionListener(this);
+      beta.setToolTipText("beta"); 
+       
       JButton gamma = new JButton("\u03B3"); 
       gamma.addActionListener(this); 
+      gamma.setToolTipText("gamma"); 
+
       JButton delta = new JButton("\u03B4"); 
       delta.addActionListener(this); 
+      delta.setToolTipText("delta"); 
+      
       JButton epsilon = new JButton("\u03B5"); 
-      epsilon.addActionListener(this); 
+      epsilon.addActionListener(this);
+      epsilon.setToolTipText("epsilon"); 
+       
       JButton zeta = new JButton("\u03B6"); 
       zeta.addActionListener(this); 
+      zeta.setToolTipText("zeta"); 
+      
       JButton theta = new JButton("\u03B8"); 
-      theta.addActionListener(this); 
+      theta.addActionListener(this);
+      theta.setToolTipText("theta"); 
+       
       JButton lambda = new JButton("\u03BB"); 
-      lambda.addActionListener(this); 
+      lambda.addActionListener(this);
+      lambda.setToolTipText("lambda"); 
+       
       JButton mu = new JButton("\u03BC"); // µ
       mu.addActionListener(this); 
+      mu.setToolTipText("mu"); 
+      
       JButton nu = new JButton("\u03BD"); 
-      nu.addActionListener(this); 
+      nu.addActionListener(this);
+      nu.setToolTipText("nu"); 
+       
       JButton pi = new JButton("\u03C0"); 
-      pi.addActionListener(this); 
+      pi.addActionListener(this);
+      pi.setToolTipText("pi -- the value 3.141592653589"); 
+       
       JButton rho = new JButton("\u03C1"); 
       rho.addActionListener(this); 
+      rho.setToolTipText("rho"); 
+      
       JButton sigma = new JButton("\u03C3"); 
-      sigma.addActionListener(this); 
+      sigma.addActionListener(this);
+      sigma.setToolTipText("sigma"); 
+       
       JButton tau = new JButton("\u03C4"); 
-      tau.addActionListener(this); 
+      tau.addActionListener(this);
+      tau.setToolTipText("tau"); 
+       
       JButton chi = new JButton("\u03C7"); 
-      chi.addActionListener(this); 
+      chi.addActionListener(this);
+      chi.setToolTipText("chi"); 
+       
       JButton omega = new JButton("\u03C9"); 
       omega.addActionListener(this); 
-
+      omega.setToolTipText("omega"); 
+      
       charMap.put('\u03B1', "g{a}"); 
       charMap.put('\u03B2', "g{b}"); // ß
       charMap.put('\u03B3', "g{g}"); 
@@ -548,6 +578,10 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             { thisLabel.setText("Instruction to Substitute: Substitute var in expr"); }
             else if ("Group".equals(insertedText))
             { thisLabel.setText("Group expr by var: group together terms with same var power"); }
+            else if ("Expand".equals(insertedText))
+            { thisLabel.setText("Instruction to Expand: Expand expr to n terms"); }
+            else if ("Express".equals(insertedText))
+            { thisLabel.setText("Instruction to Express: Express expr as polynomial in var"); }
             else if ("Theorem".equals(insertedText))
             { thisLabel.setText("Theorem expr1 when expr2: assert that expr1 follows from expr2"); }
             else if ("Rewrite".equals(insertedText))
@@ -1130,7 +1164,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    Cancel expr in expr\n" + 
         "    Substitute var in expr\n" + 
         "    Group expr by var\n" + 
-        "    Expand expr to N terms\n\n" + 
+        "    Expand expr to N terms\n" + 
+        "    Express expr as polynomial in var\n\n" + 
         "Distributions are:\n" + 
         "    N(mu,sigma^2), Bernoulli(mu), Binom(n,p),\n" + 
         "    U(), U(a,b), Poisson(mu), LogNorm(mu,sigma^2)\n"); 

@@ -29,14 +29,15 @@ part
     ;
 
 formula
-    :	'Define' ID '=' (instruction | expression) 
-    | 'Define' ID '~' expression
-    | 'Define' ID
+    :	'Define' basicExpression '=' (instruction | expression) 
+    | 'Define' basicExpression '~' expression
+    | 'Define' basicExpression
     ; 
 
 instruction
     : substituteIn 
     | expandTo 
+    | expressAs 
     | cancelIn 
     | factorBy 
     | groupBy
@@ -80,6 +81,10 @@ substituteIn
 
 expandTo
     : 'Expand' expression 'to' INT 'terms' 
+    ; 
+
+expressAs
+    : 'Express' expression 'as' 'polynomial' 'in' identifier 
     ; 
 
 factorBy
@@ -159,15 +164,15 @@ letExpression
     ; 
 
 logicalExpression
-    : logicalExpression '=>' logicalExpression  
-    | logicalExpression 'implies' logicalExpression  
+    : logicalExpression '&' logicalExpression 
+    | logicalExpression 'and' logicalExpression
     | logicalExpression 'or' logicalExpression  
     | logicalExpression 'xor' logicalExpression  
-    | logicalExpression '&' logicalExpression 
-    | logicalExpression 'and' logicalExpression
+    | logicalExpression '=>' logicalExpression  
+    | logicalExpression 'implies' logicalExpression  
     | FORALL identifier ':' type CDOT logicalExpression
     | EXISTS identifier ':' type CDOT logicalExpression  
-    | 'not' logicalExpression  
+    | 'not' equalityExpression  
     | equalityExpression
     ; 
 
@@ -188,53 +193,27 @@ additiveExpression
 factorExpression 
     : 'C_{' expression '}' '^{' expression '}'
     | 'E[' expression ']' 
-    | 'lim_{' identifier ARROW expression '}' expression
+    | '-' factorExpression 
+    | factorExpression DIFFERENTIAL 
+    | 'lim_{' identifier ARROW expression '}' factor2Expression
     | factorExpression ('*' | '/' | 'mod' | 'div') 
                                    factorExpression
     | INTEGRAL '_{' expression '}' '^{' expression '}' expression ID 
     | INTEGRAL expression ID 
     | SIGMA '_{' expression '}' '^{' expression '}' factorExpression  
     | PRODUCT '_{' expression '}' '^{' expression '}' factorExpression  
-    | '-' factorExpression 
-    | '+' factorExpression 
-    | SQUAREROOT factorExpression
-    | PARTIALDIFF '_{' ID '}' factorExpression
-    | factorExpression '!'
-    | factorExpression DIFFERENTIAL 
+    | '+' factor2Expression 
+    | SQUAREROOT factor2Expression
+    | PARTIALDIFF '_{' ID '}' factor2Expression
+    | factor2Expression '!'
     | factor2Expression
     ; 
 
-
-// factor2Expressions can appear on LHS of ->
-// ->subrange is used for ->substring and ->subSequence
-
 factor2Expression
-  : factor2Expression '->size()' 
-  | factor2Expression ('->isEmpty()' | 
-                       '->notEmpty()' | 
-                       '->asSet()' | '->asBag()' | 
-                       '->asOrderedSet()' | 
-                       '->asSequence()' | 
-                       '->sort()' ) 
-   | factor2Expression '->any()'   
-   | factor2Expression '->first()'  
-   | factor2Expression '->last()' 
-   | factor2Expression '->front()'  
-   | factor2Expression '->tail()' 
-   | factor2Expression '->reverse()'  
-   | factor2Expression '->max()'  
-   | factor2Expression '->min()'  
-   | factor2Expression '^{' expression '}' 
-   | factor2Expression '_{' expression '}' 
-   | factor2Expression ('->at' | '->union' | '->intersection' 
-            | '->includes' | '->excludes' | '->including' 
-            | '->excluding' | '->includesAll'  
-            | '->excludesAll' | '->prepend' | '->append'  
-            | '->count' | '->apply') 
-                                   '(' expression ')' 
-   | setExpression 
-   | basicExpression
-   ; 
+  : factor2Expression '^{' expression '}' 
+  | setExpression 
+  | basicExpression
+  ; 
 
 setExpression 
     : '{' ID ':' type '|' expression '}'

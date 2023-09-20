@@ -183,6 +183,18 @@ public class MathOCLBaseListener implements MathOCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterExpressAs(MathOCLParser.ExpressAsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpressAs(MathOCLParser.ExpressAsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterFactorBy(MathOCLParser.FactorByContext ctx) { }
 	/**
 	 * {@inheritDoc}

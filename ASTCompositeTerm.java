@@ -531,6 +531,18 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public String evaluationLiteralForm()
+  { String res = ""; 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm t = (ASTTerm) terms.get(i);
+      if (t == null) { continue; }  
+      res = res + ASTTerm.symbolicEvaluation(t);
+      // if (i < terms.size() - 1)
+      // { res = res + " "; }  
+    } 
+    return res; 
+  } 
+
   public Vector tokenSequence()
   { Vector res = new Vector();  
     for (int i = 0; i < terms.size(); i++) 
@@ -43584,6 +43596,10 @@ public class ASTCompositeTerm extends ASTTerm
     if ("identifier".equals(tag))
     { ASTTerm t1 = (ASTTerm) terms.get(0);
       String vv = t1.literalForm(); 
+
+      if ("e".equals(vv))
+      { return; } 
+
       Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 

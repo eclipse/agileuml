@@ -2779,6 +2779,20 @@ public class AuxMath
      return true; 
    } 
 
+   public static boolean isPerfectSquare(String val)
+   { try
+     { Double dd = Double.parseDouble(val);
+       if (dd < 0) 
+       { return false; } 
+       double sq = Math.sqrt(dd); 
+       if (dd == sq*sq) 
+       { return true; } 
+     } 
+     catch (Exception e) { return false; }
+ 
+     return false; 
+   } 
+
    public static boolean isGeneralNumeric(String val)
    { if (val.startsWith("(") && 
          val.endsWith(")"))
@@ -3434,7 +3448,11 @@ public class AuxMath
       System.out.println(isGeneralNumeric("((55))")); 
       System.out.println(isGeneralNumeric("(55))")); 
 
-      System.out.println(generalNumericValue("((55))")); 
+      System.out.println(generalNumericValue("((55))"));
+
+      System.out.println(isPerfectSquare("18")); 
+      System.out.println(isPerfectSquare("2")); 
+ 
    }
  }
    
