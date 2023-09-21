@@ -56,6 +56,10 @@ maclaurenTerm4::
 _1 |-->_1`diff3<action> 0 / x
 
 
+expressAs::
+Express _1 as polynomial in _2 |-->_0`expressAsPolynomial
+
+
 substituting::
 Substitute _1 for _2 in _3 |-->  _3<action> _1 / _2
 
@@ -249,7 +253,6 @@ factorExpression::
 _1 * 1 |-->_1
 1.0 * _1 |-->_1
 _1 * 1.0 |-->_1
-_1 * _1 |-->_1^{2}<when> _1`isIdentifier true
 
 0 * … |-->?
 … * 0 |-->?
@@ -268,6 +271,8 @@ _1 * 0.0 |-->0
 
 _1 * -1 |-->_1`negate
 -1 * _1 |-->_1`negate
+_1 * -1.0 |-->_1`negate
+-1.0 * _1 |-->_1`negate
 _1 * _2 |-->_2`numerator<when> _2`isDivision true, _2`denominator _1
 _1 * _2 |-->_0`symbolicMultiplication
 
@@ -358,7 +363,10 @@ _1 ^{ 1 } |-->_1
 _1 ^{ 0 } |-->1
 0 ^{ 2 } |-->0
 0 ^{ 3 } |-->0
+_1 ^{ 2 } |-->_1*_1
+_1 ^ { 2 } |-->_1*_1
 _1 ^{ _2 } |-->_1^{_2}
+_1 ^ { 2 } |-->_1^{_2}
 
 _1 _{ _2 } |-->_1_{_2}
 

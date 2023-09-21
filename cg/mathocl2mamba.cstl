@@ -262,7 +262,22 @@ e |-->math.e()
 … |-->math.infinity
 
 g{ p } |-->math.pi()
-g{ _1 } |-->_1
+g{ a } |-->alpha
+g{ b } |-->beta
+g{ c } |-->chi
+g{ g } |-->gamma
+g{ d } |-->delta
+g{ e } |-->epsilon
+g{ f } |-->theta
+g{ k } |-->kappa
+g{ m } |-->mu
+g{ n } |-->nu
+g{ o } |-->omega
+g{ s } |-->sigma
+g{ r } |-->rho
+g{ t } |-->tau
+g{ z } |-->zeta
+g{ _1 } |-->_1_Greek
 
 sin ( 0 ) |-->0
 cos ( 0 ) |-->1
