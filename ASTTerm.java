@@ -6150,6 +6150,8 @@ public abstract class ASTTerm
     { res = mfactor; } 
     else if (n == 1) 
     { res = mfactor + "*" + v0; } 
+    else if (n == 2) 
+    { res = mfactor + "*" + v0 + "*" + v0; } 
 
     // String cnstsP = 
     //           ASTTerm.constantTerms(vars,p);

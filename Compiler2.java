@@ -10588,6 +10588,16 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     System.out.println(c.lexicals); */ 
 
+    String testast = "(expression (logicalExpression (equalityExpression (additiveExpression (factorExpression C_{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 2))))))) } ^{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 4))))))) })))))"; 
+
+  /* "(expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (factor2Expression (basicExpression (identifier e))) ^{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 3))))))) }))))))"; */ 
+ 
+    ASTTerm asst = c.parseGeneralAST(testast); 
+    System.out.println(asst); 
+
+    asst = c.parseMathOCLAST(testast); 
+    System.out.println(asst); 
+
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
     // Expression zz = c.parseExpression(); 
