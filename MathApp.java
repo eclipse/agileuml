@@ -846,7 +846,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         // System.out.println(asttext); 
  
         Compiler2 cc = new Compiler2(); 
-        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        ASTTerm trm = cc.parseMathOCLAST(asttext); 
         if (trm != null && trm instanceof ASTCompositeTerm)  
         { ASTCompositeTerm spec = (ASTCompositeTerm) trm;
           ASTTerm.mathoclvars = new java.util.HashMap();  
@@ -906,7 +906,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         System.out.println(asttext); 
  
         Compiler2 cc = new Compiler2(); 
-        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        ASTTerm trm = cc.parseMathOCLAST(asttext); 
         if (trm != null)  
         { 
           Vector ents = new Vector(); 
@@ -951,7 +951,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         System.out.println(asttext); 
  
         Compiler2 cc = new Compiler2(); 
-        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        ASTTerm trm = cc.parseMathOCLAST(asttext); 
         if (trm != null)  
         { 
           Vector ents = new Vector(); 
@@ -1008,7 +1008,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         System.out.println(asttext); 
  
         Compiler2 cc = new Compiler2(); 
-        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        ASTTerm trm = cc.parseMathOCLAST(asttext); 
         if (trm != null)  
         { 
           Vector ents = new Vector(); 

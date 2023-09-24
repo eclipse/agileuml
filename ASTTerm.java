@@ -71,6 +71,9 @@ public abstract class ASTTerm
   { mathoclrewrites = new Vector(); }  
      // pairs [lhs,rhs]
 
+  static int mathoclfunctionIndex; 
+  { mathoclfunctionIndex = 1; } 
+
   static String cobolHyphenReplacement; 
   static 
   { cobolHyphenReplacement = "_"; } // or "$" for Java
@@ -5410,6 +5413,15 @@ public abstract class ASTTerm
   { String a = ASTTerm.symbolicEvaluation(e1); 
     String b = ASTTerm.symbolicEvaluation(e2); 
 
+    if (ASTTerm.isMathOCLSubtraction(e1))
+    { ASTTerm add2 = ASTTerm.mathOCLArgument(e1,2);
+      String add2val = symbolicEvaluation(add2); 
+      if (add2val.equals(b))
+      { ASTTerm add1 = ASTTerm.mathOCLArgument(e1,0); 
+        return ASTTerm.symbolicEvaluation(add1); 
+      }
+    }  // (a - b) + b |-->a
+
     if (AuxMath.isGeneralNumeric(a) && 
         AuxMath.isGeneralNumeric(b))
     { double aval = AuxMath.generalNumericValue(a); 
@@ -5456,6 +5468,37 @@ public abstract class ASTTerm
   { String a = ASTTerm.symbolicEvaluation(e1); 
     String b = ASTTerm.symbolicEvaluation(e2); 
 
+    boolean bneedsBracket = ASTTerm.mathOCLNeedsBracket(e2); 
+
+    if (ASTTerm.isMathOCLAddition(e2))
+    { ASTTerm add1 = ASTTerm.mathOCLArgument(e2,0); 
+      ASTTerm add2 = ASTTerm.mathOCLArgument(e2,2);
+       
+      // e1 - (add1 + add2)
+      a = 
+          ASTTerm.symbolicSubtraction(e1,add1); 
+      b = symbolicEvaluation(add2);
+      bneedsBracket = ASTTerm.mathOCLNeedsBracket(add2);
+    } 
+    else if (ASTTerm.isMathOCLSubtraction(e2)) 
+    { ASTTerm add1 = ASTTerm.mathOCLArgument(e2,0); 
+      ASTTerm add2 = ASTTerm.mathOCLArgument(e2,2);
+      // e1 - (add1 - add2)
+      a = 
+        ASTTerm.symbolicAddition(e1,add2); 
+      b = symbolicEvaluation(add1); 
+      bneedsBracket = ASTTerm.mathOCLNeedsBracket(add1);
+    }  
+    else if (ASTTerm.isMathOCLAddition(e1))
+    { ASTTerm add2 = ASTTerm.mathOCLArgument(e1,2);
+      String add2val = symbolicEvaluation(add2); 
+      if (add2val.equals(b))
+      { ASTTerm add1 = ASTTerm.mathOCLArgument(e1,0); 
+        return ASTTerm.symbolicEvaluation(add1); 
+      }
+    }  
+    // Case of (A+B)-B |-->A
+      
     if (AuxMath.isGeneralNumeric(a) && 
         AuxMath.isGeneralNumeric(b))
     { double aval = AuxMath.generalNumericValue(a); 
@@ -5507,13 +5550,13 @@ public abstract class ASTTerm
     if (a.equals("-…") || b.equals("…"))
     { return "-…"; }  
 
-    String bbrack = "(" + b + ")"; 
-
     if (ASTTerm.isMathOCLIdentifier(b) || 
         AuxMath.isGeneralNumeric(b))
-    { bbrack = b; } 
+    { bneedsBracket = false; } 
     
-    return a + " - " + bbrack; 
+    if (bneedsBracket)
+    { return a + " - (" + b + ")"; } 
+    return a + " - " + b; 
   }  
      
   public static String symbolicMultiplication(ASTTerm e1, ASTTerm e2)
@@ -5629,13 +5672,13 @@ public abstract class ASTTerm
     if (AuxMath.isNumeric(a) || 
         ASTTerm.isMathOCLIdentifier(a))
     { } 
-    else 
+    else if (ASTTerm.mathOCLNeedsBracket(e1))
     { abrack = "(" + a + ")"; } 
 
     if (AuxMath.isNumeric(b) || 
         ASTTerm.isMathOCLIdentifier(b))
     { } 
-    else 
+    else if (ASTTerm.mathOCLNeedsBracket(e2))
     { bbrack = "(" + b + ")"; } 
 
  
@@ -5755,7 +5798,14 @@ public abstract class ASTTerm
   } 
     
   public static String symbolicDivision(ASTTerm e1, ASTTerm e2)
-  { String a = ASTTerm.symbolicEvaluation(e1); 
+  { if (ASTTerm.isMathOCLNegative(e1) && 
+        ASTTerm.isMathOCLNegative(e2))
+    { ASTTerm t1 = ASTTerm.mathOCLArgument(e1,1); 
+      ASTTerm t2 = ASTTerm.mathOCLArgument(e2,1);
+      return symbolicDivision(t1,t2); 
+    } 
+ 
+    String a = ASTTerm.symbolicEvaluation(e1); 
     String b = ASTTerm.symbolicEvaluation(e2); 
 
     if (AuxMath.isGeneralNumeric(a) && 
@@ -5811,6 +5861,9 @@ public abstract class ASTTerm
     if (a.equals("1") || a.equals("1.0"))
     { return "1/" + b; }  
     
+    if (ASTTerm.mathOCLNeedsBracket(e2))
+    { return a + "/(" + b + ")"; } 
+
     return a + "/" + b; 
   }  
 
@@ -6192,6 +6245,53 @@ public abstract class ASTTerm
   
     return res + " + (" + r + ")/(" + 
            q.literalFormSpaces() + ")"; 
+  } 
+
+  public static boolean mathOCLNeedsBracket(ASTTerm trm)
+  { if (trm instanceof ASTBasicTerm) 
+    { return false; } 
+
+    if (trm instanceof ASTSymbolTerm) 
+    { return false; } 
+
+    if (ASTTerm.isMathOCLBracketed(trm))
+    { return false; } 
+
+    String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("basicExpression".equals(tg) && 
+        args.size() == 3 && 
+        "(".equals(args.get(1) + "") && 
+        ")".equals(args.get(2) + ""))
+    { return false; } // expr()
+
+    if ("basicExpression".equals(tg) && 
+        args.size() == 3 && 
+        "g{".equals(args.get(0) + "") && 
+        "}".equals(args.get(2) + ""))
+    { return false; } 
+
+    if ("basicExpression".equals(tg) && 
+        args.size() == 4 && 
+        "(".equals(args.get(1) + "") && 
+        ")".equals(args.get(3) + ""))
+    { return false; } // expr(args)
+
+    String lit = trm.literalForm(); 
+
+    if (AuxMath.isGeneralNumeric(lit))
+    { return false; } 
+
+    if (ASTTerm.isMathOCLIdentifier(lit))
+    { return false; } 
+
+    if (args.size() == 1)
+    { return ASTTerm.mathOCLNeedsBracket(
+                       (ASTTerm) args.get(0)); 
+    } 
+
+    return true; 
   } 
 
   public static boolean isMathOCLBracketed(ASTTerm trm)
@@ -6999,6 +7099,12 @@ public abstract class ASTTerm
         "+".equals(args.get(1) + ""))
     { return true; } 
 
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { return isMathOCLAddition((ASTTerm) args.get(1)); } 
+
     if (args.size() == 1) 
     { ASTTerm arg0 = (ASTTerm) args.get(0);
       return ASTTerm.isMathOCLAddition(arg0); 
@@ -7015,6 +7121,12 @@ public abstract class ASTTerm
         args.size() == 3 && 
         "-".equals(args.get(1) + ""))
     { return true; } 
+
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { return isMathOCLSubtraction((ASTTerm) args.get(1)); } 
 
     if (args.size() == 1) 
     { ASTTerm arg0 = (ASTTerm) args.get(0);
@@ -7095,10 +7207,19 @@ public abstract class ASTTerm
   public static ASTTerm mathOCLArgument(ASTTerm trm, int i)
   { // For i-th argument of binary or higher expressions
 
-    // String tg = trm.getTag();
+    String tg = trm.getTag();
     Vector args = trm.getTerms(); 
 
+    if ("basicExpression".equals(tg) &&
+        args.size() == 3 && 
+        "(".equals(args.get(0) + "") && 
+        ")".equals(args.get(2) + ""))
+    { return mathOCLArgument((ASTTerm) args.get(1), i); } 
+
     if (args.size() >= 3 && i <= 2)
+    { return (ASTTerm) args.get(i); } 
+
+    if (args.size() >= 2 && i < 2)
     { return (ASTTerm) args.get(i); } 
 
     if (args.size() == 1) 
@@ -7109,6 +7230,22 @@ public abstract class ASTTerm
     return null; 
   } // Nested unary terms until the expected n-ary term.
 
+  public static boolean isMathOCLNegative(ASTTerm trm)
+  { String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("factorExpression".equals(tg) &&
+        args.size() == 2 && 
+        "-".equals(args.get(0) + ""))
+    { return true; } 
+
+    if (args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0);
+      return ASTTerm.isMathOCLNegative(arg0); 
+    }
+
+    return false; 
+  } 
 
   public static boolean isMathOCLDisjunction(ASTTerm trm)
   { String tg = trm.getTag();
@@ -8482,27 +8619,32 @@ public abstract class ASTTerm
           { // Solution is 
             // "A*e^{-(" + coeff + ")/(" + coefd1 + ")}"; 
 
+            mathoclfunctionIndex++; 
+            String A = "A" + mathoclfunctionIndex; 
+
             return 
-              "  Define A\n" + 
+              "  Define " + A + "\n" + 
               "  Define " + vx0 + 
-                   " = A*e^{(" + frac + ")*x}\n";
+                   " = " + A + "*e^{(" + frac + ")*x}\n";
           } 
           else 
           { // Solution is above + g
             // for g = -dcnst/coeff or g = -dcnst*x/coefd1
- 
+            mathoclfunctionIndex++; 
+            String A = "A" + mathoclfunctionIndex; 
+
             if ("0".equals(coeff) || "0.0".equals(coeff))
             { return 
-                "  Define A\n" + 
+                "  Define " + A + "\n" + 
                 "  Define " + vx0 + 
-                   " = A*e^{(" + frac + ")*x} - " + 
+                   " = " + A + "*e^{(" + frac + ")*x} - " + 
                         dcnst + "*x/(" + coefd1 + ")\n";
             }  
             else 
             { return 
-                "  Define A\n" + 
+                "  Define " + A + "\n" + 
                 "  Define " + vx0 + 
-                   " = A*e^{(" + frac + ")*x} - " + 
+                   " = " + A + "*e^{(" + frac + ")*x} - " + 
                         dcnst + "/(" + coeff + ")\n";
             }  
           } 
@@ -8581,16 +8723,20 @@ public abstract class ASTTerm
             }  
           } 
           
+          mathoclfunctionIndex++; 
+          String A = "A" + mathoclfunctionIndex; 
+          String B = "B" + mathoclfunctionIndex; 
+
           if (quadf1.equals(quadf2))
           { return 
-              "  Define A\n" + 
-              "  Define B\n" + 
-              "  Define " + vx0 + " = (A + B*x)*e^{" + quadf1 + "*x}" + specialSolution;
+              "  Define " + A + "\n" + 
+              "  Define " + B + "\n" + 
+              "  Define " + vx0 + " = (" + A + " + " + B + "*x)*e^{" + quadf1 + "*x}" + specialSolution;
           } 
           return 
-            "  Define A\n" + 
-            "  Define B\n" + 
-            "  Define " + vx0 + " = A*e^{(" + quadf1 + ")*x} + B*e^{(" + quadf2 + ")*x}" + specialSolution; 
+            "  Define " + A + "\n" + 
+            "  Define " + B + "\n" + 
+            "  Define " + vx0 + " = " + A + "*e^{(" + quadf1 + ")*x} + " + B + "*e^{(" + quadf2 + ")*x}" + specialSolution; 
         } 
         else if (maxdp == 1 && vdiffs.size() == 2 && 
                  maxvdiffp <= 1) 
@@ -8611,15 +8757,18 @@ public abstract class ASTTerm
             coeff = "(" + coeff + ")/" + coefd1; 
           } 
 
-          String J = "e^{‡ " + coeff + " dx}";
+          String Jvalue = "e^{‡ " + coeff + " dx}";
+          mathoclfunctionIndex++; 
+          String J = "J" + mathoclfunctionIndex; 
+
           String integralTerm = 
-            "(1/J)*(‡ (" + cc + ")*J dx) +"; 
+            "(1/" + J + ")*(‡ (" + cc + ")*" + J + " dx) +"; 
           if ("0".equals(cc) || "0.0".equals(cc))
           { integralTerm = ""; } 
 
-          return "  Define J = " + J + "\n" +
+          return "  Define " + J + " = " + Jvalue + "\n" +
             "  Define A\n" + 
-            "  Define " + vx0 + " = " + integralTerm + " A/J\n";   
+            "  Define " + vx0 + " = " + integralTerm + " A/" + J + "\n";   
         } 
  
         return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
@@ -8711,15 +8860,15 @@ public abstract class ASTTerm
       { double commonDivisor = 
           Math.pow(-1,msize) *
           AuxMath.determinant(msize, divisorMatrix); 
-        divisorString = "" + commonDivisor; 
+        divisorString = "(" + commonDivisor + ")"; 
       } 
       else if (msize % 2 == 0) 
       { divisorString = "(" + 
           AuxMath.symbolicDeterminant(msize, divisorMatrix) + ")"; 
       } 
       else  
-      { divisorString = "-1*(" + 
-          AuxMath.symbolicDeterminant(msize, divisorMatrix) + ")"; 
+      { divisorString = "(-1*(" + 
+          AuxMath.symbolicDeterminant(msize, divisorMatrix) + "))"; 
       } 
 
   /* 

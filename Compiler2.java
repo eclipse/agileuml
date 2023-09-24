@@ -1802,7 +1802,8 @@ public class Compiler2
       if (c == '|' && i + 2 < rule.length() && rule.charAt(i+1) == '-' && 
           rule.charAt(i+2) == '-' && rule.charAt(i+3) == '>') 
       { String lhs = rule.substring(0,i); 
-        nospacelexicalanalysisText(lhs);
+        // nospacelexicalanalysisText(lhs);
+        nospacelexicalanalysisAST(lhs);
         int sz = lexicals.size();
 
         Vector variables = new Vector();
@@ -10592,21 +10593,33 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
   /* "(expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (factor2Expression (basicExpression (identifier e))) ^{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 3))))))) }))))))"; */ 
  
-    ASTTerm asst = c.parseGeneralAST(testast); 
-    System.out.println(asst); 
+    // ASTTerm asst = c.parseGeneralAST(testast); 
+    // System.out.println(asst); 
 
-    asst = c.parseMathOCLAST(testast); 
-    System.out.println(asst); 
+    ASTTerm asst = c.parseMathOCLAST(testast); 
+    System.out.println(asst.literalForm());
+    System.out.println(asst.literalFormSpaces());
+
+          Vector ents = new Vector(); 
+          Vector typs = new Vector(); 
+          CGSpec cgs = new CGSpec(ents,typs); 
+          File fs = new File("cg/simplify.cstl"); 
+          CSTL.loadCSTL(cgs,fs,ents,typs);
+ 
+          String entcode = asst.cg(cgs);
+
+          System.out.println(entcode); 
+ 
 
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
     // Expression zz = c.parseExpression(); 
 
-    Compiler2 ccx = new Compiler2(); 
-    ccx.nospacelexicalanalysis("x : int"); 
-    ModelElement zz = ccx.parseParameterDeclaration(new Vector(), new Vector()); 
-    System.out.println(zz); 
-    System.out.println(zz.getType()); 
+    // Compiler2 ccx = new Compiler2(); 
+    // ccx.nospacelexicalanalysis("x : int"); 
+    // ModelElement zz = ccx.parseParameterDeclaration(new Vector(), new Vector()); 
+    // System.out.println(zz); 
+    // System.out.println(zz.getType()); 
 
     // c.nospacelexicalanalysis("E<String,int>"); 
      
