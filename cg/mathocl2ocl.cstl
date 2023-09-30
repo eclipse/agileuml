@@ -1,3 +1,5 @@
+/* This translates MathOCL to UML/OCL */
+
 specification::
 specification _1 _* <EOF> |-->class _1 {_*`definesToAttributes_* }
 specification _1 _* |-->class _1 {_*`definesToAttributes_* }
@@ -9,6 +11,12 @@ _1 |-->_1\n
 
 constraint::
 Constraint on _1 | _2 |-->\n  invariant _2;\n
+
+theorem::
+Theorem _1 when _2 |-->
+
+rewrite::
+Rewrite _1 to _2 |-->
 
 
 prove::
@@ -54,16 +62,18 @@ _1 |-->_1`diff3<action> 0 / x
 substituting::
 Substitute _1 for _2 in _3 |-->\n  invariant _3;\n<action> _1 / _2
 
+expressAs::
+Express _1 as polynomial in _2 |-->
+
+
 solve::
 Solve _* for _+ |-->
 
-reexpression::
-Express _1 as _2 |-->
 
 
 formula::
 Define _1 |-->
-Define _1 = _2 |-->\n\n  operation _1Definition() : double\n  pre: true\n  post: result = _2;
+Define _1 = _2 |-->\n\n  operation _1`operationName(_1`operationParameters) : double\n  pre: true\n  post: result = _2;
 Define _1 ~ _2 |-->
 
 
@@ -84,7 +94,7 @@ Group _1 by _2 |-->_1
 
 
 definesToAttributes::
-Define _1 = _2 |-->\n  attribute _1 : double;
+Define _1 = _2 |-->\n  attribute _1 : double := _2;<when> _1`isIdentifier true
 Define _1 |-->\n  attribute _1 : double;
 Define _1 ~ _2 |-->\n  attribute _1 : OclRandom := OclRandom.newOclRandom_2`randomParameters; 
 
@@ -243,14 +253,14 @@ _1 ´ |-->_1`differentiate
 × _{ _1 } ^{ _2 } _3 |-->(_3)->pow(_2 - _1`rhs + 1)<when> _3 real
 × _{ _1 } ^{ _2 } _3 |-->Integer.Prd(_1`rhs,_2,_1`lhs,_3)
 
-C_ { 0 } ^{ _1 } |-->1
-C_ { _1 } ^{ _1 } |-->1
-C_ { 1 } ^{ _1 } |-->_1
-C_ { _1 } ^{ _2 } |-->MathLib.combinatorial(_2,_1)
+C_{ 0 } ^{ _1 } |-->1
+C_{ _1 } ^{ _1 } |-->1
+C_{ 1 } ^{ _1 } |-->_1
+C_{ _1 } ^{ _2 } |-->MathLib.combinatorial(_2,_1)
  
-lim_ { _1 » _2 } _1 |-->_2
-lim_ { _1 » _2 } _3 |-->_3<when> _3 real
-lim_ { _1 » _2 } _3 |-->Real.limit(_1,_2,_3)
+lim_{ _1 » _2 } _1 |-->_2
+lim_{ _1 » _2 } _3 |-->_3<when> _3 real
+lim_{ _1 » _2 } _3 |-->Real.limit(_1,_2,_3)
 
 E[ _1 ] |-->_1.mean()
 
@@ -372,6 +382,21 @@ _1 . _2 |-->_1._2
 _1 |-->_1
 
 
+operationName::
+_1 ( ) |-->_1
+_1 ( _2 ) |-->_1
+_1 |-->_1Definition
+
+operationParameters::
+_1 ( ) |-->
+_1 ( _2 ) |-->_2`parameterDeclarations
+_1 |-->
+
+parameterDeclarations::
+_1 |-->_1 : double
+_1 , _* |-->_1 : double, _*`recurse
+
+
 setExpression::
 { _1 : _2 | _3 } |-->_2->select( _1 | _3 )
 { _1 : _2 | _3 • _4 } |-->_2->select( _1 | _3 )->collect( _1 | _4)
@@ -431,10 +456,10 @@ _1 ´ |-->-(_1`differentiate)
 × _{ _1 } ^{ _2 } _3 |-->-((_3)->pow(_2 - _1 + 1))<when> _3 real
 × _{ _1 } ^{ _2 } _3 |-->-Integer.Prd(_1`rhs,_2,_1`lhs,_3)
 
-C_ { 0 } ^{ _1 } |-->-1
-C_ { _1 } ^{ _1 } |-->-1
-C_ { 1 } ^{ _1 } |-->-(_1)
-C_ { _1 } ^{ _2 } |-->-MathLib.combinatorial(_2,_1)
+C_{ 0 } ^{ _1 } |-->-1
+C_{ _1 } ^{ _1 } |-->-1
+C_{ 1 } ^{ _1 } |-->-(_1)
+C_{ _1 } ^{ _2 } |-->-MathLib.combinatorial(_2,_1)
 
 ( _1 ) |-->_1`negate
 
@@ -544,13 +569,12 @@ _1 |-->_1
 
 
 integrate::
-x |-->(x->pow(2))/2
-x ^{ 2 } |-->(x->pow(3))/3
-x ^{ 3 } |-->(x->pow(4))/4
-- x |-->-(x->pow(2))/2
+x |-->(x->pow(2))/2.0
+x ^{ 2 } |-->(x->pow(3))/3.0
+x ^{ 3 } |-->(x->pow(4))/4.0
+- x |-->-(x->pow(2))/2.0
 x ^{ -1 } |-->x->log()
 x ^{ _1 } |-->(x->pow(_1 + 1))/(_1 + 1)<when> _1 real
-x ^{ _1 } |-->(x->pow(_1 + 1))/(_1 + 1)<when> _1 integer
 e ^{ x } |-->MathLib.eValue()->pow(x)
 
 _1 ^{ _2 } |-->MathLib.indefiniteIntegral(lambda x : double in _1->pow(_2))
@@ -572,7 +596,19 @@ coth ( x ) |-->x->sinh()->log()
 sech ( x ) |-->2*(MathLib.eValue->pow(x))->atan()
 cosech ( x ) |-->-2*(MathLib.eValue->pow(x))->acoth()
 
-_1 ( _2 ) |-->MathLib.indefiniteIntegral(lambda x : double in (_2)->_1())
+log ( x ) |-->x*log(x) - x
+
+asin ( x ) |-->x*(x->asin()) + (1 - x*x)->sqrt()
+atan ( x ) |-->x*(x->atan()) - 0.5*(1 + x*x)->log()
+acos ( x ) |-->x*(x->acos()) - (1 - x*x)->sqrt()
+acot ( x ) |-->x*(x->acot()) + 0.5*(1 + x*x)->log()
+
+asinh ( x ) |-->x*(MathLib.asinh(x)) - (x*x + 1)->sqrt()
+acosh ( x ) |-->x*(MathLib.acosh(x)) - (x*x - 1)->sqrt()
+atanh ( x ) |-->x*(MathLib.atanh(x)) + 0.5*(1 - x*x)->log()
+acoth ( x ) |-->x*(MathLib.acoth(x)) + 0.5*(x*x - 1)->log()
+
+_1 ( _2 ) |-->MathLib.indefiniteIntegral(lambda x : double in _1(_2))
 
 Ð _{ x } _1 |-->_1
 Ð _{ _1 } _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_2`partialDiff))<action> _95 _1
@@ -582,7 +618,7 @@ _1 ( _2 ) |-->MathLib.indefiniteIntegral(lambda x : double in (_2)->_1())
 _1 ´ |-->_1
 
 ‡ _1 dx |-->MathLib.indefiniteIntegral(lambda x : double in (_1`integrate))
-‡ _1 _2 |-->Real.Integral(Real.Integral(_1, _2`tail), x)
+‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`integrate))
 
 - _1 |-->-(_1`integrate)
 + _1 |-->_1`integrate
@@ -595,19 +631,15 @@ _1 /= _2 |-->MathLib.indefiniteIntegral(lambda x : double in (if _1 = _2 then 0 
 
 x * x |-->(x->pow(3))/3
 
-_1 * x |-->_1*(x->pow(2)/2)<when> _1 real
-_1 * x |-->_1*(x->pow(2)/2)<when> _1 integer
+_1 * x |-->_1*(x->pow(2)/2.0)<when> _1 real
 
 _1 * _2 |-->_1*(_2`integrate)<when> _1 real
-_1 * _2 |-->_1*(_2`integrate)<when> _1 integer
-_1 * _2 |-->Real.Integral(_1*_2, x)
+_1 * _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_1*_2))
 
 _1 / _2 |-->(_1`integrate)/_2<when> _2 real
-_1 / _2 |-->(_1`integrate)/_2<when> _2 integer
-_1 / _2 |-->Real.Integral( _1/_2, x)
+_1 / _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_1/_2))
 
 _1 |-->_1*x<when> _1 real
-_1 |-->_1*x<when> _1 integer
 
 _1 |-->_1`integrate<when> _1 basicExpression
 _1 |-->_1`integrate<when> _1 factorExpression
@@ -698,7 +730,7 @@ e ^{ _1 } |-->MathLib.eValue()->pow(_1)<when> _1 _95
 e ^{ _1 } |-->(MathLib.eValue()->pow(_1))*_1`partialDiff
 
 ‡ _1 _2 |-->_1<when> _2`tail _95
-‡ _1 _2 |-->Real.Integral( _1`partialDiff, _2`tail )
+‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`partialDiff) )
 
 _1 |-->1<when> _1 _95
 _1 ^{ 2 } |-->2*_1<when> _1 _95 
@@ -812,7 +844,7 @@ _1 + _2 |-->_1`differentiate + _2`differentiate
 _1 - _2 |-->_1`differentiate - _2`differentiate
 
 ‡ _1 dx |-->_1
-‡ _1 _2 |-->Real.Integral( _1`differentiate, _2`tail)
+‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`differentiate))
 
 e ^{ x } |-->MathLib.eValue->pow(x)
 

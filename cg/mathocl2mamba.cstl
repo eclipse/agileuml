@@ -12,6 +12,12 @@ _1 |-->_1\n
 constraint::
 Constraint on _1 | _2 |-->\n /* invariant _2 */\n
 
+theorem::
+Theorem _1 when _2 |-->
+
+rewrite::
+Rewrite _1 to _2 |-->
+
 
 prove::
 Prove _1 if _2 |-->\n /* invariant _2 => _1 */\n
@@ -35,14 +41,31 @@ Substitute _1 for _2 in _3 |-->\n /* invariant _3 */\n<action> _1 / _2
 solve::
 Solve _* for _+ |-->
 
-reexpression::
-Express _1 as _2 |-->
+expressAs::
+Express _1 as polynomial in _2 |-->
 
 
 formula::
 Define _1 |-->
-Define _1 = _2 |-->\n\n  function double _1Definition()\n  { return _2; }
+Define _1 = _2 |-->\n\n  function double _1`operationName(_1`operationParameters)\n  { return _2; }
 Define _1 ~ _2 |--> 
+
+
+operationName::
+_1 ( ) |-->_1
+_1 ( _2 ) |-->_1
+_1 |-->_1Definition
+
+operationParameters::
+_1 ( ) |-->
+_1 ( _2 ) |-->_2`parameterDeclarations
+_1 |-->
+
+parameterDeclarations::
+_1 |-->double _1
+_1 , _* |-->double _1, _*`recurse
+
+
 
 
 factorBy::
@@ -57,7 +80,7 @@ Substitute _1 in _2 |-->
 
 
 definesToAttributes::
-Define _1 = _2 |-->\n  double _1 = _2;
+Define _1 = _2 |-->\n  double _1 = _2;<when> _1`isIdentifier true
 Define _1 |-->\n  double _1;
 Define _1 ~ _2 |-->\n  OclRandom _1 = OclRandom.newOclRandom_2`randomParameters; 
 
@@ -120,9 +143,9 @@ _1 => _2 |-->(_1 ? _2 : true)
 
 £ _1 : _2 • true |-->true
 £ _1 : _2 • false |-->false
-£ _1 : _2 • _3 |-->_2->exists( _1 | _3 )
+£ _1 : _2 • _3 |-->(_2).Any( _1 => _3 )
 
-¡ _1 : _2 • _3 |-->_2->forAll( _1 | _3 )
+¡ _1 : _2 • _3 |-->(_2).All( _1 => _3 )
 
 _1 _2 _3 |-->_1 _2 _3
 
@@ -148,8 +171,8 @@ _1 >= _2 |-->_1 >= _2
 _1 © Ø |-->false
 _1 ¢ Ø |-->true
 
-_1 © _2 |-->(_2)->includes(_1)
-_1 ¢ _2 |-->(_2)->excludes(_1)
+_1 © _2 |-->(_2).Contains(_1)
+_1 ¢ _2 |-->!(_2).Contains(_1)
 
 _1 _2 _3 |-->_1 _2 _3
 _1 |-->_1
@@ -195,40 +218,40 @@ _1 / _2 |-->_1/_2
 
 0 ! |-->1
 1 ! |-->1
-_1 ! |-->math.factorial(_1)
+_1 ! |-->MathLib.factorial(_1)
 
 _1 ´ |-->_1´
 
 
 † 0 |-->0
 † 1 |-->1
-† _1 |-->sqrt(_1)
+† _1 |-->Math.Sqrt(_1)
 
 ‡ _1 _2 |-->_1*_2`tail<when> _1 integer
 ‡ _1 _2 |-->_1*_2`tail<when> _1 real
 ‡ x dx |-->(x^(2)/2)
-‡ _1 dx |-->math.indefiniteIntegral((double x) => _1)
+‡ _1 dx |-->MathLib.indefiniteIntegral((double x) => _1)
 
-‡ _1 _2 |-->math.indefiniteIntegral((double _2`tail) => _1)
+‡ _1 _2 |-->MathLib.indefiniteIntegral((double _2`tail) => _1)
 
 ‡ _{ _1 } ^{ _2 } _3 _4 |-->_3*(_2 - _1)<when> _3 integer
 ‡ _{ _1 } ^{ _2 } _3 _4 |-->_3*(_2 - _1)<when> _3 real
 
-‡ _{ _1 } ^{ _2 } x dx |-->(_2^(2)/2) - (_1^(2)/2)
-‡ _{ _1 } ^{ _2 } _3 _4 |-->math.definiteIntegral(_1, _2, (double _4`tail) => _3) 
+‡ _{ _1 } ^{ _2 } x dx |-->0.5*(_2^(2) - _1^(2))
+‡ _{ _1 } ^{ _2 } _3 _4 |-->MathLib.definiteIntegral(_1, _2, (double _4`tail) => _3) 
 
 € _{ _1 } ^{ _2 } _3 |-->_3*(_2 - _1`rhs + 1)<when> _3 integer
 € _{ _1 } ^{ _2 } _3 |-->_3*(_2 - _1`rhs + 1)<when> _3 real
-€ _{ _1 } ^{ _2 } _3 |-->math.Sum((int _1`lhs) => _3, _1`rhs, _2)
+€ _{ _1 } ^{ _2 } _3 |-->MathLib.Sum((int _1`lhs) => _3, _1`rhs, _2)
 
 × _{ _1 } ^{ _2 } _3 |-->_3^(_2 - _1`rhs + 1)<when> _3 integer
 × _{ _1 } ^{ _2 } _3 |-->_3^(_2 - _1`rhs + 1)<when> _3 real
-× _{ _1 } ^{ _2 } _3 |-->math.Prd((int _1`lhs) => _3, _1`rhs, _2)
+× _{ _1 } ^{ _2 } _3 |-->MathLib.Prd((int _1`lhs) => _3, _1`rhs, _2)
 
 C_ { 0 } ^{ _1 } |-->1
 C_ { _1 } ^{ _1 } |-->1
 C_ { 1 } ^{ _1 } |-->_1
-C_ { _1 } ^{ _2 } |-->math.combinatorial(_2,_1)
+C_ { _1 } ^{ _2 } |-->MathLib.combinatorial(_2,_1)
  
 E[ _1 ] |-->_1.mean()
 
@@ -242,11 +265,11 @@ _1 ^{ 0 } |-->1
 0 ^{ 2 } |-->0
 0 ^{ 3 } |-->0
 
-e ^{ _1 } |-->exp(_1)
+e ^{ _1 } |-->MathLib.Exp(_1)
 
 _1 ^{ _2 } |-->_1^(_2)
 
-_1 _{ _2 } |-->_1[_2]
+_1 _{ _2 } |-->_1.Get(_2-1)
 
 _1 _2 |-->_1_2
 
@@ -254,14 +277,14 @@ _1 |-->_1
 
 
 basicExpression::
-e |-->math.e()
+e |-->MathLib.eValue()
 0.0 |-->0
 1.0 |-->1
 
-Ø |-->Set{}
+Ø |-->(new Collection[double])
 … |-->math.infinity
 
-g{ p } |-->math.pi()
+g{ p } |-->Math.Pi()
 g{ a } |-->alpha
 g{ b } |-->beta
 g{ c } |-->chi
@@ -290,25 +313,25 @@ sinh ( 0 ) |-->0
 tanh ( 0 ) |-->0
 sech ( 0 ) |-->1
 
-cosec ( _1 ) |-->(1.0/sin(_1))
-sec ( _1 ) |-->(1.0/cos(_1))
-cot ( _1 ) |-->(1.0/tan(_1))
+cosec ( _1 ) |-->(1.0/Math.Sin(_1))
+sec ( _1 ) |-->(1.0/Math.Cos(_1))
+cot ( _1 ) |-->(1.0/Math.Tan(_1))
 
-acosec ( _1 ) |-->asin(1.0/_1)
-asec ( _1 ) |-->acos(1.0/_1)
-acot ( _1 ) |-->atan(1.0/_1)
+acosec ( _1 ) |-->Math.Asin(1.0/_1)
+asec ( _1 ) |-->Math.Acos(1.0/_1)
+acot ( _1 ) |-->Math.Atan(1.0/_1)
 
 cosech ( _1 ) |-->(1.0/sinh(_1))
 sech ( _1 ) |-->(1.0/cosh(_1))
 coth ( _1 ) |-->(1.0/tanh(_1))
 
-acosech ( _1 ) |-->math.asinh(1.0/_1)
-asech ( _1 ) |-->math.acosh(1.0/_1)
-acoth ( _1 ) |-->math.atanh(1.0/_1)
+acosech ( _1 ) |-->MathLib.asinh(1.0/_1)
+asech ( _1 ) |-->MathLib.acosh(1.0/_1)
+acoth ( _1 ) |-->MathLib.atanh(1.0/_1)
 
-sin ( _1 ) |-->sin(_1)
-cos ( _1 ) |-->cos(_1)
-tan ( _1 ) |-->tan(_1)
+sin ( _1 ) |-->Math.Sin(_1)
+cos ( _1 ) |-->Math.Cos(_1)
+tan ( _1 ) |-->Math.Tan(_1)
 
 sinh ( _1 ) |-->sinh(_1)
 cosh ( _1 ) |-->cosh(_1)
@@ -318,12 +341,12 @@ exp ( _1 ) |-->exp(_1)
 log ( _1 ) |-->log(_1)
 log10 ( _1 ) |-->log10(_1)
 
-ceil ( _1 ) |-->ceil(_1)
-floor ( _1 ) |-->floor(_1)
-round ( _1 ) |-->round(_1)
+ceil ( _1 ) |-->Math.Ceil(_1)
+floor ( _1 ) |-->Math.Floor(_1)
+round ( _1 ) |-->Math.Round(_1,0)
 
-min ( _1 ) |-->math.min(_1)
-max ( _1 ) |-->math.max(_1)
+min ( _1 ) |-->(_1).Min(x => x)
+max ( _1 ) |-->(_1).Max(x => x)
 
 Binomial ( _1 ) |-->excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
 
@@ -341,7 +364,7 @@ _1 ( ) |-->_1()
 ( _1 ) |-->_1<when> _1`bracketed true
 ( _1 ) |-->(_1)
 
-_1 [ _2 ] |-->_1[_2]
+_1 [ _2 ] |-->_1.Get(_2-1)
 
 _1 . _2 |-->_1._2
 
@@ -349,8 +372,8 @@ _1 |-->_1
 
 
 setExpression::
-{ _1 : _2 | _3 } |-->_2->select( _1 | _3 )
-{ _1 : _2 | _3 • _4 } |-->_2->select( _1 | _3 )->collect( _1 | _4)
+{ _1 : _2 | _3 } |-->(_2).Where( _1 => _3 )
+{ _1 : _2 | _3 • _4 } |-->(_2).Where( _1 => _3 ).Select( _1 => _4)
   
 
 identifier::

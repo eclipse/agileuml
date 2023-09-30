@@ -53,9 +53,18 @@ PriorityBlockingQueue |-->Sequence
 PriorityQueue |-->Sequence
 BitSet |-->Sequence(boolean)
 ByteBuffer |-->Sequence(int)
+CharBuffer |-->Sequence(int)
+IntBuffer |-->Sequence(int)
+LongBuffer |-->Sequence(int)
+ShortBuffer |-->Sequence(int)
+FloatBuffer |-->Sequence(double)
+DoubleBuffer |-->Sequence(double)
+
 Stream |-->Sequence
 JsonArray |-->Sequence
 JSONArray |-->Sequence
+Multiset |-->Sequence
+MultiSet |-->Sequence
 
 Set |-->Set
 TreeSet |-->Set
@@ -196,7 +205,8 @@ NoClassDefFoundError |-->AccessingException
 LinkageError |-->AccessingException
 SecurityException |-->AccessingException
 BindException |-->AccessingException
-
+ReadOnlyBufferException |-->AccessingException
+ReadOnlySystemException |-->AccessingException
 
 Object |-->OclAny
 Iterable |-->Sequence
@@ -831,6 +841,8 @@ NoClassDefFoundError |-->AccessingException
 LinkageError |-->AccessingException
 SecurityException |-->AccessingException
 BindException |-->AccessingException
+ReadOnlyBufferException |-->AccessingException
+ReadOnlySystemException |-->AccessingException
 
 _1 . _* |-->_*`recurse
 _1 |-->_1
@@ -1053,6 +1065,12 @@ offerLast ( _1 ) |-->->append(_1)
 trim ( ) |-->->trim()
 printStackTrace ( ) |-->.printStackTrace()
 setElementAt ( _1 ) |-->.setAt(_1`last+1, _1`first)
+putChar ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
+putInt ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
+putLong ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
+putShort ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
+putFloat ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
+putDouble ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
 set ( _1 ) |-->.setAt(_1`first+1, _1`last)<when> _1 multiple
 set ( _1 ) |-->.set(_1)
 setSize ( _1 ) |-->.subrange(1,_1)
@@ -1064,6 +1082,12 @@ insert ( _1 ) |-->.insertAt(_1`first+1, StringLib.newString(_1`tailtail))
 setCharAt ( _1 ) |-->.setAt(_1`first+1, _1`last)
 setLength ( _1 ) |-->.subrange(1,_1)
 reverse ( ) |-->->reverse()
+asCharBuffer ( ) |-->->oclAsType(Sequence(int))
+asIntBuffer ( ) |-->->oclAsType(Sequence(int))
+asShortBuffer ( ) |-->->oclAsType(Sequence(int))
+asLongBuffer ( ) |-->->oclAsType(Sequence(int))
+asFloatBuffer ( ) |-->->oclAsType(Sequence(double))
+asDoubleBuffer ( ) |-->->oclAsType(Sequence(double))
 
 _1 ( _2 ) |-->
 _1 ( ) |-->
@@ -2791,6 +2815,8 @@ NoClassDefFoundError |-->AccessingException
 LinkageError |-->AccessingException
 SecurityException |-->AccessingException
 BindException |-->AccessingException
+ReadOnlyBufferException |-->AccessingException
+ReadOnlySystemException |-->AccessingException
 
 
 Object |-->OclAny
