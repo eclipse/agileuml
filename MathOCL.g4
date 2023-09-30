@@ -60,7 +60,7 @@ simplify
     ; 
 
 substituting
-    : 'Substitute' expression 'for' ID 'in' expression
+    : 'Substitute' expression 'for' basicExpression 'in' expression
     ; 
 
 solve 
@@ -76,7 +76,7 @@ expanding
     ; 
 
 substituteIn
-    : 'Substitute' ID 'in' expression
+    : 'Substitute' basicExpression 'in' expression
     ; 
 
 expandTo

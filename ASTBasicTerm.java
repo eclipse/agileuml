@@ -1287,6 +1287,13 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     } 
+
+    if ("Multiset".equals(value) || 
+        "MultiSet".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    } 
      
     if ("BitSet".equals(value))
     { modelElement = new Type("Sequence", null);
@@ -1295,11 +1302,25 @@ public class ASTBasicTerm extends ASTTerm
       return "Sequence(boolean)";
     } 
 
-    if ("ByteBuffer".equals(value))
+    if ("ByteBuffer".equals(value) || 
+        "IntBuffer".equals(value) ||
+        "ShortBuffer".equals(value) || 
+        "CharBuffer".equals(value) || 
+        "LongBuffer".equals(value) 
+       )
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setElementType(new Type("int", null));  
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence(int)";
+    } 
+
+    if ("FloatBuffer".equals(value) || 
+        "DoubleBuffer".equals(value)
+       )
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("double", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(double)";
     } 
 
     if ("Set".equals(value) || "HashSet".equals(value) ||
@@ -1674,7 +1695,10 @@ public class ASTBasicTerm extends ASTTerm
         "LinkageError".equals(value) || 
         "SecurityException".equals(value) ||  
         "NoClassDefFoundError".equals(value) ||
-        "BindException".equals(value))
+        "BindException".equals(value) ||
+        "ReadOnlyBufferException".equals(value) || 
+        "ReadOnlySystemException".equals(value)
+       )
     { modelElement = new Type("AccessingException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "AccessingException"; 
@@ -2041,6 +2065,13 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     } 
+
+    if ("Multiset".equals(value) || 
+        "MultiSet".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    } 
      
     if ("BitSet".equals(value))
     { modelElement = new Type("Sequence", null);
@@ -2049,11 +2080,25 @@ public class ASTBasicTerm extends ASTTerm
       return "Sequence(boolean)"; 
     } 
 
-    if ("ByteBuffer".equals(value))
+    if ("ByteBuffer".equals(value) || 
+        "IntBuffer".equals(value) ||
+        "ShortBuffer".equals(value) || 
+        "CharBuffer".equals(value) || 
+        "LongBuffer".equals(value) 
+       )
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setElementType(new Type("int", null));  
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence(int)";
+    } 
+
+    if ("FloatBuffer".equals(value) || 
+        "DoubleBuffer".equals(value)
+       )
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("double", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(double)";
     } 
 
     if ("Set".equals(value) ||
@@ -2413,7 +2458,9 @@ public class ASTBasicTerm extends ASTTerm
         "LinkageError".equals(value) || 
         "SecurityException".equals(value) ||  
         "NoClassDefFoundError".equals(value) ||
-        "BindException".equals(value))
+        "BindException".equals(value) ||
+        "ReadOnlyBufferException".equals(value) || 
+        "ReadOnlySystemException".equals(value))
     { modelElement = new Type("AccessingException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "AccessingException"; 

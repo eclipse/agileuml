@@ -807,7 +807,9 @@ public class MathOCLParser extends Parser {
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
-		public TerminalNode ID() { return getToken(MathOCLParser.ID, 0); }
+		public BasicExpressionContext basicExpression() {
+			return getRuleContext(BasicExpressionContext.class,0);
+		}
 		public SubstitutingContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -835,7 +837,7 @@ public class MathOCLParser extends Parser {
 			setState(134);
 			match(T__13);
 			setState(135);
-			match(ID);
+			basicExpression(0);
 			setState(136);
 			match(T__14);
 			setState(137);
@@ -998,7 +1000,9 @@ public class MathOCLParser extends Parser {
 	}
 
 	public static class SubstituteInContext extends ParserRuleContext {
-		public TerminalNode ID() { return getToken(MathOCLParser.ID, 0); }
+		public BasicExpressionContext basicExpression() {
+			return getRuleContext(BasicExpressionContext.class,0);
+		}
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
@@ -1025,7 +1029,7 @@ public class MathOCLParser extends Parser {
 			setState(155);
 			match(T__12);
 			setState(156);
-			match(ID);
+			basicExpression(0);
 			setState(157);
 			match(T__14);
 			setState(158);
@@ -3159,13 +3163,13 @@ public class MathOCLParser extends Parser {
 		"\34\2{\r\3\2\2\2|}\7\f\2\2}~\5,\27\2~\177\7\r\2\2\177\u0080\5,\27\2\u0080"+
 		"\17\3\2\2\2\u0081\u0084\7\16\2\2\u0082\u0085\5\b\5\2\u0083\u0085\5,\27"+
 		"\2\u0084\u0082\3\2\2\2\u0084\u0083\3\2\2\2\u0085\21\3\2\2\2\u0086\u0087"+
-		"\7\17\2\2\u0087\u0088\5,\27\2\u0088\u0089\7\20\2\2\u0089\u008a\7l\2\2"+
+		"\7\17\2\2\u0087\u0088\5,\27\2\u0088\u0089\7\20\2\2\u0089\u008a\5.\30\2"+
 		"\u008a\u008b\7\21\2\2\u008b\u008c\5,\27\2\u008c\23\3\2\2\2\u008d\u008e"+
 		"\7\22\2\2\u008e\u008f\5*\26\2\u008f\u0090\7\20\2\2\u0090\u0091\5&\24\2"+
 		"\u0091\25\3\2\2\2\u0092\u0093\7\23\2\2\u0093\u0094\5\66\34\2\u0094\u0095"+
 		"\7\24\2\2\u0095\u0096\5*\26\2\u0096\27\3\2\2\2\u0097\u0098\7\25\2\2\u0098"+
 		"\u0099\5,\27\2\u0099\u009a\7\r\2\2\u009a\u009b\7k\2\2\u009b\u009c\7\26"+
-		"\2\2\u009c\31\3\2\2\2\u009d\u009e\7\17\2\2\u009e\u009f\7l\2\2\u009f\u00a0"+
+		"\2\2\u009c\31\3\2\2\2\u009d\u009e\7\17\2\2\u009e\u009f\5.\30\2\u009f\u00a0"+
 		"\7\21\2\2\u00a0\u00a1\5,\27\2\u00a1\33\3\2\2\2\u00a2\u00a3\7\27\2\2\u00a3"+
 		"\u00a4\5,\27\2\u00a4\u00a5\7\r\2\2\u00a5\u00a6\7k\2\2\u00a6\u00a7\7\26"+
 		"\2\2\u00a7\35\3\2\2\2\u00a8\u00a9\7\30\2\2\u00a9\u00aa\5,\27\2\u00aa\u00ab"+

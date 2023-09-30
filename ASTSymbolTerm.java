@@ -592,6 +592,14 @@ public class ASTSymbolTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
+
+    if ("Multiset".equals(symbol) || 
+        "MultiSet".equals(symbol))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    } 
+
  
     if ("Set".equals(symbol) || "HashSet".equals(symbol) ||
         "EnumSet".equals(symbol)) 
@@ -615,11 +623,25 @@ public class ASTSymbolTerm extends ASTTerm
       return "Sequence(boolean)"; 
     } 
 
-    if ("ByteBuffer".equals(symbol))
+    if ("ByteBuffer".equals(symbol) || 
+        "IntBuffer".equals(symbol) ||
+        "ShortBuffer".equals(symbol) || 
+        "CharBuffer".equals(symbol) || 
+        "LongBuffer".equals(symbol) 
+       )
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setElementType(new Type("int", null));  
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence(int)";
+    } 
+
+    if ("FloatBuffer".equals(symbol) || 
+        "DoubleBuffer".equals(symbol)
+       )
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("double", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(double)";
     } 
 
     if ("HashMap".equals(symbol) || 

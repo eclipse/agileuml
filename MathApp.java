@@ -655,13 +655,251 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
       Action loadAction = new LoadAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
-      menu.add(loadAction); 
-        
+      JMenuItem loadMI = menu.add(loadAction); 
+      loadMI.setToolTipText("Load from Test.xml, data.ser"); 
+
       Action saveAction = new SaveAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
-      menu.add(saveAction); 
+      JMenuItem saveMI = menu.add(saveAction);
+      saveMI.setToolTipText("Save in Test.xml, data.ser"); 
+ 
       return menu; 
    } 
+
+  public void loadKM3FromFile(File file)
+  { 
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    
+    try
+    { br = new BufferedReader(new FileReader(file)); }
+    catch (FileNotFoundException e)
+    { System.out.println("!! File not found: " + file.getName());
+      return; 
+    }
+
+    String xmlstring = ""; 
+    int linecount = 0; 
+
+    while (!eof)
+    { try 
+      { s = br.readLine(); }
+      catch (IOException e)
+      { System.out.println("!! Reading " + file.getName() + " failed.");
+        return; 
+      }
+
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("import ")) 
+      { System.out.println(">> Import directive: " + s); } 
+      else if (s.startsWith("//"))
+      { System.out.println(">> Comment: " + s); }
+      else  
+      { xmlstring = xmlstring + s + " "; } 
+      linecount++; 
+    }
+
+    System.out.println(">>> " + linecount + " lines in KM3 file"); 
+    loadKM3FromText(xmlstring); 
+  }
+
+  private void loadKM3FromText(String xmlstring)
+  { 
+    Vector oldentities = new Vector(); 
+    oldentities.addAll(entities); 
+	
+    Vector oldtypes = new Vector(); 
+    oldtypes.addAll(types); 
+	
+    Vector pregens = new Vector(); 
+    Vector preassocs = new Vector(); 
+    Vector pnames = new Vector(); 
+
+    Compiler2 comp = new Compiler2();  
+    comp.nospacelexicalanalysis(xmlstring);
+
+    Vector xentities = new Vector(); 
+    Vector xtypes = new Vector(); 
+    comp.identifyKM3classifiers(xentities,xtypes); 
+
+    System.out.println(">>> Identified classes: " + xentities); 
+    System.out.println(">>> Identified types: " + xtypes); 
+
+    // As bases for parsing, also include oldentities and 
+    // oldtypes which are not in xentities, xtypes
+
+    for (int i = 0; i < oldentities.size(); i++) 
+    { Entity oldent = (Entity) oldentities.get(i); 
+      String oldname = oldent.getName(); 
+      Entity ex = 
+        (Entity) ModelElement.lookupByName(oldname,xentities); 
+      if (ex == null)
+      { xentities.add(oldent); } 
+    } 
+
+    for (int i = 0; i < oldtypes.size(); i++) 
+    { Type oldtyp = (Type) oldtypes.get(i); 
+      // String oldname = oldtyp.getName(); 
+      // Type tx = 
+      //   (Type) ModelElement.lookupByName(oldname,xtypes); 
+      // if (tx == null)
+      { xtypes.add(oldtyp); } 
+    } 
+ 
+    Vector items = comp.parseKM3(xentities,xtypes,
+                                 pregens,preassocs,pnames); 
+    System.out.println(">>> Packages " + pnames + " in KM3 file"); 
+    /* if (pnames.size() > 0) 
+    { setSystemName((String) pnames.get(0)); }
+	
+    Vector passocs = new Vector(); 
+    passocs.addAll(preassocs); 
+
+    for (int aa = 0; aa < preassocs.size(); aa++) 
+    { PreAssociation a1 = (PreAssociation) preassocs.get(aa); 
+      for (int bb = aa+1; bb < preassocs.size(); bb++) 
+      { PreAssociation b1 = (PreAssociation) preassocs.get(bb); 
+        if (a1.isDualTo(b1)) 
+        { PreAssociation c1 = a1.combineWith(b1); 
+          passocs.remove(a1); 
+          passocs.remove(b1); 
+          passocs.add(c1); 
+        } 
+      } 
+    } 
+
+    int delta = 180; // visual displacement 
+    int ecount = oldentities.size() + 1; */ 
+
+    Vector newentities = new Vector(); 
+    newentities.addAll(xentities); 
+    newentities.removeAll(oldentities); 
+
+    System.out.println(">>> New entities: " + newentities); 
+	
+   
+    for (int i = 0; i < newentities.size(); i++) 
+    { Entity enode = (Entity) newentities.get(i);
+      if (enode.isGenericParameter()) 
+      { continue; } 
+
+     /* int xval = 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5; 
+      int yval = 150 + (ecount % 5)*delta; 
+ 
+      String ex = enode.getTaggedValue("x"); 
+      if (ex != null) 
+      { xval = Integer.parseInt(ex); } 
+
+      String ey = enode.getTaggedValue("y"); 
+      if (ey != null) 
+      { yval = Integer.parseInt(ey); } */ 
+
+      entities.add(enode); 
+      // addEntity(enode, xval, yval); 
+      // addOperationActivities(enode); 
+         // But not for existing entities  
+      // ecount++; 
+    } 
+
+    Vector newtypes = new Vector(); 
+    newtypes.addAll(xtypes); 
+    newtypes.removeAll(oldtypes); 
+
+  /* 
+    for (int j = 0; j < newtypes.size(); j++) 
+    { Type tt = (Type) newtypes.get(j); 
+      // if (tt.isEnumeration())
+      { RectData rd = new RectData(120*j,20,getForeground(),
+                                 componentMode,
+                                 rectcount);
+        rectcount++;
+        rd.setLabel(tt.getName());
+        Type existingtype = 
+          (Type) ModelElement.lookupByName(
+                                 tt.getName(),types); 
+        if (existingtype != null) 
+        { existingtype.mergeTypes(tt); }
+        else 
+        { existingtype = tt;
+          types.add(tt);
+        } 
+        rd.setModelElement(existingtype); 
+        visuals.add(rd); 
+        System.out.println(">>> Added type " + existingtype); 
+      } 
+    } 
+
+    for (int p = 0; p < pregens.size(); p++) 
+    { PreGeneralisation pg = (PreGeneralisation) pregens.get(p); 
+      String e1n = pg.e1name;   // subclass
+      String e2n = pg.e2name;   // superclass 
+      Entity subc = 
+        (Entity) ModelElement.lookupByName(e1n,entities);
+      Entity supc = 
+        (Entity) ModelElement.lookupByName(e2n,entities);
+
+      if (subc == null) 
+      { System.err.println("!!! ERROR: no subclass entity " + pg.e1name); } 
+      if (supc == null) 
+      { System.err.println("!!! ERROR: no superclass entity " +  pg.e2name); } 
+
+      if (subc != null && supc != null) 
+      { Generalisation g = new Generalisation(supc,subc);
+        addInheritance(g,supc,subc); 
+        supc.setAbstract(true); 
+      } 
+    } 
+
+    for (int q = 0; q < passocs.size(); q++) 
+    { PreAssociation pa = (PreAssociation) passocs.get(q);  
+      Entity e1 =
+        (Entity) ModelElement.lookupByName(pa.e1name,entities);
+      Entity e2 =
+        (Entity) ModelElement.lookupByName(pa.e2name,entities);
+
+      if (e1 == null) 
+      { System.err.println("!!! ERROR: no entity " + pa.e1name); } 
+      if (e2 == null) 
+      { System.err.println("!!! ERROR: no entity for " + pa.e1name + "." + pa.role2 + " : " + pa.e2name); } 
+
+      
+      if (e1 != null && e2 != null) 
+      { RectData rd1 = (RectData) getVisualOf(e1); 
+        RectData rd2 = (RectData) getVisualOf(e2);
+        Vector linecoords = lineCoordinates(rd1, rd2, e1, e2); 
+
+        int xs = ((Integer) linecoords.get(0)).intValue();
+        int ys = ((Integer) linecoords.get(1)).intValue(); 
+        int xe = ((Integer) linecoords.get(2)).intValue(); 
+        int ye = ((Integer) linecoords.get(3)).intValue();   
+
+        if (rd1 == rd2)
+        { xs = rd2.sourcex + 10; 
+          xe = rd2.sourcex + rd2.width - 10;
+          ys = rd2.sourcey + 10;  
+          ye = rd2.sourcey + rd2.height - 10; 
+        }
+
+        reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
+                    xe,ye,pa.card1,pa.card2,
+                    pa.role2, pa.role1, pa.stereotypes, 
+                    new Vector());
+      } 
+    } 
+
+    for (int h = 0; h < items.size(); h++) 
+    { Object hx = items.get(h); 
+      if (hx instanceof UseCase) 
+      { addGeneralUseCase((UseCase) hx); } 
+    } 
+
+    repaint(); */  
+  }
 
   class SaveAction extends AbstractAction
   { public SaveAction()
@@ -850,7 +1088,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         if (trm != null && trm instanceof ASTCompositeTerm)  
         { ASTCompositeTerm spec = (ASTCompositeTerm) trm;
           ASTTerm.mathoclvars = new java.util.HashMap();  
-          ASTTerm.mathoclrewrites = new Vector();  
+          ASTTerm.mathoclrewrites = new Vector(); 
+          ASTTerm.mathoclfunctionIndex = 1;  
           spec.checkMathOCL(); 
 
           // String extracode = 
@@ -965,12 +1204,20 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           String arg1 = CGRule.correctNewlines(entcode); 
           System.out.println(arg1); 
 
+          File mathlib = new File("libraries/mathlib.km3"); 
+          if (mathlib.exists())
+          { loadKM3FromFile(mathlib); }
+          else 
+          { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+
           Compiler2 comp = new Compiler2(); 
           comp.nospacelexicalanalysis("package app {\n " + arg1 + "\n}\n\n"); 
-          entities = comp.parseKM3();
+          Vector yentities = comp.parseKM3();
 
-          for (int k = 0; k < entities.size(); k++) 
-          { Entity ent = (Entity) entities.get(k); 
+          entities.addAll(yentities); 
+
+          for (int k = 0; k < yentities.size(); k++) 
+          { Entity ent = (Entity) yentities.get(k); 
             ent.typeCheck(types,entities); 
           } 
  

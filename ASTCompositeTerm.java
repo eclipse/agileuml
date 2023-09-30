@@ -26051,6 +26051,31 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + " := " + args + ".setAt(" + callp1 + "+1, " + callp2 + ")"; 
         }  
+        else if (("putInt".equals(called) || 
+                  "putChar".equals(called) || 
+                  "putLong".equals(called) || 
+                  "putShort".equals(called) || 
+                  "putFloat".equals(called) || 
+                  "putDouble".equals(called)) && 
+                 arg.isSequence() && cargs.size() >= 2)
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+
+          if (arg.expression != null && 
+              callarg1.expression != null &&
+              callarg2.expression != null) 
+          { Vector pars = new Vector(); 
+            Expression par1 = new BinaryExpression("+", callarg1.expression, new BasicExpression(1)); 
+            pars.add(par1); 
+            pars.add(callarg2.expression);  
+            expression = BasicExpression.newFunctionBasicExpression("setAt", arg.expression, pars); 
+            statement = new AssignStatement(arg.expression, expression); 
+          }
+
+          return args + " := " + args + ".setAt(" + callp1 + "+1, " + callp2 + ")"; 
+        }  // Plus cloning operations asFloatBuffer, etc
         else if ("setLength".equals(called) && arg.isString() && cargs.size() >= 1)
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
@@ -43539,7 +43564,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm.mathoclvars.put(vname, expr); 
       JOptionPane.showMessageDialog(null, 
                ">> " + vname + " now defined as " + 
-               expr.literalForm(), 
+               expr.literalFormSpaces(), 
                "", 
                JOptionPane.INFORMATION_MESSAGE);
 
