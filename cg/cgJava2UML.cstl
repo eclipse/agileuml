@@ -707,7 +707,7 @@ instanceBlockInitialisation::
 
 
 fieldDeclaration::
-_1 _2 ; |-->  attribute _2`variableName : _1;\n<action> _2`variableName _1
+_1 _2 ; |-->  attribute _2`variableName : _1_2`variableInitialValue;\n<action> _2`variableName _1
 
 
 localVariableDeclaration::
@@ -721,6 +721,11 @@ _1 , _2 |-->_1`variableName<when> _1 variableDeclarator
 _1 = _2 |-->_1
 _1 |-->_1
 
+variableInitialValue::
+_1 |-->_1`variableInitialValue<when> _1 variableDeclarator
+_1 , _2 |-->_1`variableInitialValue<when> _1 variableDeclarator
+_1 = _2 |--> := _2
+_1 |-->
 
 
 variableDeclaratorId::
