@@ -400,15 +400,11 @@ log10 ( 10 ) |-->1
 log10 ( … ) |-->…
 log10 ( 0 ) |-->-…
 
-cosh ( 0 ) |-->1
-sinh ( 0 ) |-->0
-
-cosh ( -x ) |-->cosh(x)
-sinh ( -x ) |-->-sinh(x)
-tanh ( -x ) |-->-tanh(x)
+cosh ( _1 ) |-->_1`evaluateCosh
+sinh ( _1 ) |-->_1`evaluateSinh
 
 tanh ( 0 ) |-->0
-tanh ( _1 ) |-->(sinh(_1)/cosh(_1))
+tanh ( _1 ) |-->(_1`evaluateSinh/_1`evaluateCosh)
 
 sec ( 0 ) |-->1
 sech ( 0 ) |-->1
@@ -469,6 +465,56 @@ Sequence{ _1 } |-->Sequence{_1}
 
 identifier::
 _1 |-->_1
+
+
+evaluateCosh::
+0 |-->1
+0.0 |-->1
+
+( _1 ) |-->_1`evaluateCosh
+
+- _1 |-->_1`evaluateCosh
+
+_1 + _2 |-->(_1`evaluateCosh)*(_2`evaluateCosh) + (_1`evaluateSinh)*(_2`evaluateSinh)
+_1 - _2 |-->(_1`evaluateCosh)*(_2`evaluateCosh) - (_1`evaluateSinh)*(_2`evaluateSinh)
+
+2 * _1 |-->(_1`evaluateCosh)*(_1`evaluateCosh) + (_1`evaluateSinh)*(_1`evaluateSinh)
+2.0 * _1 |-->(_1`evaluateCosh)*(_1`evaluateCosh) + (_1`evaluateSinh)*(_1`evaluateSinh)
+
+_1 |-->_1`evaluateCosh<when> _1 basicExpression
+_1 |-->_1`evaluateCosh<when> _1 factorExpression
+_1 |-->_1`evaluateCosh<when> _1 factor2Expression
+_1 |-->_1`evaluateCosh<when> _1 logicalExpression
+_1 |-->_1`evaluateCosh<when> _1 equalityExpression
+_1 |-->_1`evaluateCosh<when> _1 additiveExpression
+_1 |-->_1`evaluateCosh<when> _1 expression
+
+_0 |-->cosh(_0)
+
+
+evaluateSinh::
+0 |-->0
+0.0 |-->0
+
+( _1 ) |-->_1`evaluateSinh
+
+- _1 |-->-(_1`evaluateSinh)
+
+_1 + _2 |-->(_1`evaluateSinh)*(_2`evaluateCosh) + (_1`evaluateCosh)*(_2`evaluateSinh)
+_1 - _2 |-->(_1`evaluateSinh)*(_2`evaluateCosh) - (_1`evaluateCosh)*(_2`evaluateSinh)
+
+2 * _1 |-->2*(_1`evaluateCosh)*(_1`evaluateSinh)
+2.0 * _1 |-->2*(_1`evaluateCosh)*(_1`evaluateSinh)
+
+_1 |-->_1`evaluateSinh<when> _1 basicExpression
+_1 |-->_1`evaluateSinh<when> _1 factorExpression
+_1 |-->_1`evaluateSinh<when> _1 factor2Expression
+_1 |-->_1`evaluateSinh<when> _1 logicalExpression
+_1 |-->_1`evaluateSinh<when> _1 equalityExpression
+_1 |-->_1`evaluateSinh<when> _1 additiveExpression
+_1 |-->_1`evaluateSinh<when> _1 expression
+
+_0 |-->sinh(_0)
 
 
 evaluateLimit::

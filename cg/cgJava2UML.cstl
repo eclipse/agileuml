@@ -34,6 +34,7 @@ EnumMap |-->Map
 Entry |-->Map
 Pair |-->Map
 Triple |-->Map
+LinkedHashMap |-->Map
 
 Vector |-->Sequence
 ArrayList |-->Sequence
@@ -246,6 +247,7 @@ ImmutableMap _1 |-->Map_1`collectionParameters
 EnumMap _1  |-->Map_1`collectionParameters
 Pair _1 |-->Map(String,OclAny)
 Triple _1 |-->Map(String,OclAny)
+LinkedHashMap _1 |-->Map_1`collectionParameters
 
 ArrayList _1 |-->Sequence_1`collectionParameters
 List _1 |-->Sequence_1`collectionParameters
@@ -533,10 +535,10 @@ classDeclaration::
 class _1 extends _2 implements _3 _4 |-->class _1 extends _2, _3 _4\n
 class _1 extends _2 _3 |-->class _1 extends _2 _3\n
 class _1 implements _2 _3 |-->class _1 implements _2 _3\n
-class _1 _2 extends _3 implements _4 _5 |-->class _1_2 extends _3, _4 _5\n
-class _1 _2 extends _3 _4 |-->class _1_2 extends _3 _4\n
-class _1 _2 implements _3 _4 |-->class _1_2 implements _3 _4\n
-class _1 _2 _3 |-->class _1_2 _3\n
+class _1 _2 extends _3 implements _4 _5 |-->class _1_2 extends _3, _4 _5\n<action> _1`isGeneric true
+class _1 _2 extends _3 _4 |-->class _1_2 extends _3 _4\n<action> _1`isGeneric true
+class _1 _2 implements _3 _4 |-->class _1_2 implements _3 _4\n<action> _1`isGeneric true
+class _1 _2 _3 |-->class _1_2 _3\n<action> _1`isGeneric true
 class _1 _2 |-->class _1 _2\n
 
 
@@ -653,8 +655,8 @@ _1 _2 throws _3 _4 |-->  static operation new_1_2 : _1\n  pre: true\n  post: tru
 
 
 genericConstructorDeclaration::
-_1 _2 |-->  static operation new_2`first_1_2`second : _2`first\n  pre: true\n  post: true\n  activity:\n  ( var self : _2`first ;\n    self := create_2`first();\n    self.initialise_2`constructorParameterNames;\n    return self );\n\n  operation initialise_1_2`second : void\n  pre: true  post: true\n  activity: _2`third;\n\n
-
+_1 _2 |-->  static operation new_2`first_1_2`second : _2`first_1\n  pre: true\n  post: true\n  activity:\n  ( var self : _2`first_1 ;\n    self := create_2`first_1();\n    self.initialise_1_2`constructorParameterNames;\n    return self );\n\n  operation initialise_1_2`second : void\n  pre: true  post: true\n  activity: _2`third;\n\n
+_1 _2 throws _3 _4 |-->  static operation new_2`first_1_2`second : _2`first_1\n  pre: true\n  post: true\n  activity:\n  ( var self : _2`first_1 ;\n    self := create_2`first_1();\n    self.initialise_1_2`constructorParameterNames;\n    return self );\n\n  operation initialise_1_2`second : void\n  pre: true  post: true\n  activity: _4;\n\n  
 
 formalParameters::
 ( ) |-->()
@@ -1003,6 +1005,13 @@ offer ( _1 ) |-->->including(_1)
 
 remove ( ) |-->.remove()
 
+putChar ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,2))<when> _1 multiple
+putShort ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,2))<when> _1 multiple
+putInt ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,4))<when> _1 multiple
+putLong ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,8))<when> _1 multiple
+
+putFloat ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,4))<when> _1 multiple
+putDouble ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,8))<when> _1 multiple
 
  
 _1 ( ) |-->._1()
@@ -1071,7 +1080,7 @@ trim ( ) |-->->trim()
 printStackTrace ( ) |-->.printStackTrace()
 setElementAt ( _1 ) |-->.setAt(_1`last+1, _1`first)
 putChar ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
-putInt ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
+putInt ( _1 ) |-->.insertInto(_1`first+1, MathLib.integer2bytes(_1`last,4))<when> _1 multiple
 putLong ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
 putShort ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
 putFloat ( _1 ) |-->.setAt(_1`last+1, _1`first)<when> _1 multiple
@@ -1196,6 +1205,12 @@ _1 = _2 |-->_1`queryForm
 _1 . class |-->OclType["_1"]
 
 _1 . new _2 |-->_1`queryForm._2
+
+{ _1 } |-->Sequence{_1}
+
+{ _1, _* } |-->Sequence{_1,_*}
+
+{ } |-->Sequence{}
 
 Boolean . TRUE |-->true
 Boolean . FALSE |-->false
@@ -1390,8 +1405,8 @@ complementOf ( _1 ) |-->((_1->any()->oclType()).allInstances() - _1)
 of ( _1 ) |-->Set{_1}
 
 
-methodCallQueryForm::
 
+methodCallQueryForm::
 booleanValue ( ) |-->
 doubleValue ( ) |-->->oclAsType(double)
 floatValue ( ) |-->->oclAsType(double)
@@ -1540,7 +1555,7 @@ toCharArray ( ) |-->->characters()
 getBytes ( ) |-->->characters()->collect( _c | _c->char2byte() )
 getBytes ( _1 ) |-->->characters()->collect( _c | _c->char2byte() )
 
-append ( _1 ) |-->+ StringLib.newString(_1)
+append ( _1 ) |--> + StringLib.newString(_1)
 deleteCharAt ( _1 ) |-->->excludingAt(_1+1)
 delete ( _1 ) |-->->antirestrict( Integer.subrange(_1`first+1,_1`last) )
 insert ( _1 ) |-->.insertAt(_1`first+1, StringLib.newString(_1`tailtail))
@@ -2332,11 +2347,18 @@ _1 . _2 ( _3 ) |-->_1`preSideEffect_3`preSideEffect
 
 new _1 |-->
 
+{ _1 } |-->
+
+{ _1, _* } |-->
+
+{ } |-->
+
 _1 ( ) |-->
 
 _1 ( _2 ) |-->_2`expressionListPreSideEffect
 
 _1 |-->_1`preSideEffect<when> _1 multiple
+
 
 _1 |-->
 
@@ -2359,6 +2381,11 @@ _1 [ _2 ] |-->_1`postSideEffect_2`postSideEffect
 _1 ? _2 : _3 |-->_1`postSideEffect_2`postSideEffect_3`postSideEffect
 _1 :: _2 |-->
 
+{ _1 } |-->
+
+{ _1, _* } |-->
+
+{ } |-->
 
 _1 + _2 |-->_1`postSideEffect_2`postSideEffect
 _1 % _2 |-->_1`postSideEffect_2`postSideEffect
@@ -2464,12 +2491,50 @@ _1 . _2 |-->    _1 := _1_2`collectionMethodCallSideEffect<when> _1 Collection
 
 _1 . _2 |-->    _1_2`methodCallSideEffect<when> _1 File
     
-_1 . _2 |-->    _1 := _1_2`methodCallSideEffect<when> _2 updatesObject
+_1 . _2 |-->    _1`updatedObject := _1_2`methodCallSideEffect<when> _2 updatesObject
 
 _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm._2
 
 _1 |-->    _1
 
+
+
+updatedObject::
+_1 , _2 |-->_1`updatedObject
+
+new _1 |-->_1
+
+- _1 |-->
++ _1 |-->
+! _1 |-->
+~ _1 |-->
+
+++ _1 |-->_1`updatedObject
+-- _1 |-->_1`updatedObject
+
+_1 ++ |-->_1`updatedObject
+_1 -- |-->_1`updatedObject
+
+_1 = _2 |-->_1`updatedObject
+_1 += _2 |-->_1`updatedObject
+_1 -= _2 |-->_1`updatedObject
+_1 *= _2 |-->_1`updatedObject
+_1 /= _2 |-->_1`updatedObject
+_1 &= _2 |-->_1`updatedObject
+_1 |= _2 |-->_1`updatedObject
+_1 %= _2 |-->_1`updatedObject
+_1 ^= _2 |-->_1`updatedObject
+_1 <<= _2 |-->_1`updatedObject
+_1 >>= _2 |-->_1`updatedObject
+_1 >>>= _2 |-->_1`updatedObject
+
+
+System.out . _1 |-->OclFile["System.out"]
+System.in . _1 |-->OclFile["System.in"]
+System.err . _1 |-->OclFile["System.err"]
+
+_1 . _2 |-->_1`updatedObject
+_1 |-->_1
 
 
 expressionListPreSideEffect::
@@ -2493,6 +2558,14 @@ _1 _2 _3 |-->new_1_3
 
 
 creator::
+byte _1 |-->_1`intArrayInit<when> _1 arrayCreatorRest
+int _1 |-->_1`intArrayInit<when> _1 arrayCreatorRest
+long _1 |-->_1`intArrayInit<when> _1 arrayCreatorRest
+short _1 |-->_1`intArrayInit<when> _1 arrayCreatorRest
+char _1 |-->_1`intArrayInit<when> _1 arrayCreatorRest
+double _1 |-->_1`doubleArrayInit<when> _1 arrayCreatorRest
+float _1 |-->_1`doubleArrayInit<when> _1 arrayCreatorRest
+boolean _1 |-->_1`booleanArrayInit<when> _1 arrayCreatorRest
 _1 _2 |-->_2`arrayInit<when> _2 arrayCreatorRest
 
 Boolean _1 |-->("" + _1)->toBoolean()
@@ -2540,6 +2613,7 @@ TreeMap _1 |-->Map{}_1`collectionCreationRest
 ImmutableMap _1 |-->Map{}_1`collectionCreationRest
 JsonObject _1 |-->Map{}_1`collectionCreationRest
 JSONObject _1 |-->Map{}_1`collectionCreationRest
+LinkedHashMap _1 |-->Map{}_1`collectionCreationRest
 
 PrintStream _1 |-->_1`newTextWriter
 FileInputStream _1 |-->_1`newTextReader
@@ -2610,6 +2684,7 @@ Hashtable _1 |-->true
 HashMap _1 |-->true
 TreeMap _1 |-->true
 EnumMap _1 |-->true
+LinkedHashMap _1 |-->true
 
 _1 _2 |-->false
 _1 |-->false
@@ -2652,6 +2727,43 @@ arrayInit::
 [ _1 ] [ _2 ] [ ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Sequence{}))
 [ ] [ ] [ ] _1 |-->_1
 
+intArrayInit::
+[ ] |-->Sequence{}
+[ _1 ] |-->Integer.subrange(1,_1)->collect(0)
+[ ] _1 |-->_1
+[ _1 ] [ _2 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(0))
+[ _1 ] [ ] _2 |-->_2
+[ ] [ ] _1 |-->_1
+[ _1 ] [ ] |-->Integer.subrange(1,_1)->collect(Sequence{})
+[ _1 ] [ _2 ] [ _3 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Integer.subrange(1,_3)->collect(0)))
+[ _1 ] [ _2 ] [ ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Sequence{}))
+[ ] [ ] [ ] _1 |-->_1
+
+doubleArrayInit::
+[ ] |-->Sequence{}
+[ _1 ] |-->Integer.subrange(1,_1)->collect(0.0)
+[ ] _1 |-->_1
+[ _1 ] [ _2 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(0.0))
+[ _1 ] [ ] _2 |-->_2
+[ ] [ ] _1 |-->_1
+[ _1 ] [ ] |-->Integer.subrange(1,_1)->collect(Sequence{})
+[ _1 ] [ _2 ] [ _3 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Integer.subrange(1,_3)->collect(0.0)))
+[ _1 ] [ _2 ] [ ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Sequence{}))
+[ ] [ ] [ ] _1 |-->_1
+
+
+booleanArrayInit::
+[ ] |-->Sequence{}
+[ _1 ] |-->Integer.subrange(1,_1)->collect(false)
+[ ] _1 |-->_1
+[ _1 ] [ _2 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(false))
+[ _1 ] [ ] _2 |-->_2
+[ ] [ ] _1 |-->_1
+[ _1 ] [ ] |-->Integer.subrange(1,_1)->collect(Sequence{})
+[ _1 ] [ _2 ] [ _3 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Integer.subrange(1,_3)->collect(false)))
+[ _1 ] [ _2 ] [ ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Sequence{}))
+[ ] [ ] [ ] _1 |-->_1
+
 
 createdName::
 Collection |-->Sequence
@@ -2670,6 +2782,7 @@ ImmutableMap |-->Map
 Entry |-->Map
 Pair |-->Map
 Triple |-->Map
+LinkedHashMap |-->Map
 
 Vector |-->Sequence
 ArrayList |-->Sequence
@@ -2852,6 +2965,7 @@ ImmutableMap _1 |-->Map{}
 Pair _1 |-->Map{}
 Triple _1 |-->Map{}
 EnumMap _1 |-->Map{}
+LinkedHashMap _1 |-->Map{}
 
 ArrayList _1 |-->Sequence{}
 List _1 |-->Sequence{}
