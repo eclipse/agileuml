@@ -9085,6 +9085,30 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateInsertIntoOp()  
+  { String res = 
+      "  public static List insertInto(List l, int ind, List ob)\n" + 
+      "  { List res = new Vector();\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    for (int j = 0; j < ob.size(); j++)\n" + 
+      "    { res.add(ob.get(j)); }\n" + 
+      "    for (int i = ind-1; i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
+      "  { String res = \"\";\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    res = res + ob; \n" + 
+      "    for (int i = ind-1; i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
   public static String generateRemoveSetAtOps()
   { String res = 
       "  public static List removeAt(List l, int ind)\n" + 
@@ -9153,6 +9177,31 @@ public class BSystemTypes extends BComponent
       "  }\n"; 
     return res; 
   } 
+
+  public static String generateInsertIntoOpJava6()  
+  { String res = 
+      "  public static ArrayList insertInto(ArrayList l, int ind, ArrayList ob)\n" + 
+      "  { ArrayList res = new ArrayList();\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    for (int j = 0; j < ob.size(); j++)\n" + 
+      "    { res.add(ob.get(j)); }\n" + 
+      "    for (int i = ind-1; i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
+      "  { String res = \"\";\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    res = res + ob;\n" + 
+      "    for (int i = ind-1; i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
 
   public static String generateRemoveSetAtOpsJava6()
   { String res = 
@@ -9224,6 +9273,31 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateInsertIntoOpJava7()  
+  { String res = 
+      "  public static <T> ArrayList<T> insertInto(List<T> l, int ind, List<T> ob)\n" + 
+      "  { ArrayList<T> res = new ArrayList<T>();\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    for (int j = 0; j < ob.size(); j++)\n" + 
+      "    { res.add(ob.get(j)); }\n" + 
+      "    for (int i = ind-1; i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
+      "  { String res = \"\";\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    res = res + ob;\n" + 
+      "    for (int i = ind-1; i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+
   public static String generateRemoveSetAtOpsJava7()
   { String res = 
       "  public static <T> ArrayList<T> removeAt(List<T> l, int ind)\n" + 
@@ -9287,6 +9361,30 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < ind-1 && i < l.Length; i++)\n" +  
       "    { res = res + l[i]; }\n" + 
       "    if (ind <= l.Length + 1) { res = res + ob; }\n" + 
+      "    for (int i = ind-1; i < l.Length; i++)\n" +  
+      "    { res = res + l[i]; }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateInsertIntoOpCSharp()  
+  { String res = 
+      "  public static ArrayList insertInto(ArrayList l, int ind, ArrayList ob)\n" + 
+      "  { ArrayList res = new ArrayList();\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.Count; i++)\n" +  
+      "    { res.Add(l[i]); }\n" + 
+      "    for (int j = 0; j < ob.Count; j++) \n" + 
+      "    { res.Add(ob[j]); }\n" + 
+      "    for (int i = ind-1; i < l.Count; i++)\n" +  
+      "    { res.Add(l[i]); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    res = res + "  public static string insertInto(string l, int ind, object ob)\n" + 
+      "  { string res = \"\";\n" + 
+      "    for (int i = 0; i < ind-1 && i < l.Length; i++)\n" +  
+      "    { res = res + l[i]; }\n" + 
+      "    res = res + ob; \n" + 
       "    for (int i = ind-1; i < l.Length; i++)\n" +  
       "    { res = res + l[i]; }\n" + 
       "    return res;\n" + 

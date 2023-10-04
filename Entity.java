@@ -202,6 +202,9 @@ public class Entity extends ModelElement implements Comparable
     }
   }      
 
+  public void setIsParameter(boolean gen)
+  { genericParameter = gen; } 
+
   public boolean isEmpty()
   { if (attributes.size() == 0 && associations.size() == 0 && operations.size() == 0)
     { return true; }
@@ -528,7 +531,12 @@ public class Entity extends ModelElement implements Comparable
   } 
 
   public void setTypeParameters(Vector tpars)
-  { typeParameters = tpars; }
+  { typeParameters = new Vector(); 
+    for (int i = 0; i < typeParameters.size(); i++)
+    { ModelElement x = (ModelElement) typeParameters.get(i);
+      addTypeParameter(x);
+    }
+  } 
 
   public boolean hasTypeParameters(Vector tpars) 
   { boolean res = true; 
@@ -1111,6 +1119,23 @@ public class Entity extends ModelElement implements Comparable
   { if (typeParameters.contains(t)) { } 
     else 
     { typeParameters.add(t); } 
+  } 
+
+  public void addTypeParameter(Entity e)
+  { if (e != null) 
+    { Type t = new Type(e); 
+      this.addTypeParameter(t); 
+    } 
+  } 
+
+  public void addTypeParameter(ModelElement x)
+  { if (x instanceof Entity) 
+    { Entity e = (Entity) x; 
+      Type t = new Type(e); 
+      this.addTypeParameter(t); 
+    } 
+    else if (x instanceof Type)
+    { this.addTypeParameter((Type) x); } 
   } 
 
   public Vector getTypeParameters()
@@ -11286,10 +11311,11 @@ public class Entity extends ModelElement implements Comparable
   public String getCompleteName()
   { String nme = getName();
 
-    if (typeParameters.size() > 0)
+    if (typeParameters != null && typeParameters.size() > 0)
     { String tp = ""; 
       for (int i = 0; i < typeParameters.size(); i++) 
-      { tp = tp + ((ModelElement) typeParameters.get(i)).getName();
+      { tp = tp + ((ModelElement) 
+                      typeParameters.get(i)).getName();
         if (i < typeParameters.size()-1)
         { tp = tp + ","; } 
       } 

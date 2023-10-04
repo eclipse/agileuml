@@ -5641,6 +5641,11 @@ class BasicExpression extends Expression
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
       }
+      else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.insertInto(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
@@ -6173,6 +6178,11 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.insertInto(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
@@ -6690,6 +6700,11 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
         return "Ocl.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.insertInto(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
@@ -7433,6 +7448,11 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
         return "SystemTypes.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.insertInto(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 

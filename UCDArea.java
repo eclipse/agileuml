@@ -10818,6 +10818,8 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOp(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateInsertIntoOp(); 
+    out.println("\n" + mop);  
     mop = BSystemTypes.generateRemoveSetAtOps(); 
     out.println("\n" + mop);  
 
@@ -11044,6 +11046,8 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateConcatAllOpJava6(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOpJava6(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateInsertIntoOpJava6(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateRemoveSetAtOpsJava6(); 
     out.println("\n" + mop);  
@@ -11285,6 +11289,8 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOpJava7(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateInsertIntoOpJava7(); 
+    out.println("\n" + mop);  
     mop = BSystemTypes.generateRemoveSetAtOpsJava7(); 
     out.println("\n" + mop);  
 
@@ -11477,6 +11483,8 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateUnionAllOpCSharp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOpCSharp(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateInsertIntoOpCSharp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateRemoveSetAtOpsCSharp(); 
     out.println("\n" + mop);  

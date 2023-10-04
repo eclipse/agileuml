@@ -490,6 +490,7 @@ public class BehaviouralFeature extends ModelElement
   { BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
     bf.setParameters(pars); 
     Entity e = new Entity(ename); 
+ 
     Type etype = new Type(e); 
     bf.setType(etype); 
     bf.setPostcondition(new BasicExpression(true)); 
@@ -500,7 +501,90 @@ public class BehaviouralFeature extends ModelElement
                           "res", etype); 
  
     CreationStatement cs = 
-        new CreationStatement("res", etype); 
+        new CreationStatement("res", etype);
+    // cs.setInstanceType(etype);  
+    code.addStatement(cs); 
+
+    BasicExpression createCall = 
+        new BasicExpression("create" + ename); 
+    createCall.setUmlKind(Expression.UPDATEOP); 
+    createCall.setParameters(new Vector()); 
+    createCall.setIsEvent(); 
+    createCall.setType(etype); 
+    createCall.setStatic(true); 
+    // createCall.entity = e; 
+
+    AssignStatement assgn = new AssignStatement(res,createCall); 
+    code.addStatement(assgn); 
+
+    BasicExpression initialiseCall = 
+       new BasicExpression("initialise"); 
+    initialiseCall.setUmlKind(Expression.UPDATEOP);
+    initialiseCall.setIsEvent(); 
+    Vector parNames = bf.getParameterExpressions(); 
+    // System.out.println(">>=== " + pars + " " + parNames); 
+ 
+    initialiseCall.setParameters(parNames); 
+    initialiseCall.setObjectRef(res); 
+    InvocationStatement callInit = 
+        new InvocationStatement(initialiseCall);
+    callInit.setParameters(parNames);  
+    code.addStatement(callInit); 
+
+    // Add each instance _initialiseInstance() operation
+    // res._initialiseInstance()
+	if (ent != null) 
+    { Vector allops = ent.getOperations(); 
+      for (int i = 0; i < allops.size(); i++) 
+      { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
+        String opname = op.getName(); 
+        if (opname.startsWith("_initialiseInstance"))
+        { BasicExpression initialiseInstanceCall = 
+                             new BasicExpression(opname); 
+          initialiseInstanceCall.setUmlKind(Expression.UPDATEOP);
+          initialiseInstanceCall.setIsEvent(); 
+          initialiseInstanceCall.setParameters(new Vector()); 
+          initialiseInstanceCall.setObjectRef(res); 
+          InvocationStatement callInstInit = 
+            new InvocationStatement(initialiseInstanceCall);
+          callInstInit.setParameters(new Vector());  
+          code.addStatement(callInstInit); 
+        } 
+      } 
+    }
+	
+    ReturnStatement rs = new ReturnStatement(res); 
+    code.addStatement(rs); 
+
+    code.setBrackets(true); 
+
+    bf.setActivity(code); 
+    bf.setStatic(true); 
+
+    return bf; 
+  } 
+
+  public static BehaviouralFeature newConstructor(String ename, 
+                                       Entity ent, Vector pars,
+                                       Vector gpars)
+  { BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
+    bf.setParameters(pars); 
+    Entity e = new Entity(ename); 
+    if (gpars != null) 
+    { e.setTypeParameters(gpars); }
+ 
+    Type etype = new Type(e); 
+    bf.setType(etype); 
+    bf.setPostcondition(new BasicExpression(true)); 
+    SequenceStatement code = new SequenceStatement();
+
+    BasicExpression res = 
+      BasicExpression.newVariableBasicExpression(
+                          "res", etype); 
+ 
+    CreationStatement cs = 
+        new CreationStatement("res", etype);
+    cs.setInstanceType(etype);  
     code.addStatement(cs); 
 
     BasicExpression createCall = 

@@ -645,6 +645,7 @@ public class ASTSymbolTerm extends ASTTerm
     } 
 
     if ("HashMap".equals(symbol) || 
+        "LinkedHashMap".equals(symbol) || 
         "EnumMap".equals(symbol) || 
         "Hashtable".equals(symbol) || 
         "Map".equals(symbol)) 

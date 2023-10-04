@@ -1344,6 +1344,7 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("HashMap".equals(value) || 
+        "LinkedHashMap".equals(value) || 
         "EnumMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -2122,6 +2123,7 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("HashMap".equals(value) || 
+        "LinkedHashMap".equals(value) || 
         "EnumMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
