@@ -3174,6 +3174,7 @@ public class Attribute extends ModelElement
   }  // actuators -- include a message?  Should not be local?
 
 
+  /* add/remove operation for the owning entity */ 
   public String addremOperation(Entity ent)
   { String res = "";
     if (!isMultiple()) { return res; }

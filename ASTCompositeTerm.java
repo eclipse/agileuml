@@ -30016,7 +30016,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "(" + args + " + \"\")"; 
         }
-        else if ("currentTimeMillis".equals(called) && "System".equals(args))
+        else if ("currentTimeMillis".equals(called) && 
+                 "System".equals(args))
         { ASTTerm.setType(thisliteral,"long"); 
 
           Expression dateExpr = 
@@ -30028,7 +30029,8 @@ public class ASTCompositeTerm extends ASTTerm
           
           return "OclDate.getSystemTime()"; 
         } 
-        else if ("getProperty".equals(called) && "System".equals(args))
+        else if ("getProperty".equals(called) && 
+                 "System".equals(args))
         { ASTTerm.setType(thisliteral,"String"); 
           ASTTerm arg1 = (ASTTerm) cargs.get(0);
           String callp1 = arg1.toKM3(); 
@@ -30042,7 +30044,8 @@ public class ASTCompositeTerm extends ASTTerm
           
           return "OclProcess.getEnvironmentProperty(" + callp1 + ")"; 
         } 
-        else if ("getProperties".equals(called) && "System".equals(args))
+        else if ("getProperties".equals(called) && 
+                 "System".equals(args))
         { ASTTerm.setType(thisliteral,"Map(String,String)"); 
           
           Expression procExpr = 
@@ -30054,7 +30057,8 @@ public class ASTCompositeTerm extends ASTTerm
           
           return "OclProcess.getEnvironmentProperties()"; 
         } 
-        else if ("setProperty".equals(called) && "System".equals(args))
+        else if ("setProperty".equals(called) && 
+                 "System".equals(args))
         { ASTTerm.setType(thisliteral,"String"); 
           ASTTerm arg1 = (ASTTerm) cargs.get(0);
           String callp1 = arg1.toKM3(); 
@@ -30078,7 +30082,8 @@ public class ASTCompositeTerm extends ASTTerm
           
           return "OclProcess.setEnvironmentProperty(" + callp1 + "," + callp2 + ")"; 
         } 
-        else if ("clearProperty".equals(called) && "System".equals(args))
+        else if ("clearProperty".equals(called) && 
+                 "System".equals(args))
         { ASTTerm.setType(thisliteral,"String"); 
 
           ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -30098,7 +30103,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "OclProcess.clearEnvironmentProperty(" + callp1 + ")"; 
         } 
-        else if ("exit".equals(called) && "System".equals(args))
+        else if ("exit".equals(called) && 
+                 "System".equals(args))
         { // ASTTerm.setType(thisliteral,"String"); 
           ASTTerm arg1 = (ASTTerm) cargs.get(0);
           String callp1 = arg1.toKM3(); 
@@ -30115,7 +30121,75 @@ public class ASTCompositeTerm extends ASTTerm
 
 
           return "OclProcess.exit(" + callp1 + ")"; 
-        } 
+        } // Also arraycopy
+        else if ("arraycopy".equals(called) && 
+                 "System".equals(args) && 
+                 cargs.size() == 5)
+        { // System.arraycopy(u, i, v, j, k) is 
+          // for _x : Integer.subrange(1,k) do 
+          //   v[j +_x] := u[i + _x] 
+ 
+          ASTTerm arg1 = (ASTTerm) cargs.get(0);
+          String callp1 = arg1.toKM3(); 
+
+          ASTTerm arg2 = (ASTTerm) cargs.get(1);
+          String callp2 = arg2.toKM3(); 
+
+          ASTTerm arg3 = (ASTTerm) cargs.get(2);
+          String callp3 = arg3.toKM3(); 
+       
+          ASTTerm arg4 = (ASTTerm) cargs.get(3);
+          String callp4 = arg4.toKM3(); 
+
+          ASTTerm arg5 = (ASTTerm) cargs.get(4);
+          String callp5 = arg5.toKM3(); 
+
+          Expression uExpr = arg1.expression;
+          uExpr.setType(new Type("Sequence", null));  
+          Expression iExpr = arg2.expression; 
+          Expression vExpr = arg3.expression; 
+          Expression jExpr = arg4.expression; 
+          Expression kExpr = arg5.expression; 
+
+          BasicExpression xExpr = 
+            BasicExpression.newVariableBasicExpression("_x", 
+                               new Type("int", null)); 
+
+          if (uExpr != null && iExpr != null &&
+              vExpr != null && jExpr != null &&
+              kExpr != null) 
+          {  
+            Expression uIndexExpr = 
+              new BinaryExpression("+", iExpr, xExpr); 
+            Expression vIndexExpr = 
+              new BinaryExpression("+", jExpr, xExpr); 
+            Expression uElement = 
+              new BinaryExpression("->at", uExpr,
+                                           uIndexExpr); 
+            Expression vElement = 
+              new BinaryExpression("->at", vExpr,
+                                           vIndexExpr);
+            AssignStatement asgn = 
+              new AssignStatement(vElement,uElement); 
+            Vector rpars = new Vector(); 
+            rpars.add(unitExpression); 
+            rpars.add(kExpr); 
+            Expression loopRange = 
+              BasicExpression.newFunctionBasicExpression(
+                                   "subrange","Integer",rpars);
+            Expression loopTest = 
+              new BinaryExpression(":", xExpr, loopRange);   
+            WhileStatement ws = 
+               new WhileStatement(loopTest, asgn); 
+            ws.setLoopKind(Statement.FOR); 
+            ws.setLoopRange(loopRange); 
+            ws.setLoopVar(xExpr); 
+            statement = ws;      
+            return "for _x : " + loopRange + " do " + 
+                 asgn; 
+          } 
+          return ""; 
+        } // Also arraycopy
         else if (arg.isDate() && 
                  ("getTimeInMillis".equals(called) || 
                   "computeTime".equals(called) || 
@@ -30936,7 +31010,9 @@ public class ASTCompositeTerm extends ASTTerm
         return args1 + "->toLong()"; 
       } 
 
-      if ("BufferedReader".equals(clsliteral))
+      if ("BufferedReader".equals(clsliteral) || 
+          "LittleEndianInput".equals(clsliteral) ||
+          "BigEndianInput".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile"); 
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3(); 
@@ -30946,7 +31022,9 @@ public class ASTCompositeTerm extends ASTTerm
         return sarg; 
       }
 
-      if ("BufferedWriter".equals(clsliteral))
+      if ("BufferedWriter".equals(clsliteral) ||
+          "LittleEndianOutput".equals(clsliteral) ||
+          "BigEndianOutput".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile"); 
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3();
@@ -33174,7 +33252,8 @@ public class ASTCompositeTerm extends ASTTerm
           } 
         } 
         else if (("writeChar".equals(called) || 
-                  "writeShort".equals(called)) && arg.isFile())
+                  "writeShort".equals(called)) && 
+                 arg.isFile())
         { if (cargs.size() == 1)
           { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
             String callp1 = callarg1.toKM3();

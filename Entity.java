@@ -532,8 +532,8 @@ public class Entity extends ModelElement implements Comparable
 
   public void setTypeParameters(Vector tpars)
   { typeParameters = new Vector(); 
-    for (int i = 0; i < typeParameters.size(); i++)
-    { ModelElement x = (ModelElement) typeParameters.get(i);
+    for (int i = 0; i < tpars.size(); i++)
+    { ModelElement x = (ModelElement) tpars.get(i);
       addTypeParameter(x);
     }
   } 
@@ -1123,14 +1123,16 @@ public class Entity extends ModelElement implements Comparable
 
   public void addTypeParameter(Entity e)
   { if (e != null) 
-    { Type t = new Type(e); 
+    { e.genericParameter = true; 
+      Type t = new Type(e); 
       this.addTypeParameter(t); 
     } 
   } 
 
   public void addTypeParameter(ModelElement x)
   { if (x instanceof Entity) 
-    { Entity e = (Entity) x; 
+    { Entity e = (Entity) x;
+      e.genericParameter = true;  
       Type t = new Type(e); 
       this.addTypeParameter(t); 
     } 

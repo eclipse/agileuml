@@ -1347,7 +1347,11 @@ abstract class Expression
           tname.equals("Function") || 
           tname.equals("OclType") ||
           tname.equals("OclDate") || 
+          tname.equals("OclFile") || 
           tname.equals("OclIterator") || 
+          tname.equals("OclRandom") || 
+          tname.equals("OclDatasource") || 
+          tname.equals("OclProcess") || 
           tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))
@@ -1376,7 +1380,11 @@ abstract class Expression
           tname.equals("Function") || 
           tname.equals("OclType") ||
           tname.equals("OclDate") || 
+          tname.equals("OclFile") || 
           tname.equals("OclIterator") || 
+          tname.equals("OclRandom") || 
+          tname.equals("OclDatasource") || 
+          tname.equals("OclProcess") || 
           tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))
@@ -1403,9 +1411,14 @@ abstract class Expression
       String tname = t.getName();
       if (tname.equals("Set") || tname.equals("Sequence") || 
           tname.equals("String") || tname.equals("Map") ||
+          tname.equals("Function") || 
           tname.equals("OclType") || 
+          tname.equals("OclFile") || 
           tname.equals("OclIterator") || 
-          tname.equals("OclDate") || 
+          tname.equals("OclDate") ||
+          tname.equals("OclRandom") || 
+          tname.equals("OclDatasource") || 
+          tname.equals("OclProcess") || 
           tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))

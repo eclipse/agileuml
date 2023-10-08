@@ -1510,29 +1510,37 @@ public class ASTBasicTerm extends ASTTerm
       return "OclFile"; 
     }
  
-    if ("Reader".equals(value))
+    if ("Reader".equals(value) || "FileReader".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("FileReader".equals(value))
-    { modelElement = new Type("OclFile", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    } 
+
     if ("Writer".equals(value) ||
         "StringWriter".equals(value) || 
         "FileWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("RandomAccessFile".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("BufferedReader".equals(value))
+      return "OclFile"; 
+    }
+ 
+    if ("BufferedReader".equals(value) || 
+        "LittleEndianInput".equals(value) ||
+        "BigEndianInput".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("BufferedWriter".equals(value))
+      return "OclFile"; 
+    }
+ 
+    if ("BufferedWriter".equals(value) ||
+        "LittleEndianOutput".equals(value) ||
+        "BigEndianOutput".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; 
@@ -2308,12 +2316,19 @@ public class ASTBasicTerm extends ASTTerm
     if ("RandomAccessFile".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("BufferedReader".equals(value))
+      return "OclFile"; }
+ 
+    if ("BufferedReader".equals(value) || 
+        "LittleEndianInput".equals(value) ||
+        "BigEndianInput".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("BufferedWriter".equals(value))
+      return "OclFile"; 
+    }
+ 
+    if ("BufferedWriter".equals(value) || 
+        "LittleEndianOutput".equals(value) ||
+        "BigEndianOutput".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; 

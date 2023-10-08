@@ -854,12 +854,20 @@ public class ASTSymbolTerm extends ASTTerm
     if ("RandomAccessFile".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("BufferedReader".equals(symbol))
+      return "OclFile"; 
+    }
+ 
+    if ("BufferedReader".equals(symbol) ||        
+        "LittleEndianInput".equals(symbol) ||
+        "BigEndianInput".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("BufferedWriter".equals(symbol))
+      return "OclFile"; 
+    }
+ 
+    if ("BufferedWriter".equals(symbol) ||               
+        "LittleEndianOutput".equals(symbol) ||
+        "BigEndianOutput".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 

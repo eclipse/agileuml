@@ -720,12 +720,56 @@ public class CGRule
             return repl; 
           } 
         } 
+
         if (term instanceof ASTSymbolTerm)
         { ASTSymbolTerm st = (ASTSymbolTerm) term;
           return "" + st.symbol.charAt(4);  
         } 
 
       }   
+
+      if ("sixth".equals(mffeat) || 
+          "6th".equals(mffeat) || 
+          "6".equals(mffeat))
+      { // get 6th subterm of obj
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          if (ct.terms.size() > 5)
+          { ASTTerm ct1 = (ASTTerm) ct.terms.get(5); 
+            String repl = ct1.cg(cgs); 
+                
+            return repl; 
+          } 
+        } 
+
+        if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term;
+          return "" + st.symbol.charAt(5);  
+        } 
+
+      }   
+  
+      if ("seventh".equals(mffeat) || 
+          "7th".equals(mffeat) || 
+          "7".equals(mffeat))
+      { // get 7th subterm of obj
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          if (ct.terms.size() > 6)
+          { ASTTerm ct1 = (ASTTerm) ct.terms.get(6); 
+            String repl = ct1.cg(cgs); 
+                
+            return repl; 
+          } 
+        } 
+
+        if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term;
+          return "" + st.symbol.charAt(6);  
+        } 
+
+      }   
+  
   
       if ("last".equals(mffeat))
       { // get last subterm of obj
@@ -1401,6 +1445,34 @@ public class CGRule
             { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
               if (ct.terms.size() > 4)
               { ASTTerm ct1 = (ASTTerm) ct.terms.get(4); 
+                String repl = ct1.cg(cgs); 
+                
+                res = replaceByMetafeatureValue(res,mf,repl);
+              } 
+            } 
+          }   
+          else if ("sixth".equals(mffeat) || 
+                   "6th".equals(mffeat) || 
+                   "6".equals(mffeat))
+          { // get 6th subterm of obj
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              if (ct.terms.size() > 5)
+              { ASTTerm ct1 = (ASTTerm) ct.terms.get(5); 
+                String repl = ct1.cg(cgs); 
+                
+                res = replaceByMetafeatureValue(res,mf,repl);
+              } 
+            } 
+          }   
+          else if ("seventh".equals(mffeat) || 
+                   "7th".equals(mffeat) || 
+                   "7".equals(mffeat))
+          { // get 7th subterm of obj
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              if (ct.terms.size() > 6)
+              { ASTTerm ct1 = (ASTTerm) ct.terms.get(6); 
                 String repl = ct1.cg(cgs); 
                 
                 res = replaceByMetafeatureValue(res,mf,repl);

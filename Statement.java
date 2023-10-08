@@ -5832,7 +5832,7 @@ class CreationStatement extends Statement
         if (ent.genericParameter)
         { return "  " + ename + " " + assignsTo + ";\n"; } 
 
-        String gpars = ent.typeParameterTextCSharp(); 
+        String gpars = ""; // ent.typeParameterTextCSharp(); 
        
 
         if (ent.hasStereotype("external"))

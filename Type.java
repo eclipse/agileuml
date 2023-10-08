@@ -4947,8 +4947,8 @@ public class Type extends ModelElement
     if ("Set".equals(nme) || "Sequence".equals(nme) || 
         "Ref".equals(nme))
     { if (elementType == null)
-	  { return nme; }
-	  else if (elementType == this)
+      { return nme; }
+      else if (elementType == this)
       { return nme; }
       else   
       { return nme + "(" + elementType + ")"; } 

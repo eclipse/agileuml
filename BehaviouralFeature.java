@@ -575,6 +575,11 @@ public class BehaviouralFeature extends ModelElement
  
     Type etype = new Type(e); 
     bf.setType(etype); 
+
+    System.out.println(">> Generic parameters of " + bf + " are " + gpars); 
+
+    System.out.println(">> Return type of " + bf + " is " + e.getCompleteName()); 
+
     bf.setPostcondition(new BasicExpression(true)); 
     SequenceStatement code = new SequenceStatement();
 
