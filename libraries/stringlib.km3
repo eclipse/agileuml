@@ -6,6 +6,10 @@ package stringlib {
     stereotype component; 
     stereotype external; 
 
+    static query newString(s : OclAny) : String
+    pre: true 
+    post: result = "" + s; 
+
     static query nCopies(s: String, n : int) : String
     pre: true
     post: result = Integer.subrange(1,n)->collect( i | s )->sum(); 

@@ -607,3 +607,8 @@ System_out = OclFile.newOclFile("System.out")
 System_err = OclFile.newOclFile("System.err")
 
 
+# d = OclFile.newOclFile(".")
+# dirfiles = d.listFiles()
+# for f in dirfiles : 
+#   f.openRead()
+#   print(f.getName() + " " + str(f.lineCount()))

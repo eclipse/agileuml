@@ -1,5 +1,8 @@
     class StringLib
     {
+       public static string newString(object s)
+       { return "" + s; }  
+
         public static string leftTrim(string s)
         {
             string result = "";

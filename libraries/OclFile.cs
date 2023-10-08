@@ -1,5 +1,5 @@
 
-    class OclFile
+    public class OclFile
     {
         private string name = ""; // internal
         private int port = 0; // internal
