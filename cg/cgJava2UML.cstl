@@ -102,6 +102,11 @@ Scanner |-->OclFile
 FileOutputStream |-->OclFile
 SortedFileOutputStream |-->OclFile
 
+LittleEndianInput |-->OclFile
+LittleEndianOutput |-->OclFile
+BigEndianInput |-->OclFile
+BigEndianOutput |-->OclFile
+
 SeekableByteChannel |-->OclFile
 FileChannel |-->OclFile
 
@@ -1061,6 +1066,14 @@ writeBytes ( _1 ) |-->.write(_1)
 seek ( _1 ) |-->.setPosition(_1)
 flush ( ) |-->.flush()
 
+writeBoolean ( _1 ) |-->.writeByte(if _1 then 1 else 0 endif)
+writeChar ( _1 ) |-->.writeNbytes(MathLib.integer2Nbytes(_1`first,2),2)
+writeShort ( _1 ) |-->.writeNbytes(MathLib.integer2Nbytes(_1`first,2),2)
+writeInt ( _1 ) |-->.writeNbytes(MathLib.integer2Nbytes(_1`first,4),4)
+writeLong ( _1 ) |-->.writeNbytes(MathLib.integer2Nbytes(_1`first,8),8)
+writeFloat ( _1 ) |-->.writeNbytes(MathLib.real2Nbytes(_1`first,4),4)
+writeDouble ( _1 ) |-->.writeNbytes(MathLib.real2Nbytes(_1`first,8),8)
+
 insertElementAt ( _1 ) |-->.insertAt(_1`last+1,_1`first)
 add ( _1 ) |-->.insertAt(_1`first+1,_1`last)<when>_1 multiple
 add ( _1 ) |-->->including(_1)
@@ -1775,6 +1788,7 @@ _1 ( _2 ) |-->_1(_2)
 filesMethodCall::
 copy ( _1 ) |-->OclFile.copyFromTo(_1`first,_1`third)
 createDirectory ( _1 ) |-->OclFile.newOclFile(_1`first).mkdir()
+createDirectories ( _1 ) |-->OclFile.newOclFile(_1`first).mkdirs()
 createFile ( _1 ) |-->OclFile.newOclFile(_1`first)
 createTempDirectory ( _1 ) |-->OclFile.createTemporaryFile(_1`first,"")
 createTempFile ( _1 ) |-->OclFile.createTemporaryFile(_1`first,_1`fifth)
@@ -1804,6 +1818,7 @@ readAllBytes ( _1 ) |-->OclFile.newOclFile(_1).readNbytes(OclFile.newOclFile(_1)
 readAllLines ( _1 ) |-->OclFile.newOclFile(_1`first).readAll()->split("\n\r")
 size ( _1 ) |-->OclFile.newOclFile(_1).length()
 write ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first)).writeNbytes(_1`third,_1`third->size())
+
 
 
 filesMethodCallQueryForm::
@@ -1949,14 +1964,45 @@ setShort ( _1 ) |-->    _1`first[_1`third+1] := _1`last
 
 systemMethodCall::
 currentTimeMillis ( ) |-->OclDate.getSystemTime()
+getenv ( _1 ) |-->OclProcess.getEnvironmentProperty(_1)
 getProperty ( _1 ) |-->OclProcess.getEnvironmentProperty(_1)
 getProperties ( ) |-->OclProcess.getEnvironmentProperties()
 exit ( _1 ) |-->OclProcess.exit(_1)
 setProperty ( _1 ) |-->    OclProcess.setEnvironmentProperty(_1);\n
 clearProperty ( _1 ) |-->    OclProcess.clearEnvironmentProperty(_1);\n
+arraycopy ( _1 ) |-->    for _x : Integer.subrange(1,_1`last) do _1`fifth[_1`seventh + _x] := _1`first[_1`third + _x]
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+
+fstArgument::
+_1 , _* |-->_1
+_1 |-->_1
+
+scdArgument::
+_1 , _2, _* |-->_2
+_1 , _2 |-->_2
+_1 |-->_1`scdArgument
+
+thrdArgument::
+_1 , _2, _3 , _* |-->_3
+_1 , _2 , _3 |-->_3
+_1 |-->_1`thrdArgument<when> _1 expressionList
+_1 |-->_1
+
+frthArgument::
+_1 , _2, _3 , _4 , _* |-->_4
+_1 , _2 , _3 , _4 |-->_4
+_1 |-->_1`frthArgument<when> _1 expressionList
+_1 |-->_1
+
+fithArgument::
+_1 , _2, _3 , _4 , _5 , _* |-->_5
+_1 , _2 , _3 , _4 , _5 |-->_5
+_1 |-->_1`fithArgument<when> _1 expressionList
+_1 |-->_1
 
 
 methodCall::
@@ -2000,6 +2046,13 @@ fail ( ) |-->    assert false
 fail ( _1 ) |-->    assert false do _1
 assertThat ( _1 ) |-->    assert _1`firstQueryForm _1`assertMatcherCondition
 
+writeBoolean ( _1 ) |-->writeByte(if _1 then 1 else 0 endif)
+writeChar ( _1 ) |-->writeNbytes(MathLib.integer2Nbytes(_1`first,2),2)
+writeShort ( _1 ) |-->writeNbytes(MathLib.integer2Nbytes(_1`first,2),2)
+writeInt ( _1 ) |-->writeNbytes(MathLib.integer2Nbytes(_1`first,4),4)
+writeLong ( _1 ) |-->writeNbytes(MathLib.integer2Nbytes(_1`first,8),8)
+writeFloat ( _1 ) |-->writeNbytes(MathLib.real2Nbytes(_1`first,4),4)
+writeDouble ( _1 ) |-->writeNbytes(MathLib.real2Nbytes(_1`first,8),8)
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
@@ -2284,6 +2337,8 @@ _1 . _2 |-->_1_2`methodCallQueryForm<when>_2 methodCall
 
 _1 . _2 |-->_1._2
 
+( _1 ) |-->(_1)
+
 _1 |-->_1
 
 
@@ -2476,7 +2531,7 @@ Arrays . _1 |-->_1`arraysMethodCall
 Boolean . _1 |-->_1`booleanMethodCall
 Thread . _1 |-->    OclProcess._1
 Assert . _1 |-->_1`assertMethodCall
-
+Files . _1 |-->_1`filesMethodCall
 
 System.out . _1 |-->    OclFile["System.out"]._1`systemMethodCall
 System.in . _1 |-->    OclFile["System.in"]._1`systemMethodCall
@@ -2867,6 +2922,11 @@ InputStreamReader |-->OclFile
 OutputStreamWriter |-->OclFile
 PrintWriter |-->OclFile
 RandomAccessFile |-->OclFile
+
+LittleEndianInput |-->OclFile
+LittleEndianOutput |-->OclFile
+BigEndianInput |-->OclFile
+BigEndianOutput |-->OclFile
 
 Socket |-->OclDatasource
 BluetoothSocket |-->OclDatasource

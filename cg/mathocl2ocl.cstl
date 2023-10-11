@@ -577,7 +577,7 @@ x ^{ -1 } |-->x->log()
 x ^{ _1 } |-->(x->pow(_1 + 1))/(_1 + 1)<when> _1 real
 e ^{ x } |-->MathLib.eValue()->pow(x)
 
-_1 ^{ _2 } |-->MathLib.indefiniteIntegral(lambda x : double in _1->pow(_2))
+_1 ^{ _2 } |-->MathLib.indefiniteIntegral(lambda x : double in _1->pow(_2))->apply(x)
 
 ( _1 ) |-->(_1`integrate)
 
@@ -608,17 +608,17 @@ acosh ( x ) |-->x*(MathLib.acosh(x)) - (x*x - 1)->sqrt()
 atanh ( x ) |-->x*(MathLib.atanh(x)) + 0.5*(1 - x*x)->log()
 acoth ( x ) |-->x*(MathLib.acoth(x)) + 0.5*(x*x - 1)->log()
 
-_1 ( _2 ) |-->MathLib.indefiniteIntegral(lambda x : double in _1(_2))
+_1 ( _2 ) |-->MathLib.indefiniteIntegral(lambda x : double in _1(_2))->apply(x)
 
 Ð _{ x } _1 |-->_1
-Ð _{ _1 } _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_2`partialDiff))<action> _95 _1
+Ð _{ _1 } _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_2`partialDiff))->apply(x)<action> _95 _1
 
-† _1 |-->MathLib.indefiniteIntegral(lambda x : double in (_1)->sqrt())
+† _1 |-->MathLib.indefiniteIntegral(lambda x : double in (_1)->sqrt())->apply(x)
 
 _1 ´ |-->_1
 
-‡ _1 dx |-->MathLib.indefiniteIntegral(lambda x : double in (_1`integrate))
-‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`integrate))
+‡ _1 dx |-->MathLib.indefiniteIntegral(lambda x : double in (_1`integrate))->apply(x)
+‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`integrate))->apply(x)
 
 - _1 |-->-(_1`integrate)
 + _1 |-->_1`integrate
@@ -626,18 +626,18 @@ _1 ´ |-->_1
 _1 + _2 |-->_1`integrate + _2`integrate
 _1 - _2 |-->_1`integrate - _2`integrate
 
-_1 = _2 |-->MathLib.indefiniteIntegral(lambda x : double in (if _1 = _2 then 1 else 0 endif))
-_1 /= _2 |-->MathLib.indefiniteIntegral(lambda x : double in (if _1 = _2 then 0 else 1 endif))
+_1 = _2 |-->MathLib.indefiniteIntegral(lambda x : double in (if _1 = _2 then 1 else 0 endif))->apply(x)
+_1 /= _2 |-->MathLib.indefiniteIntegral(lambda x : double in (if _1 = _2 then 0 else 1 endif))->apply(x)
 
 x * x |-->(x->pow(3))/3
 
 _1 * x |-->_1*(x->pow(2)/2.0)<when> _1 real
 
 _1 * _2 |-->_1*(_2`integrate)<when> _1 real
-_1 * _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_1*_2))
+_1 * _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_1*_2))->apply(x)
 
 _1 / _2 |-->(_1`integrate)/_2<when> _2 real
-_1 / _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_1/_2))
+_1 / _2 |-->MathLib.indefiniteIntegral(lambda x : double in (_1/_2))->apply(x)
 
 _1 |-->_1*x<when> _1 real
 
@@ -650,7 +650,7 @@ _1 |-->_1`integrate<when> _1 additiveExpression
 _1 |-->_1`integrate<when> _1 expression
 _1 |-->_1`integrate<when> _1 expressionList
 
-_1 |-->MathLib.indefiniteIntegral(lambda x : double in _1)
+_1 |-->MathLib.indefiniteIntegral(lambda x : double in _1)->apply(x)
 
 
 partialDiff::
@@ -730,7 +730,7 @@ e ^{ _1 } |-->MathLib.eValue()->pow(_1)<when> _1 _95
 e ^{ _1 } |-->(MathLib.eValue()->pow(_1))*_1`partialDiff
 
 ‡ _1 _2 |-->_1<when> _2`tail _95
-‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`partialDiff) )
+‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`partialDiff) )->apply(x)
 
 _1 |-->1<when> _1 _95
 _1 ^{ 2 } |-->2*_1<when> _1 _95 
@@ -844,7 +844,7 @@ _1 + _2 |-->_1`differentiate + _2`differentiate
 _1 - _2 |-->_1`differentiate - _2`differentiate
 
 ‡ _1 dx |-->_1
-‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`differentiate))
+‡ _1 _2 |-->MathLib.indefiniteIntegral(lambda _2`tail : double in (_1`differentiate))->apply(x)
 
 e ^{ x } |-->MathLib.eValue->pow(x)
 

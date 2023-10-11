@@ -738,11 +738,9 @@ _* |-->E[_*]
 
 
 evaluateVariance::
-_1 * _2 |-->_1*_1*_2`evaluateVariance<when> _1 integer
-_1 * _2 |-->_1*_1*_2`evaluateVariance<when> _1 real
+_1 * _2 |-->_1*_1*(_2`evaluateVariance)<when> _1 real
 
-_1 * _2 |-->_2*_2*_1`evaluateVariance<when> _2 integer
-_1 * _2 |-->_2*_2*_1`evaluateVariance<when> _2 real
+_1 * _2 |-->_2*_2*(_1`evaluateVariance)<when> _2 real
 
 _1 + _2 |-->_1`evaluateVariance<when> _2 integer
 _1 - _2 |-->_1`evaluateVariance<when> _2 real
@@ -769,8 +767,8 @@ _* |-->var(_*)
 
 evaluatePdf::
 _1 , _2 |-->if _2 <= 1 & 0 <= _2 then 1 else 0 endif<when> _1`distribution StandardUniform
-_1 , _2 |-->(1/†(2*g{p}*_1`evaluateVariance))*e^{-0.5*(_2 - _1`expectation)^{2}/(_1`evaluateVariance)}<when> _1`distribution Normal
-_1 , _2 |-->(_1`evaluateVariance)^{_2}*e^{-_1`evaluateVariance}/(_2)!<when> _1`distribution Poisson
+_1 , _2 |-->(1/†(2*g{p}*(_1`evaluateVariance)))*e^{-0.5*(_2 - _1`expectation)^{2}/(_1`evaluateVariance)}<when> _1`distribution Normal
+_1 , _2 |-->(_1`evaluateVariance)^{_2}*e^{-(_1`evaluateVariance)}/(_2)!<when> _1`distribution Poisson
 _1 , _2 |-->if _2 = 0 then 1 - _1`expectation else if _2 = 1 then _1`expectation else 0 endif endif<when> _1`distribution Bernoulli
 
 
