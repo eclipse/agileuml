@@ -214,16 +214,16 @@ class OclFile
   pre: true post: true; 
 
   operation readN(n : int) : Sequence(String)
-  pre: true post: true
+  pre: true post: true;
 
   operation readByte() : int
   pre: true post: true; 
 
   operation readNbytes(n : int) : Sequence(int)
-  pre: true post: true
+  pre: true post: true;
 
   operation readAllBytes() : Sequence(int)
-  pre: true post: true
+  pre: true post: true;
 
   operation readObject() : OclAny
   pre: true post: true; 
@@ -262,6 +262,9 @@ class OclFile
   post: result = eof; 
 
   operation mkdir() : boolean
+  pre: true post: true;
+
+  operation mkdirs() : boolean
   pre: true post: true;
 
 }
