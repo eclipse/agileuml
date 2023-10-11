@@ -966,6 +966,9 @@ public class ASTSymbolTerm extends ASTTerm
   public boolean updatesObject(ASTTerm t)
   { return false; } 
 
+  public ASTTerm updatedObject()
+  { return this; } 
+
   public boolean callSideEffect()
   { return false; }
 

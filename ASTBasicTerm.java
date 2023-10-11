@@ -2784,6 +2784,9 @@ public class ASTBasicTerm extends ASTTerm
     return "OclAny"; 
   }
 
+  public ASTTerm updatedObject()
+  { return this; } 
+
   public boolean updatesObject(ASTTerm t)
   { return false; } 
 

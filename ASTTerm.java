@@ -825,6 +825,8 @@ public abstract class ASTTerm
   // Only for programming languages. 
   public abstract boolean updatesObject(ASTTerm t); 
 
+  public abstract ASTTerm updatedObject();
+
   public abstract boolean callSideEffect(); 
 
   // Only for programming languages. 
