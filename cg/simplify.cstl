@@ -18,7 +18,7 @@ Rewrite _1 to _2 |-->
 
 
 prove::
-Prove false if _1 |-->  Simplify (not _1`conjoinAll)
+Prove false if _1 |-->  Simplify not (_1`conjoinAll)
 Prove true if _1 |-->  Simplify true
 Prove _1 if _1 |-->  Simplify true
 
@@ -1034,11 +1034,16 @@ asin ( x ) |-->x*asin(x) + †(1 - x*x)
 atan ( x ) |-->x*atan(x) - 0.5*log(1 + x*x)
 acos ( x ) |-->x*acos(x) - †(1 - x*x)
 acot ( x ) |-->x*acot(x) + 0.5*log(1 + x*x)
+asec ( x ) |-->x*asec(x) - acosh(x)
+acosec ( x ) |-->x*acosec(x) + acosh(x)
 
 asinh ( x ) |-->x*asinh(x) - †(x*x + 1)
 acosh ( x ) |-->x*acosh(x) - †(x*x - 1)
 atanh ( x ) |-->x*atanh(x) + 0.5*log(1 - x*x)
 acoth ( x ) |-->x*acoth(x) + 0.5*log(x*x - 1)
+asech ( x ) |-->x*asech(x) - asin(x)
+acosech ( x ) |-->x*acosech(x) - atan(x)
+
 
 _1 ( _2 ) |-->‡ _1(_2) dx
 
