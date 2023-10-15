@@ -837,6 +837,12 @@ public class SetExpression extends Expression
   public int typeCheck(final Vector sms)
   { return SENSOR; }
 
+  public boolean typeInference(final Vector typs, 
+                                        final Vector ents,
+                   final Vector contexts, final Vector env, 
+                   java.util.Map vartypes)
+  { return typeCheck(typs,ents,contexts,env); } 
+
   public boolean typeCheck(final Vector types, final Vector entities,
                            final Vector contexts, final Vector env)
   { boolean res = true;

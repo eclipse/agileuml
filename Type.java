@@ -176,7 +176,8 @@ public class Type extends ModelElement
     if (exceptions2java.get(tname) != null) 
     { return true; } 
     return false; 
-  } // MathLib, StringLib and OclComparator are static
+  } // MathLib, Excel, OclRegex, 
+    // StringLib and OclComparator are static
 
   public static boolean isDefinedType(Type t) 
   { if (t == null) 
@@ -186,6 +187,33 @@ public class Type extends ModelElement
     if ("void".equals(t.getName()))
     { return false; } 
     return true; 
+  } 
+
+  public static boolean isVacuousType(Type t) 
+  { if (t == null) 
+    { return true; } 
+    if ("OclAny".equals(t.getName()))
+    { return true; } 
+    if ("void".equals(t.getName()))
+    { return true; } 
+    return false; 
+  } 
+
+  public static boolean hasVacuousType(Expression expr) 
+  { Type t = expr.getType(); 
+    return Type.isVacuousType(t); 
+  } 
+
+  public static boolean isSummableType(Type t) 
+  { if (t == null) 
+    { return false; } 
+    String tname = t.getName(); 
+    if ("int".equals(tname) || "long".equals(tname) || 
+        "double".equals(tname))
+    { return true; } 
+    if ("String".equals(tname))
+    { return true; } 
+    return false; 
   } 
 
   public boolean isEnumeratedType() 
@@ -4804,18 +4832,24 @@ public class Type extends ModelElement
     
     String tn1 = oldType.getName();
     String tn2 = t.getName();
+
+    if ("OclAny".equals(tn1) && 
+        !("OclAny".equals(tn2)))
+    { return t; } 
         
-    if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+    if (tn1.equals("double") && 
+        (tn2.equals("int") || tn2.equals("long")))
     { return oldType; }
 
     if (tn1.equals("long") && tn2.equals("int"))
     { return oldType; }
 
-    if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+    if (tn2.equals("double") && 
+        (tn1.equals("int") || tn1.equals("long")))
     { return oldType; }
     
     if (tn2.equals("long") && tn1.equals("int"))
-    { return t; }
+    { return t; } // oldType
 
     if (tn1.equals(tn2))
     { return oldType; } 
@@ -4865,7 +4899,9 @@ public class Type extends ModelElement
 
     if (t1.values != null) { return t1; } 
     if (t2.values != null) { return t2; } 
-    if (t1name.equals("int") && t2name.equals("double")) { return t1; } 
+    if (t1name.equals("int") && 
+        t2name.equals("double")) 
+    { return t1; } 
     if (t2name.equals("int") && t1name.equals("double")) { return t2; } 
     if (t1name.equals("int") && t2name.equals("long")) { return t1; } 
     if (t2name.equals("int") && t1name.equals("long")) { return t2; }

@@ -2161,13 +2161,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (argtype != null && "Ref".equals(argtype.getName()))
       { type = argtype.getElementType(); } 
       else 
-      { type = new Type("OclAny", null); } 
+      { type = new Type("OclAny", null); }
+      return res;  
     } 
 
     if (operator.equals("?"))
     { Type argtype = argument.getType(); 
       type = new Type("Ref", null); 
-      type.setElementType(argtype);  
+      type.setElementType(argtype);
+      return res;   
     } 
     
     if (operator.equals("->copy"))
@@ -2204,7 +2206,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     } 
 
-    if (operator.equals("-") || operator.equals("+") || operator.equals("->abs"))   
+    if (operator.equals("-") || operator.equals("+") || 
+        operator.equals("->abs"))   
     { type = argument.type; 
       elementType = argument.elementType;
       if (type == null) 
@@ -2376,6 +2379,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
               // and ast is ordered/sorted. Also for any att or role
         } 
       }
+
+      return res; 
     } 
 
     if (operator.equals("->asSequence"))
@@ -2503,6 +2508,924 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       type = new Type("String",null); 
       elementType = type; 
       multiplicity = ModelElement.ONE; 
+      return res; 
+    }  
+
+    if (extensionoperators.containsKey(operator))
+    { type = getOperatorType(operator); 
+      elementType = type.getElementType(); 
+    }
+  
+    System.out.println(">>> *** Type of " + this + " is " + type);
+      
+    return res; 
+  } 
+
+  public boolean typeInference(final Vector typs, final Vector ents,
+          final Vector contexts, final Vector env, 
+          java.util.Map vartypes)
+  { if (operator.equals("lambda") && accumulator != null)
+    { Vector context = new Vector(); 
+      context.addAll(contexts); 
+
+      Vector env1 = new Vector(); 
+      env1.addAll(env); 
+      env1.add(accumulator); 
+      boolean rtc = argument.typeCheck(typs,ents,context,env1);
+
+      Type acctype = accumulator.getType(); 
+      if (acctype == null)
+      { System.err.println("!! Null accumulator type in lambda expression: " + this); 
+        acctype = new Type("OclAny", null); 
+      } 
+
+      Type argtype = argument.getType(); 
+      if (argtype == null)
+      { System.err.println("!! Null argument type in lambda expression: " + this); 
+        argtype = new Type("OclAny", null); 
+      } 
+
+      type = new Type("Function",acctype,argtype);
+      elementType = argument.elementType; 
+
+      System.out.println(">>> Typechecked lambda expression: " + rtc + " " + type); 
+      return true; 
+    }
+
+    boolean res = argument.typeInference(typs,ents,
+                                     contexts,env,vartypes);
+    Type argumentType = argument.getType(); 
+    if (argumentType == null) 
+    { System.err.println("!! ERROR: unknown type in " + argument); 
+      argument.setType(new Type("OclAny", null)); 
+      argumentType = new Type("OclAny", null); 
+    } 
+ 
+    multiplicity = ModelElement.ONE; // default
+
+    if (operator.equals("->size")) 
+    { type = new Type("int",null); 
+      elementType = type; 
+      // argument is either a string or collection/map
+      if (argumentType.isString() || argumentType.isMap() ||
+          argumentType.isCollection()) 
+      { } 
+      else 
+      { System.err.println("!! Argument of ->size() must be String or Map/Collection, not " + argumentType); 
+        argument.setType(new Type("Sequence", null)); 
+      }
+
+      return res; 
+    } 
+
+    if (operator.equals("->toInteger") ||
+        operator.equals("->char2byte"))
+    { if (argumentType.isString()) 
+      { } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be String, not " + argumentType); 
+        
+        argument.setType(new Type("String", null)); 
+      } 
+
+      if (argument instanceof BasicExpression)
+      { String vname = ((BasicExpression) argument).basicString(); 
+        vartypes.put(vname, new Type("String", null)); 
+      } 
+
+      type = new Type("int",null); 
+      elementType = type; 
+      return res; 
+    } 
+
+    if (operator.equals("->byte2char"))
+    { if (argumentType.isNumeric()) 
+      { } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be numeric, not " + argumentType); 
+        
+        argument.setType(new Type("int", null)); 
+      } 
+
+      if (argument instanceof BasicExpression)
+      { String vname = ((BasicExpression) argument).basicString(); 
+        vartypes.put(vname, new Type("int", null)); 
+      } 
+
+      type = new Type("String",null); 
+      elementType = type; 
+      return res; 
+    } 
+ 
+    if (operator.equals("->ceil") || 
+        operator.equals("->round") ||
+        operator.equals("->floor"))
+    { if (Type.hasVacuousType(argument))
+      { argument.setType(new Type("double", null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = argument + ""; 
+          vartypes.put(vname, new Type("double", null)); 
+        } 
+      } 
+      else if (argumentType.isNumeric()) { } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be numeric, not " + argumentType);
+        argument.setType(new Type("double", null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, new Type("double", null)); 
+        }
+      }  
+
+      type = new Type("int",null); 
+      elementType = type; 
+      return res; 
+    } 
+
+    if (operator.equals("->toLong"))
+    { type = new Type("long",null); 
+      elementType = type; 
+
+      if (argumentType.isString()) 
+      { } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be String, not " + argumentType); 
+        
+        argument.setType(new Type("String", null)); 
+      } 
+
+      if (argument instanceof BasicExpression)
+      { String vname = ((BasicExpression) argument).basicString(); 
+        vartypes.put(vname, new Type("String", null)); 
+      }
+ 
+      return res; 
+    } 
+
+    if (operator.equals("!"))
+    { if (argumentType != null && 
+          "Ref".equals(argumentType.getName()))
+      { type = argumentType.getElementType(); } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be Ref type, not " + argumentType); 
+        Type refType = new Type("Ref", null); 
+        refType.setElementType(new Type("OclAny", null)); 
+        argument.setType(refType); 
+      
+        if (argument instanceof BasicExpression)
+        { String vname = ((BasicExpression) argument).basicString();
+          vartypes.put(vname, refType); 
+        }
+
+        type = new Type("OclAny", null); 
+      }
+ 
+      return res; 
+    } 
+
+    if (operator.equals("?"))
+    { type = new Type("Ref", null); 
+      if (argumentType != null) 
+      { type.setElementType(argumentType); } 
+      else 
+      { type.setElementType(new Type("OclAny", null)); }
+      elementType = type.getElementType();   
+      return res;  
+    } 
+    
+    if (operator.equals("->copy"))
+    { type = argument.type; 
+      elementType = argument.elementType; 
+      multiplicity = argument.multiplicity; 
+      return res; 
+    }  
+
+    if (operator.equals("->iterator"))
+    { type = new Type("OclIterator", null); 
+      if (argumentType != null &&
+          argumentType.elementType != null) 
+      { type.setElementType(argumentType.elementType); } 
+      else 
+      { type.setElementType(new Type("OclAny", null)); }
+      elementType = type.getElementType();   
+      return res; 
+    }  
+    // An OclIterator is a sequence view of a 
+    // collection, via which the collection can 
+    // be navigated & modified. iterators of a map
+    // are iterators of its *values* (not keys)
+    
+    if (operator.equals("->last") || operator.equals("->first"))
+    { type = argument.elementType; 
+      if (type != null && type.isCollectionType())
+      { multiplicity = ModelElement.MANY; 
+        elementType = type.getElementType(); 
+      } 
+      else if (type == null)
+      { JOptionPane.showMessageDialog(null, "No type for: " + this, "Type error", JOptionPane.ERROR_MESSAGE); 
+        type = new Type("OclAny", null); 
+      } 
+      else 
+      { 
+        elementType = type; 
+      } 
+
+      if (argumentType.isString() || argumentType.isCollection())
+      { } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be String or Collection, not " + argumentType); 
+        argument.setType(new Type("Sequence", null)); 
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("-") || operator.equals("+") || 
+        operator.equals("->abs"))   
+    { type = argumentType; 
+      elementType = argument.elementType;
+
+      if (argumentType.isNumeric()) 
+      { return res; } 
+
+      System.err.println("!! Argument of " + operator + 
+        " must be numeric, not " + argumentType); 
+        
+      type = new Type("double",null); 
+      elementType = new Type("double",null); 
+
+      if (argument instanceof BasicExpression)
+      { String vname = ((BasicExpression) argument).basicString();
+        vartypes.put(vname, type); 
+      }
+
+      return res; 
+    } 
+
+    if (operator.equals("->any"))
+    { type = argument.elementType; // for ->any()
+      elementType = argument.elementType; 
+      if (type != null && type.isCollectionType())
+      { multiplicity = ModelElement.MANY; 
+        elementType = type.getElementType(); 
+      } 
+
+      if (type == null) 
+      { type = new Type("OclAny", null); } 
+
+      if (argumentType.isCollection()) { } 
+      else 
+      { System.err.println("!! Argument of ->any() must be collection, not " + argumentType); 
+        argument.setType(new Type("Sequence", null));
+        if (argument instanceof BasicExpression)
+        { String vname = ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    }
+
+    if (operator.equals("->oclType"))
+    { type = new Type("OclType", null); 
+      elementType = new Type("OclType", null); 
+      return res; 
+    }
+
+    if (operator.equals("->isDeleted") || 
+        operator.equals("->display") ||
+        operator.equals("->oclIsUndefined") || 
+        operator.equals("->oclIsInvalid") || 
+        operator.equals("->oclIsNew"))
+    { type = new Type("boolean",null); 
+      elementType = type; 
+      return res; 
+    } 
+
+    if (operator.equals("not"))
+    { if (argumentType.isBoolean())
+      { } 
+      else
+      { System.err.println("!! Argument of not must be boolean, not " + argumentType); 
+        argument.setType(new Type("boolean",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      type = new Type("boolean",null); 
+      elementType = type; 
+      return res; 
+    } 
+ 
+
+    if ("->isLong".equals(operator) || 
+        operator.equals("->isInteger") || 
+        operator.equals("->isReal") ||
+        operator.equals("->toBoolean"))
+    { type = new Type("boolean",null); 
+      elementType = type; 
+
+      if (argumentType.isString())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be String, not " + argumentType); 
+        argument.setType(new Type("String",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+ 
+    if (operator.equals("->isEmpty") || 
+        operator.equals("->notEmpty"))
+    { type = new Type("boolean",null); 
+      elementType = type; 
+
+      if (argumentType.isCollection() || 
+          argumentType.isMap())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be Collection/Map, not " + argumentType); 
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->subcollections"))
+    { type = new Type("Set",null); 
+      elementType = argument.getType(); 
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY;
+      modality = argument.modality; 
+
+      if (argumentType.isCollection())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be Collection, not " + argumentType); 
+        argument.setType(new Type("Set",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+      return res; 
+    }
+
+    if (operator.equals("->allInstances"))
+    { type = new Type("Sequence",null); 
+      elementType = argument.getElementType(); 
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY;
+      modality = argument.modality;
+
+      if (argumentType.isEntity())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be an entity (class) type, not " + argumentType); 
+        argument.setType(new Type("OclAny",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+ 
+      return res; 
+    }
+
+    if (operator.equals("->unionAll"))
+    { type = new Type("Set", null); 
+      
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); 
+        if (argument.elementType.isMap())
+        { type = new Type("Map", null);
+          type.keyType = argument.elementType.getKeyType();  
+          type.elementType = elementType; 
+        }
+      } 
+      else 
+      { elementType = argument.elementType; } 
+
+      if (argumentType.isCollection()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection, not " + argumentType); 
+
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->intersectAll"))
+    { type = new Type("Set", null); 
+
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); 
+        if (argument.elementType.isMap())
+        { type = new Type("Map", null); 
+          type.keyType = argument.elementType.getKeyType();  
+          type.elementType = elementType; 
+        }
+      }
+      else 
+      { elementType = argument.elementType; }  
+
+
+      if (argumentType.isCollection()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection, not " + argumentType); 
+
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->concatenateAll"))
+    { type = new Type("Sequence", null); 
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); }
+      else 
+      { elementType = argument.elementType; }  
+
+      if (argumentType.isCollection()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection, not " + argumentType); 
+
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->flatten"))
+    { type = argument.type; 
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); }
+      else 
+      { elementType = argument.elementType; }
+
+      if (argumentType.isCollection()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection, not " + argumentType); 
+
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+  
+      return res; 
+    } 
+
+    if (operator.equals("->asSet"))
+    { type = new Type("Set",null); 
+      elementType = argument.elementType;
+      if (argument.isMap())
+      { elementType = argument.type; }  
+      entity = argument.entity; 
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY; 
+
+      if (argumentType.isCollection() || argumentType.isMap()) 
+      { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection or map, not " + argumentType); 
+
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } // But map->asSet() has elementType = argument.type
+
+    if (operator.equals("->keys"))
+    { type = new Type("Set",null); 
+      elementType = new Type("String",null); 
+         // or keyType of the map 
+      if (argument.type != null && 
+          argument.type.keyType != null) 
+      { elementType = argument.type.keyType; } 
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY;
+
+      if (argumentType.isMap()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a map, not " + argumentType); 
+
+        argumentType = new Type("Map", null); 
+        argumentType.setKeyType(new Type("OclAny", null)); 
+        argumentType.setElementType(new Type("OclAny", null)); 
+
+        argument.setType(argumentType); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+ 
+      return res; 
+    } 
+
+    if (operator.equals("->closure"))
+    { BasicExpression closured = (BasicExpression) argument; 
+      // BasicExpression arg = (BasicExpression) closured.getObjectRef(); 
+
+      for (int j = 0; j < contexts.size(); j++) 
+      { Entity ent = (Entity) contexts.get(j); 
+        if (ent.hasDefinedRole(closured.data))
+        { Association ast = ent.getDefinedRole(closured.data); 
+          entity = ent; 
+          if (ast == null)   // something very bad has happened
+          { System.err.println("TYPE ERROR: Undefined role: " + argument); 
+            JOptionPane.showMessageDialog(null, "Undefined role " + argument, "Type error",
+			                                         JOptionPane.ERROR_MESSAGE);  
+            return false; 
+          } 
+          multiplicity = ast.getCard2();
+          elementType = new Type(ast.getEntity2()); 
+          modality = ModelElement.INTERNAL; // ???
+          if (multiplicity == ModelElement.ONE) 
+          { type = new Type(ast.getEntity2()); } 
+          else 
+          { if (ast.isOrdered())
+            { type = new Type("Sequence",null); } 
+            else 
+            { type = new Type("Set",null); }
+            type.setElementType(elementType); 
+          }   // index must be int type, 
+              // and ast is ordered/sorted. Also for any att or role
+        } 
+      }
+    } 
+
+    if (operator.equals("->asSequence"))
+    { type = new Type("Sequence",null); 
+      elementType = argument.elementType;
+      if (argument.isMap())
+      { elementType = argument.type; }  
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY; 
+
+      if (argumentType.isCollection() || 
+          argumentType.isMap()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection or map, not " + argumentType); 
+
+        argumentType = new Type("Set", null); 
+        argumentType.setElementType(new Type("OclAny", null)); 
+
+        argument.setType(argumentType); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } // map->asSequence() is sequence of individual maplets        
+
+    if (operator.equals("->asOrderedSet") ||  
+        operator.equals("->sort") ||
+        "->asBag".equals(operator))
+    { type = new Type("Sequence",null); 
+      elementType = argument.elementType;
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY; 
+
+      if (argumentType.isCollection() || 
+          argumentType.isMap()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a collection or map, not " + argumentType); 
+
+        argumentType = new Type("Sequence", null); 
+        argumentType.setElementType(new Type("OclAny", null)); 
+
+        argument.setType(argumentType); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    }         
+
+    if (operator.equals("->values"))
+    { type = new Type("Sequence",null); 
+      elementType = argument.elementType;
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY; 
+
+      if (argumentType.isMap()) { } 
+      else 
+      { System.err.println("!! Argument of " + this + 
+          " must be a map, not " + argumentType); 
+
+        argumentType = new Type("Map", null); 
+        argumentType.setKeyType(new Type("OclAny", null)); 
+        argumentType.setElementType(new Type("OclAny", null)); 
+
+        argument.setType(argumentType); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+ 
+    if (operator.equals("->toReal"))
+    { type = new Type("double",null); 
+      elementType = type; 
+
+      if (argumentType.isString())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be String, not " + argumentType); 
+        argument.setType(new Type("String",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString();
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+      return res; 
+    } 
+
+    if (operator.equals("->sqrt") || 
+        operator.equals("->sqr") || 
+        operator.equals("->log") ||
+        operator.equals("->cbrt") || 
+        operator.equals("->log10") ||
+        operator.equals("->exp") || 
+        operator.equals("->sin") ||
+        operator.equals("->cos") || 
+        operator.equals("->tan") ||
+        operator.equals("->sinh") || 
+        operator.equals("->cosh") ||
+        operator.equals("->tanh") || 
+        operator.equals("->asin") ||
+        operator.equals("->acos") || 
+        operator.equals("->atan"))
+    { type = new Type("double",null); 
+      elementType = type; 
+
+      if (argumentType.isNumeric())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be a numeric type, not " + argumentType); 
+        argument.setType(new Type("double",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->max") ||
+        operator.equals("->min") || 
+        operator.equals("->sum"))
+    { type = argument.getElementType(); 
+      elementType = type; 
+
+      if (Type.isVacuousType(type))
+      { type = new Type("double", null); 
+        elementType = type; 
+      } 
+      else if (Type.isSummableType(type))
+      { } // or OclDate for ->min, ->max.  
+      else 
+      { System.err.println("!! Element type of " + argument + " must be numeric/string type, not " + type); 
+        type = new Type("double", null); 
+        elementType = type;
+      } 
+
+      modality = argument.modality; 
+      multiplicity = ModelElement.ONE; 
+
+      if (argumentType.isCollection())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be a sequence or set, not " + argumentType); 
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString();
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->prd"))
+    { type = argument.getElementType();
+
+      if (Type.isVacuousType(type))
+      { type = new Type("double", null); 
+        elementType = type; 
+      } 
+      else if (type.isNumeric())
+      { }   
+      else 
+      { System.err.println("!! Element type of " + argument + " must be numeric type, not " + type); 
+        type = new Type("double", null); 
+        elementType = type;
+      } 
+
+      elementType = type; 
+      modality = argument.modality; 
+      multiplicity = ModelElement.ONE; 
+
+      if (argumentType.isCollection())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be a sequence or set, not " + argumentType); 
+        argument.setType(new Type("Sequence",null)); 
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+    if (operator.equals("->characters"))
+    { type = new Type("Sequence",null); 
+      elementType = new Type("String",null); 
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY;
+
+      if (argumentType.isString())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be a string, not " + argumentType); 
+        argument.setType(new Type("String",null)); 
+        argument.setElementType(new Type("String",null)); 
+        
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      return res; 
+    } 
+
+
+    if (operator.equals("->reverse") || 
+        operator.equals("->tail") || 
+        operator.equals("->front"))  
+    { type = argument.getType(); 
+      modality = argument.modality; 
+      elementType = argument.elementType;
+
+      if ("String".equals(argument.getType() + ""))
+      { type = new Type("String",null); 
+        elementType = type; 
+        multiplicity = ModelElement.ONE; 
+        return res;  
+      }
+      else 
+      { /* if (type == null) // objectRef is multiple but an attribute
+        { type = argument.getElementType();
+          Entity e = argument.getEntity();
+          if (type == null && e != null) 
+          { type = e.getFeatureType(((BasicExpression) argument).data); } 
+          // System.out.println("Element type of " + this + ": " + e + " " + type);
+          if (type == null)
+          { System.err.println("!!! TYPE ERROR: Can't determine element type of " + this); 
+            JOptionPane.showMessageDialog(null, "No type for: " + this, "Type error", JOptionPane.ERROR_MESSAGE); 
+            type = new Type("void",null);
+            elementType = type; 
+          }  // hack
+        }  */ 
+        type = new Type("Sequence", null); 
+        type.setElementType(elementType); 
+        entity = argument.entity;
+        multiplicity = ModelElement.MANY; 
+      }
+
+      if (argumentType.isString() || argumentType.isSequence())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be a sequence or string, not " + argumentType); 
+        argument.setType(new Type("Sequence",null)); 
+        argument.setElementType(new Type("OclAny",null)); 
+        
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
+      // and case where it is an extension operator
+      System.out.println("**Type of " + this + " is " + type);
+      return res;
+    }
+    
+    if (operator.equals("->toLowerCase") || 
+        operator.equals("->toUpper") ||
+        operator.equals("->toLower") || 
+        operator.equals("->toUpperCase") || 
+        operator.equals("->trim"))  
+    { modality = argument.modality; 
+      type = new Type("String",null); 
+      elementType = type; 
+      multiplicity = ModelElement.ONE; 
+
+      if (argumentType.isString())
+      { } 
+      else
+      { System.err.println("!! Argument of " + operator + 
+          " must be a string, not " + argumentType); 
+        argument.setType(new Type("String",null)); 
+        argument.setElementType(new Type("String",null)); 
+        
+        if (argument instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) argument).basicString(); 
+          vartypes.put(vname, argument.type); 
+        }
+      } 
+
       return res; 
     }  
 

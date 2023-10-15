@@ -383,6 +383,29 @@ public class UCDArea extends JPanel
     }
   } // and entity activities. 
 
+  public void typeInference()
+  { for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i);
+      java.util.Map vartypes = new java.util.HashMap();  
+      e.typeInference(types,entities,vartypes); 
+    } 
+
+    /* for (int j = 0; j < useCases.size(); j++) 
+    { if (useCases.get(j) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(j); 
+        uc.typeCheck(types,entities); 
+      } 
+    } 
+	
+    Vector contexts = new Vector(); 
+	
+    for (int i = 0; i < constraints.size(); i++) 
+    { Constraint con = (Constraint) constraints.get(i); 
+      con.typeCheck(types,entities,contexts); 
+    } */ 
+
+  } // and entity activities. 
+
 
   public void deleteUseCase(String nme)
   { if (nme == null)

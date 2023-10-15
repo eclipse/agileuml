@@ -2328,6 +2328,32 @@ class BasicExpression extends Expression
     return res; 
   }
 
+  public String basicString()
+  { String res;
+    if (objectRef != null)
+    { res = objectRef + "." + data; } 
+    else 
+    { res = data; } 
+
+    if (prestate)
+    { res = res + "@pre"; }
+
+    if (parameters != null)
+    { res = res + "("; 
+      for (int i = 0; i < parameters.size(); i++)
+      { res = res + parameters.get(i); 
+        if (i < parameters.size() - 1)
+        { res = res + ","; } 
+      }
+      res = res + ")"; 
+    }
+
+    if (arrayIndex != null)
+    { res = res + "[" + arrayIndex + "]"; } 
+
+    return res; 
+  }
+
   public String toAST() 
   { String res = "(OclBasicExpression ";
     if (objectRef != null)
@@ -3303,6 +3329,12 @@ class BasicExpression extends Expression
 
   // for UMLRSDS: also do doubles with E-, E+ syntax.
  
+  public boolean typeInference(final Vector typs, 
+                                        final Vector ents,
+                   final Vector contexts, final Vector env, 
+                   java.util.Map vartypes)
+  { return typeCheck(typs,ents,contexts,env); } 
+
   public boolean typeCheck(final Vector types, final Vector entities,
                            final Vector contexts, final Vector env)
   { boolean res = true;

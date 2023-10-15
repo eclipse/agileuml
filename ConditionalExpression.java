@@ -745,6 +745,43 @@ public Vector singleMutants()
     return mr;
   }
 
+  public boolean typeInference(final Vector typs, 
+                               final Vector ents,
+                   final Vector contexts, final Vector env, 
+                   java.util.Map vartypes)
+  { test.typeInference(typs,ents,contexts,env,vartypes); 
+    if (test.type != null && 
+        test.type.isBoolean())
+    { } 
+    else 
+    { System.err.println("!! Type of test " + test + 
+                         " should be boolean, not " + 
+                         test.type); 
+      test.setType(new Type("Boolean", null)); 
+    } 
+
+    if (test instanceof BasicExpression)
+    { String vname = test + ""; 
+      vartypes.put(vname, new Type("boolean", null)); 
+    } 
+
+    ifExp.typeInference(typs,ents,contexts,env,vartypes);
+    elseExp.typeInference(typs,ents,
+                          contexts,env,vartypes); 
+    
+    if ((ifExp.type + "").equals(elseExp.type + ""))
+    { type = ifExp.type; 
+      elementType = ifExp.elementType; 
+      return true; 
+    } 
+    else 
+    { System.err.println("!! WARNING: types in then, else of " + this + " are different: " + ifExp.type + " /= " + elseExp.type); 
+      type = ifExp.type; 
+      elementType = ifExp.elementType; 
+      return false; 
+    }
+  } 
+
   public boolean typeCheck(final Vector types,
                            final Vector entities,
                            final Vector contexts, final Vector env)

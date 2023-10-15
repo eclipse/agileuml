@@ -1542,6 +1542,11 @@ abstract class Expression
   public abstract boolean typeCheck(final Vector typs, final Vector ents,
                                     final Vector contexts, final Vector env); 
 
+  public abstract boolean typeInference(final Vector typs, 
+                                        final Vector ents,
+                   final Vector contexts, final Vector env, 
+                   java.util.Map vartypes); 
+
   public abstract int maxModality();
 
   public abstract int minModality(); 
@@ -1560,6 +1565,13 @@ abstract class Expression
     { return type.getName().equals("int") || 
         type.getName().equals("long"); 
     } 
+    return false; 
+  }  
+
+  public boolean isInt()
+  { if (type != null) 
+    { return type.getName().equals("int"); }
+ 
     return false; 
   }  
 

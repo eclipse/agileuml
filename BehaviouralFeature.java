@@ -3404,7 +3404,7 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public boolean typeCheck(Vector types, Vector entities)
-  { // System.err.println("ERRROR -- calling wrong type-check for " + name); 
+  { // System.err.println("ERROR -- calling wrong type-check for " + name); 
 
     Vector localEntities = allTypeParameterEntities(); 
      
@@ -3447,6 +3447,75 @@ public class BehaviouralFeature extends ModelElement
     return res;  
   } // and the activity? 
   // could deduce type and element type of result. 
+
+  public boolean typeInference(Vector types, Vector entities, 
+                               java.util.Map vartypes)
+  { java.util.Map localvartypes = new java.util.HashMap(); 
+    localvartypes.putAll(vartypes); 
+
+    Vector localEntities = allTypeParameterEntities(); 
+     
+    localEntities.addAll(entities); 
+
+    Vector contexts = new Vector(); 
+    if (entity != null && instanceScope) 
+    { contexts.add(entity); }
+    else if (entity != null && !instanceScope)
+    { localEntities.add(0,entity); } 
+ 
+    Vector env = new Vector();
+    typeCheckParameters(parameters,types,localEntities);  
+    env.addAll(parameters);
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute par = (Attribute) parameters.get(i); 
+      localvartypes.put(par.getName(), par.getType()); 
+    } 
+
+    if (resultType != null && !("void".equals(resultType + "")))
+    { Attribute resultVar = getResultParameter(); 
+      if (resultVar != null) 
+      { env.add(resultVar); 
+        localvartypes.put("result", resultType); 
+      }  
+    } 
+ 
+    if (pre != null) 
+    { pre.typeCheck(types,localEntities,contexts,env); } 
+
+    boolean res = false; 
+
+    if (post != null) 
+    { res = post.typeCheck(
+              types,localEntities,contexts,env); 
+    }
+ 
+    if (activity != null) 
+    { System.out.println(">>> Type inference for activity " + activity); 
+      res = activity.typeInference(
+              types,localEntities,contexts,env,localvartypes);
+    } 
+
+    System.out.println(">>> Typed variables = " + 
+                       localvartypes); 
+
+    Type rtype = (Type) localvartypes.get("result"); 
+    if ((resultType == null || 
+         "OclAny".equals(resultType + "")) && 
+        rtype != null) 
+    { resultType = rtype; } 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute par = (Attribute) parameters.get(i); 
+      Type newpartype = 
+         (Type) localvartypes.get(par.getName());
+      if (Type.isVacuousType(par.getType()) && 
+          newpartype != null)
+      { par.setType(newpartype); } 
+    } 
+
+    return res;  
+  } 
 
   public boolean typeCheck(Vector types, Vector entities, Vector contexts, Vector env)
   { Vector contexts1 = new Vector(); 

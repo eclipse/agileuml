@@ -753,6 +753,14 @@ public void findPlugins()
     // desMenuItem.setMnemonic(KeyEvent.VK_D);
     analyseMenu.add(tcMenuItem); 
 
+    JMenuItem tinferenceMenuItem = new JMenuItem("Type inference"); 
+    tinferenceMenuItem.addActionListener(this); 
+    tinferenceMenuItem.setToolTipText(
+      "Infers types where possible");
+    tinferenceMenuItem.setEnabled(true); 
+    // desMenuItem.setMnemonic(KeyEvent.VK_D);
+    analyseMenu.add(tinferenceMenuItem); 
+
     JMenuItem qualCheck = 
       new JMenuItem("Quality check"); 
     qualCheck.setToolTipText(
@@ -2031,6 +2039,8 @@ public void findPlugins()
       { ucdArea.generateGo(); } 
       else if (label.equals("Type-check"))
       { ucdArea.typeCheck(); } 
+      else if (label.equals("Type inference"))
+      { ucdArea.typeInference(); } 
       else if (label.equals("Generate Design"))
       { ucdArea.generateDesign(); } 
       else if (label.equals("Generate SMV"))

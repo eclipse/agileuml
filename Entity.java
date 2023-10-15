@@ -1598,6 +1598,13 @@ public class Entity extends ModelElement implements Comparable
     operations.removeAll(removed); 
   } 
 
+  public void typeInference(Vector types, Vector entities, 
+                            java.util.Map vartypes)
+  { typeInferenceAttributes(types,entities,vartypes); 
+    typeInferenceOps(types,entities,vartypes); 
+    // typeCheckInvariants(types,entities); 
+  } 
+
   public void typeCheck(Vector types, Vector entities)
   { typeCheckAttributes(types,entities); 
     typeCheckOps(types,entities); 
@@ -1615,6 +1622,18 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void typeInferenceAttributes(Vector types, Vector entities, java.util.Map vartypes)
+  { Vector localtypes = new Vector(); 
+    localtypes.addAll(types); 
+    localtypes.addAll(typeParameters); 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      // System.out.println(">> Type-checking " + att + " with " + localtypes + " " + entities); 
+      att.typeCheck(localtypes,entities);
+      vartypes.put(att.getName(), att.getType());  
+    } 
+  } 
+
   public void typeCheckOps(Vector types, Vector entities)
   { Vector localtypes = new Vector(); 
     localtypes.addAll(types); 
@@ -1622,6 +1641,17 @@ public class Entity extends ModelElement implements Comparable
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
       bf.typeCheck(localtypes,entities); 
+    } 
+  } 
+
+  public void typeInferenceOps(Vector types, Vector entities, 
+                               java.util.Map vartypes)
+  { Vector localtypes = new Vector(); 
+    localtypes.addAll(types); 
+    localtypes.addAll(typeParameters); 
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      bf.typeInference(localtypes,entities,vartypes); 
     } 
   } 
 
