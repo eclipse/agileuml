@@ -142,7 +142,7 @@ if false then _1 else _2 endif |-->_2
 
 if _1 then _2 else _2 endif |-->_2
 
-if _1 then _2 else _3 endif |-->if _1 then _2 else _3 endif
+if _1 then _2 else _3 endif |-->(if _1 then _2 else _3 endif)
 
 
 logicalExpression::
