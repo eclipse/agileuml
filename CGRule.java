@@ -1028,11 +1028,11 @@ public class CGRule
       else 
       { // k = Integer.parseInt(mfvar.charAt(1) + ""); 
         k = variablePosition(mfvar); 
-        System.out.println(">***> Variable position of " + mfvar + " is " + k); 
+        // System.out.println(">***> Variable position of " + mfvar + " is " + k); 
       }  
       // Actually the argument corresponding to _k
 
-      System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
+      // System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
       System.out.println(); 
 
       // The variable is a normal LHS variable: 
@@ -1089,7 +1089,7 @@ public class CGRule
                  obj instanceof Expression)
         { Expression e = (Expression) obj; 
           Type t = e.getElementType(); 
-          System.out.println(">--> Element type of " + e + " is: " + t);
+          // System.out.println(">--> Element type of " + e + " is: " + t);
           System.out.println(); 
  
           if (t == null) 

@@ -3329,11 +3329,1377 @@ class BasicExpression extends Expression
 
   // for UMLRSDS: also do doubles with E-, E+ syntax.
  
-  public boolean typeInference(final Vector typs, 
-                                        final Vector ents,
+  public boolean typeInference(final Vector types, 
+                               final Vector entities,
                    final Vector contexts, final Vector env, 
                    java.util.Map vartypes)
-  { return typeCheck(typs,ents,contexts,env); } 
+  { boolean res = true; 
+
+    if ("null".equals(data))
+    { type = new Type("OclAny", null); 
+      entity = null; 
+      umlkind = VALUE; 
+      multiplicity = ModelElement.ONE;
+      return true;
+    } 
+
+    if ("Math_NaN".equals(data) || 
+        "Math_PINFINITY".equals(data) || 
+        "Math_NINFINITY".equals(data))
+    { type = new Type("double", null); 
+      entity = null; 
+      umlkind = VALUE; 
+      multiplicity = ModelElement.ONE;
+      return true;
+    } // double values that represent invalid doubles
+
+    if (isInteger(data))
+    { type = new Type("int",null);
+      elementType = type; 
+      entity = null;
+      umlkind = VALUE;
+      multiplicity = ModelElement.ONE;
+      data = "" + Expression.convertInteger(data);  
+      // System.out.println("**Type of " + data + " is int");
+      return true;
+    }
+
+    if (Expression.isLong(data))
+    { type = new Type("long",null);
+      elementType = type; 
+      entity = null;
+      umlkind = VALUE;
+      multiplicity = ModelElement.ONE;
+      data = "" + Expression.convertLong(data); 
+      // System.out.println("**Type of " + data + " is long");
+      return true;
+    }
+
+    if (isDouble(data))
+    { type = new Type("double",null);
+      elementType = type; 
+      entity = null;
+      umlkind = VALUE;
+      multiplicity = ModelElement.ONE;
+      // System.out.println("**Type of " + data + " is double");
+      return true;
+    }
+
+    if (isString(data))
+    { type = new Type("String",null);
+      elementType = type; 
+      entity = null;
+      umlkind = VALUE;
+      multiplicity = ModelElement.ONE;
+      // System.out.println("**Type of " + data + " is String");
+      if (arrayIndex != null) 
+      { // System.out.println(">>It has array index " + arrayIndex); 
+        arrayIndex.typeCheck(types,entities,contexts,env); 
+      }
+      return true;
+    }
+
+    if (isBoolean(data))
+    { type = new Type("boolean",null);
+      elementType = type; 
+      entity = null;
+      umlkind = VALUE;
+      multiplicity = ModelElement.ONE;
+      // System.out.println("**Type of " + data + " is boolean");
+      return true;
+    }
+
+  if ("int".equals(data) || "long".equals(data) || 
+        "boolean".equals(data) || "void".equals(data) ||  
+        "double".equals(data) || "String".equals(data) ||
+        "OclDate".equals(data) || "OclAny".equals(data) || 
+        "OclType".equals(data) || "OclFile".equals(data) || 
+        "OclRandom".equals(data) ||
+        "SQLStatement".equals(data) || 
+        "OclDatasource".equals(data) || 
+        "OclAttribute".equals(data) || 
+        "OclOperation".equals(data) || 
+        Type.isOclExceptionType(data) ||  
+        "OclProcess".equals(data) || 
+        "OclProcessGroup".equals(data))
+    { type = new Type("OclType", null); 
+      elementType = new Type(data, null); 
+      umlkind = TYPE; 
+      type.elementType = elementType; 
+      multiplicity = ModelElement.MANY; 
+      entity = null; 
+    } // for use in oclAsType(typ)
+
+    if ("now".equals(data))
+    { type = new Type("long", null); 
+      elementType = type; 
+      umlkind = VARIABLE; 
+      variable = 
+        new Attribute("now", type, ModelElement.INTERNAL); 
+      multiplicity = ModelElement.ONE; 
+      System.out.println("***Type of " + this + " is: " + type); 
+      return true;  
+    } 
+
+    if ("$act".equals(data) || "$fin".equals(data))
+    { type = new Type("int", null); 
+      elementType = type; 
+      umlkind = VALUE; 
+      multiplicity = ModelElement.ONE; 
+      System.out.println("***Type of " + this + " is: " + type); 
+      return true; 
+    } 
+
+    if ("self".equals(data))
+    { if (contexts.size() == 0)
+      { System.err.println("!WARNING!: Invalid occurrence of self, not in instance context"); 
+        // JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of self, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
+      }
+      else 
+      { if (contexts.size() > 1)
+        { System.err.println("!WARNING!: Ambiguous occurrence of self, contexts: " + contexts);
+        } 
+        entity = (Entity) contexts.get(0); // the most local context
+        type = new Type(entity); 
+        elementType = type; 
+        umlkind = VARIABLE; 
+        variable = new Attribute("self", type, ModelElement.INTERNAL); 
+        multiplicity = ModelElement.ONE; 
+        System.out.println("***Type of self (most local context) is: " + type); 
+        vartypes.put("self", type); 
+        return true; 
+      } // but may deduce type from features used with self
+    } 
+
+
+    if ("super".equals(data))
+    { if (contexts.size() == 0)
+      { if (objectRef == null) 
+        { System.err.println("!!ERROR!!: Invalid occurrence of super, not instance context"); 
+          JOptionPane.showMessageDialog(null, "ERROR!!: Invalid occurrence of super, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE);
+        } 
+        else if (objectRef.elementType != null && 
+                 objectRef.elementType.isEntity()) 
+        { entity = objectRef.elementType.getEntity(); 
+          if (entity.getSuperclass() != null) 
+          { type = new Type(entity.getSuperclass()); }
+          else 
+          { System.err.println("!!ERROR!!: Invalid occurrence of super, no superclass for " + entity); 
+            JOptionPane.showMessageDialog(null, 
+                "ERROR!!: Invalid occurrence of super, no superclass of " + entity, 
+                "Semantic error", JOptionPane.ERROR_MESSAGE);
+          }   
+        } 
+        else 
+        { System.err.println("!!ERROR!!: Invalid occurrence of super: " + this + 
+                             " no defined instance context"); 
+        }           
+      }
+      else 
+      { if (contexts.size() > 1)
+        { System.err.println("WARNING!: Ambiguous occurrence of super, contexts: " + contexts);
+        } 
+
+        for (int i = 0; i < contexts.size(); i++) 
+        { entity = (Entity) contexts.get(i); 
+          if (entity != null && entity.getSuperclass() != null)
+          { type = new Type(entity.getSuperclass()); 
+            break; 
+          } 
+        }  
+
+        elementType = type; 
+        umlkind = VARIABLE; 
+        variable = 
+          new Attribute("super", type, ModelElement.INTERNAL); 
+        multiplicity = ModelElement.ONE; 
+        System.out.println("***Type of super is: " + type); 
+        vartypes.put("super", type); 
+        return true; 
+      } 
+    } 
+
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { if (parameters.get(i) instanceof Expression)
+        { Expression ep = (Expression) parameters.get(i); 
+          ep.typeInference(types,entities,contexts,
+                           env,vartypes);
+        } 
+      } 
+    }
+
+
+    if (arrayIndex != null)
+    { boolean res1 = 
+        arrayIndex.typeInference(types,entities,contexts,
+                                 env,vartypes);
+      arrayType = type; 
+      res = res && res1;
+    } // might reduce multiplicity to ONE - although not for --* qualified roles 
+
+    Vector context = new Vector(); 
+
+    if (objectRef != null)
+    { if (objectRef instanceof BasicExpression)
+      { BasicExpression oref = (BasicExpression) objectRef; 
+        res = objectRef.typeInference(types,entities,contexts,
+                                      env,vartypes); 
+      }
+      else 
+      { res = 
+         objectRef.typeInference(types,entities,contexts,
+                                 env,vartypes); 
+      }
+
+      Entity staticent = 
+        (Entity) ModelElement.lookupByName(objectRef + "", entities); 
+      // System.out.println("**Type of " + this + " is static operation, of: " + staticent);
+
+      if (staticent != null) 
+      { objectRef.umlkind = Expression.CLASSID; 
+        // isStatic = true; 
+
+        BehaviouralFeature bf = 
+          staticent.getStaticOperation(data,parameters); 
+
+        if (bf != null) 
+        { if (bf.parametersMatch(parameters)) { } 
+          else 
+          { JOptionPane.showMessageDialog(null, 
+              "Actual parameters do not match operation formal pars: " + this + " /= " + bf,                       
+              "Type warning", JOptionPane.WARNING_MESSAGE); 
+          }  
+
+          bf.setFormalParameters(parameters); 
+          System.out.println("** Setting formal parameters of " + this);
+
+          type = bf.getResultType(); 
+          elementType = bf.getElementType(); 
+          entity = staticent; 
+          isStatic = true; 
+            
+          if (bf.isQuery())
+          { umlkind = QUERY; }
+          else 
+          { umlkind = UPDATEOP; 
+            if (type == null || type.equals("") || 
+                type.equals("void"))
+            { type = new Type("boolean",null); }  
+          }
+          // System.out.println("**Type of " + this + " is static operation call, of: " + entity);
+          return true;  
+        } 
+        else if (staticent.hasDefinedAttribute(data))  
+        { umlkind = ATTRIBUTE;
+          multiplicity = ModelElement.ONE;
+          Attribute att = staticent.getDefinedAttribute(data);
+          if (att != null && att.isStatic())
+          { modality = att.getKind(); 
+            type = att.getType();
+            elementType = att.getElementType(); 
+            if (Type.isCollectionType(type))
+            { multiplicity = ModelElement.MANY; } 
+            entity = staticent;
+            isStatic = true; 
+            // variable = att; // For precise type-analysis
+
+            arrayType = type; 
+            adjustTypeForArrayIndex(att); 
+            System.out.println("*** Type of " + data + " is static ATTRIBUTE in entity " +
+                                staticent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
+            return res;
+          } 
+        } 
+        else 
+        { System.out.println("!! Cannot locate static feature " + 
+                             data + " of entity " +
+                             staticent); 
+        } 
+      } 
+    
+      if (objectRef.elementType != null && 
+          objectRef.elementType.isEntity(entities))
+      { context.add(0,
+          objectRef.elementType.getEntity(entities));
+      } 
+      else if (objectRef.type != null && 
+               objectRef.type.isEntity(entities)) 
+      { context.add(0,objectRef.type.getEntity(entities)); }
+      else 
+      { System.err.println("! Warning: Cannot locate class of " + objectRef); 
+        JOptionPane.showMessageDialog(null, 
+           "Warning!: Cannot locate class of " + objectRef, 
+           "Semantic error", JOptionPane.ERROR_MESSAGE);
+      } 
+    }
+    else // objectRef == null
+    { context.addAll(contexts); } 
+
+    // System.out.println("Context of " + this + "(event: " + isEvent + ") is " + context);
+ 
+    if (context.size() == 0)
+    { if (entity == null) 
+      { System.out.println("!! No owning class found for " + this);
+        System.out.println();  
+        //  + 
+        //         " -- it must be a local variable/parameter");
+        // System.out.println(">> Or static feature/global use case"); 
+        // System.out.println(">> Static features should be prefixed by their class: C.f"); 
+      } 
+    } 
+
+    // System.out.println();  
+
+    if (isEvent && isFunction(data))
+    { isEvent = false; 
+      umlkind = FUNCTION; 
+    } // this should not arise. 
+
+    if (isEvent && 
+        !data.equals("subrange") && 
+        !data.equals("indexOf") && 
+        !data.equals("setAt") && 
+        !data.equals("insertAt") && 
+        !data.equals("insertInto") && 
+        !(data.equals("replace")) && 
+        !(data.equals("replaceFirstMatch")) && 
+        !(data.equals("replaceAll")) && 
+        !(data.equals("replaceAllMatches")) && 
+        !(data.equals("Sum")) && !(data.equals("Prd")) &&  
+        !(data.equals("oclIsKindOf")) && 
+        !(data.equals("oclIsTypeOf")) && 
+        !(data.equals("oclAsType")))
+    { // data must be an event of the owning class, the elementType of 
+      // the objectRef, or of an ancestor of it. 
+      BehaviouralFeature bf; 
+
+
+      for (int i = 0; i < context.size(); i++) 
+      { Entity e = (Entity) context.get(i); 
+        bf = e.getDefinedOperation(data,parameters);
+  
+        if (bf != null) 
+        { System.out.println("**Type of " + data + " is operation, of class: " + e);
+          entity = e;
+          if (bf.parametersMatch(parameters)) { } 
+          else 
+          { JOptionPane.showMessageDialog(null, 
+              "Actual parameters do not match operation pars: " + this + " " + bf, 
+              "Type warning", JOptionPane.WARNING_MESSAGE);
+            continue; 
+          }  
+
+          System.out.println("** Setting formal parameters of " + data + " operation: " + parameters);
+          System.out.println(); 
+
+          bf.setFormalParameters(parameters); 
+
+          if (bf.isQuery())
+          { umlkind = QUERY; 
+            type = bf.getResultType(); 
+            elementType = bf.getElementType(); 
+            // System.out.println("QUERY OPERATION, type: " + type); 
+            // System.out.println("QUERY OPERATION, element type: " + elementType); 
+          }
+          else 
+          { umlkind = UPDATEOP; 
+            type = bf.getResultType(); 
+            elementType = bf.getElementType(); 
+            if (type == null || 
+                type.equals("") || type.equals("void"))
+            { type = new Type("boolean",null); }  
+            // System.out.println("UPDATE OPERATION, type: " + type); 
+          }  // shouldn't be object ref of anything. Should 
+             // only occur as part of action invariant.
+
+          setObjectRefType(); 
+          
+          adjustTypeForObjectRef(bf); 
+          arrayType = type; 
+
+          adjustTypeForArrayIndex(bf);
+
+          if (objectRef instanceof BasicExpression)
+          { String vname = 
+              ((BasicExpression) objectRef).basicString(); 
+            vartypes.put(vname, new Type(entity)); 
+          } 
+ 
+          return true; 
+        }   // type check the actual parameters, also 
+        else if (e.getEventNames().contains(data))
+        { umlkind = UPDATEOP;
+          entity = e;  
+          multiplicity = ModelElement.ONE; 
+          type = new Type("boolean",null); 
+          setObjectRefType(); 
+          // adjustTypeForObjectRef(bf); 
+          // adjustTypeForArrayIndex(bf); 
+          arrayType = type; 
+
+          if (objectRef instanceof BasicExpression)
+          { String vname = 
+              ((BasicExpression) objectRef).basicString(); 
+            vartypes.put(vname, new Type(entity)); 
+          } 
+
+          return true; 
+        } // else, downcast if in a subclass
+        else 
+        { Entity subent = 
+            e.searchForSubclassWithOperation(data); 
+          if (subent != null) 
+          { downcast = true; 
+            entity = subent; 
+            bf = subent.getOperation(data); 
+            if (bf != null) 
+            { type = bf.getResultType(); 
+              elementType = bf.getElementType(); 
+            
+              bf.setFormalParameters(parameters); 
+
+              if (bf.isQuery())
+              { umlkind = QUERY; }
+              else 
+              { umlkind = UPDATEOP; 
+                if (type == null || type.equals("") || 
+                    type.equals("void"))
+                { type = new Type("boolean",null); }  
+              } 
+              setObjectRefType(); 
+              adjustTypeForObjectRef(bf); 
+              arrayType = type; 
+              adjustTypeForArrayIndex(bf); 
+            
+              if (objectRef instanceof BasicExpression)
+              { String vname = 
+                  ((BasicExpression) objectRef).basicString(); 
+                vartypes.put(vname, new Type(entity)); 
+              }
+ 
+              return true;
+            } 
+          }  
+        } 
+      } 
+
+      // If it is a function parameter of the current operation:
+
+      Attribute fvar = 
+        (Attribute) ModelElement.lookupByName(data,env); 
+      if (fvar != null) 
+      { type = fvar.getType(); 
+        arrayType = type; 
+
+        if (type != null && type.isFunctionType())
+        { umlkind = UPDATEOP; 
+          elementType = fvar.getElementType();
+          System.out.println(">> Function parameter " + data + " of type " + type + "(" + elementType + ")"); 
+        } 
+        else 
+        { JOptionPane.showMessageDialog(null, data + " is not a function parameter or known function in " + this + ".\n" + 
+            "Please re-type-check or correct your specification.", 
+            "Type warning", JOptionPane.WARNING_MESSAGE);
+
+          if (parameters != null && parameters.size() == 1)
+          { // assume it is a function
+            type = new Type("Function", null); 
+            Expression par1 = (Expression) parameters.get(0); 
+            type.keyType = par1.getType();
+            type.elementType = new Type("OclAny", null);  
+       
+            vartypes.put(data, type); 
+          } // data->apply(par1)
+        }
+      } // default
+      else if (objectRef != null)
+      { if (objectRef.type != null) 
+        { String ename = objectRef.type.getName(); 
+          Entity cent = 
+           (Entity) ModelElement.lookupByName(ename, entities); 
+          if (cent != null) 
+          { BehaviouralFeature op = cent.getOperation(data); 
+            if (op != null) 
+            { System.out.println(">>> Found operation " + op + " of class " + cent); 
+              umlkind = UPDATEOP; 
+              type = op.getType();         
+              elementType = op.getElementType();
+            } 
+          }       
+        }
+        else  
+        { System.err.println("!Warning!: Unknown operation " + data + " at call " + this + ".\n");  
+          System.out.println(">> " + objectRef + " of type: " + objectRef.type); 
+          type = new Type("boolean",null);         
+          elementType = new Type("boolean",null);
+        } 
+        umlkind = UPDATEOP;   
+      }          
+    }
+
+    if (isFunction(data))
+    { umlkind = FUNCTION;
+      if (objectRef == null) // error
+      { System.err.println("!! TYPE ERROR: OCL operator " + data +
+          " should have object ref: arg." + data + "(pars)");
+   
+        if (parameters != null && parameters.size() > 0)
+        { objectRef = (Expression) parameters.get(0); 
+          parameters.remove(0); 
+        } 
+        else 
+        { type = null;
+          return false;
+        } 
+      }
+   
+      entity = objectRef.entity; // default
+      multiplicity = ModelElement.ONE; // default 
+      modality = objectRef.modality; 
+
+      if (("Sum".equals(data) || "Prd".equals(data)) && 
+          "Integer".equals(objectRef + "") && 
+          parameters != null && parameters.size() > 3)
+      { Expression par1 = (Expression) parameters.get(0); 
+        Expression par2 = (Expression) parameters.get(1); 
+        // must both be numeric. 
+
+        if (par1.isNumeric()) { } 
+        else
+        { System.err.println("! 1st parameter of " + this +
+            " must be numeric"); 
+          par1.setType(new Type("int", null)); 
+          if (par1 instanceof BasicExpression) 
+          { vartypes.put(((BasicExpression) par1).basicString(),
+                         par1.getType()); 
+          } 
+        } 
+
+        if (par2.isNumeric()) { } 
+        else
+        { System.err.println("! 2nd parameter of " + this +
+            " must be numeric"); 
+          par2.setType(new Type("int", null)); 
+          if (par2 instanceof BasicExpression) 
+          { vartypes.put(((BasicExpression) par2).basicString(),
+                         par2.getType()); 
+          } 
+        } 
+
+        Expression par3 = (Expression) parameters.get(2); 
+        par3.setType(new Type("int",null)); 
+        par3.setElementType(new Type("int",null)); 
+        Vector env1 = (Vector) ((Vector) env).clone(); 
+        env1.add(new Attribute(par3 + "", 
+                       par3.type, ModelElement.INTERNAL)); 
+        Expression par4 = (Expression) parameters.get(3); 
+        par4.typeCheck(types,entities,contexts,env1); 
+        
+
+        if ("Prd".equals(data) && !par4.isNumeric())
+        { System.err.println("! 4th parameter of " + this +
+            " must be numeric"); 
+          par4.setType(new Type("double", null)); 
+          if (par4 instanceof BasicExpression) 
+          { vartypes.put(
+                   ((BasicExpression) par4).basicString(),
+                   par4.getType()); 
+          } 
+        } 
+
+        type = par4.getType(); 
+        elementType = par4.getElementType(); 
+        type.setElementType(elementType); 
+
+        return true;  
+      } 
+
+      if (data.equals("toLong") || data.equals("gcd"))
+      { type = new Type("long", null); 
+        elementType = type; 
+      } 
+      else if (data.equals("size") || 
+          data.equals("floor") || data.equals("count") ||
+          data.equals("toInteger") || 
+          data.equals("indexOf") || data.equals("ceil") || 
+          data.equals("round"))
+      { type = new Type("int",null); 
+        elementType = type;
+
+        if (data.equals("floor") || 
+            data.equals("ceil") || 
+            data.equals("round"))
+        { if (objectRef.isNumeric()) { } 
+          else 
+          { System.err.println("! object ref of " + this +
+                               " must be numeric"); 
+            objectRef.setType(new Type("double", null)); 
+            if (objectRef instanceof BasicExpression) 
+            { vartypes.put(
+                ((BasicExpression) objectRef).basicString(),
+                objectRef.getType());
+            }  
+          } 
+        } 
+        else if (data.equals("toInteger") && 
+                 !objectRef.isString())
+        { System.err.println("! object ref of " + this +
+                             " must be a string"); 
+          objectRef.setType(new Type("String", null)); 
+          if (objectRef instanceof BasicExpression) 
+          { vartypes.put(
+                ((BasicExpression) objectRef).basicString(),
+                objectRef.getType()); 
+          }
+        } 
+ 
+      }
+      else if (data.equals("sort") || 
+               data.equals("characters") ||
+               data.equals("sortedBy") || 
+               data.equals("asSequence") ||
+               data.equals("allInstances"))
+      { type = new Type("Sequence",null); 
+        elementType = objectRef.elementType; 
+        type.setElementType(elementType); 
+        multiplicity = ModelElement.MANY;
+        arrayType = type; 
+ 
+        adjustTypeForArrayIndex();
+
+        if (data.equals("characters") && 
+                 !objectRef.isString())
+        { System.err.println("! object ref of " + this +
+                             " must be a string"); 
+          objectRef.setType(new Type("String", null)); 
+          if (objectRef instanceof BasicExpression) 
+          { vartypes.put(
+                ((BasicExpression) objectRef).basicString(),
+                objectRef.getType()); 
+          }
+        }  
+        else if (data.equals("allInstances"))
+        { // object ref must be an entity name
+          Entity eref = 
+            (Entity) ModelElement.lookupByName(objectRef + "",
+                                               entities); 
+          if (eref == null) 
+          { System.err.println("! object ref of " + this +
+                               " must be an entity name"); 
+            objectRef.setType(new Type("OclType", null)); 
+            if (objectRef instanceof BasicExpression) 
+            { vartypes.put(
+                ((BasicExpression) objectRef).basicString(),
+                objectRef.getType()); 
+            }
+          } 
+        } 
+        else if (objectRef.isCollection() || 
+                 objectRef.isMap()) 
+        { } 
+        else 
+        { System.err.println("! object ref of " + this +
+                             " must be a collection or map");
+        }  
+      } 
+      else if (data.equals("isDeleted") || 
+               data.equals("oclIsTypeOf") ||
+               data.equals("oclIsKindOf"))
+      { type = new Type("boolean",null);
+        elementType = type; 
+      } 
+      else if (data.equals("isReal") || 
+               data.equals("toBoolean") || 
+               data.equals("isInteger") || 
+               data.equals("isLong") ||
+               data.equals("hasPrefix") || 
+               data.equals("hasSuffix"))
+      { type = new Type("boolean",null);
+        elementType = type; 
+
+        if (!objectRef.isString())
+        { System.err.println("! object ref of " + this +
+                             " must be a string"); 
+          objectRef.setType(new Type("String", null)); 
+          if (objectRef instanceof BasicExpression) 
+          { vartypes.put(
+                ((BasicExpression) objectRef).basicString(),
+                objectRef.getType()); 
+          }
+        }  
+      } 
+      else if (data.equals("oclAsType") && 
+               parameters != null && 
+               parameters.size() > 0)  // type cast
+      { Expression par1 = (Expression) parameters.get(0); 
+        type = par1.elementType; // Type is the casted type
+        elementType = type; 
+      } 
+      else if (data.equals("subrange"))
+      { // 3 cases - Integer.subrange, 
+        // str.subrange, col.subrange
+        if ("Integer".equals(objectRef + ""))
+        { type = new Type("Sequence", null); 
+          elementType = new Type("int", null);
+          // could be long if the 2nd argument is long
+          type.setElementType(elementType);  
+          multiplicity = ModelElement.MANY;
+          arrayType = type; 
+          adjustTypeForArrayIndex(); 
+
+          // Both parameters should be integers
+          Expression par1 = (Expression) parameters.get(0); 
+          Expression par2 = (Expression) parameters.get(1); 
+        
+          if (par1.isInteger()) { } 
+          else
+          { System.err.println("! 1st parameter of " + this +
+              " must be integer"); 
+            par1.setType(new Type("int", null)); 
+            if (par1 instanceof BasicExpression) 
+            { vartypes.put(
+                   ((BasicExpression) par1).basicString(),
+                   par1.getType()); 
+            } 
+          } 
+
+          if (par2.isInteger()) { } 
+          else
+          { System.err.println("! 2nd parameter of " + this +
+              " must be integer"); 
+            par2.setType(new Type("int", null)); 
+            if (par2 instanceof BasicExpression) 
+            { vartypes.put(
+                   ((BasicExpression) par2).basicString(),
+                   par2.getType()); 
+            } 
+          } 
+
+          return res;
+        } 
+        else if (objectRef.isString())
+        { type = new Type("String", null); 
+          elementType = new Type("String", null);
+          // could be long if the 2nd argument is long
+          type.setElementType(elementType);  
+          multiplicity = ModelElement.ONE;
+          arrayType = type; 
+          adjustTypeForArrayIndex(); 
+
+          Expression par1 = (Expression) parameters.get(0); 
+          
+          if (par1.isInteger()) { } 
+          else
+          { System.err.println("! 1st parameter of " + this +
+              " must be integer"); 
+            par1.setType(new Type("int", null)); 
+            if (par1 instanceof BasicExpression) 
+            { vartypes.put(
+                   ((BasicExpression) par1).basicString(),
+                   par1.getType()); 
+            } 
+          }
+ 
+          return res;
+        } 
+
+        // Otherwise, assume it is a collection
+        type = new Type("Sequence", null); 
+        elementType = objectRef.elementType; 
+        multiplicity = ModelElement.MANY;
+        arrayType = type; 
+        adjustTypeForArrayIndex(); 
+
+        Expression par1 = (Expression) parameters.get(0); 
+        
+        if (par1.isInteger()) { } 
+        else
+        { System.err.println("! 1st parameter of " + this +
+              " must be integer"); 
+          par1.setType(new Type("int", null)); 
+          if (par1 instanceof BasicExpression) 
+          { vartypes.put(
+                   ((BasicExpression) par1).basicString(),
+                   par1.getType()); 
+          } 
+        } 
+
+        return res;
+      } 
+      else if (data.equals("reverse") || 
+               data.equals("tail") || 
+               data.equals("front") || 
+               data.equals("insertAt") || 
+               data.equals("insertInto") || 
+               data.equals("setAt"))  
+      { type = objectRef.getType(); // Sequence or String
+        elementType = objectRef.elementType; 
+
+        if (objectRef.isString() || 
+            objectRef.isSequence())
+        { } 
+        else 
+        { System.err.println("! objectRef of " + this +
+              " must be string or sequence");
+        }  
+            
+        if (data.equals("insertAt") || 
+            data.equals("setAt"))
+        { Expression par2 = (Expression) parameters.get(1);
+          Type partyp = par2.getType(); 
+          Type newleftET = 
+            Type.refineType(elementType,partyp); 
+          System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
+          elementType = newleftET; 
+          type.setElementType(newleftET);
+
+          Expression par1 = (Expression) parameters.get(0); 
+          if (par1.isInteger()) { } 
+          else 
+          { System.err.println("! 1st parameter of " + this +
+              " must be integer"); 
+            par1.setType(new Type("int", null)); 
+            if (par1 instanceof BasicExpression) 
+            { vartypes.put(
+                   ((BasicExpression) par1).basicString(),
+                   par1.getType()); 
+            } 
+          } 
+        } 
+
+        if (type != null && 
+            type.isCollectionType())
+        { multiplicity = ModelElement.MANY;
+          arrayType = type; 
+          adjustTypeForArrayIndex(); 
+          return res;
+        } 
+      }
+      else if (data.equals("toReal"))
+      { if (objectRef.isString()) { } 
+        else
+        { System.err.println("! objectRef of " + this +
+              " must be a string"); 
+          objectRef.setType(new Type("String", null)); 
+          if (objectRef instanceof BasicExpression) 
+          { vartypes.put(
+                   ((BasicExpression) objectRef).basicString(),
+                   objectRef.getType()); 
+          } 
+        }
+  
+        type = new Type("double",null); 
+        elementType = type; 
+      } 
+      else if (data.equals("sqrt") || 
+               data.equals("exp") || data.equals("pow") ||
+               data.equals("sqr") || data.equals("abs") || 
+               data.equals("sin") || data.equals("cos") || 
+               data.equals("cbrt") ||
+               data.equals("sinh") || data.equals("cosh") || 
+               data.equals("tanh") ||
+               data.equals("atan") || data.equals("acos") || 
+               data.equals("asin") ||
+               data.equals("tan") || data.equals("log") || 
+               data.equals("log10"))
+      { if (objectRef.isNumeric()) { } 
+        else
+        { System.err.println("! objectRef of " + this +
+              " must be numeric"); 
+          objectRef.setType(new Type("double", null)); 
+          if (objectRef instanceof BasicExpression) 
+          { vartypes.put(
+                   ((BasicExpression) objectRef).basicString(),
+                   objectRef.getType()); 
+          } 
+        }
+
+        type = new Type("double",null); 
+        elementType = type; 
+      } 
+      else if (data.equals("toLowerCase") || 
+               data.equals("toUpperCase") ||
+               data.equals("replace") || 
+               data.equals("replaceAll") ||
+               data.equals("replaceFirstMatch") || 
+               data.equals("replaceAllMatches") )
+      { if (objectRef.isString()) { } 
+        else
+        { System.err.println("! objectRef of " + this +
+              " must be a string"); 
+          objectRef.setType(new Type("String", null)); 
+          if (objectRef instanceof BasicExpression) 
+          { vartypes.put(
+                   ((BasicExpression) objectRef).basicString(),
+                   objectRef.getType()); 
+          } 
+        }
+
+        type = new Type("String",null); 
+        elementType = type; 
+      }
+      else if (data.equals("closure") || data.equals("asSet"))
+      { type = new Type("Set",null); 
+        elementType = objectRef.elementType; 
+        type.setElementType(elementType); 
+        multiplicity = ModelElement.MANY;
+        return res; 
+      }  
+      else if (data.equals("subcollections"))
+      { type = new Type("Set",null); 
+        elementType = objectRef.getType();
+        type.setElementType(elementType);  
+        multiplicity = ModelElement.MANY;
+        return res; 
+      }  
+      else // max,min,sum,prd,last,first,any
+      { type = objectRef.getElementType();
+        elementType = type; 
+        if (data.equals("sum") || data.equals("prd")) 
+        { entity = null; } 
+ 
+        if (type == null) // objectRef is multiple but an attribute
+        { type = objectRef.getType();
+          Entity e = objectRef.getEntity();
+          if (type == null && e != null && (objectRef instanceof BasicExpression)) 
+          { type = e.getFeatureType(((BasicExpression) objectRef).data); } 
+          // System.out.println("Element type of " + data + ": " + e + " " + type);
+          if (type == null) // || type.getName().equals("Set"))
+          { System.err.println("!!! ERROR: Can't determine element type of " + this); 
+            JOptionPane.showMessageDialog(null, "ERROR: Can't determine element type of " + this,
+                            "Semantic error", JOptionPane.ERROR_MESSAGE);            
+            type = new Type("void",null);
+          }  // actually a void or Object type. 
+        }  
+      }
+      // entity = null;
+      // System.out.println("**Type of " + this + " is " + type);
+      return res;
+    }  // toUpper, toLower, sqr, sqrt, exp, abs, floor, could have objectRef 
+       // multiple, in which case result is multiple
+
+
+
+    // Parameters or local variables of the 
+    // current operation/usecase: 
+
+    Attribute paramvar = 
+       (Attribute) ModelElement.lookupByName(data,env); 
+    if (paramvar != null && objectRef == null) 
+    { type = paramvar.getType(); 
+      elementType = paramvar.getElementType(); 
+      entity = paramvar.getEntity(); 
+      if (entity == null && elementType != null) 
+      { entity = elementType.getEntity(); } 
+      if (entity == null && type != null) 
+      { entity = type.getEntity(); } 
+      if (elementType == null && type != null) 
+      { elementType = type.getElementType(); } 
+      arrayType = type; 
+      adjustTypeForArrayIndex(paramvar);
+      
+      // System.out.println(">>> Parameter/local variable: " + this + " type= " + type + " (" + elementType + ")"); 
+      // System.out.println();
+      variable = paramvar;  
+      umlkind = VARIABLE; 
+      modality = paramvar.getKind(); 
+
+      return true; 
+    } // And adjust type for any array index. 
+
+    for (int j = 0; j < context.size(); j++)
+    { Entity ent = (Entity) context.get(j);
+      if (ent.hasDefinedAttribute(data))  
+      { umlkind = ATTRIBUTE;
+        multiplicity = ModelElement.ONE;
+        Attribute att = ent.getDefinedAttribute(data);
+        if (att == null)   // something very bad has happened
+        { System.err.println("!! TYPE ERROR: attribute: " + data + " is not defined in class " + ent.getName()); 
+          return false; 
+        } 
+        modality = att.getKind(); 
+        type = att.getType();
+        if (att.isStatic())
+        { isStatic = true; } 
+
+        if (objectRef instanceof BasicExpression)
+        { vartypes.put(
+                    ((BasicExpression) objectRef).basicString(), 
+                    new Type(ent)); 
+        } 
+
+        elementType = att.getElementType(); 
+        if (elementType == null || 
+            "OclAny".equals("" + elementType)) 
+        { elementType = type.getElementType(); } 
+
+        if (Type.isCollectionType(type))
+        { multiplicity = ModelElement.MANY; } 
+        entity = ent;  // may not be att.owner, but a subclass of this. 
+        if (objectRef == null)
+        { res = true; }
+        else 
+        { setObjectRefType(); } 
+
+        System.out.println(">+>+> Attribute: " + this + " type= " + type + " (" + elementType + ")"); 
+        
+        /* if (arrayIndex != null) 
+        { System.out.println("** Unadjusted type of " + this + " is ATTRIBUTE in entity " +
+                            ent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
+        } */ 
+        
+        adjustTypeForObjectRef(att);
+        arrayType = type;  
+
+        // if (alreadyCorrected) { } 
+        // else 
+        // { 
+        adjustTypeForArrayIndex(att); 
+         
+        elementType = Type.correctElementType(
+                          type,elementType,types,entities); 
+        // att.setElementType(elementType); 
+        // variable = att; 
+        System.out.println("*>>* Adjusted type of " + this + " is " + type + "(" + elementType + ")");
+        System.out.println(); 
+          // alreadyCorrected = true; 
+        // } 
+
+        return res;
+      } // couldn't it have an array ref if objectRef was a sequence?
+      else 
+      { Entity subent = ent.searchForSubclassWithAttribute(data); 
+        if (subent != null) 
+        { umlkind = ATTRIBUTE;
+          multiplicity = ModelElement.ONE;
+          Attribute att = subent.getAttribute(data);
+          if (att == null)   // something very bad has happened
+          { System.err.println("!! TYPE ERROR: attribute: " + data + " is not defined in class " + subent); 
+            JOptionPane.showMessageDialog(null, "Undefined attribute: " + data, "Type error",                                           JOptionPane.ERROR_MESSAGE);  
+            return false; 
+          } 
+          modality = att.getKind();
+          downcast = true;  
+          if (att.isStatic())
+          { isStatic = true; } 
+
+          if (objectRef instanceof BasicExpression)
+          { vartypes.put(
+                    ((BasicExpression) objectRef).basicString(), 
+                    new Type(subent)); 
+          } 
+
+          type = att.getType();
+          elementType = att.getElementType(); 
+          if (Type.isCollectionType(type))
+          { multiplicity = ModelElement.MANY; } 
+          entity = subent;
+          adjustTypeForObjectRef(att);
+          arrayType = type;  
+          adjustTypeForArrayIndex(att); 
+          // System.out.println("**Type of " + data + " is downcast ATTRIBUTE in entity " +
+          //                    subent + " type is " + type); 
+          // variable = att; 
+          return res;
+        }  
+      } 
+
+      if (ent.hasDefinedRole(data))
+      { umlkind = ROLE; 
+        Association ast = ent.getDefinedRole(data); 
+        if (ast == null)   // something very bad has happened
+        { System.err.println("!! TYPE ERROR: role: " + data + " is not defined in class " + ent.getName()); 
+          JOptionPane.showMessageDialog(null, "Undefined role " + data, "Type error",                                         
+		                                JOptionPane.ERROR_MESSAGE);  
+          return false; 
+        } 
+
+        if (objectRef instanceof BasicExpression)
+        { vartypes.put(
+                    ((BasicExpression) objectRef).basicString(), 
+                    new Type(ent)); 
+        } 
+
+
+        multiplicity = ast.getCard2();
+        elementType = new Type(ast.getEntity2()); 
+        modality = ModelElement.INTERNAL; // ???
+        
+        if (ast.isQualified() && arrayIndex == null) // a naked qualified role, it is a map
+        { type = ast.getRole2Type(); }
+        else if (multiplicity == ModelElement.ONE) 
+        { type = new Type(ast.getEntity2()); } 
+        else 
+        { if (ast.isOrdered())
+          { type = new Type("Sequence",null); } 
+          else 
+          { type = new Type("Set",null); }
+          type.setElementType(elementType); 
+ 
+          // type = new Type(ast.getEntity2());
+        }   // index must be int type, 
+            // and ast is ordered/sorted. Also for any att or role
+
+        adjustTypeForObjectRef();
+        arrayType = type; 
+ 
+        if (arrayIndex != null && !ast.isQualified())  
+        { adjustTypeForArrayIndex(); } 
+
+        // if (Type.isCollectionType(type))
+        // { multiplicity = ModelElement.MANY; } 
+        // else 
+        // { multiplicity = ModelElement.ONE; } 
+        // System.out.println("**Type of " + data + " is ROLE in entity " + ent +
+        //                    "\n type is: " + type + " element type: " + 
+        //                    elementType + " Modality = " + modality); 
+        entity = ent;
+        if (objectRef == null)
+        { res = true; }
+        else 
+        { setObjectRefType(); } 
+
+        // variable = attribute for the role? 
+
+        return res;
+      }
+      else 
+      { Entity subent = ent.searchForSubclassWithRole(data); 
+        if (subent != null) 
+        { umlkind = ROLE;
+          Association ast = subent.getRole(data);
+          if (ast == null)   // something very bad has happened
+          { System.err.println("!! ERROR: Undefined role: " + data); 
+            return false; 
+          } 
+
+          if (objectRef instanceof BasicExpression)
+          { vartypes.put(
+                    ((BasicExpression) objectRef).basicString(), 
+                    new Type(subent)); 
+          } 
+
+          multiplicity = ast.getCard2();
+          modality = ModelElement.INTERNAL;
+          downcast = true;  
+          elementType = new Type(ast.getEntity2()); 
+          if (multiplicity == ModelElement.ONE)
+          { type = new Type(ast.getEntity2()); } 
+          else 
+          { if (ast.isOrdered())
+            { type = new Type("Sequence",null); } 
+            else
+            { type = new Type("Set",null); } 
+            type.setElementType(elementType); 
+          }
+          adjustTypeForObjectRef();
+          arrayType = type;  
+          if (arrayIndex != null && !ast.isQualified())  
+          { adjustTypeForArrayIndex(); } 
+          // System.out.println("**Type of " + data + " is downcast ROLE in entity " +
+          //                    subent + " type is " + type); 
+          entity = subent;
+
+          // variable = attribute for the role? 
+          return res;
+        } // objectRefTypeAssignment 
+      }  // or it could be a query op of the entity
+    }
+    // prestate == true only for VARIABLE, ATTRIBUTE, ROLE, CONSTANT
+
+    /* Is data in some enumerated type? */ 
+
+    for (int i = 0; i < types.size(); i++)
+    { Type t = (Type) types.get(i);
+      if (t != null && t.hasValue(data))
+      { umlkind = VALUE;
+        multiplicity = ModelElement.ONE; 
+        System.out.println("*** " + data + " is enumerated literal in type " + t); 
+        type = t;
+        elementType = type; 
+     
+        if (objectRef == null) 
+        { return true; }
+        else if (t.getName().equals(objectRef + "")) 
+        { return true; } 
+      }
+    }   // if T1.value and T2.value may both occur, must be distinguished by the type name
+
+    if (data.equals("Integer"))
+    { type = new Type("OclType",null); 
+      elementType = new Type("int",null); 
+      type.setElementType(elementType); 
+      umlkind = TYPE;    
+      modality = ModelElement.INTERNAL;
+      multiplicity = ModelElement.MANY;
+      return true; 
+    }  
+
+    Attribute var = 
+      (Attribute) ModelElement.lookupByName(data,env); 
+    if (var != null) 
+    { type = var.getType();
+      elementType = var.getElementType(); 
+      umlkind = VARIABLE;  // its a parameter or local variable. 
+      variable = var; 
+      modality = var.getKind(); 
+      if (type != null) 
+      { String tname = type.getName(); 
+        if (tname.equals("Set") || 
+            tname.equals("Sequence") || 
+            tname.equals("Map"))
+        { multiplicity = ModelElement.MANY; } 
+        else 
+        { multiplicity = ModelElement.ONE; }   // assume
+      } 
+      else 
+      { multiplicity = ModelElement.ONE; }   // assume
+      
+      arrayType = type; 
+      if (arrayIndex != null) 
+      { adjustTypeForArrayIndex(var); } 
+	  
+      if (parameters != null && 
+          var.getType().isFunctionType()) // application of a Function(S,T)
+      { Type ftype = var.getType(); 
+        type = ftype.getElementType(); 
+        elementType = type.getElementType(); 
+        System.out.println(">>>> TYPE CHECKED: Type of variable expression " + this + " is " + type + " entity: " + entity); 
+      }
+	  
+      entity = var.getEntity(); 
+      if (entity == null && elementType != null) 
+      { entity = elementType.getEntity(); } 
+      if (entity == null && type != null) 
+      { entity = type.getEntity(); } 
+
+      return true; 
+    } // entity = var.getEntity() ? 
+
+    Entity ee = 
+      (Entity) ModelElement.lookupByName(data,entities); 
+    if (ee != null) 
+    { umlkind = CLASSID; 
+      // System.out.println("**umlkind of " + this + " is CLASSID"); 
+      modality = ModelElement.INTERNAL; 
+      elementType = new Type(ee); 
+      if (arrayIndex != null)  // a lookup by primary key
+      { if (!arrayIndex.isMultiple()) // (arrayIndex.multiplicity == ModelElement.ONE)
+        { multiplicity = ModelElement.ONE; 
+          type = new Type(ee);
+        } 
+        else 
+        { multiplicity = ModelElement.MANY; 
+
+          if (arrayIndex.isOrdered())
+          { type = new Type("Sequence", null); } 
+          else 
+          { type = new Type("Set",null); } 
+          type.setElementType(elementType); 
+        }
+      }
+      else 
+      { multiplicity = ModelElement.MANY; 
+        type = new Type("Sequence",null); 
+        type.setElementType(elementType); 
+      } 
+      entity = ee; // ?? 
+      elementType = new Type(ee);  // type.setElementType(elementType); ?? 
+      return res; 
+    } 
+
+    /* if (isConstant(data))
+    { umlkind = CONSTANT; 
+      // System.out.println("**Type of " + data + " is CONSTANT");
+      modality = ModelElement.INTERNAL; 
+      multiplicity = ModelElement.ONE;   // as for variables
+      return res; 
+    } */  
+
+    if (umlkind != UNKNOWN && type != null && elementType != null)    
+    { return res; } 
+
+    if (parameters != null && umlkind == UNKNOWN) // must be an operation, external, not a variable
+    { umlkind = UPDATEOP; } 
+    else if (parameters == null) 
+    { umlkind = VARIABLE; }
+    modality = ModelElement.INTERNAL; 
+    multiplicity = ModelElement.ONE;   // assume 
+
+    if (objectRef != null && entity == null) 
+    { Type oret = objectRef.getElementType(); 
+      if (oret != null && oret.isEntity())
+      { entity = oret.getEntity(); } 
+    } 
+
+    if (isEvent && type == null && objectRef == null && 
+        context.size() == 0)
+    { // A usecase, or a static operation of the local class
+ 
+      BehaviouralFeature bf; 
+
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity e = (Entity) entities.get(i); 
+        bf = e.getDefinedOperation(data,parameters);
+  
+        if (bf != null && bf.isStatic()) 
+        { System.out.println("**Type of " + data + " is static operation, of class: " + e);
+          entity = e;
+          if (bf.parametersMatch(parameters)) { } 
+          else 
+          { JOptionPane.showMessageDialog(null, 
+              "Parameters do not match operation pars: " + this + " " + bf, 
+              "Type warning", JOptionPane.WARNING_MESSAGE);
+            continue; 
+          }  
+
+          if (objectRef instanceof BasicExpression)
+          { vartypes.put(
+                    ((BasicExpression) objectRef).basicString(), 
+                    new Type(e)); 
+          } 
+
+          System.out.println("** Setting formal parameters of " + data + " operation: " + parameters);
+          System.out.println(); 
+
+          bf.setFormalParameters(parameters); 
+
+          if (bf.isQuery())
+          { umlkind = QUERY; 
+            type = bf.getResultType(); 
+            elementType = bf.getElementType(); 
+            // System.out.println("QUERY OPERATION, type: " + type); 
+            // System.out.println("QUERY OPERATION, element type: " + elementType); 
+          }
+          else 
+          { umlkind = UPDATEOP; 
+            type = bf.getResultType(); 
+            elementType = bf.getElementType(); 
+            if (type == null || 
+                type.equals("") || type.equals("void"))
+            { type = new Type("boolean",null); }  
+            // System.out.println("UPDATE OPERATION, type: " + type); 
+          }  // shouldn't be object ref of anything. Should 
+             // only occur as part of action invariant.
+
+          arrayType = type; 
+
+          adjustTypeForArrayIndex(bf); 
+          return true; 
+        }   // type check the actual parameters, also 
+      }
+    } 
+
+    if ("skip".equals(data))
+    { } 
+    else if (type == null) 
+    { System.out.println("***! WARNING: Type of " + this + " is unknown");
+      System.out.println("***! Re-run type-checking/correct your specification"); 
+    } 
+       
+    return true; 
+  } 
 
   public boolean typeCheck(final Vector types, final Vector entities,
                            final Vector contexts, final Vector env)
@@ -3532,9 +4898,17 @@ class BasicExpression extends Expression
         { System.err.println("!!ERROR!!: Invalid occurrence of super, not instance context"); 
           JOptionPane.showMessageDialog(null, "ERROR!!: Invalid occurrence of super, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE);
         } 
-        else if (objectRef.elementType != null && objectRef.elementType.isEntity()) 
+        else if (objectRef.elementType != null && 
+                 objectRef.elementType.isEntity()) 
         { entity = objectRef.elementType.getEntity(); 
-          type = new Type(entity.getSuperclass()); 
+          if (entity.getSuperclass() != null) 
+          { type = new Type(entity.getSuperclass()); }
+          else 
+          { System.err.println("!!ERROR!!: Invalid occurrence of super, no superclass for " + entity); 
+            JOptionPane.showMessageDialog(null, 
+                "ERROR!!: Invalid occurrence of super, no superclass of " + entity, 
+                "Semantic error", JOptionPane.ERROR_MESSAGE);
+          } 
         } 
         else 
         { System.err.println("!!ERROR!!: Invalid occurrence of super: " + this + " no defined instance context"); }           
@@ -3853,6 +5227,7 @@ class BasicExpression extends Expression
     if (("hasNext".equals(data) || "canRead".equals(data) ||
          "canWrite".equals(data) || "exists".equals(data) || 
          "isFile".equals(data) || "mkdir".equals(data) ||  
+         "mkdirs".equals(data) || 
          "isDirectory".equals(data) || 
          "isAbsolute".equals(data))
         && objectRef != null) 

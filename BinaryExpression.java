@@ -3831,7 +3831,7 @@ public void findClones(java.util.Map clones,
         } 
       } 
     }
-    else if (":".equals(operator))
+    else if (":".equals(operator) || "/:".equals(operator))
     { // right must be a collection 
       if (right.isCollection()) { } 
       else 
@@ -3847,7 +3847,7 @@ public void findClones(java.util.Map clones,
 
       type = new Type("boolean", null); 
     }
-    else if ("=".equals(operator))
+    else if ("=".equals(operator) || "/=".equals(operator))
     { type = new Type("boolean", null); 
       if (Type.hasVacuousType(left) && 
           !Type.hasVacuousType(right))
@@ -3857,7 +3857,7 @@ public void findClones(java.util.Map clones,
         { String vname = ((BasicExpression) left).basicString(); 
           vartypes.put(vname, right.getType()); 
         } 
-      } 
+      } // and vice-versa
     } 
     else if ("->compareTo".equals(operator))
     { type = new Type("int", null); 
@@ -4356,21 +4356,138 @@ public void findClones(java.util.Map clones,
         } 
       }
     }
-    else if (operator.equals("\\/") || operator.equals("^")  || 
-             "->concatenate".equals(operator)
-            || operator.equals("->append") ||
+    else if (operator.equals("\\/") || 
              operator.equals("->union") || 
-             operator.equals("->including") ||
              operator.equals("->symmetricDifference") || 
-             operator.equals("->excluding") ||
-             operator.equals("->excludingAt") ||
-             operator.equals("->excludingFirst") ||
-             operator.equals("->prepend") || 
-             operator.equals("->append") || 
              operator.equals("->intersection") || 
-             operator.equals("/\\"))
-    { // tcSetOps(tleft,tright,eleft,eright); 
+             operator.equals("/\\") || 
+             operator.equals("<:") || 
+             operator.equals("->includesAll") ||
+             operator.equals("/<:") || 
+             operator.equals("->excludesAll"))
+    { // both are maps or both are collections
+      if (left.isMap() && !right.isMap())
+      { System.err.println("!! RHS of " + this + 
+                           " must be map"); 
+        right.setType(new Type("Map", null)); 
+        type = new Type("Map", null); 
+        elementType = left.elementType;
+        type.setKeyType(left.getType().getKeyType()); 
+
+        if (right instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) right).basicString(); 
+          vartypes.put(vname, right.getType()); 
+        } 
+      }
+      else if (!left.isMap() && right.isMap())
+      { System.err.println("!! LHS of " + this + 
+                           " must be map"); 
+        left.setType(new Type("Map", null)); 
+        type = new Type("Map", null); 
+        elementType = right.elementType;
+        type.setKeyType(right.getType().getKeyType()); 
+
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      }
+      else if (left.isCollection() && !right.isCollection())
+      { System.err.println("!! RHS of " + this + 
+                           " must be collection"); 
+        right.setType(left.getType()); 
+        type = left.getType(); 
+        elementType = left.getElementType();
+        
+        if (right instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) right).basicString(); 
+          vartypes.put(vname, right.getType()); 
+        } 
+      }
+      else if (!left.isCollection() && right.isCollection())
+      { System.err.println("!! LHS of " + this + 
+                           " must be collection"); 
+        left.setType(right.getType()); 
+        type = right.getType(); 
+        elementType = right.getElementType();
+
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      } 
     }
+    else if (operator.equals("^")  || 
+             "->concatenate".equals(operator))
+    { // both are sequences 
+      if (left.isSequence() && !right.isSequence())
+      { System.err.println("!! RHS of " + this + 
+                           " must be sequence"); 
+        right.setType(left.getType()); 
+        type = left.getType(); 
+        elementType = left.getElementType();
+        
+        if (right instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) right).basicString(); 
+          vartypes.put(vname, right.getType()); 
+        } 
+      }
+      else if (!left.isSequence() && right.isSequence())
+      { System.err.println("!! LHS of " + this + 
+                           " must be sequence"); 
+        left.setType(right.getType()); 
+        type = right.getType(); 
+        elementType = right.getElementType();
+
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      } 
+    } 
+    else if (operator.equals("->including") ||
+             operator.equals("->excluding") ||
+             operator.equals("->excludingFirst"))
+    { // LHS must be a collection 
+
+      if (!left.isCollection())
+      { System.err.println("!! LHS of " + this + 
+                           " must be a collection"); 
+        left.setType(new Type("Sequence", null)); 
+        elementType = right.getType();
+        left.setElementType(elementType); 
+
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      } 
+    }  
+    else if (operator.equals("->prepend") || 
+             operator.equals("->append"))
+    { // LHS must be a sequence 
+
+      if (!left.isSequence())
+      { System.err.println("!! LHS of " + this + 
+                           " must be sequence"); 
+        left.setType(new Type("Sequence", null)); 
+        elementType = right.getType();
+        left.setElementType(elementType); 
+
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      } 
+    }  
     else if (operator.equals("|->"))
     { type = new Type("OclAny", null); 
       elementType = tright; 
@@ -4379,58 +4496,39 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("<+"))
     { type = tleft; } // Map override. 
     else if (operator.equals(":") ||
-             operator.equals("<:") || operator.equals("->includesAll") ||
-             operator.equals("/<:") || operator.equals("->excludesAll") ||
              operator.equals("/:"))
     { 
       type = new Type("boolean",null);
 
-      if (right.isCollection() || right.isMap()) 
-      { }
-      else 
-      { System.err.println("!! TYPE ERROR: RHS of " + this + " must be a collection");
-        // JOptionPane.showMessageDialog(null, "RHS of " + this + " must be a collection!", 
-        //    "Type error", JOptionPane.ERROR_MESSAGE);
-      } // deduce type of one side from that of other
+      if (!right.isCollection())
+      { System.err.println("!! RHS of " + this + 
+                           " must be a collection"); 
+        right.setType(new Type("Sequence", null)); 
+        elementType = left.getType();
+        right.setElementType(elementType); 
 
-      if (tleft == null && tright != null)
-      { if (operator.equals(":") || operator.equals("/:"))
-        { left.setType(right.getElementType()); } 
-        else // if (operator.equals("<:") || operator.equals("/<:"))
-        { left.setType(tright); } 
+        if (right instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) right).basicString(); 
+          vartypes.put(vname, right.getType()); 
+        } 
       } 
-      else if (tright == null && tleft != null) 
-      { if (operator.equals(":") || operator.equals("/:"))
-        { Type rst = new Type("Set", null); 
-          right.setType(rst); 
-          if (right.elementType == null)
-          { right.setElementType(tleft); // new Type(eleft)); 
-            rst.setElementType(tleft); 
-          }
-        }
-        else 
-        { right.setType(tleft); } 
-      } // and set one element type to the other when not null
     }
     else if (operator.equals("->includes") || 
              operator.equals("->excludes"))
     { type = new Type("boolean",null); 
-      if (left.isCollection()) 
-      { }
-      else 
-      { System.err.println("!! TYPE ERROR: LHS of " + this + " must be a collection");
-      } // deduce type of one side from that of other
+      if (!left.isCollection())
+      { System.err.println("!! LHS of " + this + 
+                           " must be a collection"); 
+        left.setType(new Type("Sequence", null)); 
+        left.setElementType(right.getType()); 
 
-      if (tright == null && tleft != null)
-      { right.setType(left.getElementType()); } 
-      else if (tleft == null && tright != null) 
-      { Type lst = new Type("Set", null); 
-        left.setType(lst); 
-        if (left.elementType == null)
-        { left.setElementType(tright); // new Type(eright)); 
-          lst.setElementType(tright); // new Type(eright)); 
-        }
-      } // and set one element type to the other when not null
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      } 
     }
     else if (operator.equals("&") || operator.equals("<=>") || 
              operator.equals("xor") ||  
@@ -4469,7 +4567,8 @@ public void findClones(java.util.Map clones,
       }
     } 
  
-    return typeCheck(types,entities,contexts,env); 
+    return true; 
+    // return typeCheck(types,entities,contexts,env); 
   } 
 
   public boolean typeCheck(final Vector types,

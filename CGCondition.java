@@ -1170,7 +1170,7 @@ public class CGCondition
                              mffeat,a,cgs,entities); 
 
 
-      System.out.println(">|>|> Testing " + repl + " with " + stereo); 
+      // System.out.println(">|>|> Testing " + repl + " with " + stereo); 
       /* JOptionPane.showMessageDialog(null, 
                  " Evaluated " + a + 
                  "`" + mffeat + " = " + repl, 
@@ -1196,7 +1196,7 @@ public class CGCondition
       { return !positive; } 
     } 
 
-    System.out.println(">|>|> Testing " + alit + " with " + stereo); 
+    // System.out.println(">|>|> Testing " + alit + " with " + stereo); 
 
     if (isMatches)
     { // check that variable matches the stereo

@@ -64,6 +64,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
    HashMap actions;
 
    JEditorPane helpPane = null; 
+   JEditorPane umlPane = null; 
 
    String systemName = "app"; 
    private JLabel thisLabel;
@@ -1175,6 +1176,29 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     public void actionPerformed(ActionEvent e)
     { String result = internalModel; 
 
+      if (umlPane != null) 
+      { umlPane.setVisible(true); }
+      else 
+      {  
+        umlPane = new JEditorPane();  
+        umlPane.setEditable(false); 
+        umlPane.setSize(300,400);
+        int w = getWidth(); 
+        int h = getHeight(); 
+ 
+        getContentPane().add(new JScrollPane(umlPane),  
+                             java.awt.BorderLayout.EAST); 
+        setSize(w + 300, h); 
+        umlPane.setVisible(true); 
+
+        java.awt.LayoutManager ll = getLayout(); 
+        if (ll != null)
+        { ll.layoutContainer(getContentPane()); }  
+
+        umlPane.repaint(); 
+        repaint(); 
+      } 
+
       String[] args = {"MathOCL", "specification"}; 
 
       try { 
@@ -1221,6 +1245,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             ent.typeCheck(types,entities); 
           } 
  
+          umlPane.setText(entcode); 
           // System.out.println(entcode);
           // messageArea.append("\n"); 
           // messageArea.append(entcode);
@@ -1393,6 +1418,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       helpPane.setText("Specifications contain these elements: \n\n" + 
         "1. Define clauses, with syntax one of\n" + 
         "    Define var = expr\n" + 
+        "    Define funcn(pars) = expr\n" + 
         "    Define var = instruction\n" + 
         "    Define var ~ distribution\n\n" +
         "2. Constraint clauses, with syntax\n" + 
