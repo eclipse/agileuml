@@ -149,8 +149,8 @@ sorted _1 |-->_1->sort()
 
 tuple _1 |-->_1
 range _1 |-->_1`rangeTrailer
-enumerate _1 |-->Integer.subrange(1, _1->size())->collect( $i | Sequence{$i-1, _1->at($i)} )
-zip _1 |-->Integer.subrange(1, _1`firstArg->size())->collect( $i | Sequence{_1`firstArg->at($i), _1`secondArg->at($i)} )
+enumerate _1 |-->Integer.subrange(1, _1->size())->collect( _indx | Sequence{_indx-1, _1->at(_indx)} )
+zip _1 |-->Integer.subrange(1, _1`firstArg->size())->collect( _indx | Sequence{_1`firstArg->at(_indx), _1`secondArg->at(_indx)} )
 
 open _1 |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`firstArg))<when> _1`lastArg matches .*[wWaA].*
 open _1 |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`firstArg))
@@ -802,6 +802,7 @@ _1 |-->
 
 trailerUpdateForm::
 . append _1 |-->->including_1
+. extend _1 |-->->union(_1->characters())<when> _1`ocltype String
 . extend _1 |-->->union_1
 . insert _1 |-->.insertAt(_1`firstArg+1, _1`lastArg)
 . remove _1 |-->->excludingFirst_1
@@ -914,7 +915,7 @@ popArguments::
 
 popUpdateArguments::
 ( ) |-->->tail()
-( _1 ) |-->->excludingAt(_1`firstArg+1)
+( _1 ) |-->->excludingAt(_1+1)
 [ ] |-->->tail()
 [ _1 ] |-->->excludingAt(_1`firstArg+1)
 
@@ -1393,6 +1394,10 @@ _1 in _2 |-->boolean
 _1 is not _2 |-->boolean
 _1 is _2 |-->boolean
 
+( _1 ) |-->_1`ocltype
+
+{ _1 } |-->Set<when> _1 dictorsetmaker
+
 _1 _2 |-->OclIterator<when> _1 generator, _2 trailer
 
 _1 _2 |-->_1<when> _1 Class, _2 trailer
@@ -1401,9 +1406,12 @@ _1 _2 |-->_2`trailerOclType<when> _1 atom, _2 trailer
 
 _1 |-->int<when> _1 int
 _1 |-->double<when> _1 real
+_1 |-->String<when> _1 String
 
 _1 |-->_1`ocltype<when> _1 testlist_star_expr
 _1 |-->_1`ocltype<when> _1 testlist
+_1 |-->_1`ocltype<when> _1 arglist
+_1 |-->_1`ocltype<when> _1 argument
 _1 |-->_1`ocltype<when> _1 test
 _1 |-->_1`ocltype<when> _1 logical_test
 _1 |-->_1`ocltype<when> _1 comparison
