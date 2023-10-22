@@ -6162,8 +6162,6 @@ class CreationStatement extends Statement
     if (elementType != null) 
     { att.setElementType(elementType); } 
  
-    variable = att; 
-    env.add(att); 
 	
     if (initialExpression != null) 
     { initialExpression.typeInference(types,entities,
@@ -6171,12 +6169,22 @@ class CreationStatement extends Statement
       System.out.println(">>> Inferred type " + 
         initialExpression.getType() + " for variable " + att); 
 
-      if (Type.isVacuousType(att.getType()))
-      { instanceType = initialExpression.getType(); 
-        att.setType(initialExpression.getType()); 
+      Type initType = initialExpression.getType(); 
+      Type initElemType = initialExpression.getElementType(); 
+
+      if (!Type.isVacuousType(initType))
+      { instanceType = initType;  
+        att.setType(initType);
+      } 
+ 
+      if (!Type.isVacuousType(initElemType))
+      { elementType = initElemType; 
+        att.setElementType(initElemType); 
       } 
     } 
 
+    variable = att; 
+    env.add(att); 
     vartypes.put(assignsTo, att.getType()); 
 
     return true; 

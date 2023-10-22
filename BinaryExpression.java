@@ -3653,8 +3653,27 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("|") || operator.equals("|R"))
     { BinaryExpression lexp = (BinaryExpression) left; 
       Expression scope = lexp.right;
+      Expression vbl = lexp.left; 
 
-      if (scope.isCollection()) { } 
+      Type vblType = (Type) vartypes.get(vbl + ""); 
+
+      if (scope.isCollection()) 
+      { if (scope.elementType == null)
+        { System.err.println("!! No element type for " + scope); 
+          Type tt = (Type) vartypes.get(scope + ""); 
+          if (tt != null && 
+              tt.elementType != null) 
+          { scope.setElementType(tt.elementType);
+            vbl.setType(tt.elementType);
+          } 
+          else if (vblType != null) 
+          { scope.setElementType(vblType);
+            vbl.setType(vblType);
+          } 
+
+          System.out.println(">> Set element type to " + scope.getElementType()); 
+        } 
+      } 
       else 
       { System.err.println("!! Left argument of " + operator + 
                            " must be a collection"); 
@@ -4734,7 +4753,8 @@ public void findClones(java.util.Map clones,
              "|selectMinimals".equals(operator) || 
              "|selectMaximals".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left; 
-      boolean lrt = lexp.right.typeCheck(types,entities,contexts,env); 
+      boolean lrt = 
+        lexp.right.typeCheck(types,entities,contexts,env); 
 
       // lexp.right must be multiple 
 
@@ -4751,10 +4771,17 @@ public void findClones(java.util.Map clones,
       System.out.println(">> *** Type of " + lexp.right + " = " + lexp.right.type + "(" + et + ")"); 
 
       if (et == null)
-      { System.err.println("!! Warning: no element type for " + lexp.right + " in " + this); 
+      { System.err.println("!! Warning: no element type for " + lexp.right + " in " + this + " in environment " + env); 
         // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
-        //      "Type error", JOptionPane.ERROR_MESSAGE); 
-        et = new Type("OclAny", null); 
+        //      "Type error", JOptionPane.ERROR_MESSAGE);
+        Attribute attr = 
+          (Attribute) ModelElement.lookupByName(lexp.right + "", env); 
+
+        if (attr != null && 
+            !Type.isVacuousType(attr.getElementType()))
+        { et = attr.getElementType(); }   
+        else 
+        { et = new Type("OclAny", null); }  
       } 
 
       //  && et.isEntity())

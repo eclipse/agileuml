@@ -1656,6 +1656,35 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           String ind = ((BasicExpression) argument).arrayIndex.queryFormCSharp(env,local); 
           return precopy + ".RemoveAt(" + ind + " - 1);";   
         }
+        else if (argument instanceof BasicExpression && 
+((BasicExpression) argument).getData().equals("subrange")) 
+        { // s.subrange(i,j)->isDeleted() means 
+          // s := s.subrange(1,i-1)^s.subrange(j+1,s.size)
+          // for sequences, likewise for strings
+
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          Expression updatedVar = argcopy.getObjectRef(); 
+          String precopy = updatedVar.queryFormCSharp(env,local);
+          Vector pars = argcopy.getParameters(); 
+          Expression par1 = (Expression) pars.get(0); 
+          String ind1 = par1.queryFormCSharp(env,local);
+          String subrange1 = 
+            "SystemTypes.subrange(" + precopy + ",1," + 
+                          ind1 + "-1)"; 
+          if (pars.size() > 1) 
+          { Expression par2 = (Expression) pars.get(1); 
+            String ind2 = par2.queryForm(env,local);
+            String subrange2 = 
+              "SystemTypes.subrange(" + precopy + ", " + 
+                            ind2 + "+1," + 
+                            precopy + ".Count)";
+            if (argument.isSequence())
+            { return precopy + " = SystemTypes.concatenate(" + subrange1 + ", " + subrange2 + ");"; } 
+            else 
+            { return precopy + " = " + subrange1 + " + (" + subrange2 + ");"; }  
+          }
+        } 
+  
         return "{}";  
       }  
 
@@ -3627,6 +3656,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->asBag")) 
     { return "Set.sort(" + qf + ")"; }  
 
+    if (operator.equals("->characters")) 
+    { return "Set.characters(" + qf + ")"; } 
+
     if ("->copy".equals(operator))
     { if (type == null) 
       { return qf; } 
@@ -4053,6 +4085,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->asBag")) 
     { return "Set.sort(" + qf + ")"; }  
+
+    if (operator.equals("->characters")) 
+    { return "Set.characters(" + qf + ")"; } 
 
     if ("->copy".equals(operator))
     { if (type == null) 
@@ -4744,6 +4779,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->byte2char")) 
     { return "SystemTypes.byte2char(" + qf + ")"; } 
+
+    if (operator.equals("->characters")) 
+    { return "((ArrayList) SystemTypes.characters(" + qf + "))"; } 
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
