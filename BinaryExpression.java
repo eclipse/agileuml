@@ -4290,6 +4290,41 @@ public void findClones(java.util.Map clones,
         } 
       }
     }
+    else if (operator.equals("*") || operator.equals("/"))
+    { // both are numeric
+
+      if (left.isNumeric() && right.isNumeric())
+      { } 
+      else 
+      { if (!right.isNumeric())
+        { System.err.println("!! RHS of " + this + 
+                           " must be numeric"); 
+          right.setType(new Type("double", null)); 
+          type = new Type("double", null); 
+          elementType = new Type("double", null);
+
+          if (right instanceof BasicExpression)
+          { String vname = 
+              ((BasicExpression) right).basicString(); 
+            vartypes.put(vname, right.getType()); 
+          } 
+        } 
+      
+        if (!left.isNumeric())
+        { System.err.println("!! LHS of " + this + 
+                           " must be numeric"); 
+          left.setType(new Type("double", null)); 
+          type = new Type("double", null); 
+          elementType = new Type("double", null);
+
+          if (left instanceof BasicExpression)
+          { String vname = 
+              ((BasicExpression) left).basicString(); 
+            vartypes.put(vname, left.getType()); 
+          } 
+        } 
+      }
+    }
     else if (operator.equals("-"))
     { // Either both are maps, both are collections or
       // both are numeric
@@ -5416,15 +5451,24 @@ public void findClones(java.util.Map clones,
  
         // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
         //                              "Type error", JOptionPane.WARNING_MESSAGE);
-        type = tleft; // new Type("double",null);
+
+        if (tleft != null && tleft.isNumeric())
+        { 
+          type = tleft; // new Type("double",null);
+        }
+        else if (tright != null && tright.isNumeric())
+        { type = tright; } 
+        else 
+        { type = new Type("OclAny", null); } 
       } 
     }
     else
-    { if (tright == null && tleft != null)
+    { if (tright == null && !Type.isVacuousType(tleft))
       { right.setType(tleft);
         type = tleft;
       }
-      else if (tleft == null && tright != null)
+      else if (tleft == null && 
+               !Type.isVacuousType(tright))
       { left.setType(tright);
         type = tright;
       }

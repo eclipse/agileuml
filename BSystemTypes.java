@@ -7739,6 +7739,18 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +
       "  }\n\n";   
 
+    res = res + 
+      "  public static ArrayList asSequence(Hashtable m)\n" +
+      "  { ArrayList res = new ArrayList();\n" +
+      "    foreach (DictionaryEntry pair in m)\n" +
+      "    { object key = pair.Key;\n" +
+      "      Hashtable maplet = new Hashtable();\n" +
+      "      maplet[key] = pair.Value;\n" + 
+      "      res.Add(maplet);\n" +
+      "    }\n" +
+      "    return res;\n" + 
+      "  }\n\n"; 
+
     return res;
   } // and map
 

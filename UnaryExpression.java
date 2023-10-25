@@ -4739,7 +4739,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->asSequence")) 
     { if (argument.isRef())
-      { return "SystemTypes.asSequence(" + qf + ")"; } 
+      { return "SystemTypes.asSequence(" + qf + ")"; }
+      
+      if (argument.isMap())
+      { return "SystemTypes.asSequence((Hashtable) " + qf + ")"; } 
+       
       return qf; 
     } 
 
@@ -4793,7 +4797,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "(" + qf + " != null)"; } 
 
     if (operator.equals("->oclType"))
-    { return "(" + qf + ").GetType()"; }  
+    { return "OclType.getOclTypeByMetatype((" + qf + ").GetType())"; }  
 
     if ("->copy".equals(operator))
     { if (type == null) 
