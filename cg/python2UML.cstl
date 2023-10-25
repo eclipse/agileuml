@@ -192,7 +192,7 @@ _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 
 _1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 trailer
 
-_1 _2 |-->_1.new_1().initialise_2<when> _1 Class, _2 trailer
+_1 _2 |-->(_1.new_1()).initialise_2<when> _1 Class, _2 trailer
 
 
 _1 _2 |-->StringLib.capitalise(_1)<when> _1 atom, _2 matches .capitalize\(\)
@@ -709,6 +709,21 @@ reTrailer::
 _1 |-->
 
 
+reType::
+. compile _1 |-->OclRegex
+. search _1 |-->String
+. match _1 |-->String
+. fullmatch _1 |-->String
+. split _1 |-->Sequence(String)
+. findall _1 |-->Sequence(String)
+. finditer _1 |-->OclIterator
+. sub _1 |-->String
+
+. _1 |-->OclAny
+. _1 _* |-->OclAny
+_1 |-->OclAny
+
+
 randomTrailer::
 . Random _1 |-->OclRandom.newOclRandom()
 
@@ -765,6 +780,42 @@ mathTrailer::
 . _1 _* |-->
 _1 |-->
 
+mathType::
+. cosin _1 |-->double
+. sin _1 |-->double
+. tan _1 |-->double
+. ceil _1 |-->double
+. floor _1 |-->double
+. trunc _1 |-->int
+. sqrt _1 |-->double
+. cbrt _1 |-->double
+. exp _1 |-->double
+. log _1 |-->double
+. log10 _1 |-->double
+. acos _1 |-->double
+. asin _1 |-->double
+. atan _1 |-->double
+. acosh _1 |-->double
+. asinh _1 |-->double
+. atanh _1 |-->double
+. cosh _1 |-->double
+. sinh _1 |-->double
+. tanh _1 |-->double
+
+. pow _1 |-->double
+. comb _1 |-->long
+. fabs _1 |-->double
+. factorial _1 |-->long
+. fsum _1 |-->double
+. prod _1 |-->double
+. gcd _1 |-->long
+. lcm _1 |-->int
+
+. _1 |-->OclAny
+. _1 _* |-->OclAny
+_1 |-->OclAny
+
+
 pickleTrailer::
 . dump _1 |-->_1`secondArg.writeObject(_1`firstArg)
 . load _1 |-->_1.readObject()
@@ -772,6 +823,7 @@ pickleTrailer::
 . _1 |-->
 . _1 _* |-->
 _1 |-->
+
 
 datetimeTrailer::
 . MINYEAR |-->1
@@ -1354,6 +1406,9 @@ slice _1 |-->Sequence
 
 open _1 |-->OclFile
 asyncio _1 |-->OclProcess
+
+math _1 |-->_1`mathType
+re _1 |-->_1`reType
 
 _1 if _2 else _3 |-->_1`ocltype
 lambda _1 : _2 |-->Function
