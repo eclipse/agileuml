@@ -17,6 +17,7 @@ class MathLib:
   ix = 0
   iy = 0
   iz = 0
+  defaultTolerance = 0.001
   hexdigit = []
 
   def __init__(self):
@@ -47,6 +48,9 @@ class MathLib:
     MathLib.ix = x
     MathLib.iy = y
     MathLib.iz = z
+
+  def setSeed(r) : 
+    MathLib.setSeeds((r % 30269), (r % 30307), (r % 30323))
 
   # normally-distributed with mean 1.5
 
@@ -381,6 +385,24 @@ class MathLib:
       result.append( MathLib.rowMult(row, m2) )
     return result
 
+  def differential(f) :
+    result = lambda x : ((1.0/(2.0*MathLib.defaultTolerance)) * ((f)(x + MathLib.defaultTolerance) - (f)(x - MathLib.defaultTolerance)))
+    return result
+
+  def definiteIntegral(st,en,f) :
+    area = 0.0
+    d = MathLib.defaultTolerance * (en - st)
+    cum = st
+    while cum < en :
+      next = cum + d
+      area = area + d * ((f)(cum) + (f)(next))/2.0
+      cum = next
+    return area
+
+  def indefiniteIntegral(f) :
+    result = lambda x : MathLib.definiteIntegral(0, x, f)
+    return result
+
 
   def killMathLib(mathlib_x) :
     mathlib_instances = ocl.excludingSet(mathlib_instances, mathlib_x)
@@ -441,4 +463,13 @@ MathLib.initialiseMathLib()
 # m2 = [[6,8], [4,2]]
 
 # print(MathLib.matrixMultiplication(m1,m2))
+
+# lin = lambda x : x
+# sq = lambda x : x*x
+
+# df = MathLib.differential(sq)
+
+# print(df(0.1))
+
+# print(MathLib.definiteIntegral(1,2,lin))
 

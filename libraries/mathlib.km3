@@ -37,6 +37,10 @@ package mathlib {
     pre: true
     post: MathLib.ix = x & MathLib.iy = y & MathLib.iz = z;
 
+    static operation setSeed(r : int) : void
+    pre: true
+    post: MathLib.setSeeds((r mod 30269), (r mod 30307), (r mod 30323));
+
     static operation nrandom() : double
     pre: true
     post: true
@@ -310,6 +314,31 @@ package mathlib {
    static query matrixMultiplication(m1: Sequence(Sequence(double)), m2 : Sequence(Sequence(double))) : Sequence(Sequence(double))
    pre: true
    post: result = m1->collect( row | MathLib.rowMult(row, m2) );
+
+   static query differential(f : Function(double,double)) : Function(double,double)
+   pre: true 
+   post: 
+     result = lambda x : double in (500*(f->apply(x+0.001) - f->apply(x-0.001))); 
+
+  static query definiteIntegral(st : double , en : double , f : Function(double,double) ) : double
+  pre: true
+  post: true
+  activity:
+    var tol : double := 0.001; 
+    var area : double := 0.0; 
+    var d : double := tol*(en - st); 
+    var cum : double := st; 
+    while cum < en
+    do (
+      var next : double := cum + d; 
+      area := area + d*(f->apply(cum) + f->apply(next))/2.0; 
+      cum := next 
+    );  
+    return area;
+
+ static query indefiniteIntegral(f : Function(double,double)) : Function(double,double)
+   pre: true 
+   post: result = lambda x : double in MathLib.definiteIntegral(0,x,f); 
 
  }
 

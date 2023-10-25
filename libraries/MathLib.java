@@ -80,6 +80,9 @@ class MathLib
     MathLib.setiz(z);
   }
 
+  public static void setSeed(int r)  
+  { MathLib.setSeeds((r % 30269), (r % 30307), (r % 30323)); }
+
   public static double nrandom()
   { double result;
     MathLib.setix(( MathLib.getix() * 171 ) % 30269);
@@ -531,55 +534,6 @@ class MathLib
     return ((int) Math.log10(-y)) + 1 > m;
   }  
 
-  /* 
-  public static ArrayList<Double> collect_4(Collection<Integer> _l,ArrayList<Double> s,ArrayList<ArrayList<Double>> m,int i)
-  { // Implements: Integer.subrange(1,m.size)->collect( k | s[k] * ( m[k]->at(i) ) )
-    ArrayList<Double> _results_4 = new ArrayList<Double>();
-    for (Integer _i : _l)
-    { int k = ((Integer) _i).intValue();
-      _results_4.add(new Double(((Double) s.get(k - 1)).doubleValue() * ((Double) m.get(k - 1).get(i - 1)).doubleValue()));
-    }
-    return _results_4;
-  }
-
-    public static ArrayList<Double> collect_5(Collection<Integer> _l,ArrayList<ArrayList<Double>> m,ArrayList<Double> s)
-  { // Implements: Integer.subrange(1,s.size)->collect( i | Integer.Sum(1,m.size,k,s[k] * ( m[k]->at(i) )) )
-
-    ArrayList<Double> _results_5 = new ArrayList<Double>();
-    for (Integer _i : _l)
-    { int i = ((Integer) _i).intValue();
-     _results_5.add(new Double(Ocl.sumdouble(MathLib.collect_4(Ocl.integerSubrange(1,m.size()),s,m,i))));
-    }
-    return _results_5;
-  }
-
-  public static ArrayList<ArrayList<Double>> collect_6(Collection<ArrayList<Double>> _l,ArrayList<ArrayList<Double>> m2)
-  { // Implements: m1->collect( row | MathLib.rowMult(row,m2) )
-   ArrayList<ArrayList<Double>> _results_6 = new ArrayList<ArrayList<Double>>();
-    for (ArrayList<Double> _i : _l)
-    { ArrayList<Double> row = (ArrayList<Double>) _i;
-     _results_6.add(MathLib.rowMult(row,m2));
-    }
-    return _results_6;
-  }
-
-  public static ArrayList<Double> rowMult(ArrayList<Double> s,ArrayList<ArrayList<Double>> m)
-  { ArrayList<Double> result = new ArrayList<Double>();
-  
-    result = MathLib.collect_5(Ocl.integerSubrange(1,s.size()),m,s);
-  
-    return result;
-  }
-
-
-    public static ArrayList<ArrayList<Double>> matrixMultiplication(ArrayList<ArrayList<Double>> m1,ArrayList<ArrayList<Double>> m2)
-  { ArrayList<ArrayList<Double>> result = new ArrayList<ArrayList<Double>>();
-  
-    result = MathLib.collect_6(m1,m2);
-  
-    return result;
-  }  */ 
-
   public static ArrayList<Double> rowMult(ArrayList<Double> s, ArrayList<ArrayList<Double>> m)
   {
     ArrayList<Double> result = new ArrayList<Double>();
@@ -595,8 +549,37 @@ class MathLib
     return result;
   }
 
- 
-  public static void main(String[] args)
+  public static Function<Double,Double> differential(Function<Double,Double> f)
+  {
+    Function<Double,Double> result = (_x10) -> { return 0.0; };
+    result = (x) -> { return (500.0 * ((f).apply(x + 0.001) - (f).apply(x - 0.001))); };
+    return result;
+  }
+
+  public static double definiteIntegral(double st, double en, Function<Double,Double> f)
+  {
+    double result = 0.0;
+    double tol = 0.001;
+    double area = 0.0;
+    double d = tol * (en - st);
+    double cum = st;
+    while (cum < en)
+    {
+      double next = cum + d;
+      area = area + d * ((f).apply(cum) + (f).apply(next)) / 2.0;
+      cum = next;
+    }
+    return area;
+  }
+
+  public static Function<Double,Double> indefiniteIntegral(Function<Double,Double> f)
+  {
+    Function<Double,Double> result = (_x8) -> { return 0.0; };
+    result = (x) -> { return MathLib.definiteIntegral(0, x, f); };
+    return result;
+  }
+
+  /* public static void main(String[] args)
   { ArrayList<Double> row1 = new ArrayList<Double>(); 
     ArrayList<Double> row2 = new ArrayList<Double>(); 
     row1.add(1.0); row1.add(3.0); 
@@ -612,7 +595,7 @@ class MathLib
     m2.add(row3); m2.add(row4); 
 
     System.out.println(MathLib.matrixMultiplication(m1,m2));
-  } 
+  } */ 
 
 
 }

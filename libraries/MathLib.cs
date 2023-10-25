@@ -167,6 +167,9 @@
             MathLib.setiz(z);
         }
 
+        public static void setSeed(int r)  
+        { MathLib.setSeeds((r % 30269), (r % 30307), (r % 30323)); } 
+
         public static double nrandom()
         {
             MathLib.setix((MathLib.getix() * 171) % 30269);
