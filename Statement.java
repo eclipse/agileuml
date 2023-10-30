@@ -11188,11 +11188,14 @@ class AssignStatement extends Statement
   public boolean typeInference(Vector types, Vector entities, Vector cs, Vector env, java.util.Map vartypes)
   { // Also recognise the type as an entity or enumeration if it exists
 
-    boolean res = lhs.typeCheck(types,entities,cs,env); 
+    boolean res = lhs.typeCheck(types,entities,cs,env);
+    res = rhs.typeCheck(types,entities,cs,env);
+    Type rhsType = rhs.getType();  
     res = rhs.typeInference(types,entities,cs,env,vartypes);
 
-    if (lhs.type == null && rhs.type != null) 
-    { lhs.type = rhs.type; } 
+    if (Type.isVacuousType(lhs.type) && 
+        !Type.isVacuousType(rhsType)) 
+    { lhs.type = rhsType; } 
 
     if (rhs.elementType != null && lhs.elementType == null) 
     { lhs.elementType = rhs.elementType; } 
@@ -11209,14 +11212,13 @@ class AssignStatement extends Statement
     if (type != null)  // declare it
     { Attribute att = new Attribute(lhs + "", rhs.type, ModelElement.INTERNAL); 
       att.setElementType(lhs.elementType);
-      System.out.println(">>> " + lhs + " has type " + att.getType());  
+      System.out.println(">>> local variable " + lhs + " has type " + att.getType());  
       env.add(att); 
     } 
 
     Type declaredType = (Type) vartypes.get(lhs + ""); 
-    if (declaredType != null && 
-        (lhs.type == null || 
-         "OclAny".equals(lhs.type.getName())))
+    if (!Type.isVacuousType(declaredType) && 
+        Type.isVacuousType(lhs.type))
     { lhs.type = declaredType;
       System.out.println(">>> " + lhs + " actual type is " + declaredType);  
     } // does not allow for changing the type 

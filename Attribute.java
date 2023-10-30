@@ -371,14 +371,19 @@ public class Attribute extends ModelElement
       if (entity != null) 
       { cntx.add(entity); } 
       Vector env = new Vector(); 
-      initialExpression.typeCheck(types,entities,cntx,env); 
+      initialExpression.typeCheck(types,entities,cntx,env);
+ 
       System.out.println(">> Type of attribute: " + name + " is " + type + "(" + elementType + ")");
-      if (type == null) 
+
+      if (Type.isVacuousType(type) && 
+          !Type.isVacuousType(initialExpression.type)) 
       { type = initialExpression.type; 
         elementType = initialExpression.elementType;
         type.elementType = elementType;   
       } 
-      System.out.println(">> Type of initialiser: " + initialExpression + " is " + type + "(" + elementType + ")");
+
+      System.out.println(">> Type of initialiser: " + initialExpression + " is " + initialExpression.type + "(" + initialExpression.elementType + ")");
+
       return true; 
     } 
 

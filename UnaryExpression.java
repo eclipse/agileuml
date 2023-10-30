@@ -2560,12 +2560,25 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       Vector env1 = new Vector(); 
       env1.addAll(env); 
       env1.add(accumulator); 
-      boolean rtc = argument.typeCheck(typs,ents,context,env1);
+
+      String avar = accumulator.getName(); 
+
+      java.util.Map vartypes1 = new java.util.HashMap(); 
+      vartypes1.putAll(vartypes); 
+      vartypes1.put(avar, 
+                    accumulator.getType()); 
+      boolean rtc = 
+        argument.typeInference(typs,ents,context,env1,vartypes1);
 
       Type acctype = accumulator.getType(); 
-      if (acctype == null)
-      { System.err.println("!! Null accumulator type in lambda expression: " + this); 
-        acctype = new Type("OclAny", null); 
+      if (Type.isVacuousType(acctype))
+      { System.err.println("!! vacuous accumulator type in lambda expression: " + this); 
+        Type vtype = (Type) vartypes1.get(avar); 
+        if (!Type.isVacuousType(vtype))
+        { acctype = vtype; } 
+        else 
+        { acctype = new Type("OclAny", null); }
+        accumulator.setType(acctype);  
       } 
 
       Type argtype = argument.getType(); 

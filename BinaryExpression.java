@@ -3939,7 +3939,16 @@ public void findClones(java.util.Map clones,
     }  // and right for map must be of keytype of left.
     else if ("->apply".equals(operator)) 
     { // lhs must be a function
-      if (left.hasFunctionType()) { } 
+      if (left.hasFunctionType()) 
+      { Type ftype = left.getType(); 
+        type = type.getElementType();
+        if (Type.isVacuousType(type))
+        { Type vtype = (Type) vartypes.get(left + ""); 
+          if (vtype != null && 
+              !Type.isVacuousType(vtype.getElementType()))
+          { type = vtype.getElementType(); } 
+        }  
+      } 
       else 
       { System.err.println("!! LHS of " + this + " must be a function"); 
         Type ftype = new Type("Function", null); 

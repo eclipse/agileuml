@@ -8514,6 +8514,10 @@ class BasicExpression extends Expression
       } 
     }
    
+    if ((data.equals("rawString")) && 
+        "StringLib".equals(objectRef + ""))
+    { return "@" + pars; } 
+
     if ("getMessage".equals(data) && objectRef != null &&
         Type.isOclExceptionType(objectRef))
     { String rqf = objectRef.queryFormCSharp(env,local); 
