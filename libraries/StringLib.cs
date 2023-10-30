@@ -19,7 +19,20 @@
             return result;
         }
 
-        private static string nCopies(string s, int n)
+        public static string sumStringsWithSeparator(ArrayList lst, string sep)
+        {
+            string res = "";
+            for (int i = 0; i < lst.Count; i++)
+            {
+                string xx = (string) lst[i];
+                res = res + xx;
+                if (i < lst.Count - 1)
+                { res = res + sep; }
+            }
+            return res; 
+        } 
+
+        public static string nCopies(string s, int n)
         { String result = "";
           for (int _icollect = 0; _icollect < n; _icollect++)
           {

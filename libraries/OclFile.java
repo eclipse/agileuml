@@ -456,6 +456,13 @@ class OclFile {
     return result;
   }
 
+  public boolean mkdirs()
+  { boolean result = false;
+    if (actualFile != null)
+    { return actualFile.mkdirs(); }
+    return result;
+  }
+
   public void write(String s)
   { 
     if (outputStreamWriter != null)
