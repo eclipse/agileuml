@@ -27,23 +27,40 @@ _1 |-->_1<when> _1 star_expr
 _1 |-->Sequence{ _1 }
 _1 , _* |-->_1->union(_*`recurse)<when> _1 star_expr
 _1 , _* |-->Sequence{_1}->union(_*`recurse)
-_1 _2 |-->_2`domainPart->select(_2`variablePart | _2`selectPart)->collect(_2`variablePart | _1)<when> _2 comp_for
+_1 _2 |-->_2`domainPart->select(_2`variablePart | _2`selectPart)->collect(_2`variablePart | _2`collectPart(_1))<when> _2 comp_for
 
 comp_for::
 for _1 in _2 |-->
 for _1 in _2 _3 |-->
 
 domainPart::
+for _1 in _2 |-->_2->characters()<when> _2 String
+for _1 in _2 _3 |-->_2->characters()<when> _2 String
+for _1 in _2 |-->_2->keys()<when> _2 Map
+for _1 in _2 _3 |-->_2->keys()<when> _2 Map
 for _1 in _2 |-->_2
 for _1 in _2 _3 |-->_2
 
 variablePart::
+for _1 in _2 |-->_tuple<when> _1 multiple
+for _1 in _2 _3 |-->_tuple<when> _1 multiple
 for _1 in _2 |-->_1
 for _1 in _2 _3 |-->_1
 
 selectPart::
 for _1 in _2 |-->true
+for _1 in _2 _3 |-->let _1`first : OclAny = _tuple->at(1) in let _1`third : OclAny = _tuple->at(2) in _3`selectPart<when> _1 multiple
 for _1 in _2 _3 |-->_3`selectPart
+
+_1 |-->true
+if _1 |-->_1
+if _1 _2 |-->_1
+
+collectPart::
+for _1 in _2 |-->let _1`first : OclAny = _tuple->at(1) in let _1`third : OclAny = _tuple->at(2) in <when> _1 multiple
+for _1 in _2 _3 |-->let _1`first : OclAny = _tuple->at(1) in let _1`third : OclAny = _tuple->at(2) in <when> _1 multiple
+for _1 in _2 |-->
+for _1 in _2 _3 |-->
 
 
 comp_iter::
@@ -51,10 +68,6 @@ _1 |-->_1
 if _1 |-->
 if _1 _2 |-->
 
-selectPart::
-_1 |-->true
-if _1 |-->_1
-if _1 _2 |-->_1
 
 
 test::
@@ -72,11 +85,21 @@ _1 |-->_1
 
 
 comparison::
-_1 < _2 |-->_1 < _2
-_1 > _2 |-->_1 > _2
+_1 < _2 |-->_1 < _2<when> _1 String
+_1 < _2 |-->_1 < _2<when> _1 real
+_1 < _2 |-->(_1->compareTo(_2)) < 0
+_1 > _2 |-->_1 > _2<when> _1 String
+_1 > _2 |-->_1 > _2<when> _1 String
+_1 > _2 |-->(_1->compareTo(_2)) > 0
+
+_1 >= _2 |-->_1 >= _2<when> _1 String
+_1 >= _2 |-->_1 >= _2<when> _1 real
+_1 >= _2 |-->(_1->compareTo(_2)) >= 0
+_1 <= _2 |-->_1 <= _2<when> _1 String
+_1 <= _2 |-->_1 <= _2<when> _1 real
+_1 <= _2 |-->(_1->compareTo(_2)) <= 0
+
 _1 == _2 |-->_1 = _2
-_1 >= _2 |-->_1 >= _2
-_1 <= _2 |-->_1 <= _2
 _1 <> _2 |-->_1 /= _2
 _1 != _2 |-->_1 /= _2
 _1 not in _2 |-->(_2)->characters()->excludes(_1)<when> _2 String
@@ -243,6 +266,7 @@ set |-->OclType["Set"]
 
 R _1 |-->StringLib.rawString(_1)
 r _1 |-->StringLib.rawString(_1)
+f _1 |-->StringLib.formattedString(_1)
 
 _1 |-->_1
 
@@ -1044,6 +1068,7 @@ while _1 : _2 |-->    while _1 do (_2)
 
 for _1 in _2 : _3 |-->    for _1 : _2->characters() do (_3)<when> _2 String
 for _1 in _2 : _3 |-->    for _1 : _2->keys() do (_3)<when> _2 Map
+for _1 in _2 : _3 |-->    for _tuple : _2 do (var _indx : int := 1;\n_1`tupleDeclarations  _3)<when> _1 multiple
 for _1 in _2 : _3 |-->    for _1 : _2 do (_3)
 
 try : _1 |-->    try (_1)
@@ -1271,7 +1296,9 @@ _1 |-->false
 _* |-->false
 
 
-
+tupleDeclarations::
+_1 , _* |-->      var _1 : OclAny := _tuple->at(_indx); _indx := _indx + 1;\n_*`recurse
+_1 |-->      var _1 : OclAny := _tuple->at(_indx);\n
 
 errorlist::
 _1 |-->    error _1`errorToUML
@@ -1453,6 +1480,10 @@ _1 is _2 |-->boolean
 
 { _1 } |-->Set<when> _1 dictorsetmaker
 
+r _1 |-->String
+R _1 |-->String
+f _1 |-->String
+
 _1 _2 |-->OclIterator<when> _1 generator, _2 trailer
 
 _1 _2 |-->_1<when> _1 Class, _2 trailer
@@ -1559,6 +1590,16 @@ trailerOclType::
 . fromtimestamp _1 |-->OclDate
 . fromisoformat _1 |-->OclDate
 
+. capitalize _1 |-->String
+. join _1 |-->String
+. title _1 |-->String
+. swapcase _1 |-->String
+. lstrip_1 |-->String
+. rstrip _1 |-->String
+. istitle _1 |-->boolean
+. rjust _1 |-->String
+. ljust _1 |-->String
+. format _1 |-->String
 
 . _1 |-->OclAny
 . _1 _2 |-->OclAny
