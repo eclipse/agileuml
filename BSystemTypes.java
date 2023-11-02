@@ -340,10 +340,11 @@ public class BSystemTypes extends BComponent
     } 
   } 
 
-  public static String getSelectDefinitionJava7(Expression left, String lqf,
-                                           Expression pred, String selectvar, 
-                                           java.util.Map env,
-                                           Vector pars)
+  public static String getSelectDefinitionJava7(
+                   Expression left, String lqf,
+                   Expression pred, String selectvar, 
+                   java.util.Map env,
+                   Vector pars)
   { String signature = Attribute.parList(pars); 
 
     if (Expression.isSimpleEntity(left)) 
@@ -371,6 +372,7 @@ public class BSystemTypes extends BComponent
     else if (e != null) 
     { tname = e.typeWrapperJava7(); } 
 
+    String partype1 = "List<" + tname + ">"; 
     String restype1 = "ArrayList<" + tname + ">"; 
     String restype2 = "HashSet<" + tname + ">"; 
     String restype3 = "TreeSet<" + tname + ">"; 
@@ -391,7 +393,7 @@ public class BSystemTypes extends BComponent
       { var = selectvar; } 
       else 
       { var = ename.toLowerCase() + "_" + oldindex + "_xx"; }
-      String res1 = "  public static " + restype1 + " select_" + oldindex + "(" + restype1 + " _l"; 
+      String res1 = "  public static " + restype1 + " select_" + oldindex + "(" + partype1 + " _l"; 
       String res2 = "  public static " + restype2 + " select_" + oldindex + "(" + restype2 + " _l"; 
       String res3 = "  public static " + restype3 + " select_" + oldindex + "(" + restype3 + " _l"; 
       String res4 = "  public static " + restype2 + " select_" + oldindex + "(" + restype4 + " _l"; 
@@ -897,10 +899,11 @@ public class BSystemTypes extends BComponent
     } 
   } 
 
-  public static String getCollectDefinitionJava7(Expression left, String lqf,
-                                           Expression exp, boolean rprim,
-                                           String collectvar, java.util.Map env,
-                                           Vector pars)
+  public static String getCollectDefinitionJava7(
+           Expression left, String lqf,
+           Expression exp, boolean rprim,
+           String collectvar, java.util.Map env,
+           Vector pars)
   { String signature = Attribute.parList(pars); 
 
     if (Expression.isSimpleEntity(left))  
@@ -957,7 +960,8 @@ public class BSystemTypes extends BComponent
         if (partype != null)  
         { res = res + "," + 
                 partype.getJava7(partype.getElementType()) + 
-                                 " " + par.getName(); } 
+                                 " " + par.getName(); 
+        } 
       } 
       res = res + ")\n"; 
       res = res + "  { // Implements: " + left + "->collect( " + var + " | " + exp + " )\n" + 
@@ -1575,10 +1579,11 @@ public class BSystemTypes extends BComponent
     } 
   } 
 
-  public static String getRejectDefinitionJava7(Expression left, String lqf,
-                                           Expression pred, String selectvar,
-                                           java.util.Map env,
-                                           Vector pars)
+  public static String getRejectDefinitionJava7(
+            Expression left, String lqf,
+            Expression pred, String selectvar,
+            java.util.Map env,
+            Vector pars)
   { String signature = Attribute.parList(pars); 
 
     if (Expression.isSimpleEntity(left)) 
@@ -1605,6 +1610,7 @@ public class BSystemTypes extends BComponent
     else if (e != null) 
     { tname = e.typeWrapperJava7(); } 
 
+    String partype1 = "List<" + tname + ">"; 
     String restype1 = "ArrayList<" + tname + ">"; 
     String restype2 = "HashSet<" + tname + ">"; 
     String restype3 = "TreeSet<" + tname + ">"; 
@@ -1630,7 +1636,7 @@ public class BSystemTypes extends BComponent
       if (selectvar == null && e != null && e.isEntity())
       { newenv.put(ename,var); } 
 
-      String res1 = "  public static " + restype1 + " reject_" + oldindex + "(" + restype1 + " _l"; 
+      String res1 = "  public static " + restype1 + " reject_" + oldindex + "(" + partype1 + " _l"; 
       String res2 = "  public static " + restype2 + " reject_" + oldindex + "(" + restype2 + " _l"; 
       String res3 = "  public static " + restype3 + " reject_" + oldindex + "(" + restype3 + " _l"; 
       String res4 = "  public static " + restype2 + " reject_" + oldindex + "(" + restype4 + " _l"; 
@@ -2234,8 +2240,8 @@ public class BSystemTypes extends BComponent
     if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else if ("Set".equals(e.getName()))
-	{ ename = "HashSet"; } 
-	else if ("Sequence".equals(e.getName()))
+    { ename = "HashSet"; } 
+    else if ("Sequence".equals(e.getName()))
     { ename = "ArrayList"; } 
     else 
     { ename = e.getName(); }

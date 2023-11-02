@@ -1287,6 +1287,18 @@ public class Attribute extends ModelElement
     } 
     return res; 
   } 
+
+  public static String parListJava7(Vector pars)
+  { String res = ""; 
+    for (int i = 0; i < pars.size(); i++) 
+    { Attribute par = (Attribute) pars.get(i); 
+      res = res + " " + par.getName() + 
+            " " + par.getParTypeJava7();
+      if (i < pars.size() - 1)
+      { res = res + ", "; } 
+    } 
+    return res; 
+  } 
  
   public String underscoreName()
   { if (navigation.size() <= 1) 
@@ -1486,6 +1498,18 @@ public class Attribute extends ModelElement
 
   public Type getType()
   { return type; }
+
+  public String getTypeJava7()
+  { if (type != null) 
+    { return type.getJava7(); } 
+    return "Object"; 
+  } 
+
+  public String getParTypeJava7()
+  { if (type != null) 
+    { return type.getParJava7(); } 
+    return "Object"; 
+  } 
 
   public int getKind()
   { return kind; } 

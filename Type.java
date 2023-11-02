@@ -3891,6 +3891,95 @@ public class Type extends ModelElement
     return "int"; 
   }
 
+  public String getParJava7()
+  { String nme = getName();
+    // String et = ""; 
+    // if (elementType != null && elementType != this) 
+    // { et = elementType.getJava7(); } 
+    // else 
+    // { et = "Object"; } 
+
+    if (nme.equals("Set"))
+    { String tname = "HashSet"; 
+      if (sorted) 
+      { tname = "TreeSet"; } 
+
+      if (elementType != null) 
+      { return tname + "<" + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return tname; } 
+    } 
+
+    if (nme.equals("Sequence"))
+    { if (elementType != null) 
+      { return "List<" + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "List"; } 
+    } 
+
+    if (nme.equals("Map"))
+    { if (keyType != null && elementType != null) 
+      { return "Map<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "Map<Object, " + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "Map"; } 
+    
+      // if (sorted) 
+      // { tname = "TreeMap"; } 
+    } 
+
+    if (nme.equals("Function"))
+    { if (keyType != null && elementType != null) 
+      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<Object, " + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "Evaluation<Object,Object>"; } 
+    } 
+
+    if (nme.equals("Ref"))
+    { String restype = "Object"; 
+      if (elementType != null) 
+      { restype = elementType.getJava7();
+        // if (isBasicType(elementType) ||
+        //     elementType.isStructEntityType() ||  
+        //     "Ref".equals(elementType.getName()) || 
+        //     "void".equals(elementType.getName()))
+        { return restype + "[]"; } 
+        // else 
+        // { return restype; }
+      }  
+      else 
+      { return restype + "[]"; } 
+    } 
+
+    if (alias != null)    // For datatypes
+    { return alias.getJava7(); } 
+
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
+
+    String jex = (String) exceptions2java.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
+    if (entity != null) 
+    { return entity.getCompleteName(); } 
+
+    if (values == null)
+    { return nme; }
+
+    // if (nme.equals("long")) { return "long"; } 
+    return "int"; 
+  }
+
   public String getJava7(Type elemType)
   { String nme = getName();
     String et = "Object"; 

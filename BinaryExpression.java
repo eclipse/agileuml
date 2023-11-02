@@ -3552,6 +3552,34 @@ public void findClones(java.util.Map clones,
     Type tleft = left.getType(); 
     Type tright = right.getType(); 
 
+    if (operator.equals("let") && accumulator != null)
+    { Vector context = new Vector(); 
+      context.addAll(contexts); 
+
+      String vname = accumulator.getName(); 
+      Type vtype = accumulator.getType(); 
+
+      java.util.Map vartypes1 = new java.util.HashMap(); 
+      vartypes1.putAll(vartypes); 
+
+      Vector env1 = new Vector(); 
+      env1.addAll(env); 
+      env1.add(accumulator); 
+
+      boolean rtc = right.typeInference(types,entities,context,env1,vartypes1);
+
+      Type vetype = (Type) vartypes1.get(vname); 
+
+      if (Type.isVacuousType(vtype) && 
+          !Type.isVacuousType(vetype))
+      { accumulator.setType(vetype); } 
+
+      type = right.type; 
+      elementType = right.elementType;  
+      System.out.println(">>> Typechecked let expression: let " + vname + " : " + accumulator.getType() + " = " + accumulator.getInitialisation() + " in (" + type + ")"); 
+      return true; 
+    }
+
     if (operator.equals("->exists") || 
         operator.equals("->exists1") ||
         "->existsLC".equals(operator) || 
