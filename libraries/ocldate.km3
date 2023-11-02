@@ -5,6 +5,7 @@ class OclDate
   stereotype component; 
 
   static attribute systemTime : long; 
+  
   attribute time : long; 
   attribute year : int; 
   attribute month : int; 
@@ -50,6 +51,19 @@ class OclDate
   pre: true
   post: 
      if time > d.time then result = true else result = false endif; 
+
+  operation compareToYMD(d : OclDate) : int
+  pre: true
+  post: 
+    (year /= d.year => result = (year - d.year)*365) & 
+    (year = d.year & month /= d.month => result = (month - d.month)*30) & 
+    (year = d.year & month = d.month => result = (day - d.day));  
+
+  static operation maxDateYMD(d1 : OclDate, d2 : OclDate) : OclDate
+  pre: true
+  post: 
+    (0 < d1.compareTo(d2) => result = d2) & 
+    (true => result = d1); 
 
   operation yearDifference(d : OclDate) : long
   pre: true 
@@ -123,6 +137,22 @@ class OclDate
   pre: true 
   post: OclDate->exists( d | d.time = time + m*2628000000 & result = d); 
 
+  operation addMonthYMD(m : int) : OclDate
+  pre: true 
+  post: 
+    (month + m > 12 => 
+       result = OclDate.newOclDate_YMD(year + 1, (month + m) mod 12, day)) & 
+    (month + m <= 12 => 
+       result = OclDate.newOclDate_YMD(year, month + m, day)); 
+
+  operation subtractMonthYMD(m : int) : OclDate
+  pre: true 
+  post: 
+    (month - m <= 0 => 
+       result = OclDate.newOclDate_YMD(year - 1, 12 - (m - month), day)) & 
+    (month + m <= 12 => 
+       result = OclDate.newOclDate_YMD(year, month - m, day)); 
+
   operation addDays(d : int) : OclDate
   pre: true 
   post: OclDate->exists( dt | dt.time = time + d*86400000 & result = dt); 
@@ -142,7 +172,71 @@ class OclDate
   operation toString() : String
   pre: true 
   post: result = day + "-" + month + "-" + year + " " + hour + ":" + minute + ":" + second; 
- 
+
+  static query leapYear(yr : int) : boolean
+  pre: true
+  post: 
+    (yr mod 4 = 0 & yr mod 100 /= 0 => result = true) &
+    (yr mod 400 = 0 => result = true) & 
+    (true => result = false); 
+
+
+  operation isLeapYear() : boolean
+  pre: true 
+  post: result = OclDate.leapYear(year); 
+
+  static query monthDays(mn : int, yr : int) : int
+  pre: true
+  post: 
+    (mn : Set{4,6,9,11} => result = 30) & 
+    (mn = 2 & OclDate.leapYear(yr) => result = 29) & 
+    (mn = 2 & not(OclDate.leapYear(yr)) => result = 28) & 
+    (true => result = 31); 
+
+
+  operation daysInMonth() : int
+  pre: true
+  post: result = OclDate.monthDays(month, year); 
+
+  operation isEndOfMonth() : boolean
+  pre: true
+  post: 
+    (day = OclDate.monthDays(month,year) => result = true) & 
+    (true => result = false);  
+
+  static operation daysBetweenDates(d1 : OclDate, d2 : OclDate) : int
+  pre: true 
+  post: true
+  activity: 
+    var startDay : int := d1.day; 
+    var startMonth : int := d1.month;
+    var startYear : int := d1.year;
+
+    var endDay : int := d2.day; 
+    var endMonth : int := d2.month;
+    var endYear : int := d2.year;
+
+    var days : int := 0;
+
+    while startYear < endYear or (startYear = endYear & startMonth < endMonth)
+    do (var daysinmonth : int := 
+          OclDate.monthDays(startMonth,startYear);   
+
+        days := days + daysinmonth - startDay + 1; 
+        startDay := 1;
+        startMonth := startMonth + 1; 
+
+        if startMonth > 12
+        then
+            startMonth := 1;
+            startYear := startYear + 1
+        else 
+          skip
+     ); 
+    days := days + endDay - startDay; 
+    return days; 
+
+
  }
 
 
