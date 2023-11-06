@@ -3550,7 +3550,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }
 	
     if (operator.equals("-"))
-    { return "-" + qf; } 
+    { if (needsBracket) 
+      { return "(-" + qf + ")"; } 
+      return "-" + qf; 
+    } 
 
     if (operator.equals("?"))
     { String res = qf; 
@@ -3961,7 +3964,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }
 
     if (operator.equals("-"))
-    { return "-" + qf; } 
+    { if (needsBracket) 
+      { return "(-" + qf + ")"; } 
+      return "-" + qf; 
+    } 
 
     if (operator.equals("!"))
     { String res = qf; 
@@ -4319,7 +4325,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }
 
     if (operator.equals("-"))
-    { return "-" + qf; } 
+    { if (needsBracket) 
+      { return "(-" + qf + ")"; } 
+      return "-" + qf; 
+    } 
 
     if (operator.equals("!"))
     { String res = qf; 
@@ -4687,7 +4696,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }
 
     if (operator.equals("-"))
-    { return "-" + qf; } 
+    { if (needsBracket) 
+      { return "(-" + qf + ")"; } 
+      return "-" + qf; 
+    } 
 
     if (operator.equals("?"))
     { String res = qf; 
@@ -5034,7 +5046,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }
      
     if (operator.equals("-"))
-    { return "-" + qf; } 
+    { if (needsBracket) 
+      { return "(-" + qf + ")"; } 
+      return "-" + qf; 
+    } 
 
     if (operator.equals("?"))
     { // if (Type.isBasicType(argument.type))
@@ -5962,7 +5977,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     } 
   
     if (operator.equals("-"))
-    { String res = "-" + argument; 
+    { String res = "-(" + argument + ")"; 
       if (needsBracket)
       { return "(" + res + ")"; }
       return res;

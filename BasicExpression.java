@@ -6818,8 +6818,12 @@ class BasicExpression extends Expression
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryForm(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
-        return "\"" + "\" + " + data + ".charAt(" + indopt + ")"; 
+        return "(\"" + "\" + " + data + ".charAt(" + indopt + "))"; 
       } 
+
+      if (needsBracket) 
+      { return "(" + data + ")"; } 
+
       return data;
     }
 
@@ -6851,8 +6855,8 @@ class BasicExpression extends Expression
           if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); }
-		  else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
-		  { return unwrap(data + ".get(" + ind + ")"); }
+          else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+          { return unwrap(data + ".get(" + ind + ")"); }
 		   
           String jType = type.getJava(); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
@@ -6861,13 +6865,13 @@ class BasicExpression extends Expression
       } // unwrap ints, doubles, etc, also 
       else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
       { String pars = ""; 
-	    for (int h = 0; h < parameters.size(); h++) 
-		{ Expression par = (Expression) parameters.get(h); 
-		  pars = pars + par.queryForm(env,local); 
-		  if (h < parameters.size()-1) 
-		  { pars = pars + ","; } 
-		} 
-	    return data + ".evaluate(" + pars + ")"; 
+        for (int h = 0; h < parameters.size(); h++)     
+        { Expression par = (Expression) parameters.get(h); 
+          pars = pars + par.queryForm(env,local); 
+          if (h < parameters.size()-1) 
+          { pars = pars + ","; } 
+        } 
+        return data + ".evaluate(" + pars + ")"; 
       }
       else 
       { return data; } 
@@ -7383,8 +7387,12 @@ class BasicExpression extends Expression
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryFormJava6(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
-        return "\"" + "\" + " + data + ".charAt(" + indopt + ")"; 
+        return "(\"" + "\" + " + data + ".charAt(" + indopt + "))"; 
       } 
+   
+      if (needsBracket) 
+      { return "(" + data + ")"; } 
+
       return data;
     }
 
@@ -7893,6 +7901,10 @@ class BasicExpression extends Expression
         String indopt = evaluateString("-",ind,"1"); 
         return "(\"" + "\" + " + data + ".charAt(" + indopt + "))"; 
       } 
+
+      if (needsBracket) 
+      { return "(" + data + ")"; } 
+
       return data;
     }
 	

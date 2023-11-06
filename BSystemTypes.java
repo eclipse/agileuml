@@ -366,7 +366,10 @@ public class BSystemTypes extends BComponent
     if (ename.equals("Set"))
     { tname = "Set"; } // element type? 
     else if (ename.equals("Sequence"))
-    { tname = "ArrayList"; } 
+    { tname = "ArrayList"; 
+      if (e != null)
+      { tname = e.getJava7(); }
+    }  
     else if (ename.equals("int"))
     { tname = "Integer"; } 
     else if (e != null) 
@@ -1604,7 +1607,10 @@ public class BSystemTypes extends BComponent
     if (ename.equals("Set"))
     { tname = "Set"; } 
     else if (ename.equals("Sequence"))
-    { tname = "ArrayList"; } 
+    { tname = "ArrayList"; 
+      if (e != null)
+      { tname = e.getJava7(); }
+    } 
     else if (ename.equals("int"))
     { tname = "Integer"; } 
     else if (e != null) 

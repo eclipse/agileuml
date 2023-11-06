@@ -6169,18 +6169,21 @@ class CreationStatement extends Statement
     { initialExpression.typeInference(types,entities,
                                       ctxs,env,vartypes); 
       System.out.println(">>> Inferred type " + 
-        initialExpression.getType() + " for variable " + att); 
+        initialExpression.getType() + "(" + 
+        initialExpression.getElementType() + 
+        ") for variable " + att); 
 
       Type initType = initialExpression.getType(); 
       Type initElemType = initialExpression.getElementType(); 
 
       if (!Type.isVacuousType(initType))
       { instanceType = initType;  
-        att.setType(initType);
+        att.setType(instanceType);
       } 
  
       if (!Type.isVacuousType(initElemType))
-      { elementType = initElemType; 
+      { elementType = initElemType;
+        instanceType.setElementType(initElemType);  
         att.setElementType(initElemType); 
       } 
     } 

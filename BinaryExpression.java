@@ -22,7 +22,8 @@ class BinaryExpression extends Expression
 
   String iteratorVariable = null; // for ->exists( x, ->forAll( x, etc
   Attribute accumulator = null;      // let and ->iterate(  )
-  Expression keyValue = null;   // for map operators ->including(key,right), ->excluding(key,right)
+  Expression keyValue = null;   
+    // for map operators ->including(key,right), ->excluding(key,right)
 
   public BinaryExpression(String op, Expression ll, Expression rr)
   { operator = op; 
@@ -2778,16 +2779,17 @@ class BinaryExpression extends Expression
     if (operator.equals("->closure")) 
     { return left.getBaseEntityUses(); } 
 
-    if ("->iterate".equals(operator))
+    if ("->iterate".equals(operator) || "let".equals(operator))
     { Vector ss1 = left.getBaseEntityUses();  
+      Vector ss2 = right.getBaseEntityUses(); 
 
       if (accumulator != null) 
       { Expression expr = accumulator.getInitialExpression(); 
         if (expr != null) 
         { ss1.addAll(expr.allPreTerms()); } 
-      } 
+      }
 
-      return VectorUtil.union(ss1,right.getBaseEntityUses());
+      return VectorUtil.union(ss1,ss2);
     } 
 
     if (operator.equals("!") || operator.equals("#") || operator.equals("#LC") ||
@@ -2837,15 +2839,15 @@ class BinaryExpression extends Expression
       return ss; 
     } 
     
-    if ("->iterate".equals(operator))
-    { Vector ss2 = left.getVariableUses();
-      ss2 = VectorUtil.union(ss2,right.getVariableUses());
+    if ("->iterate".equals(operator) || "let".equals(operator))
+    { Vector ss1 = left.getVariableUses();
+      Vector ss2 = right.getVariableUses();
       Vector removals = new Vector(); 
 
       if (accumulator != null) 
       { Expression expr = accumulator.getInitialExpression(); 
         if (expr != null) 
-        { ss2.addAll(expr.getVariableUses()); } 
+        { ss1.addAll(expr.getVariableUses()); } 
         String acc = accumulator.getName(); 
 
         for (int i = 0; i < ss2.size(); i++) 
@@ -2855,14 +2857,8 @@ class BinaryExpression extends Expression
         } 
       } 
 
-      for (int i = 0; i < ss2.size(); i++) 
-      { Expression e1 = (Expression) ss2.get(i); 
-        if ((e1 + "").equals(iteratorVariable))
-        { removals.add(e1); } 
-      } 
-
       ss2.removeAll(removals);          
-      return ss2; 
+      return VectorUtil.union(ss1,ss2); 
     } 
 
     Vector res = left.getVariableUses();
@@ -3553,11 +3549,14 @@ public void findClones(java.util.Map clones,
     Type tright = right.getType(); 
 
     if (operator.equals("let") && accumulator != null)
-    { Vector context = new Vector(); 
+    { // let v : T = left in right 
+
+      Vector context = new Vector(); 
       context.addAll(contexts); 
 
       String vname = accumulator.getName(); 
       Type vtype = accumulator.getType(); 
+      // Expression vinit = accumulator.getInitialisation(); 
 
       java.util.Map vartypes1 = new java.util.HashMap(); 
       vartypes1.putAll(vartypes); 
@@ -3566,7 +3565,14 @@ public void findClones(java.util.Map clones,
       env1.addAll(env); 
       env1.add(accumulator); 
 
-      boolean rtc = right.typeInference(types,entities,context,env1,vartypes1);
+      if (Type.isVacuousType(vtype) && 
+          !Type.isVacuousType(left.getType()))
+      { accumulator.setType(left.getType()); 
+        vtype = accumulator.getType(); 
+      }  
+
+      boolean rtc = right.typeInference(types,entities,
+                                context,env1,vartypes1);
 
       Type vetype = (Type) vartypes1.get(vname); 
 
@@ -3576,7 +3582,7 @@ public void findClones(java.util.Map clones,
 
       type = right.type; 
       elementType = right.elementType;  
-      System.out.println(">>> Typechecked let expression: let " + vname + " : " + accumulator.getType() + " = " + accumulator.getInitialisation() + " in (" + type + ")"); 
+      System.out.println(">>> Typechecked let expression: let " + vname + " : " + accumulator.getType() + " = " + left + " in (" + type + ")"); 
       return true; 
     }
 
@@ -3686,11 +3692,11 @@ public void findClones(java.util.Map clones,
       Type vblType = (Type) vartypes.get(vbl + ""); 
 
       if (scope.isCollection()) 
-      { if (scope.elementType == null)
+      { if (Type.isVacuousType(scope.elementType))
         { System.err.println("!! No element type for " + scope); 
           Type tt = (Type) vartypes.get(scope + ""); 
           if (tt != null && 
-              tt.elementType != null) 
+              !Type.isVacuousType(tt.elementType)) 
           { scope.setElementType(tt.elementType);
             vbl.setType(tt.elementType);
           } 
@@ -3705,7 +3711,22 @@ public void findClones(java.util.Map clones,
       else 
       { System.err.println("!! Left argument of " + operator + 
                            " must be a collection"); 
-        scope.setType(new Type("Sequence", null)); 
+      
+        Type tt = (Type) vartypes.get(scope + "");
+        if (tt != null) 
+        { scope.setType(tt); } 
+        else 
+        { scope.setType(new Type("Sequence", null)); } 
+ 
+        if (tt != null && 
+            !Type.isVacuousType(tt.elementType)) 
+        { scope.setElementType(tt.elementType);
+          vbl.setType(tt.elementType);
+        } 
+        else if (vblType != null) 
+        { scope.setElementType(vblType);
+          vbl.setType(vblType);
+        } 
 
         if (scope instanceof BasicExpression)
         { String vname = ((BasicExpression) scope).basicString(); 
@@ -3852,8 +3873,27 @@ public void findClones(java.util.Map clones,
         "|concatenateAll".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left; 
       Expression scope = lexp.right;
+      Expression vbl = lexp.left; 
 
-      if (scope.isCollection()) { } 
+      Type vblType = (Type) vartypes.get(vbl + ""); 
+
+      if (scope.isCollection()) 
+      { if (Type.isVacuousType(scope.elementType))
+        { System.err.println("!! No element type for " + scope); 
+          Type tt = (Type) vartypes.get(scope + ""); 
+          if (tt != null && 
+              !Type.isVacuousType(tt.elementType)) 
+          { scope.setElementType(tt.elementType);
+            vbl.setType(tt.elementType);
+          } 
+          else if (vblType != null) 
+          { scope.setElementType(vblType);
+            vbl.setType(vblType);
+          } 
+
+          System.out.println(">> Set element type to " + scope.getElementType()); 
+        }
+      } 
       else 
       { System.err.println("!! Left argument of " + operator + 
                            " must be a collection"); 
