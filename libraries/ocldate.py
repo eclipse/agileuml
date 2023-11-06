@@ -150,6 +150,22 @@ class OclDate:
   def __str__(self) : 
     return self.toString()
 
+  def addMonthYMD(self, m) :
+    result = self
+    if self.month + m > 12 :
+      result = OclDate.newOclDate_YMD(self.year + 1, (self.month + m) % 12, self.day)
+    else :
+      result = OclDate.newOclDate_YMD(self.year, self.month + m, self.day)
+    return result
+
+  def subtractMonthYMD(self, m) :
+    result = self
+    if self.month - m <= 0 :
+      result = OclDate.newOclDate_YMD(self.year - 1, 12 - (m - self.month), self.day)
+    else :
+      result = OclDate.newOclDate_YMD(self.year, self.month - m, self.day)
+    return result
+
   def addYears(self,y) : 
     newtime = self.time + y*OclDate.YEARS
     return OclDate.newOclDate_Time(newtime)
@@ -174,6 +190,26 @@ class OclDate:
     newtime = self.time + mn
     return OclDate.newOclDate_Time(newtime)
 
+  def compareToYMD(self, d) :
+    result = 0
+    if self.year != d.year :
+      result = (self.year - d.year) * 365
+    else :
+      if self.year == d.year and self.month != d.month :
+        result = (self.month - d.month) * 30
+      else :
+        if self.year == d.year and self.month == d.month :
+          result = (self.day - d.day)
+    return result
+
+  def maxDateYMD(d1,d2) :
+    result = None
+    if 0 < d1.compareTo(d2) :
+      result = d2
+    else :
+      result = d1
+    return result
+
   def yearDifference(self,d) :
     newtime = self.time - d.time
     return newtime/OclDate.YEARS
@@ -181,6 +217,9 @@ class OclDate:
   def monthDifference(self,d) :
     newtime = self.time - d.time
     return newtime/OclDate.MONTHS
+
+  def differenceMonths(d1,d2) : 
+    return (d1.year - d2.year)*12 + (d1.month - d2.month)
 
   def dayDifference(self,d) :
     newtime = self.time - d.time
@@ -198,11 +237,73 @@ class OclDate:
     newtime = self.time - d.time
     return newtime
 
+  def leapYear(yr) :
+    result = False
+    if yr % 4 == 0 and yr % 100 != 0 :
+      result = True
+    else :
+      if yr % 400 == 0 :
+        result = True
+      else :
+        result = False
+    return result
 
-# t = OclDate.newOclDate_String("2022/09/28 11:30:30")
-# print(t.toString())
-# t = t.addMonths(12)
-# print(t.toString())
+  def isLeapYear(self) :
+    result = False
+    result = OclDate.leapYear(self.year)
+    return result
+
+  def monthDays(mn,yr) :
+    result = 0
+    if mn in set({4,6,9,11}) :
+      result = 30
+    else :
+      if mn == 2 and OclDate.leapYear(yr) :
+        result = 29
+      else :
+        if mn == 2 and not OclDate.leapYear(yr) :
+          result = 28
+        else :
+          result = 31
+    return result
+
+  def daysInMonth(self) :
+    result = 0
+    result = OclDate.monthDays(self.month, self.year)
+    return result
+
+  def isEndOfMonth(self) :
+    result = False
+    if self.day == OclDate.monthDays(self.month, self.year) :
+      result = True
+    else :
+      result = False
+    return result
+
+  def daysBetweenDates(d1,d2) :
+    result = 0
+    startDay = d1.day
+    startMonth = d1.month
+    startYear = d1.year
+    endDay = d2.day
+    endMonth = d2.month
+    endYear = d2.year
+    days = 0
+    while startYear < endYear or (startYear == endYear and startMonth < endMonth) :
+      daysinmonth = OclDate.monthDays(startMonth, startYear)
+      days = days + daysinmonth - startDay + 1
+      startDay = 1
+      startMonth = startMonth + 1
+      if startMonth > 12 :
+        startMonth = 1
+        startYear = startYear + 1
+    days = days + endDay - startDay
+    return days
+
+
+# d1 = OclDate.newOclDate_YMD(2023, 8, 1)
+# d2 = OclDate.newOclDate_YMD(2023, 11, 1)
+# print(OclDate.daysBetweenDates(d1,d2))
 
 
 

@@ -215,28 +215,6 @@ package mathlib {
   static query longBitsToDouble(x : long) : double
   pre: true post: true; 
 
-  static query discountDiscrete(amount : double, rate: double, time: double) : double
-  pre: rate > -1
-  post: result = amount/((1+rate)->pow(time)); 
-
-  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
-  pre: rate > -1
-  post: 
-    result = Integer.subrange(1,values->size())->collect( _ind | MathLib.discountDiscrete(values->at(_ind), rate, _ind ) )->sum(); 
-
-  static query netPresentValueDiscrete(rate: double, values: Sequence(double)) : double
-  pre: rate > -1
-  post: 
-    result = Integer.subrange(1,values->size())->collect( _ind | MathLib.discountDiscrete(values->at(_ind), rate, (_ind - 1) ) )->sum(); 
-
-  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
-  pre: rate > -1
-  post: 
-    result = Integer.subrange(1,values->size())->collect( _ind | MathLib.discountDiscrete(values->at(_ind), rate, _ind) )->sum(); 
-
-  static query irrDiscrete(values: Sequence(double)) : double
-  pre: true post: true; 
-
  static query roundN(x : double, n : int) : double
  pre: true
  post: true 
@@ -341,5 +319,44 @@ package mathlib {
    post: result = lambda x : double in MathLib.definiteIntegral(0,x,f); 
 
  }
+
+  class FinanceLib {
+
+    stereotype external; 
+    stereotype component; 
+
+  static query discountDiscrete(amount : double, rate: double, time: double) : double
+  pre: rate > -1
+  post: result = amount/((1+rate)->pow(time)); 
+
+  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
+  pre: rate > -1
+  post: 
+    result = Integer.subrange(1,values->size())->collect( _ind | FinanceLib.discountDiscrete(values->at(_ind), rate, _ind ) )->sum(); 
+
+  static query netPresentValueDiscrete(rate: double, values: Sequence(double)) : double
+  pre: rate > -1
+  post: 
+    result = Integer.subrange(1,values->size())->collect( _ind | FinanceLib.discountDiscrete(values->at(_ind), rate, (_ind - 1) ) )->sum(); 
+
+  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
+  pre: rate > -1
+  post: 
+    result = Integer.subrange(1,values->size())->collect( _ind | FinanceLib.discountDiscrete(values->at(_ind), rate, _ind) )->sum(); 
+
+  static query irrDiscrete(values: Sequence(double)) : double
+  pre: true post: true; 
+
+  static query straddleDate(d1 : OclDate, d2 : OclDate, period : int) : Sequence(OclDate)
+  pre: true 
+  post: true 
+  activity: 
+    var cd : OclDate := d1; 
+    while cd.compareToYMD(d2) <= 0
+    do 
+      (cd := cd.addMonthYMD(period)); 
+    return Sequence{cd.subtractMonthYMD(period),cd}; 
+
+  }
 
 }

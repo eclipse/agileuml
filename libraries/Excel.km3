@@ -1,0 +1,746 @@
+package app { 
+
+class SpreadsheetFont { 
+
+  stereotype component; 
+
+  attribute Name : String; 
+  attribute Size : int; 
+  attribute Color : OclAny; 
+  attribute Bold : boolean; 
+  attribute Italic : boolean; 
+} 
+
+class SpreadsheetCell { 
+  stereotype component; 
+
+  attribute Name : String; 
+  attribute RowNumber : int; 
+  attribute ColumnName : String; 
+  attribute Value : OclAny; 
+  attribute Font : SpreadsheetFont; 
+  attribute Sheet : Worksheet; 
+
+  static operation newSpreadsheetCell(nme : String, val : OclAny) : SpreadsheetCell
+  pre: true 
+  post: SpreadsheetCell->exists( c | c.Name = nme & c.RowNumber = nme->firstMatch("[0-9]+")->toInteger() & c.ColumnName = nme->firstMatch("[A-Z]+") & c.Value = val & result = c ); 
+
+  operation Offset(x : int, y : int) : SpreadsheetCell
+  pre: true
+  post: col = (ColumnName->char2byte() + x)->byte2char() & result = Sheet.getACell(col, RowNumber + y);  
+
+  operation toString() : String
+  pre: true 
+  post: result = (Value + ""); 
+
+  operation precedes(c : SpreadsheetCell) : boolean
+  pre: true 
+  post: (self.ColumnName <= c.ColumnName &
+         (self.ColumnName = c.ColumnName => self.RowNumber < c.RowNumber)) => result = true;  
+
+  static operation startColumn(s : String) : String
+  pre: true 
+  post: result = s->firstMatch("[A-Z]+"); 
+
+  static operation endColumn(s : String) : String
+  pre: true 
+  post: (s->indexOf(":") > 0 => result = s->after(":")->firstMatch("[A-Z]+")) & (s->indexOf(":") = 0 => result = s->firstMatch("[A-Z]+")); 
+
+  static operation startRow(s : String) : int
+  pre: true 
+  post: result = s->firstMatch("[0-9]+")->toInteger(); 
+
+  static operation endRow(s : String) : int
+  pre: true 
+  post: (s->indexOf(":") > 0 => result = s->after(":")->firstMatch("[0-9]+")->toInteger()) & (s->indexOf(":") = 0 => result = s->firstMatch("[0-9]+")->toInteger()); 
+} 
+
+class Worksheet { 
+  stereotype component; 
+
+  attribute Visible : boolean;
+  attribute ColumnNames : Sequence(String); 
+  attribute AllCells : Sequence(SpreadsheetCell); 
+  attribute Range : Map(String, SpreadsheetCell); 
+
+  static operation newWorksheet(cells : Sequence(SpreadsheetCell)) : Worksheet
+  pre: true 
+  post: Worksheet->exists( w | w.AllCells = cells & w.ColumnNames = cells->collect( c | c.ColumnName ) & w.Range = cells->collect(c | Map{ c.Name |-> c })->unionAll() & result = w ); 
+
+  operation Activate() : void 
+  pre: true post: Visible = true & AllCells->forAll( c | c.Sheet = self ); 
+
+  operation getACell(col : String, row : int) : SpreadsheetCell
+  pre: true 
+  post: result = AllCells->select( c | c.ColumnName = col & c.RowNumber = row)->any(); 
+
+  operation getOneCell(s : String) : SpreadsheetCell
+  pre: true 
+  post: result = AllCells->select( c | c.ColumnName = s->firstMatch("[A-Z]+") & c.RowNumber + "" = s->firstMatch("[0-9]+"))->any(); 
+
+  operation getCellRange(s : String) : Sequence(SpreadsheetCell)
+  pre: true 
+  post: startcol = SpreadsheetCell.startColumn(s) & endcol = SpreadsheetCell.endColumn(s) & startrow = SpreadsheetCell.startRow(s) & endrow = SpreadsheetCell.endRow(s) & result = AllCells->select(c | c.ColumnName >= startcol & c.ColumnName <= endcol & (c.ColumnName = endcol => c.RowNumber <= endrow) & (c.ColumnName = startcol => c.RowNumber >= startrow)); 
+
+  operation getRange(s : String) : OclAny
+  pre: true 
+  post: 
+    (s->indexOf(":") > 0 => result = self.getCellRange(s)) & 
+    (s->indexOf(":") = 0 => result = self.getOneCell(s)); 
+
+
+  operation getRow(j : int) : Sequence(SpreadsheetCell)
+  pre: true 
+  post: result = AllCells->select( c | c.RowNumber = j )->sortedBy( cx | cx.ColumnName ); 
+
+  operation getColumn(i : int) : Sequence(SpreadsheetCell)
+  pre: true 
+  post: result = AllCells->select( c | c.ColumnName = ColumnNames->at(i) )->sortedBy( cx | cx.RowNumber ); 
+
+  operation getCell(i : int) : SpreadsheetCell
+  pre: true 
+  post: result = AllCells->at(i); 
+
+  operation getCell(i : int, j : int) : SpreadsheetCell
+  pre: true 
+  post: result = AllCells->select( c | c.ColumnName = ColumnNames->at(j) & c.RowNumber = i )->any(); 
+
+} 
+
+class Excel { 
+  stereotype component; 
+
+  static attribute Worksheets : Map(String,Worksheet); 
+
+
+  static operation AccrInt(issueDate : OclAny, firstInterestDate : OclAny, settlement: OclAny, rate: OclAny, par: OclAny, freq: OclAny, basis: OclAny) : double
+  pre: true
+  post: true; 
+
+  static operation AccrIntM(issueDate : OclAny, maturityDate : OclAny, couponRate: OclAny, par: OclAny, basis: OclAny) : double
+  pre: true
+  post: true; 
+
+  static operation Acos(v : double) : double
+  pre: -1 <= v & v <= 1
+  post: result = v->acos(); 
+
+  static operation Acosh(v : double) : double
+  pre: v <= 1
+  post: result = MathLib.acosh(v); 
+
+  static operation Acot(v : double) : double
+  pre: true 
+  post: result = (1.0/v)->atan(); 
+
+  static operation Acoth(v : double) : double
+  pre: true 
+  post: result = MathLib.atanh(1.0/v); 
+
+  static operation AmorDegrc(cost : OclAny, purchaseDate : OclAny, firstPeriodEnd : OclAny, salvageValue : OclAny, period : OclAny, rate : OclAny, basis : OclAny) : Double
+  pre: true 
+  post: true; 
+
+  static operation AmorLinc(cost : OclAny, purchaseDate : OclAny, firstPeriodEnd : OclAny, salvageValue : OclAny, period : OclAny, rate : OclAny, basis : OclAny) : Double
+  pre: true 
+  post: true; 
+
+  static operation And(sq : Sequence(OclAny)) : boolean
+  pre: true 
+  post: result = (sq->forAll( v | v = true )); 
+
+  static operation Arabic(romanString : String) : double 
+  pre: true 
+  post: true; 
+
+  static operation Asc(s : String) : String 
+  pre: true 
+  post: result = s; 
+
+  static operation Asin(v : double) : double
+  pre: -1 <= v & v <= 1
+  post: result = v->asin();
+
+  static operation Asinh(v : double) : double
+  pre: true
+  post: result = MathLib.asinh(v); 
+ 
+  static operation Atan2(x : double, y : double) : double
+  pre: x /= 0 or y /= 0
+  post: (x > 0 => result = (y/x)->atan()) & 
+     (x < 0 & y >= 0 => result = (y/x)->atan() + MathLib.piValue()) & 
+     (x < 0 & y < 0 => result = (y/x)->atan() - MathLib.piValue()) & 
+     (x = 0 & y > 0 => result = MathLib.piValue()/2) & 
+     (x = 0 & y < 0 => result = -MathLib.piValue()/2); 
+  
+  static operation Atanh(v : double) : double
+  pre: v > -1 & v < -1
+  post: result = MathLib.atanh(v); 
+ 
+  static operation AveDev(sq : Sequence(OclAny)) : boolean
+  pre: sq->size() > 0
+  post: n = sq->size() & m = MathLib.mean(sq) & result = (1.0/n)*(sq->collect( v | (v - m)->abs() )->sum() ); 
+
+  static operation Average(sq : Sequence(OclAny)) : boolean
+  pre: sq->size() > 0
+  post: result = MathLib.mean(sq); 
+
+  static operation Base(v : double, bse : double) : String
+  pre: true
+  post: (bse = 2 => result = MathLib.decimal2binary(v)) & (bse = 8 => result = MathLib.decimal2octal(v)) & (bse = 16 => result = MathLib.decimal2hex(v)) & (true => result = v); 
+
+  static operation BesselI(x : OclAny, ord : OclAny) : double
+  pre: true post: true; 
+
+  static operation BesselJ(x : OclAny, ord : OclAny) : double
+  pre: true post: true
+  activity: 
+    var result : double;
+    result := 0.0; 
+    for m : Integer.subrange(0,10)
+    do 
+      result := result + ((-1)->pow(m))*((x/2.0)->pow(2*m+ord))/(MathLib.factorial(m)*Excel.Gamma(m+ord+1)); 
+    return result;  
+
+  static operation BesselK(x : OclAny, ord : OclAny) : double
+  pre: true post: true; 
+
+  static operation BesselY(x : OclAny, ord : OclAny) : double
+  pre: true post: true; 
+
+  static operation betaFunction(a : double, b : double) : double 
+  pre: true
+  post: result = Excel.Gamma(a)*Excel.Gamma(b)/Excel.gammaIncomplete(a,b); 
+
+  static operation Beta_Dist(x : double, a: double, b: double, cum : boolean) : double
+  pre: true 
+  post: (cum = false => result = Excel.betaFunction(a,b)*(x->pow(a-1))*((1-x)->pow(b-1))); 
+
+  static operation Beta_Inv(v : double, a: double, b: double) : double
+  pre: true post: true; 
+
+  static operation BetaDist(v : double, a: double, b: double) : double
+  pre: true post: true; 
+
+  static operation BetaInv(v : double, a: double, b: double) : double
+  pre: true post: true; 
+
+  static operation Bin2Dec(v : OclAny) : String
+  pre: true post: result = "" + (v + "")->toReal(); 
+
+  static operation Bin2Hex(v : OclAny) : String
+  pre: true post: true; 
+
+  static operation Bin2Oct(v : OclAny) : String
+  pre: true post: true; 
+
+  static operation Binom_Dist(num : double, trials : double, prob : double, cum : boolean) : double
+  pre: true 
+  post: (cum = false => result = MathLib.combinatorial(num->oclAsType(int), trials->oclAsType(int))*(prob->pow(trials))*((1-prob)->pow(num - trials))) & (cum = true => result = Integer.subrange(0,trials)->collect( i | Excel.Binom_Dist(num, i, prob, false) )->sum()); 
+
+  static operation Binom_Dist_Range(num : double, prob : double, mintrials : double, maxtrials : double) : double
+  pre: true 
+  post: result = Integer.subrange(mintrials,maxtrials)->collect( i | Excel.Binom_Dist(num, i, prob, false) )->sum(); 
+
+  static operation Binom_Inv(trials : double, prob : double, alpha : double) : double
+  pre: true post: true; 
+
+  static operation BinomDist(num : double, trials : double, prob : double, cum : boolean) : double
+  pre: true post: result = Binom_Dist(num, trials, prob, cum); 
+
+  static operation Bitand(x : double, y : double) : double
+  pre: true 
+  post: result = MathLib.bitwiseAnd(x, y); 
+
+  static operation Bitor(x : double, y : double) : double
+  pre: true 
+  post: result = MathLib.bitwiseOr(x, y); 
+
+  static operation Bitxor(x : double, y : double) : double
+  pre: true 
+  post: result = MathLib.bitwiseXor(x, y); 
+
+  static operation Bitlshift(x : double, y : double) : double
+  pre: true 
+  post: result = x*(2->pow(y)); 
+
+  static operation Bitrshift(x : double, y : double) : double
+  pre: true 
+  post: result = x/(2->pow(y)); 
+
+  static operation Ceiling(x : double, y : double) : double
+  pre: true 
+  post: result = x->ceil(); 
+
+  static operation Ceiling_Math(x : double, y : double, z : double) : double
+  pre: true 
+  post: result = x->ceil(); 
+
+  static operation Ceiling_Precise(x : double, y : double) : double
+  pre: true 
+  post: result = x->ceil(); 
+
+  static operation ChiDist(x : double, y : double) : double
+  pre: true 
+  post: true; 
+
+  static operation ChiInv(x : double, y : double) : double
+  pre: true 
+  post: true; 
+
+  static operation chisquare(x : double, y : double) : double
+  pre: y >= 2
+  post: 
+    g = Excel.Gamma(y/2)*(2->pow(y/2)) & result = (1.0/g)*(x->pow(y/2 - 1))*((-x/2)->exp()); 
+
+  static operation chisquareCumulative(x : double, y : double) : double 
+  pre: true 
+  post: deg = y/2 & result = Excel.gammaIncomplete(deg,x/2)/Excel.Gamma(deg); 
+
+  static operation gammaIncomplete(r : double, x : double) : double 
+  pre: true 
+  post: (r = 0.5 => result = MathLib.piValue()->sqrt() * Excel.Erf(x->sqrt()));  
+
+  static operation ChiSq_Dist(x : double, y : double, b : boolean) : double
+  pre: y >= 2
+  post: (b = false => result = Excel.chisquare(x,y)) & (b = true => result = Excel.chisquareCumulative(x,y)); 
+
+  static operation ChiSq_Dist_RT(x : double, y : double) : double
+  pre: true 
+  post: true; 
+
+  static operation ChiSq_Inv(x : double, y : double) : double
+  pre: true 
+  post: true; 
+
+  static operation ChiSq_Inv_RT(x : double, y : double) : double
+  pre: true 
+  post: true; 
+
+  static operation ChiSq_Test(obs : OclAny, ratios : OclAny) : double
+  pre: true 
+  post: true; 
+
+  static operation ChiTest(obs : OclAny, ratios : OclAny) : double
+  pre: true 
+  post: true; 
+
+  static operation Choose(ind : OclAny, sq : Sequence(OclAny)) : OclAny
+  pre: true 
+  post: indx = ("" + ind)->toInteger() & result = sq->at(indx); 
+
+  static operation Clean(s : String) : String
+  pre: true 
+  post: chrs = s->characters() & result = chrs->select( c | c->char2byte() > 31 )->sum(); 
+
+  static operation Combin(n : int, m : int) : int
+  pre: true 
+  post: result = MathLib.combinatorial(n,m); 
+
+  static operation Combina(n : double, m : double) : double
+  pre: true 
+  post: result = MathLib.combinatorial(n->oclAsType(int),m->oclAsType(int)); 
+
+  static operation Complex(n : double, m : double, suff: String) : String
+  pre: true 
+  post: (suff->oclIsUndefined() => result = n + " + (" + m + ")*i") & (true => result = n + " + (" + m + ")*" + suff); 
+
+  static operation Confidence(signif : double, sigma : double, n : double) : double
+  pre: true 
+  post: true; 
+
+  static operation Confidence_Norm(signif : double, sigma : double, n: double) : double
+  pre: true 
+  post: true; 
+
+  static operation Confidence_T(signif : double, sigma : double, n: double) : double
+  pre: true 
+  post: true; 
+
+  static operation Convert(x : OclAny, inUnit : String, outUnit: String) : OclAny
+  pre: true 
+  post: true; 
+
+  static operation Correl(xs : Sequence(double), ys : Sequence(double)) : double
+  pre: xs->size() >= 1 & ys->size() = xs->size()
+  post: xmean = MathLib.mean(xs) & ymean = MathLib.mean(ys) & sumdiffs = Integer.subrange(1,xs->size())->collect( i | (xs[i] - xmean)*(ys[i] - ymean) )->sum() & sumx = Integer.subrange(1,xs->size())->collect( i | (xs[i] - xmean)*(xs[i] - xmean) )->sum() & sumy = Integer.subrange(1,ys->size())->collect( i | (ys[i] - ymean)*(ys[i] - ymean) )->sum() & result = sumdiffs/((sumx*sumy)->sqrt()); 
+
+
+  static operation Cosh(x : double) : double
+  pre: true 
+  post: result = x->cosh(); 
+ 
+  static operation Cot(x : double) : double
+  pre: true 
+  post: result = 1.0/(x->tan()); 
+
+  static operation Coth(x : double) : double
+  pre: true 
+  post: result = 1.0/(x->tanh()); 
+
+  static operation Count(sq : Sequence(OclAny)) : double
+  pre: true 
+  post: result = sq->select( x | (x + "")->isReal() )->size(); 
+
+  static operation CountA(sq : Sequence(OclAny)) : double
+  pre: true 
+  post: result = sq->select( x | (x + "")->size() > 0 )->size(); 
+
+  static operation CountBlank(sq : Sequence(OclAny)) : double
+  pre: true 
+  post: result = sq->select( x | (x + "")->size() = 0 )->size(); 
+
+  static operation Covar(sq1 : Sequence(double), sq2 : Sequence(double)) : double
+  pre: sq1->size() > 0 & sq1->size() = sq2->size()
+  post: m1 = MathLib.mean(sq1) & m2 = MathLib.mean(sq2) & n = sq1->size() & result = (Integer.subrange(1,n)->collect( i | (sq1[i] - m1)*(sq2[i] - m2) )->sum())/n; 
+
+  static operation Covariance_P(sq1 : Sequence(double), sq2 : Sequence(double)) : double
+  pre: sq1->size() > 0 & sq1->size() = sq2->size()
+  post: result = Excel.Covar(sq1, sq2); 
+
+  static operation Covariance_S(sq1 : Sequence(OclAny), sq2 : Sequence(OclAny)) : double
+  pre: true
+  post: 
+    numbs1 = sq1->select( x | x->oclIsTypeOf(double) ) & numbs2 = sq2->select( y | y->oclIsTypeOf(double) ) & result = Excel.Covar(numbs1, numbs2); 
+
+  static operation CritBinom(x : double, y : double, z : double) : double
+  pre: true post: true; 
+
+  static operation Csc(x : double) : double
+  pre: true 
+  post: result = 1.0/(x->sin()); 
+
+  static operation Csch(x : double) : double
+  pre: true 
+  post: result = 1.0/(x->sinh()); 
+
+  static operation CumlPmt(rate : double, periods : double, presentValue : double, firstPeriod : double, lastPeriod : double, timing : double) : double
+  pre: true post: true; 
+
+  static operation CumPric(rate : double, periods : double, presentValue : double, firstPeriod : double, lastPeriod : double, timing : double) : double
+  pre: true post: true; 
+
+  static operation DAverage(x : OclAny, y : OclAny, z : OclAny) : double
+  pre: true post: true; 
+
+  static operation Days(x : OclDate, y : OclDate) : double
+  pre: true
+  post: result = x.daysDifference(y); 
+
+  static operation Days360(x : OclDate, y : OclDate) : double
+  pre: true
+  post: (x > y => result = 0) & (x <= y => result = 360 * (y.getYear() - x.getYear()) + 30 * (y.getMonth() - x.getMonth()) + (y.getDate() - x.getDate())); 
+
+  static operation Db(cost : double, salvage : double, life : double, period : double, month : double) : double
+  pre: true post: true; 
+
+  static operation Dbcs(s : String) : String
+  pre: true post: result = s; 
+
+  static operation Dec2Bin(x : double, places : double) : String
+  pre: true 
+  post: result = MathLib.decimal2binary(x->oclAsType(long)); 
+
+  static operation Dec2Hex(x : double, places : double) : String
+  pre: true 
+  post: result = MathLib.decimal2hex(x->oclAsType(long)); 
+
+  static operation Dec2Oct(x : double, places : double) : String
+  pre: true 
+  post: result = MathLib.decimal2octal(x->oclAsType(long)); 
+
+  static operation Decimal(x : String, places : double) : double
+  pre: true 
+  post: result = x->toReal(); 
+
+  static operation Degrees(x : double) : double
+  pre: true 
+  post: result = x*(57.29577951308232); 
+
+  static operation Delta(x : OclAny, y : OclAny) : int
+  pre: true 
+  post: (x = y => result = 1) & (true => result = 0); 
+
+  static operation DevSq(sq : Sequence(double)) : double
+  pre: true
+  post: m = MathLib.mean(sq) & result = Integer.subrange(1, sq->size())->collect( i | (sq[i] - m)->sqr() )->sum(); 
+
+  static operation Duration(settle : OclDate, matur : OclDate, coup : double, irr : double, freq : int, basis : OclAny) : double
+  pre: true 
+  post: term = (matur - settle)/365.0 & npayments = (term*freq)->oclAsType(int) & period = 1/freq & result = Integer.subrange(1,npayments)->collect( _ind | FinanceLib.discountDiscrete(100*coup, irr, _ind*period)*_ind*period )->sum() + FinanceLib.discountDiscrete(100, irr, term)*term; 
+
+  static operation Effect(nrate : double, nperiods : int) : double
+  pre: true 
+  post: result = (1 + nrate/nperiods)->pow(nperiods) - 1; 
+
+
+  static operation computeErf(x : double) : double
+  pre: x >= 0
+  post: p = 0.3275911 & a1 = 0.254829592 & a2 = -0.284496736 &  a3 = 1.421413741 & a4 = -1.453152027 & a5 = 1.061405429 & t = 1.0/(1 + p*x) & result = 1 - (a1*t + a2*t*t + a3*t*t*t + a4*t*t*t*t + a5*t*t*t*t*t)*((-x*x)->exp());
+
+  static operation Erf_Precise(x : double) : double 
+  pre: true 
+  post: (x >= 0 => result = Excel.computeErf(x)) & 
+    (x < 0 => result = -1 * Excel.computeErf(-x)); 
+
+  static operation ErfC_Precise(x : double) : double 
+  pre: true 
+  post: (x >= 0 => result = 1 - Excel.computeErf(x)) & 
+    (x < 0 => result = 1 + Excel.computeErf(-x)); 
+
+  static operation Erf(a : double, b : double) : double 
+  pre: true 
+  post: result = Excel.Erf_Precise(b) - Excel.Erf_Precise(a); 
+
+  static operation ErfC(a : double, b : double) : double 
+  pre: true 
+  post: result = 1 - Excel.Erf(a,b); 
+
+  static operation Expon_Dist(x : double, lam : double, cum : boolean) : double
+  pre: true 
+  post: (cum = false => result = lam*((-lam*x)->exp())) & (cum = true => result = 1 - ((-lam*x)->exp())); 
+
+  static operation ExponDist(x : double, lam : double, cum : boolean) : double
+  pre: true 
+  post: result = Expon_Dist(x,lam,cum); 
+
+  static operation Fact(x : double) : double
+  pre: true 
+  post: result = MathLib.factorial(x->oclAsType(int)); 
+
+  static operation FactDouble(x : double) : double
+  pre: true 
+  post: true 
+  activity: 
+    var y : long; 
+    y := x->oclAsType(long);
+    var res : long; 
+    res := y;  
+    while y > 0 
+    do ( y := y - 2; res := res*y ) ; 
+    return res;    
+
+  static operation Fisher(x : double) : double
+  pre: true 
+  post: result = 0.5*((1+x)/(1-x))->log(); 
+
+  static operation FisherInv(x : double) : double
+  pre: true 
+  post: y = (2*x)->exp() & result = (y-1)/(y+1); 
+
+  static operation Floor(x : double, n : int) : double
+  pre: true  
+  post: result = MathLib.roundN(x,n); 
+
+  static operation Floor_Math(x : double, n : int, y : OclAny) : double
+  pre: true  
+  post: result = MathLib.roundN(x,n);
+
+  static operation Forecast(x : double, ys : Sequence(double), xs : Sequence(double)) : double
+  pre: xs->size() > 0 & xs->size() = ys->size()
+  post: n = xs->size() & xm = MathLib.mean(xs) & ym = MathLib.mean(ys) & slope = (Integer.subrange(1,n)->collect( _ind | (xs[_ind] - xm)*(ys[_ind] - ym))->sum())/(Integer.subrange(1,n)->collect(_jnd | (xs[_jnd] - xm)->sqr())->sum()) & result = (ym - slope*xm) + slope*x;  
+
+  static operation Gamma(x : double) : double 
+  pre: x >= 1
+  post: y = x - 1 & f1 = (2*MathLib.piValue()*y)->sqrt() & f2 = (y/MathLib.eValue())->pow(y) & result = f1*f2;   
+
+  static operation Gcd(sq : Sequence(double)) : long
+  pre: sq->size() > 0
+  post: true
+  activity: var d : long; d := sq->at(1)->oclAsType(long); for x : sq do d := d->gcd(x->oclAsType(int)); return d; 
+
+  static operation Geo(sq : Sequence(double)) : double
+  pre: sq->size() > 0
+  post: result = sq->prd()->pow(1.0/(sq->size())); 
+
+  static operation HarMean(sq : Sequence(double)) : double
+  pre: sq->size() > 0
+  post: recip = (sq->collect( _x | 1.0/_x )->sum())/(sq->size()) & result = 1.0/recip; 
+
+  static operation Intercept(ys : Sequence(double), xs : Sequence(double)) : double
+  pre: xs->size() > 0 & xs->size() = ys->size()
+  post: result = Excel.Forecast(0,ys,xs);  
+
+  static operation IntRate(settle : OclDate, matur : OclDate, invest : double, redempt : double, basis : OclAny) : double
+  pre: true
+  post: termDays = (matur - settle) & result = ((redempt - invest)/invest)*(365/termDays);
+
+  static operation Irr(paymnts : Sequence(double), guess : OclAny) : double
+  pre: paymnts->size() > 0 
+  post: result = FinanceLib.irrDiscrete(paymnts); 
+
+  static operation IsEven(x : OclAny) : boolean
+  pre: true
+  post: x->oclIsTypeOf(long) & (x->oclAsType(long)) mod 2 = 0 => result = true;
+
+  static operation IsNumber(x : OclAny) : boolean
+  pre: true
+  post: x->oclIsTypeOf(long) or x->oclIsTypeOf(double) => result = true;
+
+  static operation IsOdd(x : OclAny) : boolean
+  pre: true
+  post: x->oclIsTypeOf(long) & (x->oclAsType(long)) mod 2 = 1 => result = true;
+
+  static operation IsText(x : OclAny) : boolean
+  pre: true
+  post: x->oclIsTypeOf(String) => result = true;
+
+  static operation Kurt(sq : Sequence(double)) : double
+  pre: sq->size() >= 4
+  post: n = sq->size() & m = MathLib.mean(sq) & s = MathLib.standardDeviation(sq) & adjustment = (3*(n-1)->sqr())/((n-2)*(n-3)) & result = (n*(n+1)/((n-1)*(n-2)*(n-3))) * Integer.subrange(1, n)->collect( i | ((sq[i] - m)/s)->pow(4) )->sum() - adjustment; 
+
+  static operation Large(sq : Sequence(double), k : int) : double
+  pre: sq->size() >= k
+  post: n = sq->size() & ssq = sq->sort() & result = ssq->at(n-k+1); 
+
+  static operation Lcm(sq : Sequence(int)) : double
+  pre: sq->size() > 0
+  post: 
+    (sq->size() = 1 => result = sq->at(1)) & 
+    (sq->size() = 2 => result = MathLib.lcm(sq[1],sq[2])) & 
+    (sq->size() > 2 => result = MathLib.lcm(sq[1], Excel.Lcm(sq->tail()))); 
+
+  static operation Ln(x : double) : double 
+  pre: true
+  post: result = x->log(); 
+
+  static operation Log(x : double, base: double) : double 
+  pre: true 
+  post: 
+    result = (x->log())/(base->log()); 
+
+  static operation Log10(x : double) : double 
+  pre: true 
+  post: 
+    result = x->log10(); 
+
+  static operation LogInv(x : double, mu : double, sigma : double) : double
+  pre: true
+  post: ninv = Excel.Norm_S_Inv(x) & result = (mu + sigma*ninv)->exp(); 
+
+  static operation LogNorm_Dist(x : double, mu : double, sigma : double, cum : boolean) : double 
+  pre: true 
+  post: result = Excel.Norm_S_Dist((x->log() - mu)/sigma, cum); 
+
+  static operation LogNorm_Inv(x : double, mu : double, sigma : double) : double
+  pre: true
+  post: ninv = Excel.Norm_S_Inv(x) & result = (mu + sigma*ninv)->exp(); 
+
+  static operation LogNormDist(x : double, mu : double, sigma : double) : double
+  pre: true
+  post: result = Excel.NormSDist((x->log() - mu)/sigma); 
+
+  static operation Median(sq : Sequence(double)) : double 
+  pre: sq->size() > 0 
+  post: result = MathLib.median(sq); 
+
+  static operation Min(r : Sequence(SpreadsheetCell)) : OclAny
+  pre: r->size() > 0
+  post: result = r->collect( c | c.Value )->min(); 
+
+  static operation Max(r : Sequence(SpreadsheetCell)) : OclAny
+  pre: r->size() > 0
+  post: result = r->collect( c | c.Value )->max(); 
+
+  static operation MDuration(settle : OclDate, matur : OclDate, coup : double, irr : double, freq : int, basis : OclAny) : double
+  pre: true 
+  post: factor = 1.0/(1 + irr/freq) & result = Excel.Duration(settle,matur,coup,irr,freq,basis)*factor;
+
+  static operation Mode(sq : Sequence(double)) : double
+  pre: sq->size() > 0
+  post: 
+    result = sq->select( x | sq->forAll( y | sq->count(x) >= sq->count(x) ) )->any(); 
+
+  static operation Mode_Sngl(sq : Sequence(double)) : double
+  pre: sq->size() > 0
+  post: 
+    result = Excel.Mode(sq); 
+
+  static operation NormalDist(x : double, mu : double, sigma : double) : double
+  pre: true
+  post: disp = (x-mu)/sigma & twopi = 2*MathLib.piValue() & result = (1.0/(sigma*(twopi)->sqrt())) * (-0.5*disp*disp)->exp();   
+
+  static operation cumulativeNormalDist(x : double, m : double, sigma : double) : double
+  pre: x >= m
+  post: k = ( 1 / ( 1 + 0.2316419 * ( x - m ) ) ) & poly = ( 0.31938153 * k ) + ( -0.356563782 * k * k ) + ( 1.781477937 * k * k * k ) + ( -1.821255978 * k * k * k * k ) + ( 1.330274429 * k * k * k * k * k ) & result = 1 - Excel.NormalDist(x,m,sigma) * poly; 
+
+  static operation cdfNormalDist(x : double, m : double, sigma : double) : double
+  pre: true
+  post: ( x >= m => result = Excel.cumulativeNormalDist(x,m,sigma) ) & ( x < m => result = 1 - Excel.cumulativeNormalDist(m + (m-x),m,sigma) );
+
+
+  static operation Norm_Dist(x : double, mu : double, sigma : double, cum : boolean) : double
+  pre: true
+  post: (cum = false => result = Excel.NormalDist(x,mu,sigma)) & (cum = true => result = Excel.cdfNormalDist(x,mu,sigma));   
+
+  static operation Norm_Inv(x : double, mu : double, sigma : double) : double
+  pre: x >= 0 & x <= 1
+  post: result = MathLib.bisectionAsc(0,-1000,1000,
+lambda y : double in Excel.cdfNormalDist(y,mu,sigma) - x, 0.0001);   
+
+  static operation NormDist(x : double, mu : double, sigma : double, cum : boolean) : double
+  pre: true
+  post: result = Excel.Norm_Dist(x,mu,sigma,cum); 
+
+  static operation NormInv(x : double, mu : double, sigma : double) : double
+  pre: x >= 0 & x <= 1
+  post: result = MathLib.bisectionAsc(0,-1000,1000,
+lambda y : double in Excel.cdfNormalDist(y,mu,sigma) - x, 0.0001);   
+
+  static operation Norm_S_Dist(x : double, cum : boolean) : double
+  pre: true
+  post: (cum = false => result = Excel.NormalDist(x,0,1)) & (cum = true => result = Excel.cdfNormalDist(x,0,1));   
+
+  static operation Norm_S_Inv(x : double) : double
+  pre: x >= 0 & x <= 1
+  post: result = MathLib.bisectionAsc(0,-1000,1000,
+lambda y : double in Excel.cdfNormalDist(y,0,1) - x, 0.0001);   
+
+  static operation NormSDist(x : double) : double
+  pre: true
+  post: result = Excel.cdfNormalDist(x,0,1);   
+
+  static operation NormSInv(x : double) : double
+  pre: x >= 0 & x <= 1
+  post: result = MathLib.bisectionAsc(0,-1000,1000,
+lambda y : double in Excel.cdfNormalDist(y,0,1) - x, 0.0001);   
+
+  static operation Npv(r : double, sq : Sequence(double)) : double
+  pre: true 
+  post: result = FinanceLib.netPresentValueDiscrete(r,sq); 
+
+  static operation Pi() : double
+  pre: true 
+  post: result = 3.14159265358979; 
+
+  static operation Round(x : double, n : int) : double
+  pre: true  
+  post: result = MathLib.roundN(x,n);
+
+  static operation Sec(x : double) : double 
+  pre: true 
+  post: 
+    result = 1/(x->cos()); 
+
+  static operation Sech(x : double) : double 
+  pre: true 
+  post: 
+    result = 1/(x->cosh()); 
+
+  static operation Sinh(x : double) : double 
+  pre: true 
+  post: 
+    result = x->sinh(); 
+
+  static operation Tanh(x : double) : double 
+  pre: true 
+  post: 
+    result = x->tanh(); 
+
+} 
+
+
+
+}
+
+

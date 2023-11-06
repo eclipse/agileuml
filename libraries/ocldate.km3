@@ -73,6 +73,10 @@ class OclDate
   pre: true 
   post: result = (time - d.time)/(2628000000); 
 
+  static operation differenceMonths(d1 : OclDate, d2 : OclDate) : int
+  pre: true 
+  post: result = (d1.year - d2.year)*12 + (d1.month - d2.month); 
+
   operation dayDifference(d : OclDate) : long
   pre: true 
   post: result = (time - d.time)/(86400000); 
