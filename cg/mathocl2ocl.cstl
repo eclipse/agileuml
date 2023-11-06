@@ -343,9 +343,17 @@ sin ( _1 ) |-->(_1)->sin()
 cos ( _1 ) |-->(_1)->cos()
 tan ( _1 ) |-->(_1)->tan()
 
+asin ( _1 ) |-->(_1)->asin()
+acos ( _1 ) |-->(_1)->acos()
+atan ( _1 ) |-->(_1)->atan()
+
 sinh ( _1 ) |-->(_1)->sinh()
 cosh ( _1 ) |-->(_1)->cosh()
 tanh ( _1 ) |-->(_1)->tanh()
+
+asinh ( _1 ) |-->MathLib.asinh(_1)
+acosh ( _1 ) |-->MathLib.acosh(_1)
+atanh ( _1 ) |-->MathLib.atanh(_1)
 
 exp ( _1 ) |-->MathLib.eValue()->pow(_1)
 log ( _1 ) |-->(_1)->log()
@@ -359,6 +367,9 @@ min ( _1 ) |-->(_1)->min()
 max ( _1 ) |-->(_1)->max()
 
 var ( _1 ) |-->_1.variance()
+
+Date ( _1 ) |-->OclDate.newOclDate_String(_1)
+Time ( _1 ) |-->OclDate.newOclDate_Time(_1)
 
 Binomial ( _1 ) |-->Excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
 

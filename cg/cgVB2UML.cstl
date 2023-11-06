@@ -835,8 +835,8 @@ Tan ( _1 ) |-->(_1)->tanh()
 Truncate ( _1 ) |-->(_1)->oclAsType(int)
 DDB ( _1 ) |-->_1`argsCallDDB
 FV ( _1 ) |-->_1`argsCallFV
-IRR ( _1 ) |-->MathLib.irrDiscrete(_1)
-NPV ( _1 ) |-->MathLib.netPresentValueDiscrete(_1)
+IRR ( _1 ) |-->FinanceLib.irrDiscrete(_1)
+NPV ( _1 ) |-->FinanceLib.netPresentValueDiscrete(_1)
 
 Worksheets ( _1 ) |-->Excel.Worksheets[_1]
 Sheets ( _1 ) |-->Excel.Worksheets[_1]

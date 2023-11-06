@@ -41,11 +41,25 @@ for _1 in _2 _3 |-->_2->keys()<when> _2 Map
 for _1 in _2 |-->_2
 for _1 in _2 _3 |-->_2
 
+
 variablePart::
 for _1 in _2 |-->_tuple<when> _1 multiple
 for _1 in _2 _3 |-->_tuple<when> _1 multiple
 for _1 in _2 |-->_1
-for _1 in _2 _3 |-->_1
+for _1 in _2 _3 |-->_1_3`variableTailPart
+
+
+variableTailPart::
+for _1 in _2 |-->; _tuple : _2<when> _1 multiple
+for _1 in _2 _3 |-->; _tuple : _2<when> _1 multiple
+for _1 in _2 |-->; _1 : _2
+for _1 in _2 _3 |-->; _1 : _2_3`variableTailPart
+
+_1 |-->_1`variableTailPart<when> _1 comp_for
+if _1 |-->
+if _1 _2 |-->_2`variableTailPart
+_1 |-->
+
 
 selectPart::
 for _1 in _2 |-->true
@@ -54,7 +68,8 @@ for _1 in _2 _3 |-->_3`selectPart
 
 _1 |-->true
 if _1 |-->_1
-if _1 _2 |-->_1
+if _1 _2 |-->_1 & _2`selectPart
+
 
 collectPart::
 for _1 in _2 |-->let _1`first : OclAny = _tuple->at(1) in let _1`third : OclAny = _tuple->at(2) in <when> _1 multiple
@@ -78,25 +93,44 @@ _1 |-->_1
 
 
 logical_test::
+not _1 |-->not(_1 = 0)<when> _1 real
+not _1 |-->not(_1 = "")<when> _1 String
 not _1 |-->not(_1)
+
+_1 and _2 |-->if _1 = 0 then _1 else _2 endif<when> _1 real
+_1 and _2 |-->if _1 = "" then _1 else _2 endif<when> _1 String
 _1 and _2 |-->_1 & _2
+
+_1 or _2 |-->if _1 /= 0 then _1 else _2 endif<when> _1 real
+_1 or _2 |-->if _1 /= "" then _1 else _2 endif<when> _1 String
 _1 or _2 |-->_1 or _2
+
 _1 |-->_1
 
 
 comparison::
 _1 < _2 |-->_1 < _2<when> _1 String
 _1 < _2 |-->_1 < _2<when> _1 real
+_1 < _2 |-->_1 < _2<when> _2 String
+_1 < _2 |-->_1 < _2<when> _2 real
 _1 < _2 |-->(_1->compareTo(_2)) < 0
+
 _1 > _2 |-->_1 > _2<when> _1 String
-_1 > _2 |-->_1 > _2<when> _1 String
+_1 > _2 |-->_1 > _2<when> _1 real
+_1 > _2 |-->_1 > _2<when> _2 String
+_1 > _2 |-->_1 > _2<when> _2 real
 _1 > _2 |-->(_1->compareTo(_2)) > 0
 
 _1 >= _2 |-->_1 >= _2<when> _1 String
 _1 >= _2 |-->_1 >= _2<when> _1 real
+_1 >= _2 |-->_1 >= _2<when> _2 String
+_1 >= _2 |-->_1 >= _2<when> _2 real
 _1 >= _2 |-->(_1->compareTo(_2)) >= 0
+
 _1 <= _2 |-->_1 <= _2<when> _1 String
 _1 <= _2 |-->_1 <= _2<when> _1 real
+_1 <= _2 |-->_1 <= _2<when> _2 String
+_1 <= _2 |-->_1 <= _2<when> _2 real
 _1 <= _2 |-->(_1->compareTo(_2)) <= 0
 
 _1 == _2 |-->_1 = _2
@@ -144,8 +178,12 @@ iter _1 |-->OclIterator.newOclIterator_Sequence_1
 
 len _1 |-->_1->size()
 list _1 |-->_1
-max _1 |-->_1->max()
-min _1 |-->_1->min()
+
+max _1 |-->_1->max()<when> _1`argCount 1
+max _1 |-->Set{_1`argList}->max()
+min _1 |-->_1->min()<when> _1`argCount 1
+min _1 |-->Set{_1`argList}->min()
+
 next _1 |-->_1.next()
 
 round _1 |-->_1->round()<when> _1`numberOfArguments 1
@@ -205,7 +243,10 @@ _1 % _2 |-->StringLib.format(_1,_2)<when> _1 String
 _1 % _2 |-->_1 mod _2
 _1 // _2 |-->_1 div _2
 _1 @ _2 |-->MathLib.matrixMultiplication(_1,_2)
+
+_1 + _2 |-->_1->union(_2)<when> _1 Sequence
 _1 + _2 |-->_1 + _2
+
 _1 - _2 |-->_1 - _2
 _1 << _2 |-->_1 * (2->pow(_2))
 _1 >> _2 |-->_1 /(2->pow(_2))
@@ -372,8 +413,11 @@ range _1 |-->true
 None |-->false
 ... |-->false
 
+_1 + _2 |-->_1`isSequenceExpression
+
 _1 _2 |-->false<when> _1 atom, _2 trailer
 _1 , _* |-->false
+_1 |-->true<when> _1 Sequence
 _1 |-->false
 
 
@@ -718,6 +762,23 @@ _1 |-->0
 _* |-->0
 
 
+argCount::
+_1 |-->_1`argCount<when> _1 trailer
+_1 |-->_1`argCount<when> _1 arguments
+
+( ) |-->0
+( _1 ) |-->_1`arity<when> _1 multiple
+( _1 ) |-->1
+
+
+argList::
+_1 |-->_1`argList<when> _1 trailer
+_1 |-->_1`argList<when> _1 arguments
+
+( ) |-->
+( _1 ) |-->_1
+
+
 reTrailer::
 . compile _1 |-->OclRegex.compile_1
 . search _1 |-->(_1`secondArg)->firstMatch(_1`firstArg)
@@ -1036,8 +1097,17 @@ _1 , _* |-->_1_*`recurse
 
 subscript::
 ... |-->
+0 |-->->first()
+-1 |-->->last()
+-2 |-->->front()->last()
+_1 |-->->reverse()->at(-(_1))<when> _1 matches -.*
+
 _1 : _2 |-->.subrange(_1+1, _2)<when> _2 test
+: -1 |-->->front()
+: -2 |-->->front()->front()
 : _1 |-->.subrange(1,_1)<when> _1 test
+1 : |-->->tail()
+_1 : |-->.subrange(_1+1)<when> _1 test
 _1 |-->->at(_1)<when> _1 String
 _1 |-->[_1+1]
 
