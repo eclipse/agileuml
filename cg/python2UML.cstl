@@ -673,7 +673,7 @@ trailer::
 . remove _1 |-->->excluding_1
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
-. items _1 |-->->asSequence()
+. items _1 |-->->asSequence()->collect( _mx | Sequence{_mx->keys()->any(), _mx->values()->any()})
 
 . upper _1 |-->->toUpperCase()
 . lower _1 |-->->toLowerCase()
