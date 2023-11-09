@@ -2868,6 +2868,12 @@ public class Type extends ModelElement
     return res; 
   } 
 
+  public static Expression defaultInitialValueExpression(Type t)
+  { if (t == null) 
+    { return new BasicExpression("null"); } 
+    return t.getDefaultValueExpression(); 
+  } 
+
   public Expression getDefaultValueExpression()
   { return getDefaultValueExpression(elementType); } 
 

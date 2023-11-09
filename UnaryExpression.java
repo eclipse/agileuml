@@ -2416,7 +2416,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { type = new Type("Sequence",null); 
       elementType = argument.elementType;
       if (argument.isMap())
-      { elementType = argument.type; }  
+      { elementType = argument.type; }
+      // It is a sequence of individual maplets
+  
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
@@ -4093,11 +4095,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }  
 
     if (operator.equals("->asSequence")) 
-    { return "Set.asSequence(" + qf + ")"; }  
+    { if (argument.isMap())
+      { return "Set.mapAsSequence(" + qf + ")"; } 
+      return "Set.asSequence(" + qf + ")"; 
+    }  
     // but maps cannot be converted 
 
     if (operator.equals("->asSet")) 
-    { return "Set.asSet(" + qf + ")"; }
+    { if (argument.isMap())
+      { return "Set.mapAsSet(" + qf + ")"; } 
+      return "Set.asSet(" + qf + ")"; 
+    }
 
     if (operator.equals("->asOrderedSet")) 
     { return "Set.asOrderedSet(" + qf + ")"; }

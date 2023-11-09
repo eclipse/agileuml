@@ -1629,7 +1629,7 @@ public class Entity extends ModelElement implements Comparable
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       // System.out.println(">> Type-checking " + att + " with " + localtypes + " " + entities); 
-      att.typeCheck(localtypes,entities);
+      att.typeInference(localtypes,entities,vartypes);
       vartypes.put(att.getName(), att.getType());  
     } 
   } 

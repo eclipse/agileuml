@@ -428,6 +428,76 @@ public class Attribute extends ModelElement
     return true; 
   } 
 
+  public boolean typeInference(Vector types, Vector entities, 
+                               java.util.Map vtypes)
+  { if (initialExpression != null) 
+    { Vector cntx = new Vector(); 
+      if (entity != null) 
+      { cntx.add(entity); } 
+      Vector env = new Vector(); 
+      initialExpression.typeCheck(types,entities,cntx,env);
+ 
+      System.out.println(">> Type of attribute: " + name + " is " + type + "(" + elementType + ")");
+
+      if (Type.isVacuousType(type) && 
+          !Type.isVacuousType(initialExpression.type)) 
+      { type = initialExpression.type; 
+        elementType = initialExpression.elementType;
+        type.elementType = elementType;   
+      } 
+
+      System.out.println(">> Type of initialiser: " + initialExpression + " is " + initialExpression.type + "(" + initialExpression.elementType + ")");
+
+      if (initialExpression.type == null) 
+      { System.err.println("!! Invalid initial expression !!"); 
+        initialExpression = 
+           Type.defaultInitialValueExpression(type); 
+      } 
+
+      return true; 
+    } 
+
+    if (type == null) 
+    { type = new Type("OclAny", null); 
+      return true; 
+    } 
+
+    String tname = type + ""; 
+    Type t = Type.getTypeFor(tname, types, entities); 
+    if (t == null) 
+    { System.err.println("!! Warning: null type for attribute " + name); 
+      // type = new Type("OclAny", null); 
+      return true; 
+    } 
+
+    type = t; 
+
+    Type et = elementType; 
+    if (elementType != null) 
+    { String etname = elementType + ""; 
+      et = Type.getTypeFor(etname, types, entities); 
+      if (et == null) 
+      { System.err.println("!! Warning: null element type for attribute " + name); 
+        et = elementType; 
+        type.elementType = elementType; 
+      } 
+      else 
+      { elementType = et; 
+        type.elementType = et; 
+      }  
+    } 
+
+    System.out.println(">> Updated type of attribute: " + name + " is " + type + "(" + elementType + ")");
+
+    if (initialExpression != null && 
+        initialExpression.type == null) 
+    { initialExpression.type = type; 
+      initialExpression.elementType = et; 
+    } 
+
+    return true; 
+  } 
+
   public boolean isMany()
   { return upper == 0; }
 

@@ -258,6 +258,42 @@ abstract class Expression
 
   public abstract String toAST(); 
 
+  public static String formattedString(String f)
+  { /* s written with {v:fmt} to format v element */ 
+
+    String res = "";
+    boolean inElement = false;
+    boolean inFormat = false;
+    String var = "";   
+    for (int i = 0; i < f.length(); i++) 
+    { char c = f.charAt(i); 
+      if (inElement) 
+      { if (':' == c) 
+        { res = res + "\" + " + var + " + \""; 
+          var = ""; 
+          inFormat = true; 
+        } 
+        else if ('}' == c)
+        { inElement = false;
+          inFormat = false;  
+          var = ""; 
+        } 
+        else if (inFormat) 
+        { } // skip the format
+        else 
+        { var = var + c; } // var name character
+      } 
+      else if ('{' == c) 
+      { inElement = true; } 
+      else 
+      { res = res + c; } // literal character
+    }  
+
+    return res + ""; 
+  } 
+
+
+
   public Vector mutants()
   { Vector res = new Vector(); 
     res.add(this); 

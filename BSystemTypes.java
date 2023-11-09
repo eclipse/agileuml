@@ -4952,7 +4952,9 @@ public class BSystemTypes extends BComponent
                  "  }\n\n";
 
      res = res + "  public static List subrange(List l, int i, int j)\n";
-     res = res + "  { List tmp = new Vector(); \n" + 
+     res = res + "  { List tmp = new Vector(); \n" +
+                 "    if (i < 0) { i = l.size() + i; }\n" + 
+                 "    if (j < 0) { j = l.size() + j; }\n" + 
                  "    for (int k = i-1; k < j; k++)\n" + 
                  "    { tmp.add(l.get(k)); } \n" + 
                  "    return tmp; \n" + 
@@ -4980,6 +4982,8 @@ public class BSystemTypes extends BComponent
 
      res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";
      res = res + "  { ArrayList tmp = new ArrayList(); \n" + 
+                 "    if (i < 0) { i = l.size() + i; }\n" + 
+                 "    if (j < 0) { j = l.size() + j; }\n" + 
                  "    for (int k = i-1; k < j; k++)\n" + 
                  "    { tmp.add(l.get(k)); } \n" + 
                  "    return tmp; \n" + 
@@ -5007,6 +5011,8 @@ public class BSystemTypes extends BComponent
 
     res = res + "  public static <T> ArrayList<T> subrange(ArrayList<T> l, int i, int j)\n";
     res = res + "  { ArrayList<T> tmp = new ArrayList<T>(); \n" + 
+                "    if (i < 0) { i = l.size() + i; }\n" + 
+                "    if (j < 0) { j = l.size() + j; }\n" + 
                 "    for (int k = i-1; k < j; k++)\n" + 
                 "    { tmp.add(l.get(k)); } \n" + 
                 "    return tmp; \n" + 
@@ -5034,6 +5040,8 @@ public class BSystemTypes extends BComponent
 
     res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";
     res = res + "  { ArrayList tmp = new ArrayList(); \n" + 
+                "    if (i < 0) { i = l.Count + i; }\n" + 
+                "    if (j < 0) { j = l.Count + j; }\n" + 
                 "    if (i < 1) { i = 1; }\n" + 
                 "    for (int k = i-1; k < j; k++)\n" + 
                 "    { tmp.Add(l[k]); } \n" + 
@@ -7694,8 +7702,8 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
     res = res + 
-      "  public static List mapAsSequence(Map m)\n" +
-      "  { List range = new Vector();\n" +
+      "  public static Vector mapAsSequence(Map m)\n" +
+      "  { Vector range = new Vector();\n" +
       "    java.util.Set ss = m.entrySet();\n" + 
       "    for (Object x : ss)\n" +
       "    { Map.Entry ee = (Map.Entry) x;\n" + 
@@ -7707,8 +7715,8 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
     res = res + 
-      "  public static List mapAsSet(Map m)\n" +
-      "  { List range = mapAsSequence(m); \n" +
+      "  public static Vector mapAsSet(Map m)\n" +
+      "  { Vector range = mapAsSequence(m); \n" +
       "    return asSet(range); \n" +
       "  }\n\n"; 
  
@@ -7764,7 +7772,7 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
     return res;
-  } // and map
+  } // and map as a set
 
   public static String refOps() 
   { String res = ""; 
@@ -9938,6 +9946,25 @@ public class BSystemTypes extends BComponent
     "      return res; \n" + 
     "    }\n\n"; 
 
+    res = res + 
+      "  public static ArrayList mapAsSequence(Map m)\n" +
+      "  { ArrayList range = new ArrayList();\n" +
+      "    java.util.Set ss = m.entrySet();\n" + 
+      "    for (Object x : ss)\n" +
+      "    { Map.Entry ee = (Map.Entry) x;\n" + 
+      "      HashMap mx = new HashMap(); \n" +
+      "      mx.put(ee.getKey(), ee.getValue());\n" + 
+      "      range.add(mx); \n" +
+      "    } \n" +
+      "    return range;\n" + 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static HashSet mapAsSet(Map m)\n" +
+      "  { ArrayList range = mapAsSequence(m); \n" +
+      "    return asSet(range); \n" +
+      "  }\n\n"; 
+
     return res;
   }
 
@@ -9949,6 +9976,11 @@ public class BSystemTypes extends BComponent
     "      return res;\n" +
     "    }\n\n";
 
+    res = res + "    public static <S,T> HashSet<HashMap<S,T>> asSet(Map<S,T> m)\n" +
+    "    { ArrayList<HashMap<S,T>> res = Ocl.asSequence(m);\n" +
+    "      return Ocl.asSet(res);\n" +
+    "    }\n\n";
+
     res = res + "    public static <T> ArrayList<T> asOrderedSet(Collection<T> c)\n" + 
     "    { ArrayList<T> res = new ArrayList<T>();\n" +  
     "      for (T x : c)\n" + 
@@ -9958,6 +9990,17 @@ public class BSystemTypes extends BComponent
     "      } \n" + 
     "      return res;\n" +  
     "    }\n\n"; 
+
+    res = res + "    public static <S,T> ArrayList<HashMap<S,T>> asSequence(Map<S,T> m)\n" + 
+    "    { Set<Map.Entry<S,T>> ss = m.entrySet();\n" + 
+    "      ArrayList<HashMap<S,T>> res = new ArrayList<HashMap<S,T>>();\n" + 
+    "      for (Map.Entry<S,T> item : ss)\n" + 
+    "      { HashMap<S,T> maplet = new HashMap<S,T>();\n" +  
+    "        maplet.put(item.getKey(), item.getValue()); \n" + 
+    "        res.add(maplet); \n" + 
+    "      }  \n" + 
+    "      return res;\n" +  
+    "    }\n"; 
 
     return res;
   }

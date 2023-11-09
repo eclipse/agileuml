@@ -7855,6 +7855,14 @@ class BasicExpression extends Expression
       { return "new Date()"; }
     } 
 
+    if (data.equals("formattedString") && 
+        "StringLib".equals(objectRef + ""))
+    { Expression par = (Expression) parameters.get(0); 
+      String pqf = par.queryFormJava7(env,local); 
+      String cmd = "(new Object() { public String call(Object _x) { return " + Expression.formattedString(pqf) + "; } }).call(this)";
+      return cmd; 
+    } 
+
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}")) 
       { return "new HashSet<Object>()"; }    // new Set really
