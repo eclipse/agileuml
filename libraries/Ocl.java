@@ -497,6 +497,17 @@ class OclMaplet<K,T>
       return res; 
     }
 
+    public static <S,T> ArrayList<HashMap<S,T>> asSequence(Map<S,T> m)
+    { Set<Map.Entry<S,T>> ss = m.entrySet();
+      ArrayList res = new ArrayList();
+      for (Map.Entry<S,T> item : ss)
+      { HashMap<S,T> maplet = new HashMap<S,T>(); 
+        maplet.put(item.getKey(), item.getValue()); 
+        res.add(maplet); 
+      }  
+      return res; 
+    }
+
     public static <T> ArrayList<T> asOrderedSet(Collection<T> c)
     { ArrayList<T> res = new ArrayList<T>(); 
       for (T x : c)
@@ -513,16 +524,16 @@ class OclMaplet<K,T>
       return res; 
     }
 	
-	public static <K,T> HashSet<Map<K,T>> asSet(Map<K,T> m)
-	{ Set ss = m.entrySet();
-	  HashSet<Map<K,T>> res = new HashSet<Map<K,T>>();  
-	  for (Object ee : ss) 
-	  { Map.Entry x = (Map.Entry) ee; 
-	    Map<K,T> mx = new HashMap<K,T>(); 
-		mx.put((K) x.getKey(), (T) x.getValue()); 
-		res.add(mx); 
-      }
-	  return res; 
+     public static <K,T> HashSet<Map<K,T>> asSet(Map<K,T> m)
+     { Set ss = m.entrySet();
+       HashSet<Map<K,T>> res = new HashSet<Map<K,T>>();  
+       for (Object ee : ss) 
+       { Map.Entry x = (Map.Entry) ee; 
+         Map<K,T> mx = new HashMap<K,T>(); 
+         mx.put((K) x.getKey(), (T) x.getValue()); 
+         res.add(mx); 
+       }
+       return res; 
     }
 
   public static <T extends Comparable> ArrayList<T> asBag(Collection<T> a)
@@ -855,7 +866,10 @@ class OclMaplet<K,T>
   }
 
   public static <T> ArrayList<T> subrange(List<T> l, int i, int j)
-  { ArrayList<T> tmp = new ArrayList<T>(); 
+  { ArrayList<T> tmp = new ArrayList<T>();
+    if (i < 0) { i = l.size() + i; } 
+    if (j < 0) { j = l.size() + j; }
+ 
     for (int k = i-1; k < j; k++)
     { tmp.add(l.get(k)); } 
     return tmp; 
@@ -872,6 +886,7 @@ class OclMaplet<K,T>
 
   public static <T> ArrayList<T> subrange(List<T> l, int i)
   { ArrayList<T> tmp = new ArrayList<T>(); 
+    if (i < 0) { i = l.size() + i; } 
     for (int k = i-1; k < l.size(); k++)
     { tmp.add(l.get(k)); } 
     return tmp; 

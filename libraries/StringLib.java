@@ -34,6 +34,19 @@ public class StringLib
     return result;
   }
 
+  public static String sumStringsWithSeparator(List lst, String sep)
+  {
+    String res = "";
+    for (int i = 0; i < lst.size(); i++)
+    {
+      String xx = "" + lst.get(i);
+      res = res + xx;
+      if (i < lst.size() - 1)
+      { res = res + sep; }
+    }
+    return res; 
+  } 
+
 
   public static String padLeftWithInto(String s,String c,int n)
   { String result = "";
@@ -277,6 +290,41 @@ public class StringLib
     } 
     return res; 
   } 
+
+  public static String formattedString(String f)
+  { /* s written with {v:fmt} to format v element */ 
+
+    String res = "\"";
+    boolean inElement = false;
+    boolean inFormat = false;
+    String var = "";   
+    for (int i = 0; i < f.length(); i++) 
+    { char c = f.charAt(i); 
+      if (inElement) 
+      { if (':' == c) 
+        { res = res + "\" + " + var + " + \""; 
+          var = ""; 
+          inFormat = true; 
+        } 
+        else if ('}' == c)
+        { inElement = false;
+          inFormat = false;  
+          var = ""; 
+        } 
+        else if (inFormat) 
+        { } // skip the format
+        else 
+        { var = var + c; } // var name character
+      } 
+      else if ('{' == c) 
+      { inElement = true; } 
+      else 
+      { res = res + c; } // literal character
+    }  
+
+    return res + "\""; 
+  } 
+
 
   public static void main(String[] args)
   { /* ArrayList res = StringLib.scan("100##3.3::20\n", "%d##%f::%d\n"); 

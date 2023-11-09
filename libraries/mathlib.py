@@ -250,7 +250,6 @@ class MathLib:
       r = ru
   
     v = f(r)
-    # print("value at " + str(r) + " is " + str(v))
 
     if v < tol and v > -tol:
       return r
@@ -378,6 +377,7 @@ def allInstances_MathLib():
   return MathLib.mathlib_instances
 
 MathLib.initialiseMathLib()
+
 
 class FinanceLib : 
 

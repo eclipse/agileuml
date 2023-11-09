@@ -269,7 +269,16 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   } 
       
   public Object next()
-  {
+  { if (generatorFunction != null) 
+    { Object res = generatorFunction.apply(new Integer(position)); 
+      position++; 
+      if (position <= elements.size())  
+      { set(res); } 
+      else
+      { elements.add(res); } 
+      return res; 
+    } 
+     
     Object result = null;
     moveForward();
     return getCurrent();

@@ -1704,6 +1704,9 @@ int** subrangeint(int** col, int i, int j)
 { /* OCL indexing: 1..n */
 
   int len = length((void**) col);
+  if (i < 0) { i = len + i; } 
+  if (j < 0) { j = len + j; } 
+    
   if (i > j || j > len) 
   { return NULL; }
 
