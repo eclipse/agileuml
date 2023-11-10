@@ -6773,6 +6773,14 @@ class BasicExpression extends Expression
       { return "new Date()"; }
     } 
 
+    if (data.equals("formattedString") && 
+        "StringLib".equals(objectRef + ""))
+    { Expression par = (Expression) parameters.get(0); 
+      String pqf = par.queryForm(env,local); 
+      String cmd = "(new Object() { public String call(Object _x) { return " + Expression.formattedString(pqf) + "; } }).call(this)";
+      return cmd; 
+    } 
+
       
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("Set{}") || data.equals("Sequence{}"))
@@ -7333,6 +7341,14 @@ class BasicExpression extends Expression
     { String createdClass = data.substring(3); 
       if ("OclDate".equals(createdClass))
       { return "new Date()"; }
+    } 
+
+    if (data.equals("formattedString") && 
+        "StringLib".equals(objectRef + ""))
+    { Expression par = (Expression) parameters.get(0); 
+      String pqf = par.queryFormJava6(env,local); 
+      String cmd = "(new Object() { public String call(Object _x) { return " + Expression.formattedString(pqf) + "; } }).call(this)";
+      return cmd; 
     } 
 
     if (type != null && type.isEnumeration() && 

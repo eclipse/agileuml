@@ -265,21 +265,25 @@ abstract class Expression
     boolean inElement = false;
     boolean inFormat = false;
     String var = "";   
+    String fmt = "";   
     for (int i = 0; i < f.length(); i++) 
     { char c = f.charAt(i); 
       if (inElement) 
       { if (':' == c) 
-        { res = res + "\" + " + var + " + \""; 
-          var = ""; 
+        { fmt = ""; 
           inFormat = true; 
         } 
         else if ('}' == c)
-        { inElement = false;
+        { if ("".equals(fmt))
+          { fmt = "s"; } 
+          res = res + "\" + String.format(\"%" + fmt + "\", " + var + ") + \""; 
+          inElement = false;
           inFormat = false;  
           var = ""; 
+          fmt = ""; 
         } 
         else if (inFormat) 
-        { } // skip the format
+        { fmt = fmt + c; } // skip the format
         else 
         { var = var + c; } // var name character
       } 
