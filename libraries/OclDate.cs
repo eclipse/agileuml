@@ -280,5 +280,189 @@
             // DateTime dd = DateTimeOffset.FromUnixTimeMilliseconds(time).DateTime;
             // return dd.ToString();
         }
+
+            public int compareToYMD(OclDate d)
+            {
+                int result = 0;
+
+                if (year != d.getyear())
+                {
+                    result = (year - d.getyear()) * 365;
+                }
+                else
+                {
+                    if (year == d.getyear() && month != d.getmonth())
+                    {
+                        result = (month - d.getmonth()) * 30;
+                    }
+                    else if (year == d.getyear() && month == d.getmonth())
+                    {
+                        result = (day - d.getday());
+                    }
+                }
+                return result;
+            }
+
+        public static OclDate maxDateYMD(OclDate d1, OclDate d2)
+            {
+                OclDate result = null;
+
+                if (0 < d1.compareToYMD(d2))
+                {
+                    result = d2;
+                }
+                else
+                    result = d1;
+                return result;
+            }
+
+      public OclDate addMonthYMD(int m)
+            {
+                OclDate result = this;
+
+                if (month + m > 12)
+                {
+                    result = (OclDate.newOclDate_YMD(year + 1, (month + m) % 12, day));
+                }
+                else
+                  if (month + m <= 12)
+                {
+                    result = (OclDate.newOclDate_YMD(year, month + m, day));
+                }
+                return result;
+            }
+
+
+            public OclDate subtractMonthYMD(int m)
+            {
+                OclDate result = this;
+
+                if (month - m <= 0)
+                {
+                    result = (OclDate.newOclDate_YMD(year - 1, 12 - (m - month), day));
+                }
+                else
+                  if (month + m <= 12)
+                {
+                    result = (OclDate.newOclDate_YMD(year, month - m, day));
+                }
+                return result;
+            }
+
+
+            public static bool leapYear(int yr)
+            {
+                bool result = false;
+
+                if (yr % 4 == 0 && yr % 100 != 0)
+                {
+                    result = true;
+                }
+                else
+                {
+                    if (yr % 400 == 0)
+                    {
+                        result = true;
+                    }
+                    else {
+                        result = false;
+                    }
+                }
+                return result;
+            }
+
+
+            public bool isLeapYear()
+            {
+                bool result = false;
+
+                result = OclDate.leapYear(year);
+                return result;
+            }
+
+            public static int monthDays(int mn, int yr)
+            {
+                int result = 0;
+
+                if (4 == mn || 6 == mn || 9 == mn || 11 == mn)
+                {
+                    result = 30;
+                }
+                else
+                {
+                    if (mn == 2 && OclDate.leapYear(yr))
+                    {
+                        result = 29;
+                    }
+                    else
+                    {
+                        if (mn == 2 && !(OclDate.leapYear(yr)))
+                        {
+                            result = 28;
+                        }
+                        else
+                        {
+                            result = 31;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            public int daysInMonth()
+            {
+                int result = 0;
+
+                result = OclDate.monthDays(month, year);
+                return result;
+            }
+
+            public bool isEndOfMonth()
+            {
+              bool result = false;
+
+              if (day == OclDate.monthDays(month, year))
+              {
+                result = true;
+              }
+              else
+              { 
+                result = false; 
+              }
+
+              return result;
+            }
+
+    public static int daysBetweenDates(OclDate d1, OclDate d2)
+            {
+                int result = 0;
+
+                int startDay = d1.getday();
+                int startMonth = d1.getmonth();
+                int startYear = d1.getyear();
+                int endDay = d2.getday();
+                int endMonth = d2.getmonth();
+                int endYear = d2.getyear();
+
+                int days = 0;
+
+                while (startYear < endYear || (startYear == endYear && startMonth < endMonth))
+                {
+                    int daysinmonth = OclDate.monthDays(startMonth, startYear);
+
+                    days = days + daysinmonth - startDay + 1;
+                    startDay = 1;
+                    startMonth = startMonth + 1;
+                    if (startMonth > 12)
+                    {
+                        startMonth = 1;
+                        startYear = startYear + 1;
+                    }
+
+                }
+                days = days + endDay - startDay;
+                return days;
+            }
+
     }
 

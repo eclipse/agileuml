@@ -373,6 +373,141 @@ package mathlib {
     (numPeriods = FinanceLib.numberOfPeriods(sett, mat, period) => 
     result = Integer.subrange(1, numPeriods)); 
 
+static query couponDates(matur : OclDate, period : int, numPeriods : int) : Sequence(OclDate)
+pre: true 
+post: true
+activity:  
+  var cpdates : Sequence(OclDate) := Sequence{matur}; 
+  var cpdate : OclDate := matur; 
+
+  for i : Integer.subrange(0, numPeriods - 2) 
+  do ( 
+    var mo : int := cpdate.getMonth() - period;    
+    var prevMonth : int := mo; 
+    var prevYear : int := cpdate.getYear(); 
+    var prevDay : int := cpdate.getDate(); 
+      
+    if mo <= 0 
+    then
+      prevMonth := 12 + mo ;  
+      prevYear := cpdate.year - 1
+    else skip;     
+    cpdate := OclDate.newOclDate_YMD(prevYear,prevMonth,prevDay);
+    cpdates := cpdates->append(cpdate)
+  ) ; 
+
+  cpdates := cpdates->reverse() ;  
+  return cpdates;
+
+  static query days360(d1 : OclDate, d2 : OclDate, num : String, mat : OclDate) : int
+  pre: true 
+  post: true
+  activity:            
+    var dd1 : int := d1.getDate();
+    var dd2 : int := d2.getDate();
+    var mm1 : int := d1.getMonth();
+    var mm2 : int := d2.getMonth();
+    var yy1 : int := d1.getYear();
+    var yy2 : int := d2.getYear();
+
+    if num = "30/360"
+    then
+      return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1)
+    else 
+      if num = "30/360B"
+      then
+        dd1 := Set{dd1, 30}->min();
+        if dd1 > 29 then
+          dd2 := Set{dd2, 30}->min() 
+        else skip; 
+        return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1)
+      else 
+        if num = "30/360US"
+        then
+          if (mm1 = 2 & (dd1 = 28 or dd1 = 29) & mm2 = 2 & (dd2 = 28 or dd2 = 29)
+          then dd2 := 30 else skip;
+          if mm1 = 2 & (dd1 = 28 or dd1 = 29)
+          then dd1 := 30 else skip;
+          if (dd2 = 31 & (dd1 = 30 or dd1 = 31))
+          then dd2 := 30 else skip; 
+          if dd1 = 31 then dd1 := 30 else skip; 
+          return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1)
+        else 
+          if num = "30E/360"
+          then 
+            if dd1 = 31 then dd1 := 30 else skip; 
+            if dd2 = 31 then dd2 := 30 else skip; 
+            return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1)
+          else 
+            if num = "30E/360ISDA"
+            then    
+              if d1.isEndOfMonth() then dd1 := 30 else skip; 
+              if (not(d2 = mat & mm2 = 2) & d2.isEndOfMonth())  
+              then dd2 := 30 else skip; 
+              return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1)        else
+              return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1); 
+
+
+  static query numberOfMonths(pd : OclDate, settle : OclDate, cd : double, dayCount : String, matur : OclDate) : Sequence(double)
+  pre: true 
+  post: true
+  activity: 
+    var sv : double := 0.0;
+    
+    if (dayCount = "Actual/360" or dayCount = "Actual/365F" or
+        dayCount = "Actual/ActualICMA" or
+        dayCount = "Actual/364" or dayCount = "Actual/ActualISDA")
+    then
+      var daysBetween : int := OclDate.daysBetweenDates(pd, settle);
+      sv := (cd - daysBetween)/cd;
+      return Sequence{sv, cd - daysBetween}     
+    else
+      var daysBetween360 : int := FinanceLib.days360(pd, settle, dayCount, matur);
+      sv := (cd - daysBetween360)/cd;
+      return Sequence{sv, cd - daysBetween360};
+
+  static query calculateCouponPayments(paymentDates : Sequence(OclDate), annualCouponRate : double, dayCountC : String, freq : int) : Sequence(double)
+  pre: true
+  post: true; 
+
+  static query bondCashFlows(settle : OclDate, matur : OclDate, coupon : double, dayCount : String, freq : int) : Sequence(OclAny)
+   pre: true 
+   post: true; 
+
+  static query bondPrice(yld : double, settle : OclDate, matur : OclDate, coup : double, dayCount : String, freq : int) : double
+  pre: true
+  post: true
+  activity: 
+    var bcfs : Sequence(OclAny) := 
+      FinanceLib.bondCashFlows(settle,matur,
+                               coup,dayCount,freq); 
+    var coupRates : Sequence(double) := bcfs->at(1); 
+    var timePoints : Sequence(double) := bcfs->at(3);
+    var discountFactors : Sequence(double) := timePoints->collect(x | (1.0/(1 + (yld/freq)))->pow(x)); 
+    coupRates := coupRates->front()->append(coupRates->last() + 1); 
+    var sp : double := 0; 
+    for i : Integer.subrange(1,coupRates->size()) 
+    do 
+      sp := sp + (discountFactors->at(i) * coupRates->at(i)); 
+    return sp; 
+
+ static query accInterest(issue : OclDate, settle : OclDate, freq : int, coup : double) : double
+ pre: true
+ post: true
+ activity: 
+   var period : int := (12/freq)->oclAsType(int); 
+   var st : Sequence(OclDate) := FinanceLib.straddleDates(issue,settle,period); 
+   var aif : double := (1.0*OclDate.daysBetweenDates(st->at(1), settle))/OclDate.daysBetweenDates(st->at(1),st->at(2)); 
+   return aif*(coup/freq); 
+
+static query accumulatedInterest(issue : OclDate, settle : OclDate, freq : int, coup : double, dayCount : String, matur : OclDate) : double
+  pre: true
+  post: true; 
+
+static query bondPriceClean(Y : double, I : OclDate, S : OclDate, M : OclDate, c : double, dcf : String, f : int) : double
+pre: true
+post: result = FinanceLib.bondPrice(Y,S,M,c,dcf,f) -FinanceLib.accumulatedInterest(I,S,f,c,dcf,M); 
+
   }
 
 }

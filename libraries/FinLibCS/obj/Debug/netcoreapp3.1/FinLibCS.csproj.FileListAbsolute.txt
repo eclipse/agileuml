@@ -1,0 +1,13 @@
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.csprojAssemblyReference.cache
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.AssemblyInfoInputs.cache
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.AssemblyInfo.cs
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.csproj.CoreCompileInputs.cache
+C:\Users\klano\source\repos\FinLibCS\bin\Debug\netcoreapp3.1\FinLibCS.exe
+C:\Users\klano\source\repos\FinLibCS\bin\Debug\netcoreapp3.1\FinLibCS.deps.json
+C:\Users\klano\source\repos\FinLibCS\bin\Debug\netcoreapp3.1\FinLibCS.runtimeconfig.json
+C:\Users\klano\source\repos\FinLibCS\bin\Debug\netcoreapp3.1\FinLibCS.runtimeconfig.dev.json
+C:\Users\klano\source\repos\FinLibCS\bin\Debug\netcoreapp3.1\FinLibCS.dll
+C:\Users\klano\source\repos\FinLibCS\bin\Debug\netcoreapp3.1\FinLibCS.pdb
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.dll
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.pdb
+C:\Users\klano\source\repos\FinLibCS\obj\Debug\netcoreapp3.1\FinLibCS.genruntimeconfig.cache

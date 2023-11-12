@@ -456,78 +456,6 @@
         public static double longBitsToDouble(long x)
         { return BitConverter.Int64BitsToDouble(x); }
 
-        public static double discountDiscrete(double amount, double rate, double time)
-        {
-            double result = 0;
-            result = 0.0;
-            if ((rate <= -1 || time < 0))
-            { return result; }
-
-            result = amount / Math.Pow((1 + rate), time);
-            return result;
-        }
-
-        public static double netPresentValueDiscrete(double rate, ArrayList values)
-        {
-            double result = 0;
-            result = 0.0;
-            if ((rate <= -1))
-            { return result; }
-
-            int upper = values.Count; 
-            int i = 0;
-            for (; i < upper; i++)
-            { result = result + MathLib.discountDiscrete((double) values[i], rate, i); }
-            return result;
-        }
-
-       public static double presentValueDiscrete(double rate, ArrayList values)
-        {
-            double result = 0;
-            result = 0.0;
-            if ((rate <= -1))
-            { return result; }
-
-            int upper = values.Count;
-
-            for (int i = 0; i < upper; i++)
-            {
-                Object val = values[i];
-                double dval = 0.0;
-                if (val is double)
-                { dval = (double)val; }
-                else if (val is int)
-                { dval = 1.0 * ((int)val); }
-                result = result + MathLib.discountDiscrete(dval,
-                                                rate, i + 1);
-            }
-            return result;
-        }
-
-        public static double bisectionDiscrete(double r, double rl, double ru, ArrayList values)
-        {
-            double result = 0;
-            result = 0;
-            if ((r <= -1 || rl <= -1 || ru <= -1))
-            { return result; }
-
-            double v = 0;
-            v = MathLib.netPresentValueDiscrete(r, values);
-            if (ru - rl < 0.001)
-            { return r; }
-            if (v > 0)
-            { return MathLib.bisectionDiscrete((ru + r) / 2, r, ru, values); }
-            else if (v < 0)
-            { return MathLib.bisectionDiscrete((r + rl) / 2, rl, r, values); }
-            return r;
-        }
-
-        public static double irrDiscrete(ArrayList values)
-        {
-            double res = bisectionDiscrete(0.1, -0.5, 1.0, values);
-            return res;
-        }
-
        public static double roundN(double x, int n)
         {
             if (n < 0)
@@ -764,5 +692,141 @@
             result = (Func<double, double>)(x => (MathLib.definiteIntegral(0, x, f)));
             return result;
         }
+
+  }
+
+class FinanceLib
+{  public FinanceLib() { }
+
+        public static double discountDiscrete(double amount, double rate, double time)
+        {
+            double result = 0;
+            result = 0.0;
+            if ((rate <= -1 || time < 0))
+            { return result; }
+
+            result = amount / Math.Pow((1 + rate), time);
+            return result;
+        }
+
+        public static double netPresentValueDiscrete(double rate, ArrayList values)
+        {
+            double result = 0;
+            result = 0.0;
+            if ((rate <= -1))
+            { return result; }
+
+            int upper = values.Count; 
+            int i = 0;
+            for (; i < upper; i++)
+            { result = result + MathLib.discountDiscrete((double) values[i], rate, i); }
+            return result;
+        }
+
+       public static double presentValueDiscrete(double rate, ArrayList values)
+        {
+            double result = 0;
+            result = 0.0;
+            if ((rate <= -1))
+            { return result; }
+
+            int upper = values.Count;
+
+            for (int i = 0; i < upper; i++)
+            {
+                Object val = values[i];
+                double dval = 0.0;
+                if (val is double)
+                { dval = (double)val; }
+                else if (val is int)
+                { dval = 1.0 * ((int)val); }
+                result = result + MathLib.discountDiscrete(dval,
+                                                rate, i + 1);
+            }
+            return result;
+        }
+
+        public static double bisectionDiscrete(double r, double rl, double ru, ArrayList values)
+        {
+            double result = 0;
+            result = 0;
+            if ((r <= -1 || rl <= -1 || ru <= -1))
+            { return result; }
+
+            double v = 0;
+            v = MathLib.netPresentValueDiscrete(r, values);
+            if (ru - rl < 0.001)
+            { return r; }
+            if (v > 0)
+            { return MathLib.bisectionDiscrete((ru + r) / 2, r, ru, values); }
+            else if (v < 0)
+            { return MathLib.bisectionDiscrete((r + rl) / 2, rl, r, values); }
+            return r;
+        }
+
+        public static double irrDiscrete(ArrayList values)
+        {
+            double res = bisectionDiscrete(0.1, -0.5, 1.0, values);
+            return res;
+        }
+
+            public static ArrayList straddleDates(OclDate d1, OclDate d2, int period)
+            {
+                OclDate cd = d1;
+
+                while (cd.compareToYMD(d2) <= 0)
+                {
+                    cd = cd.addMonthYMD(period);
+                }
+                return SystemTypes.addSet(SystemTypes.addSet((new ArrayList()), cd.subtractMonthYMD(period)), cd);
+
+            }
+
+            public static int numberOfPeriods(OclDate settle, OclDate matur, int period)
+            {
+                int result = 0;
+
+                double monthsToMaturity = OclDate.differenceMonths(matur, settle) * 1.0);
+                result = (int) Math.Ceiling((monthsToMaturity / period));
+                return result;
+            }
+
+            public static ArrayList sequenceOfPeriods(OclDate sett, OclDate mat, int period)
+            {
+                ArrayList result = new ArrayList();
+
+                int numPeriods = FinanceLib.numberOfPeriods(sett, mat, period); 
+                result = SystemTypes.integerSubrange(1, numPeriods);
+                return result;
+            }
+
+
+            public static ArrayList couponDates(OclDate matur, int period, int numPeriods)
+            {
+                ArrayList cpdates = SystemTypes.addSet((new ArrayList()), matur);
+
+                OclDate cpdate = matur;
+
+                for (int _i10 = 0; _i10 < numPeriods - 1; _i10++)
+                {
+                    int mo = cpdate.getMonth() - period;
+
+                    int prevMonth = mo;
+                    int prevYear = cpdate.getYear();
+                    int prevDay = cpdate.getDate();
+
+                    if (mo <= 0)
+                    {
+                        prevMonth = 12 + mo;
+                        prevYear = cpdate.getYear() - 1;
+                    }
+
+                    cpdate = OclDate.newOclDate_YMD(prevYear, prevMonth, prevDay);
+                    cpdates = SystemTypes.append(cpdates, cpdate);
+                }
+
+                cpdates = SystemTypes.reverse(cpdates);
+                return cpdates;
+            }
 
   }
