@@ -97,6 +97,7 @@ definesToAttributes::
 Define _1 = _2 |-->\n  attribute _1 : double := _2;<when> _1`isIdentifier true
 Define _1 |-->\n  attribute _1 : double;
 Define _1 ~ _2 |-->\n  attribute _1 : OclRandom := OclRandom.newOclRandom_2`randomParameters; 
+Define _1 : _2 |-->\n  attribute _1 : _2;
 
 _1 |-->_1`definesToAttributes<when> _1 formula
 Constraint on _1 | _2 |-->
@@ -371,7 +372,10 @@ var ( _1 ) |-->_1.variance()
 Date ( _1 ) |-->OclDate.newOclDate_String(_1)
 Time ( _1 ) |-->OclDate.newOclDate_Time(_1)
 
+accumulatedInterest ( _1 ) |-->FinanceLib.accumulatedInterest(_1)
 Binomial ( _1 ) |-->Excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
+bondPrice ( _1 ) |-->FinanceLib.bondPrice(_1)
+bondPriceClean ( _1 ) |-->FinanceLib.bondPriceClean(_1)
 
 _1 ( _2 ) |-->_1(_2)
 _1 ( ) |-->_1()
