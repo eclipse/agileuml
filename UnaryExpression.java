@@ -4921,12 +4921,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "Math." + data1 + "(" + pre + ")"; 
     }  // upper case
     
-    if (operator.equals("->floor") || operator.equals("->ceil") ||
+    if (operator.equals("->floor") ||
         operator.equals("->round"))  
       // But exp, floor can be applied to sets/sequences. ceil not sqr? 
     { String data1 = (data.charAt(0) + "").toUpperCase() + data.substring(1,data.length()); 
       return "((int) Math." + data1 + "(" + pre + "))"; 
     }  // could be long for double arguments 
+    else if (operator.equals("->ceil"))
+    { return "((int) Math.Ceiling(" + pre + "))"; } 
     else if (data.equals("toUpperCase") || data.equals("toUpper")) 
     { return pre + ".ToUpper()"; } 
     else if (data.equals("toLowerCase") || data.equals("toLower"))

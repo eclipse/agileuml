@@ -3252,7 +3252,7 @@ public class Type extends ModelElement
     { return alias.getCSharp(); } 
  
     if (nme.equals("OclDate"))
-    { return "DateTime"; } 
+    { return "OclDate"; } 
     if (nme.equals("OclAny"))
     { return "object"; } 
     if (nme.equals("OclType"))

@@ -8592,7 +8592,7 @@ class BasicExpression extends Expression
     if (data.startsWith("new"))
     { String createdClass = data.substring(3); 
       if ("OclDate".equals(createdClass))
-      { return "DateTime.Now"; }
+      { return "OclDate.newOclDate()"; }
       if (Type.isExceptionType(createdClass))
       { String csharpClass = 
           (String) Type.exceptions2csharp.get(createdClass); 
@@ -8630,7 +8630,7 @@ class BasicExpression extends Expression
             " = DateTimeOffset.FromUnixTimeMilliseconds(" + par1qf + ").DateTime;";
         } 
       }  
-    } */ 
+    } 
 
     if ("dateAfter".equals(data) && objectRef != null) 
     { if (objectRef.type != null && 
@@ -8658,7 +8658,6 @@ class BasicExpression extends Expression
       }  
     } 
 
-/* 
     if (data.startsWith("create") && objectRef == null) 
     { String entname = data.substring(6);
       System.out.println(">>> Creation operation for " + entname); 
@@ -10394,7 +10393,7 @@ public Statement generateDesignSubtract(Expression rhs)
     }  
 
     // Update form: 
-    if ("setTime".equals(data) && objectRef != null) 
+   /* if ("setTime".equals(data) && objectRef != null) 
     { if (objectRef.type != null && 
           objectRef.type.getName().equals("OclDate")) 
       { if (parameters != null && parameters.size() > 0) 
@@ -10406,7 +10405,7 @@ public Statement generateDesignSubtract(Expression rhs)
             " = DateTimeOffset.FromUnixTimeMilliseconds(" + par1qf + ").DateTime;";
         } 
       }  
-    } 
+    } */  
 
     if (data.startsWith("create") && objectRef == null) 
     { String entname = data.substring(6);
