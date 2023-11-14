@@ -4,6 +4,8 @@
         private static int ix; // internal
         private static int iy; // internal
         private static int iz; // internal
+        private static double defaultTolerance = 0.001; // internal
+
         private static ArrayList hexdigit; // internal
 
         public MathLib()
@@ -122,40 +124,34 @@
         public static void initialiseMathLib()
         {
             MathLib.sethexdigit(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet(SystemTypes.addSet((new ArrayList()), "0"), "1"), "2"), "3"), "4"), "5"), "6"), "7"), "8"), "9"), "A"), "B"), "C"), "D"), "E"), "F"));
+
             MathLib.setSeeds(1001, 781, 913);
+            MathLib.defaultTolerance = 0.001;
         }
 
         public static double pi()
         {
-            double result = 0.0;
-
-            result = 3.14159265;
+            double result = 3.14159265;
             return result;
         }
 
 
         public static double eValue()
         {
-            double result = 0.0;
-
-            result = Math.Exp(1);
+            double result = Math.Exp(1);
             return result;
         }
 
         public static double piValue()
         {
-            double result = 0.0;
-
-            result = 3.14159265;
+            double result = 3.14159265;
             return result;
         }
 
 
         public static double e()
         {
-            double result = 0.0;
-
-            result = Math.Exp(1);
+            double result = Math.Exp(1);
             return result;
         }
 
@@ -228,9 +224,7 @@
 
         public static double asinh(double x)
         {
-            double result = 0.0;
-
-            result = Math.Log((x + Math.Sqrt((x * x + 1))));
+            double result = Math.Log((x + Math.Sqrt((x * x + 1))));
             return result;
         }
 
@@ -663,14 +657,15 @@
 
        public static Func<double,double> differential(Func<double,double> f)
        { Func<double,double> result = null;
-  
-         result = (Func<double,double>) (x => (( 500.0 * ( f.Invoke(x + 0.001) - f.Invoke(x - 0.001) ) ))); 
+         double multiplier = 1.0/(2.0*MathLib.defaultTolerance); 
+
+         result = (Func<double,double>) (x => (( multiplier * ( f.Invoke(x + MathLib.defaultTolerance) - f.Invoke(x - MathLib.defaultTolerance) ) ))); 
          return result;
        }
 
         public static double definiteIntegral(double st, double en, Func<double, double> f)
         {
-            double tol = 0.001;
+            double tol = MathLib.defaultTolerance;
             double area = 0.0;
             double d = tol * (en - st);
             double cum = st;
@@ -696,137 +691,394 @@
   }
 
 class FinanceLib
-{  public FinanceLib() { }
+{ public FinanceLib() { }
 
-        public static double discountDiscrete(double amount, double rate, double time)
-        {
-            double result = 0;
-            result = 0.0;
-            if ((rate <= -1 || time < 0))
-            { return result; }
+  public static double discountDiscrete(double amount, double rate, double time)
+  {
+    double result = 0.0;
+    if (rate <= -1 || time < 0)
+    { return result; }
 
-            result = amount / Math.Pow((1 + rate), time);
-            return result;
-        }
+    result = amount / Math.Pow((1 + rate), time);
+    return result;
+  }
 
-        public static double netPresentValueDiscrete(double rate, ArrayList values)
-        {
-            double result = 0;
-            result = 0.0;
-            if ((rate <= -1))
-            { return result; }
+  public static double netPresentValueDiscrete(double rate, ArrayList values)
+  {
+    double result = 0.0;
+    if (rate <= -1)
+    { return result; }
 
-            int upper = values.Count; 
-            int i = 0;
-            for (; i < upper; i++)
-            { result = result + MathLib.discountDiscrete((double) values[i], rate, i); }
-            return result;
-        }
+    int upper = values.Count; 
+    int i = 0;
+    for (; i < upper; i++)
+    { result = result + MathLib.discountDiscrete((double) values[i], rate, i); }
+    return result;
+  }
 
-       public static double presentValueDiscrete(double rate, ArrayList values)
-        {
-            double result = 0;
-            result = 0.0;
-            if ((rate <= -1))
-            { return result; }
+  public static double presentValueDiscrete(double rate, ArrayList values)
+  {
+    double result = 0.0;
+    if (rate <= -1)
+    { return result; }
 
-            int upper = values.Count;
+    int upper = values.Count;
 
-            for (int i = 0; i < upper; i++)
-            {
-                Object val = values[i];
-                double dval = 0.0;
-                if (val is double)
-                { dval = (double)val; }
-                else if (val is int)
-                { dval = 1.0 * ((int)val); }
-                result = result + MathLib.discountDiscrete(dval,
+    for (int i = 0; i < upper; i++)
+    {
+      Object val = values[i];
+      double dval = 0.0;
+      if (val is double)
+      { dval = (double) val; }
+      else if (val is int)
+      { dval = 1.0 * ((int)val); }
+      result = result + MathLib.discountDiscrete(dval,
                                                 rate, i + 1);
-            }
-            return result;
-        }
+    }
+    return result;
+  }
 
-        public static double bisectionDiscrete(double r, double rl, double ru, ArrayList values)
+  public static double bisectionDiscrete(double r, double rl, double ru, ArrayList values)
+  {
+    double result = 0.0;
+    if (r <= -1 || rl <= -1 || ru <= -1)
+    { return result; }
+
+    double v = FinanceLib.netPresentValueDiscrete(r, values);
+    if (ru - rl < MathLib.getdefaultTolerance())
+    { return r; }
+    if (v > 0)
+    { return FinanceLib.bisectionDiscrete((ru + r) / 2, r, ru, values); }
+    else if (v < 0)
+    { return FinanceLib.bisectionDiscrete((r + rl) / 2, rl, r, values); }
+    return r;
+  }
+
+  public static double irrDiscrete(ArrayList values)
+  {
+    double res = FinanceLib.bisectionDiscrete(0.1, -0.5, 1.0, values);
+    return res;
+  }
+
+  public static ArrayList straddleDates(OclDate d1, OclDate d2, int period)
+  {
+    OclDate cd = d1;
+
+    while (cd.compareToYMD(d2) <= 0)
+    {
+      cd = cd.addMonthYMD(period);
+    }
+          
+    ArrayList res = new ArrayList();
+    OclDate prevd = cd.subtractMonthYMD(period);
+    res.Add(prevd);
+    res.Add(cd);
+    return res;
+  }
+
+  public static int numberOfPeriods(OclDate settle, OclDate matur, int period)
+  {
+    int result = 0;
+
+    double monthsToMaturity = OclDate.differenceMonths(matur, settle) * 1.0);
+    result = (int) Math.Ceiling((monthsToMaturity / period));
+    return result;
+  }
+
+  public static ArrayList sequenceOfPeriods(OclDate sett, OclDate mat, int period)
+  {
+    ArrayList result = new ArrayList();
+
+    int numPeriods = FinanceLib.numberOfPeriods(sett, mat, period); 
+    result = SystemTypes.integerSubrange(1, numPeriods);
+    return result;
+  }
+
+
+  public static ArrayList couponDates(OclDate matur, int period, int numPeriods)
+  { ArrayList cpdates = new ArrayList(); 
+    cpdates.Add(matur);
+
+    OclDate cpdate = matur;
+
+    for (int _i10 = 0; _i10 < numPeriods - 1; _i10++)
+    {
+      int mo = cpdate.getMonth() - period;
+
+      int prevMonth = mo;
+      int prevYear = cpdate.getYear();
+      int prevDay = cpdate.getDate();
+
+      if (mo <= 0)
+      {
+        prevMonth = 12 + mo;
+        prevYear = cpdate.getYear() - 1;
+      }
+
+      cpdate = OclDate.newOclDate_YMD(prevYear, prevMonth, prevDay);
+      cpdates.Add(cpdate);
+    }
+
+    cpdates = SystemTypes.reverse(cpdates);
+    return cpdates;
+  }
+
+  public static int days360(OclDate d1, OclDate d2, string num, OclDate mat)
+  { /* num is the dayCount convention */
+            
+    int dd1 = d1.getDate();
+    int dd2 = d2.getDate();
+    int mm1 = d1.getMonth();
+    int mm2 = d2.getMonth();
+    int yy1 = d1.getYear();
+    int yy2 = d2.getYear();
+    if (num.Equals("30/360"))
+    {
+      return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+    }
+    else if (num.Equals("30/360B"))
+    {
+      dd1 = Math.Min(dd1, 30);
+      if (dd1 > 29)
+      { dd2 = Math.Min(dd2, 30); }
+      return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+    }
+    else if (num.Equals("30/360US"))
+    {
+      if (mm1 == 2 && (dd1 == 28 || dd1 == 29) && mm2 == 2 && (dd2 == 28 || dd2 == 29))
+      {
+        dd2 = 30;
+      }
+      if (mm1 == 2 && (dd1 == 28 || dd1 == 29))
+      { dd1 = 30; }
+      if (dd2 == 31 && (dd1 == 30 || dd1 == 31))
+      { dd2 = 30; }
+      if (dd1 == 31) { dd1 = 30; }
+      return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+    }
+    else if (num.Equals("30E/360"))
+    {
+      if (dd1 == 31) { dd1 = 30; }
+      if (dd2 == 31) { dd2 = 30; }
+      return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+    }
+    else if (num.Equals("30E/360ISDA"))
+    {
+      if (d1.isEndOfMonth()) { dd1 = 30; }
+      if (!(d2 == mat && mm2 == 2) && d2.isEndOfMonth()) { dd2 = 30; }
+      return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+    }
+    else
+    { return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1); }
+  }
+
+
+  public static ArrayList numberOfMonths(OclDate pd, OclDate settle, double cd, string dayCount, OclDate matur)
+  { /* Returns sequence of two doubles */ 
+    double sv = 0.0;
+    ArrayList result = new ArrayList();
+
+    if (dayCount.Equals("Actual/360") || 
+        dayCount.Equals("Actual/365F") ||
+        dayCount.Equals("Actual/ActualICMA") ||
+        dayCount.Equals("Actual/364") || 
+        dayCount.Equals("Actual/ActualISDA"))
+    {
+      int daysBetween = OclDate.daysBetweenDates(pd, settle);
+      sv = (cd - daysBetween) / cd;
+      result.Add(sv); 
+      result.Add(cd - daysBetween);
+      return result;
+    }
+    else
+    {
+      int daysBetween360 = FinanceLib.days360(pd, settle, dayCount, matur);
+      sv = (cd - daysBetween360) / cd;
+      result.Add(sv); 
+      result.Add(cd - daysBetween360);
+      return result;
+    }
+  }
+
+
+  public static ArrayList calculateCouponPayments(ArrayList paymentDates, double annualCouponRate, string dayCountC, int freq)
+  { /* Result is sequence of two double sequences */ 
+
+    ArrayList result = new ArrayList();
+    ArrayList coupon_payments = new ArrayList();
+    ArrayList dates_payments = new ArrayList();
+    double cum_days = 0.0;
+    double days = 0.0;
+
+    for (int i = 1; i < paymentDates.Count; i++)
+    {
+      OclDate start_date_str = (OclDate) paymentDates[i - 1];
+      OclDate end_date_str = (OclDate) paymentDates[i];
+
+      if (dayCountC.Equals("30/360") || 
+          dayCountC.Equals("30/360B") || 
+          dayCountC.Equals("30/360US") ||
+          dayCountC.Equals("30E/360") || 
+          dayCountC.Equals("30E/360ISDA") || 
+          dayCountC.Equals("Actual/360"))
+      {
+        days = FinanceLib.days360(start_date_str, end_date_str,
+                     dayCountC, (OclDate)paymentDates[paymentDates.Count - 1]);
+       }
+       else if (dayCountC.Equals("Actual/365F"))
+       { days = 365.0 / freq; }
+       else if (dayCountC.Equals("Actual/364"))
+       { days = 364.0 / freq; }
+       else /* actual/actual calculations */
+       { days = OclDate.daysBetweenDates(start_date_str, end_date_str); }
+
+       double coupon_payment = annualCouponRate / freq;
+
+       coupon_payments.Add(coupon_payment);
+       cum_days += days;
+       dates_payments.Add(cum_days);
+     }
+          
+     result.Add(coupon_payments);
+     result.Add(dates_payments); 
+     return result;
+   }
+
+
+   public static ArrayList bondCashFlows(OclDate settle, OclDate matur, double coupon, string dayCount, int freq)
+   {
+      ArrayList results = new ArrayList();
+
+      int period = (int)(12 / freq);
+      int np = FinanceLib.numberOfPeriods(settle, matur, period);
+      ArrayList snp = FinanceLib.sequenceOfPeriods(settle, matur, period);
+      ArrayList cd = FinanceLib.couponDates(matur, period, np);
+
+      OclDate pm = ((OclDate) cd[0]).subtractMonthYMD(period);
+      ArrayList cdn = new ArrayList();
+      cdn.Add(pm); cdn.AddRange(cd);
+      ArrayList coupPayments = 
+         FinanceLib.calculateCouponPayments(
+                    cdn, coupon, dayCount, freq);
+      ArrayList cumd = (ArrayList) coupPayments[1];
+      ArrayList cp = (ArrayList) coupPayments[0];
+      ArrayList nm = FinanceLib.numberOfMonths(pm, settle,
+                                   (double) cumd[0], dayCount, matur); 
+
+
+      if (settle.compareToYMD(pm) == 0) {
+         results.Add(cp); 
+         results.Add(cd); 
+         results.Add(snp); 
+         results.Add(cumd);  
+      }
+      else {
+         ArrayList newsnp = new ArrayList();
+         foreach (int x in snp) 
+         { newsnp.Add(x - ((int) snp[0] - (double) nm[0])); }
+         ArrayList newcumd = new ArrayList();
+         foreach (double x in cumd) 
+         { newcumd.Add(x - ((double) cumd[0] - (double) nm[1])); }
+         results.Add(cp); 
+         results.Add(cd); 
+         results.Add(newsnp); 
+         results.Add(newcumd);
+       }
+       return results;
+     }
+
+
+       public static double bondPrice(double yld, OclDate settle, OclDate matur, double coup, string dayCount, int freq)
+       {
+         ArrayList bcfs = FinanceLib.bondCashFlows(settle, matur, coup, dayCount, freq);
+
+         ArrayList coupRates = (ArrayList)bcfs[0];
+
+         ArrayList timePoints = (ArrayList)bcfs[2];
+
+         ArrayList discountFactors = new ArrayList();
+         for (int _icollect = 0; _icollect < timePoints.Count; _icollect++)
+         {
+           double x = (double)timePoints[_icollect];
+           discountFactors.Add(Math.Pow(1.0 / (1 + (yld / freq)), x));
+         }
+
+         coupRates = SystemTypes.append(SystemTypes.front(coupRates), ((double)SystemTypes.last(coupRates)) + 1);
+         double sp = 0.0;
+
+         ArrayList _range13 = SystemTypes.integerSubrange(1, (coupRates).Count);
+         for (int _i12 = 0; _i12 < _range13.Count; _i12++)
+         {
+           int i = (int)_range13[_i12];
+           sp = sp + (((double)discountFactors[i - 1]) * ((double)coupRates[i - 1]));
+         }
+         return sp;
+       }
+
+       public static double accInterest(OclDate issue, OclDate settle, int freq, double coup)
+       {
+         int period = ((int)(12 / freq));
+
+         ArrayList st = FinanceLib.straddleDates(issue, settle, period);
+         double aif = (1.0 * OclDate.daysBetweenDates((OclDate)st[0], settle)) / OclDate.daysBetweenDates((OclDate)st[0], (OclDate)st[1]);
+
+         return aif * (coup / freq);
+       }
+
+
+        public static double accumulatedInterest(OclDate issue, OclDate settle, int freq, double coup, string dayCount, OclDate matur)
         {
-            double result = 0;
-            result = 0;
-            if ((r <= -1 || rl <= -1 || ru <= -1))
-            { return result; }
+          int period = (int) (12 / freq);
 
-            double v = 0;
-            v = MathLib.netPresentValueDiscrete(r, values);
-            if (ru - rl < 0.001)
-            { return r; }
-            if (v > 0)
-            { return MathLib.bisectionDiscrete((ru + r) / 2, r, ru, values); }
-            else if (v < 0)
-            { return MathLib.bisectionDiscrete((r + rl) / 2, rl, r, values); }
-            return r;
+          ArrayList st = FinanceLib.straddleDates(issue, settle, period);
+          double aif = 0.0;
+          OclDate d1 = (OclDate) st[0];
+          OclDate d2 = (OclDate) st[1];
+          int ys = d1.getYear();
+          int ye = settle.getYear();
+          OclDate ysEnd = OclDate.newOclDate_YMD(ys, 12, 31);
+          OclDate yeStart = OclDate.newOclDate_YMD(ye, 1, 1);
+
+            if (dayCount.Equals("Actual/365F"))
+            {
+                aif = (OclDate.daysBetweenDates(d1, settle) / 365.0) * coup;
+            }
+            else if (dayCount.Equals("Actual/ActualISDA"))
+            {
+                if (d1.isLeapYear() && settle.isLeapYear())
+                { aif = (OclDate.daysBetweenDates(d1, settle) / 366.0) * coup; }
+                else if (!(d1.isLeapYear()) && !(settle.isLeapYear()))
+                {
+                    aif = (OclDate.daysBetweenDates(d1, settle) / 365.0) * coup;
+                }
+                else if (d1.isLeapYear() && !(settle.isLeapYear()))
+                {
+                    aif = (OclDate.daysBetweenDates(d1, ysEnd) / 366.0) * coup +
+                       (OclDate.daysBetweenDates(yeStart, settle) / 365.0) * coup;
+                }
+                else
+                {
+                    aif = (OclDate.daysBetweenDates(d1, ysEnd) / 365.0) * coup +
+                       (OclDate.daysBetweenDates(yeStart, settle) / 366.0) * coup;
+                }
+            }
+            else if (dayCount.Equals("Actual/364"))
+            { aif = (OclDate.daysBetweenDates(d1, settle) / 364.0) * coup; }
+            else if (dayCount.Equals("Actual/360"))
+            { aif = (OclDate.daysBetweenDates(d1, settle) / 360.0) * coup; }
+            else if (dayCount.Equals("Actual/ActualICMA"))
+            { aif = coup* (1.0*OclDate.daysBetweenDates(d1, settle)) / (freq * OclDate.daysBetweenDates(d1, d2)); }
+            else
+            { aif = (FinanceLib.days360(d1, settle, dayCount, matur) / 360.0) * coup; }
+            return aif; 
         }
 
-        public static double irrDiscrete(ArrayList values)
+
+        public static double bondPriceClean(double Y, OclDate I, OclDate S, OclDate M, double c, string dcf, int f)
         {
-            double res = bisectionDiscrete(0.1, -0.5, 1.0, values);
-            return res;
+          double result = 0.0;
+
+          result = FinanceLib.bondPrice(Y, S, M, c, dcf, f) - FinanceLib.accumulatedInterest(I, S, f, c, dcf, M);
+          return result;
         }
-
-            public static ArrayList straddleDates(OclDate d1, OclDate d2, int period)
-            {
-                OclDate cd = d1;
-
-                while (cd.compareToYMD(d2) <= 0)
-                {
-                    cd = cd.addMonthYMD(period);
-                }
-                return SystemTypes.addSet(SystemTypes.addSet((new ArrayList()), cd.subtractMonthYMD(period)), cd);
-
-            }
-
-            public static int numberOfPeriods(OclDate settle, OclDate matur, int period)
-            {
-                int result = 0;
-
-                double monthsToMaturity = OclDate.differenceMonths(matur, settle) * 1.0);
-                result = (int) Math.Ceiling((monthsToMaturity / period));
-                return result;
-            }
-
-            public static ArrayList sequenceOfPeriods(OclDate sett, OclDate mat, int period)
-            {
-                ArrayList result = new ArrayList();
-
-                int numPeriods = FinanceLib.numberOfPeriods(sett, mat, period); 
-                result = SystemTypes.integerSubrange(1, numPeriods);
-                return result;
-            }
-
-
-            public static ArrayList couponDates(OclDate matur, int period, int numPeriods)
-            {
-                ArrayList cpdates = SystemTypes.addSet((new ArrayList()), matur);
-
-                OclDate cpdate = matur;
-
-                for (int _i10 = 0; _i10 < numPeriods - 1; _i10++)
-                {
-                    int mo = cpdate.getMonth() - period;
-
-                    int prevMonth = mo;
-                    int prevYear = cpdate.getYear();
-                    int prevDay = cpdate.getDate();
-
-                    if (mo <= 0)
-                    {
-                        prevMonth = 12 + mo;
-                        prevYear = cpdate.getYear() - 1;
-                    }
-
-                    cpdate = OclDate.newOclDate_YMD(prevYear, prevMonth, prevDay);
-                    cpdates = SystemTypes.append(cpdates, cpdate);
-                }
-
-                cpdates = SystemTypes.reverse(cpdates);
-                return cpdates;
-            }
-
   }

@@ -325,7 +325,6 @@
                     result = (OclDate.newOclDate_YMD(year + 1, (month + m) % 12, day));
                 }
                 else
-                  if (month + m <= 12)
                 {
                     result = (OclDate.newOclDate_YMD(year, month + m, day));
                 }
@@ -342,7 +341,6 @@
                     result = (OclDate.newOclDate_YMD(year - 1, 12 - (m - month), day));
                 }
                 else
-                  if (month + m <= 12)
                 {
                     result = (OclDate.newOclDate_YMD(year, month - m, day));
                 }

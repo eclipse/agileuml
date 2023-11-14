@@ -599,36 +599,40 @@ class FinanceLib :
   def accumulatedInterest(issue,settle,freq,coup,dayCount,matur) :
     period = int(12/freq)
     st = FinanceLib.straddleDates(issue,settle,period)
+    aif = 0.0
+    d1 = st[0]
+    d2 = st[1]
+    # print(issue)
+    # print(settle)
+    # print(d1)
+    # print(d2)
+    ys = d1.year
+    ye = settle.year
+    ysEnd = OclDate.newOclDate_String(str(ys) + "/12/31")
+    yeStart = OclDate.newOclDate_String(str(ye) + "/01/01")
+        
     if (dayCount == "Actual/365F") :
-      aif = (OclDate.daysBetweenDates(st[0],settle)/365)*coup
+      aif = (OclDate.daysBetweenDates(d1,settle)/365)*coup
     elif (dayCount == "Actual/ActualISDA") :
-      if (st[0].isLeapYear() and settle.isLeapYear()):
-        aif = (OclDate.daysBetweenDates(st[0],settle)/366)*coup
-      elif (not(st[0].isLeapYear()) and not(settle.isLeapYear())) :
-        aif = (OclDate.daysBetweenDates(st[0],settle)/365)*coup
-      elif (st[0].isLeapYear() and not(settle.isLeapYear())) :
-        ys = st[0].year
-        ye = settle.year
-        ysEnd = OclDate.newOclDate_String(ys + "/12/31")
-        yeStart = OclDate.newOclDate_String(ye + "/01/01")
-        aif = (OclDate.daysBetweenDates(st[0],ysEnd)/366) * coup +\
+      if (d1.isLeapYear() and settle.isLeapYear()):
+        aif = (OclDate.daysBetweenDates(d1,settle)/366)*coup
+      elif (not(d1.isLeapYear()) and not(settle.isLeapYear())) :
+        aif = (OclDate.daysBetweenDates(d1,settle)/365)*coup
+      elif (d1.isLeapYear() and not(settle.isLeapYear())) :
+        aif = (OclDate.daysBetweenDates(d1,ysEnd)/366) * coup +\
            (OclDate.daysBetweenDates(yeStart,settle)/365)*coup
       else:
-        ys = st[0].year
-        ye = settle.year
-        ysEnd = OclDate.newOclDate_String(ys + "/12/31")
-        yeStart = OclDate.newOclDate_String(ye + "/01/01")
-        aif = (OclDate.daysBetweenDates(st[0],ysEnd)/365)*coup +\
+        aif = (OclDate.daysBetweenDates(d1,ysEnd)/365)*coup +\
            (OclDate.daysBetweenDates(yeStart,settle)/366)*coup
     
     elif (dayCount == "Actual/364") :
-      aif = (OclDate.daysBetweenDates(st[0],settle)/364)*coup
-    elif (dc == "Actual/360") :
-      aif = (OclDate.daysBetweenDates(st[0],settle)/360)*coup
-    elif (dc == "Actual/ActualICMA") :
-      aif = (OclDate.daysBetweenDates(st[0],settle)/(freq*OclDate.daysBetweenDates(st[0],st[1])))*coup
+      aif = (OclDate.daysBetweenDates(d1,settle)/364)*coup
+    elif (dayCount == "Actual/360") :
+      aif = (OclDate.daysBetweenDates(d1,settle)/360)*coup
+    elif (dayCount == "Actual/ActualICMA") :
+      aif = (OclDate.daysBetweenDates(d1,settle)/(freq*OclDate.daysBetweenDates(d1,d2)))*coup
     else :
-      aif = (FinanceLib.days360(st[0],settle,dayCount,matur)/360)*coup
+      aif = (FinanceLib.days360(d1,settle,dayCount,matur)/360)*coup
     return aif
     
   def bondPriceClean(Y,I,S,M,c,dcf,f) :
