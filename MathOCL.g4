@@ -32,6 +32,8 @@ formula
     :	'Define' basicExpression '=' (instruction | expression) 
     | 'Define' basicExpression '~' expression
     | 'Define' basicExpression
+    | 'Define' basicExpression ':' type
+    | 'Define' basicExpression ':' type '=' expression
     ; 
 
 instruction
@@ -110,7 +112,7 @@ type
     | 'Bag' '(' type ')' 
     | 'OrderedSet' '(' type ')' 
     | 'Map' '(' type ',' type ')' 
-    | 'Function' '(' type ',' type ')' 
+    | 'Function' '(' type ',' type ')'
     | NATURAL
     | INTEGER
     | REAL

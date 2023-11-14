@@ -1228,6 +1228,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           String arg1 = CGRule.correctNewlines(entcode); 
           System.out.println(arg1); 
 
+          File datelib = new File("libraries/ocldate.km3"); 
+          if (datelib.exists())
+          { loadKM3FromFile(datelib); }
+          else 
+          { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
           File mathlib = new File("libraries/mathlib.km3"); 
           if (mathlib.exists())
           { loadKM3FromFile(mathlib); }
