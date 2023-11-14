@@ -75,6 +75,8 @@ formula::
 Define _1 |-->
 Define _1 = _2 |-->\n\n  operation _1`operationName(_1`operationParameters) : double\n  pre: true\n  post: result = _2;
 Define _1 ~ _2 |-->
+Define _1 : _2 |-->
+Define _1 : _2 = _3 |-->\n\n  operation _1`operationName(_1`operationParameters) : _2\n  pre: true\n  post: result = _3;
 
 
 factorBy::
@@ -98,6 +100,7 @@ Define _1 = _2 |-->\n  attribute _1 : double := _2;<when> _1`isIdentifier true
 Define _1 |-->\n  attribute _1 : double;
 Define _1 ~ _2 |-->\n  attribute _1 : OclRandom := OclRandom.newOclRandom_2`randomParameters; 
 Define _1 : _2 |-->\n  attribute _1 : _2;
+Define _1 : _2 = _3 |-->\n  attribute _1 : _2 := _3;<when> _1`isIdentifier true
 
 _1 |-->_1`definesToAttributes<when> _1 formula
 Constraint on _1 | _2 |-->
@@ -125,6 +128,7 @@ Function ( _1 , _2 ) |-->Function(_1,_2)
 Ñ |-->int
 Ž |-->int
 ® |-->double
+Date |-->OclDate
 _1 |-->_1
 
 

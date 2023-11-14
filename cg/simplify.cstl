@@ -73,6 +73,8 @@ Define g { _1 } |-->  Define g{_1}
 Define _1 = _2 |-->  Define _1 = _2<action> _1`value _2
 Define _1 ~ _2 |-->  Define _1 ~ _2<action> _1`distribution _2`distributionName, _1`mean _2`distributionMean, _1`variance _2`distributionVariance
 Define _1 : _2 |-->  Define _1 : _2
+Define _1 : _2 = _3 |-->  Define _1 : _2 = _3
+
 
 
 instruction::
