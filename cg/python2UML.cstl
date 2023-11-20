@@ -551,6 +551,12 @@ _1 |-->_1
 _1 , |-->_1
 _1 , _* |-->_1, _*`recurse
 
+defaultParamSettings::
+_1 |-->_1`defaultParamCode
+_1 , |-->_1`defaultParamCode
+_1 , _* |-->_1`defaultParamCode_*`recurse
+
+
 typedargslistAttributes::
 _1 |-->_1`asAttributes
 _1 , |-->_1`asAttributes
@@ -579,6 +585,10 @@ def_parameters::
 _1 |-->_1
 _1 , _* |-->_1, _*`recurse
 
+defaultParamCode::
+_1 |-->_1`paramDefaultCode
+_1 , _* |-->_1`paramDefaultCode_*`recurse
+
 asAttributes::
 _1 |-->_1`asAttribute
 _1 , _* |-->_1`asAttribute_*`recurse
@@ -596,6 +606,14 @@ _1 = _2 |-->_1
 
 * |-->
 _1 |-->_1
+
+
+paramDefaultCode::
+_1 = _2 |-->    if _1`parameterName->oclIsUndefined() then _1`parameterName := _2 else skip;\n
+
+* |-->
+_1 |-->
+
 
 asAttribute::
 _1 = _2 |-->  attribute _1`parameterName : String;\n<when> _2 String, _1 1ary <action> _1`parameterName String
@@ -1713,7 +1731,7 @@ async def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true
 async def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n\n
 
 def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n<when> _3`hasValueReturn true
-def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n\n
+def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_3;\n\n
 
 async def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
 def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
