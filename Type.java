@@ -2868,6 +2868,15 @@ public class Type extends ModelElement
     return res; 
   } 
 
+  public static Expression nullInitialValueExpression(Type t)
+  { if (t == null) 
+    { return new BasicExpression("null"); } 
+    String tname = t.getName(); 
+    if (tname.equals("double"))
+    { return new BasicExpression("Math_NaN"); } 
+    return new BasicExpression("null"); 
+  } 
+
   public static Expression defaultInitialValueExpression(Type t)
   { if (t == null) 
     { return new BasicExpression("null"); } 

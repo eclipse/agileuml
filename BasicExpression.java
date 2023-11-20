@@ -3680,7 +3680,7 @@ class BasicExpression extends Expression
         bf = e.getDefinedOperation(data,parameters);
   
         if (bf != null) 
-        { System.out.println("**Type of " + data + " is operation, of class: " + e);
+        { System.out.println("*>>* Type of " + data + " is operation, of class: " + e);
           entity = e;
           if (bf.parametersMatch(parameters)) { } 
           else 
@@ -5464,12 +5464,13 @@ class BasicExpression extends Expression
         bf = e.getDefinedOperation(data,parameters);
   
         if (bf != null) 
-        { System.out.println("**Type of " + data + " is operation, of: " + e);
+        { System.out.println("** Type of " + data + " is operation, of: " + e);
           entity = e;
           if (bf.parametersMatch(parameters)) { } 
           else 
-          { JOptionPane.showMessageDialog(null, "Parameters do not match operation pars: " + this + " " + bf, 
-                                    "Type warning", JOptionPane.WARNING_MESSAGE);
+          { JOptionPane.showMessageDialog(null, 
+              "Parameters do not match operation pars: " + this + " " + bf, 
+              "Type warning", JOptionPane.WARNING_MESSAGE);
             continue; 
           }  
 
@@ -5517,7 +5518,8 @@ class BasicExpression extends Expression
           return true; 
         } // else, downcast if in a subclass
         else 
-        { Entity subent = e.searchForSubclassWithOperation(data); 
+        { Entity subent = 
+            e.searchForSubclassWithOperation(data); 
           if (subent != null) 
           { downcast = true; 
             entity = subent; 
@@ -5532,7 +5534,8 @@ class BasicExpression extends Expression
               { umlkind = QUERY; }
               else 
               { umlkind = UPDATEOP; 
-                if (type == null || type.equals("") || type.equals("void"))
+                if (type == null || type.equals("") || 
+                    type.equals("void"))
                 { type = new Type("boolean",null); }  
               } 
               setObjectRefType(); 
@@ -5594,7 +5597,15 @@ class BasicExpression extends Expression
         } 
         umlkind = UPDATEOP;   
       }          
+
+      // System.err.println("Operation " + data + " at call " + this + ".\n");  
+      //  System.out.println(">> " + objectRef + " of type: " + objectRef.type); 
+      // type = new Type("boolean",null);         
+      // elementType = new Type("boolean",null);
+      // umlkind = UPDATEOP;   
+      // }
     }
+
 
     if (isFunction(data))
     { umlkind = FUNCTION;

@@ -3784,7 +3784,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return qf + ".trim()"; } 
 
     if (operator.equals("->oclIsUndefined")) 
-    { return "(" + qf + " == null)"; } 
+    { if (argument.isNumeric())
+      { return "Double.isNaN((double) " + qf + ")"; } 
+      return "(" + qf + " == null)"; 
+    } 
 
     if (operator.equals("->oclIsInvalid")) 
     { return "Double.isNaN(" + qf + ")"; } 
@@ -4081,7 +4084,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return qf + ".trim()"; } 
 
     if (operator.equals("->oclIsUndefined")) 
-    { return "(" + qf + " == null)"; } 
+    { if (argument.isNumeric())
+      { return "Double.isNaN((double) " + qf + ")"; } 
+      return "(" + qf + " == null)"; 
+    } 
 
     if (operator.equals("->oclIsInvalid")) 
     { return "Double.isNaN(" + qf + ")"; } 
@@ -4448,7 +4454,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return qf + ".trim()"; } 
 
     if (operator.equals("->oclIsUndefined")) 
-    { return "(" + qf + " == null)"; } 
+    { if (argument.isNumeric())
+      { return "Double.isNaN((double) " + qf + ")"; } 
+      return "(" + qf + " == null)"; 
+    } 
 
     if (operator.equals("->oclIsInvalid")) 
     { return "Double.isNaN(" + qf + ")"; } 
@@ -4821,7 +4830,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "((ArrayList) SystemTypes.characters(" + qf + "))"; } 
 
     if (operator.equals("->oclIsUndefined")) 
-    { return "(" + qf + " == null)"; } 
+    { if (argument.isNumeric())
+      { return "double.IsNaN((double) " + qf + ")"; }
+      return "(" + qf + " == null)"; 
+    } 
 
     if (operator.equals("->oclIsInvalid")) 
     { return "double.IsNaN(" + qf + ")"; } 
@@ -5158,10 +5170,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "UmlRsdsLib<int>::byte2char(" + qf + ")"; } 
 
     if (operator.equals("->oclIsUndefined")) 
-    { return "(" + qf + " == NULL)"; } 
+    { if (argument.isNumeric())
+      { return "_isnan((double) " + qf + ")"; }
+      return "(" + qf + " == NULL)"; 
+    } 
 
     if (operator.equals("->oclIsNew")) 
-    { return "(" + qf + " != NULL)"; } 
+    { 
+      return "(" + qf + " != NULL)"; 
+    } 
 
     if (operator.equals("->oclIsInvalid")) 
     { // return "std::isnan(" + qf + ")";

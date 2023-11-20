@@ -3043,20 +3043,39 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public boolean parametersMatch(Vector pars)
-  { if (pars == null || parameters == null) { return false; } 
+  { if (pars == null || parameters == null) 
+    { return false; } 
+
+    System.out.println(">>> For operation " + name + " actual parameters are " + pars + " formal parameters are " + parameters); 
+
     if (pars.size() == parameters.size()) 
     { return true; } 
+
+    return false; 
+  } // and check the types
+
+  public boolean parametersSupset(Vector pars)
+  { if (pars == null || parameters == null) 
+    { return false; } 
+
+    if (pars.size() < parameters.size()) 
+    { return true; } 
+
     return false; 
   } // and check the types
 
   public boolean parameterMatch(Vector pars)
-  { if (pars == null || parameters == null) { return false; } 
+  { if (pars == null || parameters == null) 
+    { return false; } 
     if (pars.size() != parameters.size()) 
     { return false; } 
     for (int i = 0; i < parameters.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
       Expression arg = (Expression) pars.get(i); 
-      if (Type.isSubType(arg.getType(), par.getType())) { }  // = or a subtype
+      if (par.getType() == null ||
+          Type.isVacuousType(par.getType())) { } 
+      else if (par.getType().equals(arg.getType())) { } 
+      else if (Type.isSubType(arg.getType(), par.getType())) { }  // = or a subtype
       else 
       { return false; } 
     } 
@@ -3065,12 +3084,28 @@ public class BehaviouralFeature extends ModelElement
   } // and check the types
 
   public void setFormalParameters(Vector pars)
-  { if (pars == null || parameters == null) { return; } 
-    for (int i = 0; i < parameters.size() && i < pars.size(); i++) 
+  { if (pars == null || parameters == null) 
+    { return; }
+ 
+    Vector extrapars = new Vector(); 
+
+    for (int i = 0; i < parameters.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
-      Expression arg = (Expression) pars.get(i); 
-      arg.formalParameter = par; 
+      Type pt = par.getType(); 
+
+      if (i < pars.size())
+      { Expression arg = (Expression) pars.get(i); 
+        arg.formalParameter = par;
+      } 
+      else 
+      { Expression nullInit = 
+          Type.nullInitialValueExpression(pt); 
+        nullInit.formalParameter = par; 
+        extrapars.add(nullInit); 
+      } 
     } 
+
+    pars.addAll(extrapars); 
   } // Used in code generation, eg., for Swift. 
 
   public Expression substituteParameters(Expression e, Vector arguments) 

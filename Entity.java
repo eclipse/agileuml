@@ -7148,8 +7148,9 @@ public class Entity extends ModelElement implements Comparable
   { BehaviouralFeature res = null; 
     for (int i = 0; i < operations.size(); i++) 
     { res = (BehaviouralFeature) operations.get(i); 
-      if (nme.equals(res.getName()) && res.parametersMatch(parameters))
-      { return res; } 
+      if (nme.equals(res.getName()) && 
+          res.parametersMatch(parameters))
+      { return res; }
     }  
 
     return getOperation(nme); 
@@ -7185,16 +7186,27 @@ public class Entity extends ModelElement implements Comparable
     return null; 
   } 
 
-  public BehaviouralFeature getDefinedOperation(String nme, Vector parameters)
+  public BehaviouralFeature getDefinedOperation(String nme, 
+                                         Vector parameters)
   { BehaviouralFeature res = null; 
     for (int i = 0; i < operations.size(); i++) 
     { res = (BehaviouralFeature) operations.get(i); 
-      if (nme.equals(res.getName()) && res.parametersMatch(parameters))
+      if (nme.equals(res.getName()) && 
+          res.parametersMatch(parameters))
       { return res; } 
     }  
 
+    for (int i = 0; i < operations.size(); i++) 
+    { res = (BehaviouralFeature) operations.get(i); 
+      if (nme.equals(res.getName()) && 
+          res.parametersSupset(parameters))
+      { System.out.println("!! There is no operation " + nme + " in class " + name + " with " + parameters.size() + " parameters,\n   but there is an operation with " + res.getParameters().size() + " parameters -- the call needs to be extended."); 
+      }   
+    } 
+
     if (superclass != null) 
     { return superclass.getDefinedOperation(nme,parameters); } 
+
 
     return null; 
   } 

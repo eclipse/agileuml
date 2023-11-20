@@ -562,7 +562,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           { inserting = true; 
             insertedText = insertedText + chr.charAt(0); 
             if ("Define".equals(insertedText))
-            { thisLabel.setText("Define variable: Define v, Define v = expr, Define v = instruction, Define v ~ distribution"); }
+            { thisLabel.setText("Define variable: Define v, Define v = expr, Define v : type, Define v : type = expr, Define v = instruction, Define v ~ distribution"); }
             else if ("Solve".equals(insertedText))
             { thisLabel.setText("Solve single quadratic or differential equations, and multiple linear equations: Solve eqns for vars"); }
             else if ("Prove".equals(insertedText))
@@ -1182,13 +1182,13 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       {  
         umlPane = new JEditorPane();  
         umlPane.setEditable(false); 
-        umlPane.setSize(300,400);
+        umlPane.setSize(400,400);
         int w = getWidth(); 
         int h = getHeight(); 
  
         getContentPane().add(new JScrollPane(umlPane),  
                              java.awt.BorderLayout.EAST); 
-        setSize(w + 300, h); 
+        setSize(w + 400, h); 
         umlPane.setVisible(true); 
 
         java.awt.LayoutManager ll = getLayout(); 
@@ -1423,7 +1423,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
  
       helpPane.setText("Specifications contain these elements: \n\n" + 
         "1. Define clauses, with syntax one of\n" + 
-        "    Define var = expr\n" + 
+        "    Define var = expr\n" +
+        "    Define var : type\n" + 
+        "    Define var : type = expr\n" + 
         "    Define funcn(pars) = expr\n" + 
         "    Define var = instruction\n" + 
         "    Define var ~ distribution\n\n" +

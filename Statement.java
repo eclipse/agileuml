@@ -269,6 +269,56 @@ abstract class Statement implements Cloneable
     return st;
   } // Other cases, for all other forms of statement. 
 
+  public static Vector getLocalDeclarations(Statement st)
+  { Vector res = new Vector(); 
+    if (st == null) 
+    { return res; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(Statement.getLocalDeclarations(stat));
+        }  
+      } 
+      return res;
+    } 
+    
+    if (st instanceof CreationStatement)
+    { res.add(st); 
+      return res; 
+    } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      res.addAll(getLocalDeclarations(cs.ifPart())); 
+      res.addAll(getLocalDeclarations(cs.elsePart())); 
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      res.addAll(getLocalDeclarations(ws.getLoopBody())); 
+      return res; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      res.addAll(getLocalDeclarations(ts.getBody())); 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(getLocalDeclarations(stat));
+        }  
+      } 
+      res.addAll(getLocalDeclarations(ts.getEndStatement())); 
+    } 
+
+    return res;
+  } // Other cases, for all other forms of statement. 
 
   public static Vector getBreaksContinues(Statement st)
   { Vector res = new Vector(); 

@@ -949,6 +949,13 @@ public void findPlugins()
       "Splits operation code into segments where possible");
     qualityMenu.add(splitSegmentsop);
 
+    JMenuItem hoistDecsop = 
+      new JMenuItem("Hoist local declarations"); 
+    hoistDecsop.addActionListener(this);
+    hoistDecsop.setToolTipText(
+      "Hoists local declarations to start of operation code");
+    qualityMenu.add(hoistDecsop);
+
     JMenuItem refineMenu = new JMenu("Refinement"); 
     transMenu.add(refineMenu); 
 
