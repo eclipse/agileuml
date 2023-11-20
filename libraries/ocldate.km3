@@ -33,7 +33,7 @@ class OclDate
 
   static operation newOclDate_YMDHMS(y : int, m : int, d : int, h : int, mn : int, s : int) : OclDate
   pre: true
-  post: OclDate->exists( dte | dte.year = y & dte.month = m & dte.day = d & dte.hour = h & dte.minute = mn & dte.second = s & dte.result = dte ); 
+  post: OclDate->exists( dte | dte.year = y & dte.month = m & dte.day = d & dte.hour = h & dte.minute = mn & dte.second = s & result = dte ); 
 
   operation setTime(t : long) : void
   pre: true  
@@ -62,7 +62,7 @@ class OclDate
   static operation maxDateYMD(d1 : OclDate, d2 : OclDate) : OclDate
   pre: true
   post: 
-    (0 < d1.compareTo(d2) => result = d2) & 
+    (0 < d1.compareToYMD(d2) => result = d2) & 
     (true => result = d1); 
 
   operation yearDifference(d : OclDate) : long

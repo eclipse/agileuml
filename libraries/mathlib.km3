@@ -107,7 +107,7 @@ package mathlib {
 
     static query integer2bytes(x : long) : Sequence(int)
     pre: true
-    post: if (x/256) = 0 then result = Sequence{(x mod 256)} else result = MathLib.integer2bytes(x/256)->append(x mod 256) endif; 
+    post: if (x/256) = 0 then result = Sequence{(x mod 256)->oclAsType(int)} else result = MathLib.integer2bytes(x/256)->append((x mod 256)->oclAsType(int)) endif; 
 
     static query integer2Nbytes(x : long, n : int) : Sequence(int)
     pre: true 
@@ -472,9 +472,9 @@ activity:
       sv := (cd - daysBetween)/cd;
       return Sequence{sv, cd - daysBetween}     
     else
-      var daysBetween360 : int := FinanceLib.days360(pd, settle, dayCount, matur);
-      sv := (cd - daysBetween360)/cd;
-      return Sequence{sv, cd - daysBetween360};
+      (var daysBetween360 : int := FinanceLib.days360(pd, settle, dayCount, matur);
+       sv := (cd - daysBetween360)/cd;
+       return Sequence{sv, cd - daysBetween360});
 
   static query calculateCouponPayments(paymentDates : Sequence(OclDate), annualCouponRate : double, dayCountC : String, freq : int) : Sequence(Sequence(double))
   pre: true
@@ -541,11 +541,11 @@ activity:
      then
        return Sequence{cp, cd, snp, cumd}  
      else 
-       var newsnp : Sequence(double) := 
-         snp->collect( x | x - (snp->at(1) - nm->at(1)));
-       var newcumd : Sequence(double) :=
-         cumd->collect( x | x - (cumd->at(1) - nm->at(2))); 
-       return Sequence{cp, cd, newsnp, newcumd};
+       (var newsnp : Sequence(double) := 
+          snp->collect( x | x - (snp->at(1) - nm->at(1)));
+        var newcumd : Sequence(double) :=
+          cumd->collect( x | x - (cumd->at(1) - nm->at(2))); 
+        return Sequence{cp, cd, newsnp, newcumd});
 
 
   static query bondPrice(yld : double, settle : OclDate, matur : OclDate, coup : double, dayCount : String, freq : int) : double
@@ -555,11 +555,11 @@ activity:
     var bcfs : Sequence(OclAny) := 
       FinanceLib.bondCashFlows(settle,matur,
                                coup,dayCount,freq); 
-    var coupRates : Sequence(double) := bcfs->at(1); 
-    var timePoints : Sequence(double) := bcfs->at(3);
+    var coupRates : Sequence(double) := bcfs->at(1)->oclAsType(Sequence(double)); 
+    var timePoints : Sequence(double) := bcfs->at(3)->oclAsType(Sequence(double));
     var discountFactors : Sequence(double) := timePoints->collect(x | (1.0/(1 + (yld/freq)))->pow(x)); 
     coupRates := coupRates->front()->append(coupRates->last() + 1); 
-    var sp : double := 0; 
+    var sp : double := 0.0; 
     for i : Integer.subrange(1,coupRates->size()) 
     do 
       sp := sp + (discountFactors->at(i) * coupRates->at(i)); 
@@ -628,9 +628,9 @@ static query accumulatedInterest(issue : OclDate, settle : OclDate, freq : int, 
     else
       return coup*(FinanceLib.days360(d1, settle, dayCount, matur)/360.0);
             
-static query bondPriceClean(Y : double, I : OclDate, S : OclDate, M : OclDate, c : double, dcf : String, f : int) : double
-pre: true
-post: result = FinanceLib.bondPrice(Y,S,M,c,dcf,f) -FinanceLib.accumulatedInterest(I,S,f,c,dcf,M); 
+  static query bondPriceClean(Y : double, I : OclDate, S : OclDate, M : OclDate, c : double, dcf : String, f : int) : double
+  pre: true
+  post: result = FinanceLib.bondPrice(Y,S,M,c,dcf,f) -FinanceLib.accumulatedInterest(I,S,f,c,dcf,M); 
 
   }
 

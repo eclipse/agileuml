@@ -713,3 +713,17 @@ print(FinanceLib.bondPrice(Y,sett,mat,coup,dc,f))
 print('%.6f'% FinanceLib.accumulatedInterest(issu,sett,f,coup,dc,mat))
 
 print(FinanceLib.bondPriceClean(Y,issu,sett,mat,coup,dc,f))
+
+f = lambda x : (x*x)
+g = MathLib.differential(f)
+print(g(0))
+print(g(1))
+print(g(2))
+k = lambda x : x
+print(MathLib.definiteIntegral(0,1,k))
+print(MathLib.definiteIntegral(0,2,k))
+print(MathLib.definiteIntegral(0,3,k))
+p = MathLib.indefiniteIntegral(k)
+print(p(1))
+print(p(2))
+print(p(3))

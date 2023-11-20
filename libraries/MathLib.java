@@ -13,11 +13,13 @@ class MathLib
   private static int iy; // internal
   private static int iz; // internal
   private static List hexdigit; 
+  public static double defaultTolerance = 0.001; 
 
   static 
   { String[] hdigits = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };
     hexdigit = Arrays.asList(hdigits); 
     MathLib.setSeeds(1001,781,913);
+    MathLib.defaultTolerance = 0.001; 
   }
 
   public MathLib()
@@ -27,7 +29,6 @@ class MathLib
     this.iz = 0;
     this.hexdigit = new Vector();
   }
-
 
   public String toString()
   { String _res_ = "(MathLib) ";
@@ -45,9 +46,10 @@ class MathLib
 
   public static void sethexdigit(List hexdigit_x) { hexdigit = hexdigit_x; }
 
-  public static void sethexdigit(int _ind, String hexdigit_x) { hexdigit.set(_ind, hexdigit_x); }
+  public static void sethexdigit(int _ind, String hexdigit_x)   
+  { hexdigit.set(_ind, hexdigit_x); }
 
-    public static void addhexdigit(String hexdigit_x)
+  public static void addhexdigit(String hexdigit_x)
   { hexdigit.add(hexdigit_x); }
 
   public static void removehexdigit(String hexdigit_x)
@@ -69,10 +71,16 @@ class MathLib
   public static double pi()
   { return Math.PI; }
 
+  public static double piValue()
+  {
+    return Math.PI;
+  }
 
   public static double e()
   { return Math.E; }
 
+  public static double eValue()
+  { return Math.E; }
 
   public static void setSeeds(int x,int y,int z)
   { MathLib.setix(x);
@@ -322,82 +330,6 @@ class MathLib
   public static double longBitsToDouble(long x)
   { return Double.longBitsToDouble(x); } 
   
-  public static double discountDiscrete(double amount, double rate, double time)
-  { double result = 0;
-    result = 0.0;
-    if ((rate <= -1 || time < 0))
-    { return result; }
-  
-    result = amount / Math.pow((1 + rate), time);
-    return result;
-  }
-
-  public static double netPresentValueDiscrete(double rate, ArrayList values)
-  { double result = 0;
-    result = 0.0;
-    if ((rate <= -1))
-    { return result; }
-  
-    int upper = values.size();
-    
-    for (int i = 0; i < upper; i++)
-    { Object val = values.get(i);
-      double dval = 0.0;  
-      if (val instanceof Double)
-      { dval = (double) val; } 
-      else if (val instanceof Integer)
-      { dval = 1.0*((int) val); } 
-      result = result + MathLib.discountDiscrete(dval, 
-                                          rate, i); 
-    }
-    return result;
-  }
-
-  public static double presentValueDiscrete(double rate, ArrayList values)
-  { double result = 0;
-    result = 0.0;
-    if ((rate <= -1))
-    { return result; }
-  
-    int upper = values.size();
-    
-    for (int i = 0; i < upper; i++)
-    { Object val = values.get(i);
-      double dval = 0.0;  
-      if (val instanceof Double)
-      { dval = (double) val; } 
-      else if (val instanceof Integer)
-      { dval = 1.0*((int) val); } 
-      result = result + MathLib.discountDiscrete(dval, 
-                                          rate, i+1); 
-    }
-    return result;
-  }
-
-
-  public static double bisectionDiscrete(double r, double rl, double ru, 
-                                         ArrayList<Double> values)
-  { double result = 0;
-    result = 0;
-    if ((r <= -1 || rl <= -1 || ru <= -1))
-    { return result; }
-  
-    double v = 0;
-    v = MathLib.netPresentValueDiscrete(r,values);
-    if (ru - rl < 0.001)
-    { return r; } 
-    if (v > 0)
-    { return MathLib.bisectionDiscrete((ru + r) / 2, r, ru, values); } 
-    else if (v < 0)
-    { return MathLib.bisectionDiscrete((r + rl) / 2, rl, r, values); }
-    return r; 
-  }
-
-  public static double irrDiscrete(ArrayList<Double> values)
-  { double res = MathLib.bisectionDiscrete(0.1,-0.5,1.0,values); 
-    return res; 
-  }
-
  public static double roundN(double x, int n)
  { if (n == 0) 
    { return Math.round(x); } 
@@ -468,11 +400,16 @@ class MathLib
     { d1 = (double) x1; } 
     else if (x1 instanceof Integer) 
     { d1 = 1.0*((int) x1); } 
+    else if (x1 instanceof Long)
+    { d1 = 1.0*((long) x1); } 
 
     if (x2 instanceof Double)
     { d2 = (double) x2; } 
     else if (x2 instanceof Integer) 
     { d2 = 1.0*((int) x2); } 
+    else if (x2 instanceof Long)
+    { d2 = 1.0*((long) x2); } 
+
     return ( d1 + d2 )/2.0;
   }  
 
@@ -518,7 +455,7 @@ class MathLib
       if (v > 0) {
         result = MathLib.bisectionAsc(( rl + r ) / 2,rl,r,f,tol);
       } else if (v < 0) {
-        result = MathLib.bisectionAsc(( r + ru ) / 2,r,ru,f,tol);
+          result = MathLib.bisectionAsc(( r + ru ) / 2,r,ru,f,tol);
       }   
     }      
 
@@ -552,21 +489,24 @@ class MathLib
   public static Function<Double,Double> differential(Function<Double,Double> f)
   {
     Function<Double,Double> result = (_x10) -> { return 0.0; };
-    result = (x) -> { return (500.0 * ((f).apply(x + 0.001) - (f).apply(x - 0.001))); };
+
+    double tol = MathLib.defaultTolerance;
+    double multiplier = 1.0/(2*tol); 
+
+    result = (x) -> { return (multiplier*((f).apply(x + tol) - (f).apply(x - tol))); };
     return result;
   }
 
   public static double definiteIntegral(double st, double en, Function<Double,Double> f)
   {
-    double result = 0.0;
-    double tol = 0.001;
+    double tol = MathLib.defaultTolerance;
     double area = 0.0;
-    double d = tol * (en - st);
+    double delta = tol * (en - st);
     double cum = st;
     while (cum < en)
     {
-      double next = cum + d;
-      area = area + d * ((f).apply(cum) + (f).apply(next)) / 2.0;
+      double next = cum + delta;
+      area = area + delta * ((f).apply(cum) + (f).apply(next)) / 2.0;
       cum = next;
     }
     return area;
@@ -595,8 +535,23 @@ class MathLib
     m2.add(row3); m2.add(row4); 
 
     System.out.println(MathLib.matrixMultiplication(m1,m2));
-  } */ 
+  } 
 
+  public static void main(String[] args)
+  { Function<Double,Double> f = (x) -> { return x*x; };
+    Function<Double,Double> g = MathLib.differential(f);
+    System.out.println(g.apply(0.0));
+    System.out.println(g.apply(1.0));
+    System.out.println(g.apply(2.0));
+    Function<Double,Double> k = (x) -> { return x; }; 
+    System.out.println(MathLib.definiteIntegral(0,1,k));
+    System.out.println(MathLib.definiteIntegral(0,2,k));
+    System.out.println(MathLib.definiteIntegral(0,3,k));
+    Function<Double,Double> p = MathLib.indefiniteIntegral(k); 
+    System.out.println(p.apply(1.0));
+    System.out.println(p.apply(2.0));
+    System.out.println(p.apply(3.0));
+  } */ 
 
 }
 
