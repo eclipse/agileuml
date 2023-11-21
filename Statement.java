@@ -820,6 +820,82 @@ abstract class Statement implements Cloneable
     return st;
   } // Other cases, for all other forms of statement. 
 
+  public static Statement replaceLocalDeclarations(Statement st, Vector vars)
+  { // replace each var v : T := e statement in st by v := e
+    // if v : vars
+
+    if (st == null) 
+    { return st; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+
+      Vector res = new Vector(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.add(
+            Statement.replaceLocalDeclarations(stat,vars));
+        }  
+      } 
+      return new SequenceStatement(res);
+    } 
+    
+    if (st instanceof CreationStatement)
+    { CreationStatement cs = (CreationStatement) st; 
+      String lhs = cs.assignsTo;
+      if (vars.contains(lhs) && 
+          cs.initialExpression != null)
+      { Expression lhsexpr = new BasicExpression(lhs); 
+        lhsexpr.type = cs.getType(); 
+        lhsexpr.elementType = cs.getElementType();  
+        AssignStatement newst = 
+          new AssignStatement(lhsexpr,
+                              cs.initialExpression); 
+        return newst; 
+      } 
+      return st; 
+    } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st;
+      Statement newif = 
+        Statement.replaceLocalDeclarations(cs.ifPart(), vars);  
+      Statement newelse = 
+        Statement.replaceLocalDeclarations(cs.elsePart(), vars);
+      ConditionalStatement res = 
+        new ConditionalStatement(cs.test, newif, newelse);  
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      Statement newbody = 
+        Statement.replaceLocalDeclarations(
+                                     ws.getLoopBody(),vars); 
+      WhileStatement res = 
+             new WhileStatement(ws.getLoopTest(),newbody);
+      res.loopKind = ws.loopKind; 
+      return res;  
+    } 
+
+    /* if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      res.addAll(getLocalDeclarations(ts.getBody())); 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(getLocalDeclarations(stat));
+        }  
+      } 
+      res.addAll(getLocalDeclarations(ts.getEndStatement())); 
+    } */ 
+
+    return st;
+  } // Other cases, for all other forms of statement. 
+
   public static Statement unfoldCall(
            Statement stat, String nme, Statement defn)
   { // self.nme() replaced by defn in stat.

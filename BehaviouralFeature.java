@@ -11136,6 +11136,56 @@ public class BehaviouralFeature extends ModelElement
 
     return act;  
   } 
+
+  public void hoistLocalDeclarations()
+  { // Find all the local declarations. 
+    // Give warnings if 
+    //   (i) multiple declarations with same variable name
+    //   (ii) declaration with same name as a parameter
+    // Apart from case (ii) replace declarations by assigns
+    // in the code and put all declarations at the start 
+
+    if (activity == null) 
+    { return; } 
+
+    Vector localdecs = 
+      Statement.getLocalDeclarations(activity); 
+    
+    Vector initialDecs = new Vector(); 
+    Vector varnames = new Vector(); 
+    
+    for (int i = 0; i < localdecs.size(); i++) 
+    { CreationStatement cs = (CreationStatement) localdecs.get(i); 
+      String vname = cs.assignsTo;
+
+      ModelElement par = 
+          ModelElement.lookupByName(vname, parameters); 
+
+      if (par != null) 
+      { System.err.println("!! Warning: " + vname + " is both a parameter and local variable!"); 
+        continue; 
+      }
+  
+      if (varnames.contains(vname))
+      { System.err.println("!! Warning: multiple declarations for variable " + vname); 
+        continue;
+      } 
+
+      varnames.add(vname); 
+      initialDecs.add(cs); 
+    } 
+
+    if (varnames.size() == 0) 
+    { return; } 
+
+    Statement newactivity = 
+      Statement.replaceLocalDeclarations(activity,varnames); 
+    SequenceStatement ss = new SequenceStatement(initialDecs);
+    ss.addStatement(newactivity); 
+   
+    System.out.println(">>> New activity: " + ss); 
+    activity = ss; 
+  } 
 }
 
 
