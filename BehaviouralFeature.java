@@ -11162,17 +11162,17 @@ public class BehaviouralFeature extends ModelElement
           ModelElement.lookupByName(vname, parameters); 
 
       if (par != null) 
-      { System.err.println("!! Warning: " + vname + " is both a parameter and local variable!"); 
+      { System.err.println("!! Code Smell (MDV): " + vname + " is both a parameter and a local variable!"); 
         continue; 
       }
   
       if (varnames.contains(vname))
-      { System.err.println("!! Warning: multiple declarations for variable " + vname); 
+      { System.err.println("!! Code Smell (MDV): multiple declarations in same scope for variable " + vname); 
         continue;
       } 
 
       varnames.add(vname); 
-      initialDecs.add(cs); 
+      initialDecs.add(cs.defaultVersion()); 
     } 
 
     if (varnames.size() == 0) 
@@ -11185,6 +11185,23 @@ public class BehaviouralFeature extends ModelElement
    
     System.out.println(">>> New activity: " + ss); 
     activity = ss; 
+  } 
+
+  public void reduceCodeNesting()
+  { // Replace each conditional  
+    // if cond then stats1 else stats2 
+    // by 
+    // if cond then stats1 else skip; stats2
+    // where all code paths in stats1 end with a return. 
+
+    if (activity == null) 
+    { return; } 
+
+    Statement newactivity = 
+      Statement.replaceElseBySequence(activity); 
+       
+    System.out.println(">>> New activity: " + newactivity); 
+    activity = newactivity; 
   } 
 }
 

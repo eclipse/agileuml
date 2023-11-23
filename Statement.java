@@ -193,6 +193,55 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  public static boolean endsWithReturn(Statement st)
+  { if (st == null) 
+    { return false; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      Statement stat = (Statement) stats.get(stats.size()-1); 
+      return Statement.endsWithReturn(stat);
+    } 
+    
+    if (st instanceof ReturnStatement)
+    { return true; } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      if (Statement.endsWithReturn(cs.ifPart()))
+      { return Statement.endsWithReturn(cs.elsePart()); } 
+      return false; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { return false; } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+
+      if (Statement.endsWithReturn(ts.getBody())) 
+      { Vector stats = ts.getClauses(); 
+        for (int i = 0; i < stats.size(); i++) 
+        { if (stats.get(i) instanceof Statement)
+          { Statement stat = (Statement) stats.get(i); 
+            if (Statement.endsWithReturn(stat)) { } 
+            else 
+            { return false; } 
+          }
+          else 
+          { return false; } 
+        }  
+      }
+      else 
+      { return false; }  
+      if (ts.getEndStatement() == null) { return false; } 
+      return Statement.endsWithReturn(ts.getEndStatement()); 
+    } 
+
+    return false;
+  } // Other cases, for all other forms of statement. 
+
   public static Statement replaceReturnBySkip(Statement st)
   { if (st == null) 
     { return st; }
@@ -269,8 +318,101 @@ abstract class Statement implements Cloneable
     return st;
   } // Other cases, for all other forms of statement. 
 
+  public static Statement replaceElseBySequence(Statement st)
+  { if (st == null) 
+    { return st; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector newstats = new Vector(); 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Statement newstat = 
+            Statement.replaceElseBySequence(stat);
+          newstats.add(newstat); 
+        }  
+      } 
+
+      SequenceStatement newsq = 
+            new SequenceStatement(newstats);
+      newsq.setBrackets(sq.hasBrackets());  
+      return newsq; 
+    } 
+    
+    if (st instanceof ReturnStatement)
+    { return st; } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      Statement newif = 
+         Statement.replaceElseBySequence(cs.ifPart()); 
+      Statement newelse = 
+         Statement.replaceElseBySequence(cs.elsePart());
+      if (Statement.endsWithReturn(newif))
+      { ConditionalStatement res = 
+          new ConditionalStatement(cs.getTest(), 
+                newif, 
+                new InvocationStatement("skip"));
+        SequenceStatement ss = new SequenceStatement(); 
+        ss.addStatement(res); 
+        ss.addStatement(newelse); 
+        return ss; 
+      } 
+      else 
+      { ConditionalStatement res = 
+          new ConditionalStatement(cs.getTest(), 
+                newif, 
+                newelse);
+  
+        return res;
+      } 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      Statement newbody = 
+         Statement.replaceElseBySequence(ws.getLoopBody());
+      WhileStatement wsnew = 
+        new WhileStatement(ws.getTest(), newbody); 
+      wsnew.loopKind = ws.loopKind;  
+      wsnew.loopVar = ws.loopVar;
+      wsnew.loopRange = ws.loopRange;
+  
+      return wsnew; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      Statement newbody = 
+         Statement.replaceElseBySequence(ts.getBody());
+      Vector newclauses = new Vector();  
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Statement newstat = 
+             Statement.replaceElseBySequence(stat);
+          newclauses.add(newstat); 
+        }  
+      } 
+      
+      Statement newend = 
+         Statement.replaceElseBySequence(
+                             ts.getEndStatement()); 
+      TryStatement newtry = 
+         new TryStatement(newbody, newclauses, newend); 
+      return newtry; 
+    } 
+
+    return st;
+  } // Other cases, for all other forms of statement. 
+
   public static Vector getLocalDeclarations(Statement st)
-  { Vector res = new Vector(); 
+  { // Local declarations that are not within a loop 
+
+    Vector res = new Vector(); 
     if (st == null) 
     { return res; }
  
@@ -300,7 +442,7 @@ abstract class Statement implements Cloneable
 
     if (st instanceof WhileStatement) 
     { WhileStatement ws = (WhileStatement) st; 
-      res.addAll(getLocalDeclarations(ws.getLoopBody())); 
+      // res.addAll(getLocalDeclarations(ws.getLoopBody())); 
       return res; 
     } 
 
@@ -869,7 +1011,7 @@ abstract class Statement implements Cloneable
       return res; 
     } 
 
-    if (st instanceof WhileStatement) 
+    /* if (st instanceof WhileStatement) 
     { WhileStatement ws = (WhileStatement) st; 
       Statement newbody = 
         Statement.replaceLocalDeclarations(
@@ -880,7 +1022,7 @@ abstract class Statement implements Cloneable
       return res;  
     } 
 
-    /* if (st instanceof TryStatement) 
+    if (st instanceof TryStatement) 
     { TryStatement ts = (TryStatement) st; 
       res.addAll(getLocalDeclarations(ts.getBody())); 
       Vector stats = ts.getClauses(); 
@@ -5393,6 +5535,19 @@ class CreationStatement extends Statement
   boolean isFrozen = false;  // true when a constant is declared. 
   Attribute variable = null; // for the LHS
 
+  public Object clone()
+  { CreationStatement cs = 
+       new CreationStatement(createsInstanceOf,assignsTo); 
+    cs.instanceType = instanceType; 
+    cs.elementType = elementType; 
+    cs.declarationOnly = declarationOnly; 
+    cs.initialValue = initialValue; 
+    cs.initialExpression = (Expression) initialExpression.clone(); 
+    cs.isFrozen = isFrozen; 
+    cs.variable = variable; 
+    return cs; 
+  } 
+
   public Type getType()
   { return instanceType; } 
 
@@ -5448,6 +5603,15 @@ class CreationStatement extends Statement
     { elementType = new Type("String", null); }  
     assignsTo = vbl + ""; 
   }
+
+  public CreationStatement defaultVersion()
+  { CreationStatement res = (CreationStatement) clone(); 
+    Expression defaultInit = 
+      Type.defaultInitialValueExpression(instanceType);
+    res.initialExpression = defaultInit; 
+    res.initialValue = defaultInit + ""; 
+    return res; 
+  } 
 
 
   /* public CreationStatement(Attribute vbl, Type typ)
@@ -5576,9 +5740,6 @@ class CreationStatement extends Statement
     if (instanceType != null) 
     { instanceType.setElementType(t); }  
   } 
-
-  public Object clone()
-  { return this; } 
 
   public Statement dereference(BasicExpression var)
   { return this; } 

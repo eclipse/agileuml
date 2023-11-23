@@ -6692,6 +6692,78 @@ public class UCDArea extends JPanel
     System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
   }
 
+  public void hoistOperationLocalDecs(Entity ent)
+  { String nme = 
+          JOptionPane.showInputDialog("Enter operation name:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+
+    Statement stat = bf.getActivity();
+    bf.hoistLocalDeclarations(); 
+    Statement effect = bf.getActivity(); 
+ 
+    if (effect == null)
+    { System.err.println("!!! ERROR: Syntax error in activity"); 
+      return; 
+    } 
+    else if (effect == stat) 
+    { System.out.println(">>> No change to activity"); 
+      return; 
+    } 
+    
+    Vector contexts = new Vector(); 
+    contexts.add(ent); 
+    Vector pars = new Vector(); 
+
+    effect.setEntity(ent); 
+    pars.addAll(bf.getParameters()); 
+
+    effect.typeCheck(types,entities,contexts,pars); 
+    
+    bf.setActivity(effect); 
+    updateActivities(ent, bf, effect); 
+    System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
+  }
+
+  public void reduceCodeNesting(Entity ent)
+  { String nme = 
+          JOptionPane.showInputDialog("Enter operation name:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+
+    Statement stat = bf.getActivity();
+    bf.reduceCodeNesting(); 
+    Statement effect = bf.getActivity(); 
+ 
+    if (effect == null)
+    { System.err.println("!!! ERROR: Syntax error in activity"); 
+      return; 
+    } 
+    else if (effect == stat) 
+    { System.out.println(">>> No change to activity"); 
+      return; 
+    } 
+    
+    Vector contexts = new Vector(); 
+    contexts.add(ent); 
+    Vector pars = new Vector(); 
+
+    effect.setEntity(ent); 
+    pars.addAll(bf.getParameters()); 
+
+    effect.typeCheck(types,entities,contexts,pars); 
+    
+    bf.setActivity(effect); 
+    updateActivities(ent, bf, effect); 
+    System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
+  }
+
   public void replaceCallsByDefinitions(Entity ent)
   { String nme = 
       JOptionPane.showInputDialog("Name of operation to be replaced by its code:");

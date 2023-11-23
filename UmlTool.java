@@ -956,6 +956,13 @@ public void findPlugins()
       "Hoists local declarations to start of operation code");
     qualityMenu.add(hoistDecsop);
 
+    JMenuItem reduceNestingop = 
+      new JMenuItem("Reduce code nesting"); 
+    reduceNestingop.addActionListener(this);
+    reduceNestingop.setToolTipText(
+      "Reduces depth of code nesting where possible");
+    qualityMenu.add(reduceNestingop);
+
     JMenuItem refineMenu = new JMenu("Refinement"); 
     transMenu.add(refineMenu); 
 
@@ -2626,6 +2633,10 @@ public void findPlugins()
       { this.transformOperationActivity(); } 
       else if (label.equals("Split operation"))
       { this.splitOperationActivity(); } 
+      else if (label.equals("Hoist local declarations"))
+      { this.hoistOperationLocalDecs(); } 
+      else if (label.equals("Reduce code nesting"))
+      { this.reduceCodeNesting(); } 
       else if (label.equals("Value Object"))
       { ucdArea.makeValueObjects(); }
       else if (label.equals("Singleton"))
@@ -3363,6 +3374,46 @@ public void findPlugins()
         vals[0] instanceof Entity)
     { Entity ent = (Entity) vals[0];
       ucdArea.editOperationActivity(ent);
+    } 
+  }
+
+  private void hoistOperationLocalDecs()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
+    thisLabel.setText("Select entity to hoist operation activity for"); 
+    System.out.println(">> Select entity to hoist operation activity for");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.hoistOperationLocalDecs(ent);
+    } 
+  }
+
+  private void reduceCodeNesting()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
+    thisLabel.setText("Select entity to reduce code nesting for"); 
+    System.out.println(">> Select entity to reduce code nesting for");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.reduceCodeNesting(ent);
     } 
   }
 
