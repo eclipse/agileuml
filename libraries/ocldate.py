@@ -268,10 +268,8 @@ class OclDate:
     return result
 
   def daysInMonth(self) :
-    result = 0
-    result = OclDate.monthDays(self.month, self.year)
-    return result
-
+    return OclDate.monthDays(self.month, self.year)
+    
   def isEndOfMonth(self) :
     result = False
     if self.day == OclDate.monthDays(self.month, self.year) :
@@ -281,7 +279,6 @@ class OclDate:
     return result
 
   def daysBetweenDates(d1,d2) :
-    result = 0
     startDay = d1.day
     startMonth = d1.month
     startYear = d1.year
@@ -289,6 +286,7 @@ class OclDate:
     endMonth = d2.month
     endYear = d2.year
     days = 0
+
     while startYear < endYear or (startYear == endYear and startMonth < endMonth) :
       daysinmonth = OclDate.monthDays(startMonth, startYear)
       days = days + daysinmonth - startDay + 1
@@ -297,6 +295,7 @@ class OclDate:
       if startMonth > 12 :
         startMonth = 1
         startYear = startYear + 1
+
     days = days + endDay - startDay
     return days
 

@@ -371,14 +371,14 @@ package mathlib {
     return (monthsToMaturity/period)->ceil(); 
 
   static query sequenceOfPeriods(sett : OclDate, mat : OclDate, period : int) : Sequence(int) 
-  pre: true 
+  pre: period > 0
   post: true
   activity: 
     var numPeriods :int := FinanceLib.numberOfPeriods(sett, mat, period); 
     return Integer.subrange(1, numPeriods); 
 
 static query couponDates(matur : OclDate, period : int, numPeriods : int) : Sequence(OclDate)
-pre: true 
+pre: period > 0
 post: true
 activity:  
   var cpdates : Sequence(OclDate) := Sequence{matur}; 
@@ -477,7 +477,7 @@ activity:
        return Sequence{sv, cd - daysBetween360});
 
   static query calculateCouponPayments(paymentDates : Sequence(OclDate), annualCouponRate : double, dayCountC : String, freq : int) : Sequence(Sequence(double))
-  pre: true
+  pre: freq > 0
   post: true
   activity: 
     var coupon_payments : Sequence(double) := Sequence{};
@@ -517,7 +517,7 @@ activity:
      return Sequence{coupon_payments, dates_payments}; 
 
   static query bondCashFlows(settle : OclDate, matur : OclDate, coupon : double, dayCount : String, freq : int) : Sequence(OclAny)
-   pre: true 
+   pre: freq > 0
    post: true
    activity: 
      var period : int := (12 / freq)->oclAsType(int);
@@ -549,7 +549,7 @@ activity:
 
 
   static query bondPrice(yld : double, settle : OclDate, matur : OclDate, coup : double, dayCount : String, freq : int) : double
-  pre: true
+  pre: freq > 0
   post: true
   activity: 
     var bcfs : Sequence(OclAny) := 
@@ -566,7 +566,7 @@ activity:
     return sp; 
 
  static query accInterest(issue : OclDate, settle : OclDate, freq : int, coup : double) : double
- pre: true
+ pre: freq > 0
  post: true
  activity: 
    var period : int := (12/freq)->oclAsType(int); 
@@ -575,7 +575,7 @@ activity:
    return aif*(coup/freq); 
 
 static query accumulatedInterest(issue : OclDate, settle : OclDate, freq : int, coup : double, dayCount : String, matur : OclDate) : double
-  pre: true
+  pre: freq > 0
   post: true
   activity:           
     var period : int := (12 / freq)->oclAsType(int);
@@ -629,7 +629,7 @@ static query accumulatedInterest(issue : OclDate, settle : OclDate, freq : int, 
       return coup*(FinanceLib.days360(d1, settle, dayCount, matur)/360.0);
             
   static query bondPriceClean(Y : double, I : OclDate, S : OclDate, M : OclDate, c : double, dcf : String, f : int) : double
-  pre: true
+  pre: freq > 0
   post: result = FinanceLib.bondPrice(Y,S,M,c,dcf,f) -FinanceLib.accumulatedInterest(I,S,f,c,dcf,M); 
 
   }
