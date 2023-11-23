@@ -7,8 +7,13 @@ skip |-->skip
 return |-->return
 continue |-->continue
 break |-->break 
-var _1 : _2 |-->var _1 : _2 
+var _1 : _2 |-->var _1 : _2
+ 
+if _1 then _2 else skip |-->if _1 then _2 else skip  
+if _1 then _2 else _3 |-->if _1 then _2 else skip; _3<when> _2`endsWithReturn true
 if _1 then _2 else _3 |-->if _1 then _2 else _3  
+  
+
 while _1 do _2 |-->while _1 do _2 
 for _1 : _2 do _3 |-->for _1 : _2 do _3 
 return _1 |-->return _1 
@@ -68,6 +73,27 @@ _1 |-->_1`calledOperation<when> _1 basicExpression
 _1 |-->
 
 
+endsWithReturn::
+skip |-->false
+return |-->true
+return _1 |-->true
+
+continue |-->false
+break |-->false
+var _1 : _2 |-->false 
+
+if _1 then _2 else skip |-->false
+if _1 then _2 else _3 |-->_3`endsWithReturn<when> _2`endsWithReturn
+
+while _1 do _2 |-->false
+for _1 : _2 do _3 |-->false
+_1 := _2 |-->false
+_1 ; _2 |-->_2`endsWithReturn
+  
+execute _1 |-->false
+call _1 |-->false 
+( _1 ) |-->(_1`endsWithReturn)
+ 
 
 
 identifier::
