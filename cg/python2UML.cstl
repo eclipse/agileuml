@@ -1786,11 +1786,13 @@ _* |-->
 
 
 classdef::
-class _1 ( _2 ) : _3 |-->class _1 extends _2 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var $x : _1 := create_1(); return $x;\n\n_3`classcontent}\n\n<action> _1 Class
+class _1 ( Enum ) : _3 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_3`classcontent}\n\n<action> _1 Class
 
-class _1 ( ) : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var $x : _1 := create_1(); return $x;\n\n_2`classcontent}\n\n<action> _1 Class
+class _1 ( _2 ) : _3 |-->class _1 extends _2 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_3`classcontent}\n\n<action> _1 Class
 
-class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var $x : _1 := create_1(); return $x;\n\n_2`classcontent}\n\n<action> _1 Class
+class _1 ( ) : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_2`classcontent}\n\n<action> _1 Class
+
+class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_2`classcontent}\n\n<action> _1 Class
 
 
 classcontent::

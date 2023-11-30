@@ -8,20 +8,35 @@ return |-->return
 continue |-->continue
 break |-->break 
 var _1 : _2 |-->var _1 : _2
+var _1 : _2 := _3 |-->var _1 : _2 := _3
+
+if true then _1 else _2 |-->_1
+if false then _1 else _2 |-->_2
+if _1 then _2 else _2 |-->_2
  
 if _1 then _2 else skip |-->if _1 then _2 else skip  
 if _1 then _2 else _3 |-->if _1 then _2 else skip; _3<when> _2`endsWithReturn true
 if _1 then _2 else _3 |-->if _1 then _2 else _3  
   
-
+while false do _1 |-->skip
 while _1 do _2 |-->while _1 do _2 
 for _1 : _2 do _3 |-->for _1 : _2 do _3 
 return _1 |-->return _1 
 _1 := _2 |-->_1 := _2 
+
+skip ; _1 |-->_1
+_1 ; skip |-->_1
+return ; _1 |-->return
+continue ; _1 |-->continue
+break ; _1 |-->break
+
 _1 ; _2 |-->_1 ; _2  
 execute _1 |-->execute _1 
 call _1 |-->call _1 
+( skip ) |-->skip
 ( _1 ) |-->(_1)
+
+
 
 recursiveCall::
 skip |--> 

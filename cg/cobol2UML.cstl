@@ -2318,6 +2318,7 @@ MOVE _1  |-->_1
 
 moveToStatement::
 _1 TO _2  |-->    _2 := StringLib.leftAlignInto("" + _1, _2`fieldWidth);\n<when> _1 String
+_1 TO _2  |-->    _2 := StringLib.padLeftWithInto("" + _1, " ", _2`fieldWidth);\n<when> _1 real, _2 String
 _1 TO _2  |-->    _2 := _1 ;\n
 _1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
 

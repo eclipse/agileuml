@@ -49,6 +49,8 @@ formula::
 Define _1 |-->
 Define _1 = _2 |-->\n\n  function double _1`operationName(_1`operationParameters)\n  { return _2; }
 Define _1 ~ _2 |--> 
+Define _1 : _2 |-->
+Define _1 : _2 = _3 |-->\n\n  function _2 _1`operationName(_1`operationParameters)\n  { return _3; }
 
 
 operationName::
@@ -101,15 +103,18 @@ _1 , _* |-->_1,_*`recurse
 
 
 type::
-Sequence ( _1 ) |-->Sequence(_1)  
-Set ( _1 ) |-->Set(_1)  
-OrderedSet ( _1 ) |-->OrderedSet(_1)  
-Bag ( _1 ) |-->Bag(_1)  
-Map ( _1 , _2 ) |-->Map(_1,_2) 
-Function ( _1 , _2 ) |-->Function(_1,_2) 
+Sequence ( _1 ) |-->Array[_1]  
+Set ( _1 ) |-->Collection[_1]  
+OrderedSet ( _1 ) |-->Array[_1]  
+Bag ( _1 ) |-->Array[_1]  
+Map ( _1 , _2 ) |-->Dictionary[_1,_2] 
+Function ( _1 , _2 ) |-->Func[_1,_2] 
 Ñ |-->int
 Ž |-->int
 ® |-->double
+boolean |-->bool
+String |-->string
+Date |-->OclDate
 _1 |-->_1
 
 
@@ -351,6 +356,13 @@ max ( _1 ) |-->(_1).Max(x => x)
 Binomial ( _1 ) |-->excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
 
 var ( _1 ) |-->_1.variance()
+Date ( _1 ) |-->OclDate.newOclDate_String(_1)
+Time ( _1 ) |-->OclDate.newOclDate_Time(_1)
+
+accumulatedInterest ( _1 ) |-->financeLib.accumulatedInterest(_1)
+Binomial ( _1 ) |-->excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
+bondPrice ( _1 ) |-->financeLib.bondPrice(_1)
+bondPriceClean ( _1 ) |-->financeLib.bondPriceClean(_1)
 
 _1 ( _2 ) |-->_1(_2)
 _1 ( ) |-->_1()
