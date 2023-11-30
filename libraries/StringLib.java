@@ -51,7 +51,7 @@ public class StringLib
   public static String padLeftWithInto(String s,String c,int n)
   { String result = "";
   
-    for (int i = 1; i < n - s.length(); i++)
+    for (int i = 0; i < n - s.length(); i++)
     { 
       result = result + c;
     }
