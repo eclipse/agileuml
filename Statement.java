@@ -409,6 +409,79 @@ abstract class Statement implements Cloneable
     return st;
   } // Other cases, for all other forms of statement. 
 
+  public static Statement tryInsertCloneDeclaration(Statement st,
+                              Expression expr, Type typ, Type et)
+  { if (st == null || expr == null) 
+    { return st; }
+
+    if (typ == null) 
+    { typ = new Type("OclAny", null); } 
+
+    String vname = 
+        Identifier.nextIdentifier("factored_expr");
+
+    CreationStatement dec = 
+      CreationStatement.newCreationStatement(vname,typ,expr);
+    dec.setElementType(et); 
+
+    Vector rdfr = expr.getVariableUses(); 
+ 
+    System.out.println(">>> Read frame of cloned expr " + expr + 
+                       " is " + rdfr); 
+
+    /* if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector newstats = new Vector(); 
+      Vector stats = sq.getStatements(); 
+      Vector precedingStats = new Vector(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Vector remainingStats = 
+            VectorUtil.subrange(stats,i+1,stats.size());
+          SequenceStatement remStat = 
+            new SequenceStatement(remainingStats); 
+          Vector wrfr = remStat.writeFrame(); 
+          System.out.println(">>> Write frame of " + remStat + 
+                       " is " + wrfr); 
+
+          if (VectorUtil.haveCommonElement(rdfr, wrfr))
+          { precedingStats.add(stat); } // no good, continue search
+          else 
+          { newstats.addAll(precedingStats); 
+            newstats.add(dec); 
+            newstats.addAll(remainingStats); 
+            SequenceStatement newsq = 
+              new SequenceStatement(newstats);
+            newsq.setBrackets(sq.hasBrackets());  
+            return newsq; 
+          }
+        }  
+      } 
+      return null; 
+    } */ 
+
+    Vector wrfr = st.writeFrame(); 
+    System.out.println(">>> Write frame of " + st + 
+                       " is " + wrfr); 
+    
+    for (int j = 0; j < rdfr.size(); j++) 
+    { String rv = rdfr.get(j) + ""; 
+      if (wrfr.contains(rv)) 
+      { return null; } 
+    } 
+
+    BasicExpression var = 
+      BasicExpression.newVariableBasicExpression(vname,typ); 
+
+    Statement newstat = st.substituteEq(expr + "", var); 
+
+    Vector newstats = new Vector(); 
+    newstats.add(dec); 
+    newstats.add(newstat);
+    return new SequenceStatement(newstats); 
+  }  
+
   public static Vector getLocalDeclarations(Statement st)
   { // Local declarations that are not within a loop 
 
@@ -3284,7 +3357,8 @@ public void findClones(java.util.Map clones,
       { callpars = new Vector(); } 
       
       if (entity != null) 
-      { BehaviouralFeature op = entity.getDefinedOperation(callString); 
+      { BehaviouralFeature op = 
+          entity.getDefinedOperation(callString); 
         if (op != null) 
         { Expression post = op.getPost(); 
           Vector params = op.getParameters(); 
@@ -6889,7 +6963,10 @@ class SequenceStatement extends Statement
 
     Vector fstats = flattenSequenceStatement(); 
 
-    Vector substats = VectorUtil.allSubsegments(fstats,2); 
+    Vector substats = VectorUtil.allSubsegments(fstats,2);
+
+    System.out.println(">>> All subsegments = " + substats); 
+ 
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
       Statement sq = new SequenceStatement(subs); 
@@ -6926,6 +7003,9 @@ class SequenceStatement extends Statement
     // System.out.println(">>> Flatttended seq: " + fstats);
 
     Vector substats = VectorUtil.allSubsegments(fstats,2); 
+
+    System.out.println(">>> All subsegments = " + substats); 
+
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
       Statement sq = new SequenceStatement(subs); 

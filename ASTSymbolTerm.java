@@ -1046,6 +1046,13 @@ public class ASTSymbolTerm extends ASTTerm
     return null; 
   } 
 
+  public boolean cobolIsSigned()
+  { if ("S".equals(symbol))
+    { return true; }
+ 
+    return false; 
+  } 
+
   public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { Vector res = new Vector(); 
     return res; 

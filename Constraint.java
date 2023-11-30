@@ -138,6 +138,75 @@ public class Constraint extends ConstraintOrGroup
     { return new Constraint(new BasicExpression(true), inv); } 
   } 
 
+  public static Constraint getDataConstraint(String dname, 
+           Type typ, int intwidth, int fracwidth, 
+           boolean isSigned) 
+  { if (typ == null) 
+    { return null; } 
+
+    if ("int".equals(typ.getName()))
+    { // 0 <= dname & dname <= 9999..999 for intwidth 9's
+      BasicExpression dvar = 
+        BasicExpression.newAttributeBasicExpression(
+                                           dname,typ);
+      Expression conj1 = 
+        new BinaryExpression("<=", new BasicExpression(0), 
+                             dvar); 
+      int n_nines = 9; 
+      for (int i = 2; i <= intwidth; i++) 
+      { n_nines = n_nines*10 + 9; }
+ 
+      if (isSigned)
+      { conj1 = 
+          new BinaryExpression("<=", 
+                new BasicExpression(-n_nines), 
+                dvar);
+      } 
+
+      Expression conj2 = 
+        new BinaryExpression("<=", dvar, 
+                             new BasicExpression(n_nines));  
+      Expression conj = new BinaryExpression("&", conj1, conj2); 
+      return new Constraint(new BasicExpression(true), conj); 
+    } 
+
+    if ("double".equals(typ.getName()))
+    { // 0 <= dname & dname <= 9*9.9* for intwidth and
+      // fracwidth 9's
+
+      BasicExpression dvar = 
+        BasicExpression.newAttributeBasicExpression(
+                                           dname,typ);
+      Expression conj1 = 
+        new BinaryExpression("<=", new BasicExpression(0.0), 
+                             dvar); 
+
+      int n_nines = 0; 
+      for (int i = 1; i <= intwidth; i++) 
+      { n_nines = n_nines*10 + 9; }
+
+      double m_nines = 0.0; 
+      for (int i = 1; i <= fracwidth; i++) 
+      { m_nines = m_nines + 9/Math.pow(10,i); }
+
+ 
+      if (isSigned)
+      { conj1 = 
+          new BinaryExpression("<=", 
+                new BasicExpression(-(n_nines + m_nines)), 
+                dvar);
+      } 
+
+      Expression conj2 = 
+        new BinaryExpression("<=", dvar, 
+              new BasicExpression(n_nines + m_nines));  
+      Expression conj = new BinaryExpression("&", conj1, conj2); 
+      return new Constraint(new BasicExpression(true), conj); 
+    } 
+
+    return null; 
+  } 
+
   public Constraint(Expression scond, Expression succdt)
   { Expression ante = scond; 
     succ = succdt; 

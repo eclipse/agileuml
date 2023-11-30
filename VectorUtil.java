@@ -192,6 +192,18 @@ class VectorUtil
     return v1.containsAll(v2) && v2.containsAll(v1); 
   } 
 
+  public static boolean allElementsEqual(Vector v)
+  { if (v.size() == 0) { return true; } 
+
+    Object v1 = v.get(0); 
+    for (int i = 1; i < v.size(); i++) 
+    { Object vx = v.get(i); 
+      if (v1.equals(vx)) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  } 
 
   public static Vector removeByName(final Vector vs, final String s)
   { Vector res = new Vector(); 
@@ -464,8 +476,8 @@ class VectorUtil
 
     for (int i = n; i < mx; i++) 
     { // get all segments of length i
-      for (int j = 0; j+i < mx; j++) 
-      { res.add(subrange(v,j,j+i)); } 
+      for (int j = 0; j+i-1 < mx; j++) 
+      { res.add(subrange(v,j,j+i-1)); } // length i 
     } 
     return res; 
   } 

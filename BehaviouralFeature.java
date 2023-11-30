@@ -1269,6 +1269,7 @@ public class BehaviouralFeature extends ModelElement
 
         String testcode = 
           "  def " + nme + "_mutation_tests_" + j + "(_self, _counts, _totals) :\n" + 
+          "    pass\n" + 
           code + "\n" + 
           "    try :\n" + 
           call +    

@@ -30,7 +30,8 @@ public class TestParameters
 
   /* Settings for flaw/technical debt detection */ 
 
-  public static int cloneSizeLimit = 10; 
+  public static int cloneSizeLimit = 6;
+  public static int statementNestingLimit = 5;  
   public static int cyclomaticComplexityLimit = 10; 
   public static int numberOfDataFeaturesLimit = 20; 
   public static int numberOfOperationsLimit = 15; 

@@ -2894,6 +2894,13 @@ public class ASTBasicTerm extends ASTTerm
     return null; 
   } 
 
+  public boolean cobolIsSigned()
+  { if ("S".equals(value))
+    { return true; }
+ 
+    return false; 
+  } 
+
   public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { // Each immediately higher level item becomes an attribute
     // of container. If composite, it also becomes a class

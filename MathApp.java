@@ -483,16 +483,18 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       // Also, translate to OCL, translate to Matlab
 
       menu.setToolTipText(
-              "Translate to Matlab, OCL, Mamba, code");
+              "Translate to OCL, Mamba, code");
 
       javax.swing.Action km3Action = new KM3Action(); 
       menu.add(km3Action); 
 
-      javax.swing.Action matlabAction = new MatlabAction(); 
-      menu.add(matlabAction); 
+      // javax.swing.Action matlabAction = new MatlabAction(); 
+      // menu.add(matlabAction); 
 
       javax.swing.Action mambaAction = new MambaAction(); 
       menu.add(mambaAction); 
+
+      menu.addSeparator(); 
 
       javax.swing.Action toJavaAction = new Translate2JavaAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);

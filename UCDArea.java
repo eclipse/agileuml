@@ -3241,7 +3241,6 @@ public class UCDArea extends JPanel
     int uccount = useCases.size(); 
     System.out.println(">>> There are " + uccount + " total use cases"); 
 	
-
     int tcount = 0; 
     int trcount = 0; 
     int totalsize = 0; 
@@ -3257,7 +3256,8 @@ public class UCDArea extends JPanel
         if (ucsize > 1000) 
         { lowcost = lowcost + 90*(ucsize/1000 - 1); } 
 
-        int ucelementscount = uc.ruleCount() + uc.operationsCount(); 
+        int ucelementscount = 
+              uc.ruleCount() + uc.operationsCount(); 
 
         if (ucelementscount > 20) 
         { lowcost = lowcost + 90*((ucelementscount - 10)/10); } 
@@ -14399,7 +14399,7 @@ public void produceCUI(PrintWriter out)
 
     EtlModule mr = c.parseEtl(entities,types); 
     if (mr == null) 
-    { System.err.println("Invalid ETL syntax"); 
+    { System.err.println("!! ERROR: Invalid ETL syntax"); 
       return; 
     } 
 
@@ -27571,7 +27571,7 @@ public void produceCUI(PrintWriter out)
     java.util.Map cobolContext = new java.util.HashMap();  
     Vector auxents = 
        yy1.cobolDataDefinitions(cobolContext, 
-                               cobolinvs); 
+                                cobolinvs); 
 
     String progName = 
         (String) cobolContext.get("programName"); 

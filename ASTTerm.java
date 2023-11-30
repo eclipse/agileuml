@@ -4158,6 +4158,8 @@ public abstract class ASTTerm
 
   public abstract Type cobolDataType(); 
 
+  public abstract boolean cobolIsSigned(); 
+
   public static String coefficientOfPower(ASTTerm var, int n, 
                                           ASTTerm expr)
   { // coefficient of n-th power of v in expr, n > 0

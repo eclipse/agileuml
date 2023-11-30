@@ -1377,7 +1377,8 @@ class BasicExpression extends Expression
   } // d.isDeleted not valid syntax.
 
   public boolean isPrimitive()  // A number, boolean or enumeration value
-  { if (umlkind == ROLE || umlkind == CLASSID) { return false; } 
+  { if (umlkind == ROLE || umlkind == CLASSID) 
+    { return false; } 
     // if (arrayIndex != null) 
     // { return (elementType != null && elementType.isPrimitive()); } 
 
@@ -1437,10 +1438,12 @@ class BasicExpression extends Expression
     }  // not prim if objectRef multiple and data : {sqr, sqrt, floor, exp, sqrt,
        // abs, toLower, toUpper
 
-    if (umlkind == VALUE || umlkind == VARIABLE || umlkind == CONSTANT)
+    if (umlkind == VALUE || umlkind == VARIABLE || 
+        umlkind == CONSTANT)
     { return Type.primitiveType(type); } 
 
-    if (umlkind == ATTRIBUTE || umlkind == QUERY || umlkind == UPDATEOP)
+    if (umlkind == ATTRIBUTE || umlkind == QUERY || 
+        umlkind == UPDATEOP)
     { // Look it up
 
       if (objectRef == null)
@@ -1463,6 +1466,7 @@ class BasicExpression extends Expression
    
        // if objectRef not multiple
     }
+
     return false;
   }
 
@@ -7876,11 +7880,11 @@ class BasicExpression extends Expression
         "OclDate".equals(objectRef + ""))
     { return "Ocl.getTime()"; } 
 
-    if (data.startsWith("new"))
+    /* if (data.startsWith("new"))
     { String createdClass = data.substring(3); 
       if ("OclDate".equals(createdClass))
       { return "new Date()"; }
-    } 
+    } */ 
 
     if (data.equals("formattedString") && 
         "StringLib".equals(objectRef + ""))

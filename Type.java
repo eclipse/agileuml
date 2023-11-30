@@ -176,7 +176,7 @@ public class Type extends ModelElement
     if (exceptions2java.get(tname) != null) 
     { return true; } 
     return false; 
-  } // MathLib, Excel, OclRegex, 
+  } // MathLib, FinanceLib, Excel, OclRegex, 
     // StringLib and OclComparator are static
 
   public static boolean isDefinedType(Type t) 
@@ -2655,10 +2655,15 @@ public class Type extends ModelElement
         tname.equals("long") || tname.equals("boolean"))
     { return true; } 
 
-    if (tname.equals("String") || tname.equals("Set") || tname.equals("Sequence"))
+    if (tname.equals("String") || tname.equals("Set") || 
+        tname.equals("Sequence"))
     { return false; }
 
-    if (tname.equals("Map") || tname.equals("Function")) { return false; } 
+    if (tname.equals("Map") || tname.equals("Function")) 
+    { return false; } 
+
+    if (Type.isOclLibraryType(tname))
+    { return false; } 
 
     if (t.getEntity() != null)  { return false; } 
 
@@ -3890,7 +3895,7 @@ public class Type extends ModelElement
     { return "Class"; } 
 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "OclDate"; } 
 
     String jex = (String) exceptions2java.get(nme); 
     if (jex != null) 
@@ -3979,7 +3984,7 @@ public class Type extends ModelElement
     { return "Class"; } 
 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "OclDate"; } 
 
     String jex = (String) exceptions2java.get(nme); 
     if (jex != null) 
@@ -4066,7 +4071,7 @@ public class Type extends ModelElement
     { return "Object"; } 
 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "OclDate"; } 
 
     if (nme.equals("OclType"))
     { return "Class"; } 
@@ -4125,7 +4130,7 @@ public class Type extends ModelElement
     { return "Class"; } 
 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "OclDate"; } 
 
     if (typ.entity != null) 
     { return typ.entity.getCompleteName(); } 
@@ -4192,7 +4197,7 @@ public class Type extends ModelElement
     { return "Class"; } 
 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "Date"; } // OclDate 
 
     String jex = (String) exceptions2java.get(nme); 
     if (jex != null) 
@@ -4318,7 +4323,7 @@ public class Type extends ModelElement
     if (nme.equals("OclType"))
     { return "Class"; } 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "OclDate"; } 
  
     if (values != null) { return "Integer"; } 
     return nme; 
@@ -4383,7 +4388,7 @@ public class Type extends ModelElement
     if (nme.equals("OclType"))
     { return "Class"; } 
     if (nme.equals("OclDate"))
-    { return "Date"; } 
+    { return "Date"; } // OclDate
  
     return nme; 
   } // For enumerations, would be better to represent as Java enums. 

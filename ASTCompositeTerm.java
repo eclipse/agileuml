@@ -355,9 +355,9 @@ public class ASTCompositeTerm extends ASTTerm
 
       String rname = (String) rnames.get(0); 
 
-      JOptionPane.showMessageDialog(null, this + 
+     /* JOptionPane.showMessageDialog(null, this + 
               " Basic data item: " + fld + " in " + rname, 
-              " ", JOptionPane.INFORMATION_MESSAGE);
+              " ", JOptionPane.INFORMATION_MESSAGE); */ 
 
       if (ASTTerm.cobolAmbiguousDataNames.contains(fld))
       { ASTTerm newname = 
@@ -381,9 +381,9 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm rec = (ASTTerm) terms.get(1); 
       String ename = rec.literalForm(); 
 
-      JOptionPane.showMessageDialog(null, this + 
+      /* JOptionPane.showMessageDialog(null, this + 
               " Record data: " + ename, 
-              " ", JOptionPane.INFORMATION_MESSAGE);
+              " ", JOptionPane.INFORMATION_MESSAGE); */ 
 
       Vector newterms = new Vector();
       newterms.add(terms.get(0)); 
@@ -41338,6 +41338,36 @@ public class ASTCompositeTerm extends ASTTerm
     return stringType; 
   } 
 
+  public boolean cobolIsSigned()
+  { if ("dataPictureClause".equals(tag))
+    { // (PIC | PICTURE) IS? pictureString
+
+      int sze = terms.size(); 
+      ASTTerm ptrm = (ASTTerm) terms.get(sze-1); 
+      System.out.println(">> " + ptrm + " is signed: " + ptrm.cobolIsSigned()); 
+      return ptrm.cobolIsSigned(); 
+    } 
+
+    if ("pictureString".equals(tag))
+    { boolean res = false; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        boolean bb = tt.cobolIsSigned();
+        if (bb == true) 
+        { return true; }
+      } 
+
+      return res; 
+    } 
+
+    if ("pictureChars".equals(tag))
+    { ASTTerm val = (ASTTerm) terms.get(0); 
+      return "S".equals(val.literalForm()); 
+    }   
+
+    return false; 
+  } 
+
   public int cobolOccursTimes()
   { if ("dataOccursClause".equals(tag))
     { // OCCURS integerLiteral dataOccursTo? TIMES? 
@@ -41582,6 +41612,7 @@ public class ASTCompositeTerm extends ASTTerm
           int fractwidth = pictureClause.cobolFractionWidth();
           Type typ = pictureClause.cobolDataType();
           int wdth = pictureClause.cobolDataWidth();  
+          boolean isSigned = pictureClause.cobolIsSigned();  
           
           ASTTerm t2 = (ASTTerm) terms.get(1); 
           if (t2.getTag().equals("dataName"))
@@ -41662,12 +41693,14 @@ public class ASTCompositeTerm extends ASTTerm
             typ.setElementType(elemT); 
           }  
 
+          boolean isSigned = pictureClause.cobolIsSigned();  
           integerWidth = pictureClause.cobolIntegerWidth(); 
           fractionalWidth = 
               pictureClause.cobolFractionWidth(); 
 
           JOptionPane.showMessageDialog(null, 
              "Type of " + fieldName + " is " + typ + 
+             " Signed: " + isSigned + 
              " Width: " + wdth + " " + integerWidth + " " + 
              fractionalWidth, 
              "", 
@@ -41985,13 +42018,14 @@ public class ASTCompositeTerm extends ASTTerm
             }  
           } 
 
-          JOptionPane.showMessageDialog(null, 
+        /*  JOptionPane.showMessageDialog(null, 
                  fieldName + 
                  " is subrecord of " + ownername + 
                  " from " + startPos, 
                           "", 
                           JOptionPane.INFORMATION_MESSAGE);
-         
+        */
+ 
           context.put("container", newent); 
           context.put("previousLevel", new Integer(levelNumber));
           context.put("startPosition", new Integer(1));  
@@ -42187,6 +42221,7 @@ public class ASTCompositeTerm extends ASTTerm
             int fractwidth = 
                        pictureClause.cobolFractionWidth();
             Type typ = pictureClause.cobolDataType();  
+            boolean isSigned = pictureClause.cobolIsSigned();  
           
             ASTTerm t2 = (ASTTerm) ctrm.terms.get(1); 
             if (t2.getTag().equals("dataName"))
@@ -42202,16 +42237,25 @@ public class ASTCompositeTerm extends ASTTerm
 
               JOptionPane.showMessageDialog(null, 
                 "Type of " + fname + " is " + typ + 
-                " Width " + wdth + 
-                " Integer width " + intwidth + 
-                " Fract width " + fractwidth, 
+                " Signed: " + isSigned + 
+                " Width: " + wdth + 
+                " Integer width: " + intwidth + 
+                " Fract width: " + fractwidth, 
                 "", 
                 JOptionPane.INFORMATION_MESSAGE);
 
               if (typ != null) 
               { String dval = typ.defaultValue(); 
                 ASTTerm.setTaggedValue(fname, "defaultValue", 
-                                       dval);  
+                                       dval); 
+                Constraint consV = 
+                   Constraint.getDataConstraint(fname,
+                                 typ,intwidth,fractwidth,
+                                 isSigned); 
+                if (consV != null)
+                { consV.ownerName = progname;  
+                  invs.add(consV);  
+                } 
               } 
             }
             else 
@@ -42290,7 +42334,8 @@ public class ASTCompositeTerm extends ASTTerm
           if (pictureClause != null) 
           { wdth = pictureClause.cobolDataWidth() * multiplicity; 
             typ = pictureClause.cobolDataType();  
-
+            boolean isSigned = pictureClause.cobolIsSigned();  
+          
             if (multiplicity > 1) 
             { Type elemT = typ; 
               typ = new Type("Sequence", null);
@@ -42309,6 +42354,7 @@ public class ASTCompositeTerm extends ASTTerm
             
             JOptionPane.showMessageDialog(null, 
                "Type of " + fieldName + " is " + typ + 
+               " Signed: " + isSigned + 
                " Width: " + wdth + 
                " Integer width: " + integerWidth + 
                " Fraction width: " + fractionalWidth + 
@@ -42334,7 +42380,15 @@ public class ASTCompositeTerm extends ASTTerm
               ASTTerm.setTaggedValue(
                                    fieldName, "defaultValue", 
                                    dval);  
-               
+              Constraint consV = 
+                Constraint.getDataConstraint(fieldName,
+                      typ,integerWidth,fractionalWidth, 
+                      isSigned); 
+
+              if (multiplicity == 1 && consV != null)
+              { consV.ownerName = progname;  
+                invs.add(consV);  
+              }
             }   
 
             int dIndex = fieldName.lastIndexOf("$"); 
@@ -42778,7 +42832,7 @@ public class ASTCompositeTerm extends ASTTerm
             cent.addAttribute(att); 
             ownername = 
                  cname.substring(0,cname.length()-6);
-             
+            /*
             JOptionPane.showMessageDialog(null, 
                  fieldName + 
                  " is subrecord of " + ownername + 
@@ -42786,7 +42840,7 @@ public class ASTCompositeTerm extends ASTTerm
                  " multiplicity " + multiplicity, 
                           "", 
                           JOptionPane.INFORMATION_MESSAGE);
-         
+            */ 
        // context.put("container", newent); 
        // context.put("previousLevel", new Integer(levelNumber));
        // context.put("startPosition", new Integer(1));

@@ -509,6 +509,15 @@ public class GUIBuilder
           "      }\n" + 
           "      System.out.println();\n";  
         } 
+        else if (bf.isZeroArgument())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+          "      for (int _i = 0; _i < " + es + "_instances; _i++)\n" + 
+          "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
+          "        _ex." + bfname + "();\n" + 
+          "      }\n" + 
+          "      System.out.println();\n";  
+        }
       }
     } 
 
@@ -558,15 +567,15 @@ public class GUIBuilder
     //         "      cont.saveXSI(\"xsi.txt\"); \n" + 
          "      return; } \n";
 
-    res = res + "    JButton loadCSVButton = new JButton(\"Mutation Tests\");\n";
+    res = res + "    JButton loadCSVButton = new JButton(\"Execute Tests\");\n";
 
     cons = cons + 
          "    panel.add(loadCSVButton);\n" +
          "    loadCSVButton.addActionListener(this);\n";
                   
     aper = aper +
-         "    if (\"Mutation Tests\".equals(cmd))\n" + 
-         "    { System.err.println(\"Mutation tests\");\n" +
+         "    if (\"Execute Tests\".equals(cmd))\n" + 
+         "    { System.err.println(\"Executing tests\");\n" +
          mutationTestsOp +  
          "      return;\n" + 
          "    } \n";
@@ -783,13 +792,13 @@ public class GUIBuilder
               if (elemTyp == null) { } 
               else if ("int".equals(elemTyp.getName()))
               { testscript = testscript + 
-                      indent + "\n" + 
-				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
-				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
-				indent + "  if (" + indexvar + " < 5)\n" + 
-				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
-				indent + "  if (" + indexvar + " < 3)\n" + 
-				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 5)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
               } 
               else if ("long".equals(elemTyp.getName()) || 
                        "double".equals(elemTyp.getName()) ||
@@ -1577,15 +1586,15 @@ public class GUIBuilder
          "    { cont.saveModel(\"out.txt\");  \n" + 
          "      return; } \n";  */ 
 
-    res = res + "    JButton loadCSVButton = new JButton(\"Mutation Tests\");\n";
+    res = res + "    JButton loadCSVButton = new JButton(\"Execute Tests\");\n";
 
     cons = cons + 
          "    panel.add(loadCSVButton);\n" +
          "    loadCSVButton.addActionListener(this);\n";
                   
     aper = aper +
-         "    if (\"Mutation Tests\".equals(cmd))\n" + 
-         "    { System.err.println(\"Mutation tests\");\n" +
+         "    if (\"Execute Tests\".equals(cmd))\n" + 
+         "    { System.err.println(\"Executing tests\");\n" +
          mutationTestsOp +  
          "      return;\n" + 
          "    } \n";
@@ -2210,15 +2219,15 @@ public class GUIBuilder
          "      return;\n" + 
          "    } \n";
 
-    res = res + "    JButton loadCSVButton = new JButton(\"Mutation Tests\");\n";
+    res = res + "    JButton loadCSVButton = new JButton(\"Execute Tests\");\n";
 
     cons = cons + 
          "    tPanel.add(loadCSVButton);\n" +
          "    loadCSVButton.addActionListener(this);\n";
                   
     aper = aper +
-         "    if (\"Mutation Tests\".equals(cmd))\n" + 
-         "    { System.err.println(\"Mutation tests\");\n" +
+         "    if (\"Execute Tests\".equals(cmd))\n" + 
+         "    { System.err.println(\"Execution tests\");\n" +
          mutationTestsOp +  
          "      return;\n" + 
          "    } \n";
@@ -2312,7 +2321,7 @@ public class GUIBuilder
       if (me instanceof UseCase) 
       { UseCase uc = (UseCase) me;
         if (uc.isDerived()) { continue; } 
-		String indent = "    "; 
+        String indent = "    "; 
         
 		// String checkCode = uc.getQueryCode("Java4", types, entities); 
         String checkCode = ""; 

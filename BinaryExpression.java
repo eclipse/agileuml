@@ -12531,7 +12531,7 @@ public boolean conflictsWithIn(String op, Expression el,
     { String ll = left.unwrap(lqf); 
       res = ll + " " + operator + " " + rqf; 
     } 
-    else  // includes case of Strings 
+    else  // includes case of Strings and dates 
     { res = "(" + lqf + ".compareTo(" + rqf + ") " + operator + " 0)"; } 
     // System.out.println("Comparitor query form: " + this + " is " + res); 
     return res;     
