@@ -27616,7 +27616,7 @@ public void produceCUI(PrintWriter out)
         if (ent != null) 
         { cons.setOwner(ent);
           ent.addInvariant(cons);  
-          System.out.println(cons); 
+          System.out.println(">> Constraint: " + cons + " for entity " + ent); 
         }
       }  
     } 

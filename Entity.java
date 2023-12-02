@@ -1182,6 +1182,28 @@ public class Entity extends ModelElement implements Comparable
   { Attribute att = new Attribute(nme, t, ModelElement.INTERNAL); 
     addAttribute(att); 
   } 
+
+  // For COBOL: 
+  public void setAttributeType(Attribute att, Type t) 
+  { String nme = att.getName(); 
+    Attribute attx = 
+      (Attribute) ModelElement.lookupByName(nme,
+                                            attributes); 
+    if (attx == null) 
+    { attx = new Attribute(nme, t, ModelElement.INTERNAL); 
+      addAttribute(attx); 
+    } 
+    else 
+    { attx.setType(t); }
+
+    Expression expr = attx.getInitialExpression(); 
+    if (expr == null || ("" + expr).equals("\"\""))
+    { String defValue = t.defaultValue(); 
+      Expression defExpr = new BasicExpression(defValue); 
+      defExpr.setType(t); 
+      attx.setInitialExpression(defExpr); 
+    }  
+  } 
  
   public void addAttribute(Attribute att)
   { if (att == null || attributes.contains(att)) 
@@ -6106,6 +6128,7 @@ public class Entity extends ModelElement implements Comparable
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
         int awidth = att.getWidth(); 
+        Type atype = att.getType(); 
         int amult = att.getMultiplicity();   
         String aname = att.getName(); 
 
@@ -6156,12 +6179,20 @@ public class Entity extends ModelElement implements Comparable
           else 
           { Vector exprs0 = new Vector();
             exprs0.add(avalue);  
-            exprs0.add(new BasicExpression(awidth));
+            Expression widthExpr = new BasicExpression(awidth); 
+            exprs0.add(widthExpr);
           
             expr =
               BasicExpression.newStaticCallBasicExpression(
-                "leftAlignInto", "StringLib", exprs0); 
+                "leftAlignInto", "StringLib", exprs0);
+            atype.setFixedSize(true, widthExpr);  
           } 
+
+          JOptionPane.showMessageDialog(null, 
+             ">> Attribute " + att + " Type: " + atype + 
+             " Type is fixed size: " + atype.hasFixedSize(), 
+             "", 
+             JOptionPane.INFORMATION_MESSAGE);
         } 
  
         sumExpr = 
@@ -6440,20 +6471,20 @@ public class Entity extends ModelElement implements Comparable
         } 
       } 
     }  
-  } 
+  } // These are fixed-size sequences. 
 
   public void addFillerAttributes(Entity root)
   { // For each FILLER, add to the CSTL-generated main class
+    // For each other String attribute, make its type fixed size
 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String aname = att.getName(); 
-        
+      int wdth = att.getWidth(); 
+          
       if (aname.startsWith("FILLER_"))
-      { int wdth = att.getWidth(); 
-        String spacesString = ""; 
-        for (int j = 0; j < wdth; j++) 
-        { spacesString = spacesString + " "; } 
+      { String spacesString = 
+          AuxMath.nCopiesOfString(" ", wdth);  
         Expression fillerInit = 
           BasicExpression.newValueBasicExpression(
                            "\"" + spacesString + "\"");
@@ -6463,6 +6494,11 @@ public class Entity extends ModelElement implements Comparable
         att.setInitialExpression(fillerInit); 
         root.addAttribute(att);  
       }
+      else if (att.isString())
+      { Type typ = att.getType(); 
+        typ.setFixedSize(true, new BasicExpression(wdth)); 
+        root.setAttributeType(att,typ); 
+      } 
     }   
   } 
 

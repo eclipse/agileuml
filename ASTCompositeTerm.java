@@ -41714,7 +41714,11 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setTaggedValue(fieldName, "width", 
                                      "" + wdth);       
           if (typ != null) 
-          { String dval = typ.defaultValue(); 
+          { if ("String".equals(typ.getName()))
+            { typ.setFixedSize(true, 
+                               new BasicExpression(wdth)); 
+            }
+            String dval = typ.defaultValue(); 
             ASTTerm.setTaggedValue(fieldName, "defaultValue", 
                                    dval);  
           }   
@@ -41908,6 +41912,10 @@ public class ASTCompositeTerm extends ASTTerm
             Attribute att = 
                 new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL); 
+            if (typ != null && "String".equals(typ.getName()))
+            { typ.setFixedSize(true, 
+                               new BasicExpression(wdth)); 
+            }
             att.setWidth(wdth); 
             att.setMultiplicity(multiplicity); 
 
@@ -42235,17 +42243,22 @@ public class ASTCompositeTerm extends ASTTerm
               ASTTerm.setTaggedValue(fname, "width", 
                                      "" + wdth);       
 
-              JOptionPane.showMessageDialog(null, 
+              /* JOptionPane.showMessageDialog(null, 
                 "Type of " + fname + " is " + typ + 
                 " Signed: " + isSigned + 
                 " Width: " + wdth + 
                 " Integer width: " + intwidth + 
                 " Fract width: " + fractwidth, 
                 "", 
-                JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.INFORMATION_MESSAGE); */ 
 
               if (typ != null) 
-              { String dval = typ.defaultValue(); 
+              { if ("String".equals(typ.getName()))
+                { typ.setFixedSize(true, 
+                               new BasicExpression(wdth)); 
+                }
+
+                String dval = typ.defaultValue(); 
                 ASTTerm.setTaggedValue(fname, "defaultValue", 
                                        dval); 
                 Constraint consV = 
@@ -42376,7 +42389,12 @@ public class ASTCompositeTerm extends ASTTerm
             ASTTerm.setTaggedValue(fieldName, "width", 
                                      "" + wdth);       
             if (typ != null) 
-            { String dval = typ.defaultValue(); 
+            { if ("String".equals(typ.getName()))
+              { typ.setFixedSize(true, 
+                               new BasicExpression(wdth)); 
+              }
+
+              String dval = typ.defaultValue(); 
               ASTTerm.setTaggedValue(
                                    fieldName, "defaultValue", 
                                    dval);  
@@ -42467,12 +42485,12 @@ public class ASTCompositeTerm extends ASTTerm
               Expression simpsubstr = 
                                  substr.simplify(); 
 
-              JOptionPane.showMessageDialog(null, 
+          /*    JOptionPane.showMessageDialog(null, 
                  progname + ":: " + fieldName + 
                  " = " + simpsubstr + "\n" + 
                  "Field width = " + fwdth, 
                  "", 
-                 JOptionPane.INFORMATION_MESSAGE);
+                 JOptionPane.INFORMATION_MESSAGE); */ 
 
               ASTTerm.setTaggedValue("" + simpsubstr, 
                                      "width", 

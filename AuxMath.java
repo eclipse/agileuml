@@ -3185,6 +3185,14 @@ public class AuxMath
          "(-" + b + " - †(" + b + "*" + b + " - 4*" + a + "*" + c + "))/(2*" + a + ")"; 
    } 
 
+   public static String nCopiesOfString(String x, int n)
+   { String res = ""; 
+     for (int i = 1; i <= n; i++) 
+     { res = res + x; } 
+     return res; 
+   } 
+
+
    public static void main(String[] args)
    { /* Vector mm1 = new Vector(); 
      mm1.add("3"); mm1.add("5"); 

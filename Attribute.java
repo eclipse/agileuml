@@ -6364,7 +6364,9 @@ public String iosDbiExtractOp(String ent, int i)
     return sim; 
   } 
       
-  public Vector testCases(String x, java.util.Map lowerBnds, java.util.Map upperBnds, Vector opTests)
+  public Vector testCases(String x, 
+    java.util.Map lowerBnds, 
+    java.util.Map upperBnds, Vector opTests)
   { Vector res = new Vector(); 
     if (type == null) 
     { return res; } 
@@ -6580,12 +6582,34 @@ public String iosDbiExtractOp(String ent, int i)
       opTests.add(attname + " = false;");
     }
     else if ("String".equals(t))
-    { res.add(nme + " = \"\""); 
-      res.add(nme + " = \" abc_XZ \"");
-      res.add(nme + " = \"#�$* &~@':\"");
-      opTests.add(attname + " = \"\";"); 
-      opTests.add(attname + " = \" abc_XZ \";");
-      opTests.add(attname + " = \"#�$* &~@':\";");
+    { JOptionPane.showMessageDialog(null, 
+             ">> Attribute " + this + " has fixed size: " + 
+             type.getFixedSize() + 
+             " Tests: " + res, 
+             "", 
+             JOptionPane.INFORMATION_MESSAGE);
+      if (type.hasFixedSize())
+      { Expression fs = type.getFixedSize(); 
+        int fsize = Expression.convertInteger(fs + ""); 
+        // an fsize blank plus 2 random strings of the size
+        String allSpaces = AuxMath.nCopiesOfString(" ", fsize); 
+        String random1 = ModelElement.randomString(fsize);
+        String random2 = ModelElement.randomString(fsize);
+        res.add(nme + " = \"" + allSpaces + "\""); 
+        res.add(nme + " = \"" + random1 + "\"");
+        res.add(nme + " = \"" + random2 + "\"");
+        opTests.add(attname + " = \"" + allSpaces + "\";"); 
+        opTests.add(attname + " = \"" + random1 + "\";");
+        opTests.add(attname + " = \"" + random2 + "\";");
+      } 
+      else 
+      { res.add(nme + " = \"\""); 
+        res.add(nme + " = \" abc_XZ \"");
+        res.add(nme + " = \"#�$* &~@':\"");
+        opTests.add(attname + " = \"\";"); 
+        opTests.add(attname + " = \" abc_XZ \";");
+        opTests.add(attname + " = \"#�$* &~@':\";");
+      }
     }
     else if (vs != null && vs.size() > 0) 
     { for (int j = 0; j < vs.size(); j++)   
@@ -7443,12 +7467,28 @@ public String iosDbiExtractOp(String ent, int i)
       opTests.add(attname + " = false;");
     }
     else if ("String".equals(t))
-    { res.add(nme + " = \"\""); 
-      res.add(nme + " = \" abc_XZ \"");
-      res.add(nme + " = \"#�$* &~@':\"");
-      opTests.add(attname + " = \"\";"); 
-      opTests.add(attname + " = \" abc_XZ \";");
-      opTests.add(attname + " = \"#�$* &~@':\";");
+    { if (type.hasFixedSize())
+      { Expression fs = type.getFixedSize(); 
+        int fsize = Expression.convertInteger(fs + ""); 
+        // an fsize blank plus 2 random strings of the size
+        String allSpaces = AuxMath.nCopiesOfString(" ", fsize); 
+        String random1 = ModelElement.randomString(fsize);
+        String random2 = ModelElement.randomString(fsize);
+        res.add(nme + " = \"" + allSpaces + "\""); 
+        res.add(nme + " = \"" + random1 + "\"");
+        res.add(nme + " = \"" + random2 + "\"");
+        opTests.add(attname + " = \"" + allSpaces + "\";"); 
+        opTests.add(attname + " = \"" + random1 + "\";");
+        opTests.add(attname + " = \"" + random2 + "\";");
+      } 
+      else 
+      { res.add(nme + " = \"\""); 
+        res.add(nme + " = \" abc_XZ \"");
+        res.add(nme + " = \"#�$* &~@':\"");
+        opTests.add(attname + " = \"\";"); 
+        opTests.add(attname + " = \" abc_XZ \";");
+        opTests.add(attname + " = \"#�$* &~@':\";");
+      }
     }
     else if (vs != null && vs.size() > 0) 
     { for (int j = 0; j < vs.size(); j++)   
@@ -7706,12 +7746,28 @@ public String iosDbiExtractOp(String ent, int i)
       opTests.add(attname + " = false;");
     }
     else if ("String".equals(t))
-    { res.add(nme + " = \"\""); 
-      res.add(nme + " = \" abc_XZ \"");
-      res.add(nme + " = \"#�$* &~@':\"");
-      opTests.add(attname + " = \"\";"); 
-      opTests.add(attname + " = \" abc_XZ \";");
-      opTests.add(attname + " = \"#�$* &~@':\";");
+    { if (type.hasFixedSize())
+      { Expression fs = type.getFixedSize(); 
+        int fsize = Expression.convertInteger(fs + ""); 
+        // an fsize blank plus 2 random strings of the size
+        String allSpaces = AuxMath.nCopiesOfString(" ", fsize); 
+        String random1 = ModelElement.randomString(fsize);
+        String random2 = ModelElement.randomString(fsize);
+        res.add(nme + " = \"" + allSpaces + "\""); 
+        res.add(nme + " = \"" + random1 + "\"");
+        res.add(nme + " = \"" + random2 + "\"");
+        opTests.add(attname + " = \"" + allSpaces + "\";"); 
+        opTests.add(attname + " = \"" + random1 + "\";");
+        opTests.add(attname + " = \"" + random2 + "\";");
+      } 
+      else 
+      { res.add(nme + " = \"\""); 
+        res.add(nme + " = \" abc_XZ \"");
+        res.add(nme + " = \"#�$* &~@':\"");
+        opTests.add(attname + " = \"\";"); 
+        opTests.add(attname + " = \" abc_XZ \";");
+        opTests.add(attname + " = \"#�$* &~@':\";");
+      } 
     }
     else if (vs != null && vs.size() > 0) 
     { for (int j = 0; j < vs.size(); j++)   
