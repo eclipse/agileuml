@@ -254,6 +254,8 @@ _1 & _2 |-->MathLib.bitwiseAnd(_1, _2)
 _1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
 _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 
+_1 _2 _3 |-->_1_2<when> _2`isBasicTypeTrailer true, _3 matches .value
+
 _1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 trailer
 
 _1 _2 |-->(_1.new_1()).initialise_2<when> _1 Class, _2 trailer
@@ -673,6 +675,18 @@ _1 |-->_1
 _1 : _2 |-->_1
 
 
+isBasicTypeTrailer::
+. _1 |-->true<when> _1 int
+. _1 |-->true<when> _1 real
+. _1 |-->true<when> _1 String
+. _1 |-->true<when> _1 boolean
+. _1 |-->false
+
+
+
+
+
+
 trailer::
 . count _1 |-->->count_1
 . index _1 |-->->indexOf_1 - 1
@@ -917,6 +931,29 @@ mathType::
 . _1 |-->OclAny
 . _1 _* |-->OclAny
 _1 |-->OclAny
+
+
+numpyType::
+. arange _1 |-->Sequence
+. shape _1 |-->Sequence
+. empty _1 |-->Sequence
+. empty_like _1 |-->Sequence
+. eye _1 |-->Sequence
+. identity _1 |-->Sequence
+. ones _1 |-->Sequence
+. ones_like _1 |-->Sequence
+. zeros _1 |-->Sequence
+. zeros_like _1 |-->Sequence
+. full _1 |-->Sequence
+. full_like _1 |-->Sequence
+. array _1 |-->Sequence
+. asarray _1 |-->Sequence
+. asanyarray _1 |-->Sequence
+. ascontiguousarray _1 |-->Sequence
+. asmatrix _1 |-->Sequence
+. copy _1 |-->Sequence
+. fromstring _1 |-->Sequence
+. linspace _1 |-->Sequence
 
 
 pickleTrailer::
@@ -1524,6 +1561,8 @@ asyncio _1 |-->OclProcess
 
 math _1 |-->_1`mathType
 re _1 |-->_1`reType
+np _1 |-->_1`numpyType
+numpy _1 |-->_1`numpyType
 
 _1 if _2 else _3 |-->_1`ocltype
 lambda _1 : _2 |-->Function
@@ -1804,7 +1843,7 @@ _1 |-->_1`classcontent<when> _1 compound_stmt
 
 _1 |-->_1`methodDefinition<when> _1 funcdef
 
-_1 _2 |-->  static attribute _1 : _2`ocltype _2;\n<when> _2 assign_part
+_1 _2 |-->  static attribute _1 : _2`ocltype _2;\n<when> _2 assign_part <action> _1 _2`ocltype
 
 _1 |-->
 _* |-->
