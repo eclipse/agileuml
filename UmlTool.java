@@ -10,9 +10,9 @@
 /* 
  * Classname : UmlTool
  * 
- * Version information : 2.2
+ * Version information : 2.3
  *
- * Date : January 2023
+ * Date : December 2023
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -4327,7 +4327,7 @@ public void findPlugins()
       return; 
     } 
 
-    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.2");
+    window.setTitle("AgileUML Toolset, Eclipse Incubation Project Version 2.3");
     window.setControllerName("Controller"); 
     window.setSize(500, 400);
     window.setVisible(true);   

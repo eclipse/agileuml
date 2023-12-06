@@ -224,6 +224,9 @@ public class CGCondition
     // If vv is ww`mf then evaluate ww`mf, if null then 
     // it is intended as stereotype mf=stereo for ww.
 
+    // _* all stereo 
+    // sets the stereotype for each term in the _* list
+
     if (isSubstitute || isMatches) 
     { return; } 
 
@@ -281,6 +284,29 @@ public class CGCondition
 
     String varx = variable; 
     String mffeat = null; 
+
+    if (quantifier.equals("all") && "_*".equals(varx))
+    { // set each term in _* to the stereo 
+
+      int starind = vars.indexOf(varx);
+ 
+      if (starind >= 0)
+      { Object obj = eargs.get(starind); 
+        if (obj instanceof Vector) 
+        { Vector termlist = (Vector) obj; 
+          for (int p = 0; p < termlist.size(); p++) 
+          { if (termlist.get(p) instanceof ASTTerm)
+            { ASTTerm trm = (ASTTerm) termlist.get(p); 
+              ASTTerm.setType(trm,stereo);
+              ASTTerm.addStereo(trm,stereo);
+              System.out.println("***>> Applying action _* all " + stereo + " to: " + trm); 
+            }
+          }
+        }  
+      }
+      return;  
+    }
+
 
     Vector metafs = CGRule.metafeatures(variable); 
 

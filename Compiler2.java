@@ -2086,6 +2086,7 @@ public class Compiler2
   { // _i v
     // _i not v
     // e / x
+    // _* all v
 
     Vector conds = new Vector();
     Compiler2 newc = new Compiler2(); 
@@ -2106,6 +2107,13 @@ public class Compiler2
         expectVar = true; 
         expectStereo = false; 
       } 
+      else if (se.equals("_") && i + 1 < lexs.size() && 
+               "*".equals(lexs.get(i+1) + ""))
+      { cg.setVariable("_*"); 
+        i++; 
+        expectVar = false; 
+        expectStereo = true;
+      } 
       else if (se.equals("not"))
       { cg.setNegative();
         expectVar = false; 
@@ -2113,6 +2121,11 @@ public class Compiler2
       } 
       else if (se.equals("/"))
       { cg.setSubstitute();
+        expectVar = false; 
+        expectStereo = true;
+      } 
+      else if (se.equals("all"))
+      { cg.setUniversal(); 
         expectVar = false; 
         expectStereo = true;
       } 
@@ -2136,7 +2149,7 @@ public class Compiler2
         expectStereo = false; 
       } 
 
-      System.out.println(se + " " + expectVar + " " + expectStereo + " " + cg); 
+      // System.out.println(se + " " + expectVar + " " + expectStereo + " " + cg); 
     }
 
     conds.add(cg); 

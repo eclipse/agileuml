@@ -11,9 +11,9 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 2.2
+ * Version information : 2.3
  *
- * Date :  January 2023
+ * Date :  December 2023
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them

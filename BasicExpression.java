@@ -3632,9 +3632,9 @@ class BasicExpression extends Expression
       { context.add(0,objectRef.type.getEntity(entities)); }
       else 
       { System.err.println("! Warning: Cannot locate class of " + objectRef); 
-        JOptionPane.showMessageDialog(null, 
+        /* JOptionPane.showMessageDialog(null, 
            "Warning!: Cannot locate class of " + objectRef, 
-           "Semantic error", JOptionPane.ERROR_MESSAGE);
+           "Semantic error", JOptionPane.ERROR_MESSAGE); */ 
       } 
     }
     else // objectRef == null
@@ -5427,8 +5427,8 @@ class BasicExpression extends Expression
  
     if (context.size() == 0)
     { if (entity == null) 
-      { System.out.println(">> No owning class found for " + this);
-        System.out.println();  
+      { // System.out.println(">> No owning class found for " + this);
+        // System.out.println();  
         //  + 
         //         " -- it must be a local variable/parameter");
         // System.out.println(">> Or static feature/global use case"); 
@@ -7892,6 +7892,11 @@ class BasicExpression extends Expression
       String pqf = par.queryFormJava7(env,local); 
       String cmd = "(new Object() { public String call(Object _x) { return " + Expression.formattedString(pqf) + "; } }).call(this)";
       return cmd; 
+    } 
+
+    if (data.equals("OclFile") && arrayIndex != null)
+    { String ind = arrayIndex.queryFormJava7(env,local); 
+      return "OclFile.OclFile_index.get(" + ind + ")"; 
     } 
 
     if (umlkind == VALUE || umlkind == CONSTANT)
