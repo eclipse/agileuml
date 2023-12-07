@@ -1,0 +1,142 @@
+package matrixlib { 
+
+
+class MatrixLib { 
+
+  static query rowMult(s : Sequence(double), m : Sequence(Sequence(double))) : Sequence(double)  
+  pre: true 
+  post: result = Integer.subrange(1, s.size)->collect( i | Integer.Sum(1, m.size, k, s[k]*(m[k]->at(i))));
+
+   static query matrixMultiplication(m1: Sequence(Sequence(double)), m2 : Sequence(Sequence(double))) : Sequence(Sequence(double))
+   pre: true
+   post: result = m1->collect( row | MathLib.rowMult(row, m2) );
+
+  static query subRows(m : Sequence(Sequence(double)), s : Sequence(int)) : Sequence(Sequence(double)) 
+  pre: true
+  post: result = s->select( i | 1 <= i & i <= m.size )->collect( j | m[j] );
+
+ static query shape(x : OclAny) : Sequence(int)
+ pre: true
+ post: true
+ activity: 
+    var res : Sequence(int) := Sequence{} ; 
+    if x->oclIsTypeOf(Sequence)
+    then 
+      var sq : Sequence(OclAny) := x->oclAsType(Sequence) ; 
+      res := Sequence{ sq->size() } ; 
+      if sq->size() > 0 
+      then 
+        res := res->union(MatrixLib.shape(sq->at(1)))
+      else 
+        return res
+    else 
+      return res ; 
+    return res;
+
+  static query setSingleValue(sh : Sequence(int), x : double) : Sequence(OclAny)
+  pre: true 
+  post: true
+  activity: 
+    if sh->size() = 0 
+    then 
+      return Sequence{}
+    else skip ; 
+
+    if sh->size() = 1 
+    then 
+      return Integer.subrange(1,sh->at(1))->collect(x)
+    else skip ; 
+      
+    var res : Sequence(OclAny) ; 
+    res := Integer.subrange(1,sh->at(1))->collect(MatrixLib.setSingleValue(sh->tail(), x)) ; 
+    return res; 
+
+  static query setValues(sq : Sequence(double), sh : Sequence(int)) : Sequence(OclAny)
+  pre: true 
+  post: true
+  activity: 
+    if sh->size() = 0 
+    then 
+      return Sequence{}
+    else skip ; 
+
+    if sh->size() = 1 
+    then 
+      return sq.subrange(1,sh->at(1))
+    else skip ; 
+      
+    var res : Sequence(OclAny) := Sequence{} ; 
+    var prod : int := sh->tail()->prd() ; 
+
+    for i : Integer.subrange(1,sh->at(1))
+    do 
+      (var rowi : Sequence(double) := 
+         MatrixLib.setValues(sq.subrange(1 + prod*(i-1), prod*i), sh->tail()) ; 
+       res := res->append(rowi) ) ;
+ 
+    return res; 
+
+  static query identityMatrix(n : int) : Sequence(Sequence(double))
+  pre: true 
+  post: 
+    result = Integer.subrange(1,n)->collect( i | Integer.subrange(1,n)->collect( j | if i = j then 1.0 else 0.0 endif ) ); 
+
+  static query flattenMatrix(m : Sequence(OclAny)) : Sequence(double) 
+  pre: true 
+  post: true
+  activity: 
+    if m->size() = 0 
+    then 
+      return Sequence{}
+    else skip; 
+
+    if m->at(1)->oclIsTypeOf(Sequence) 
+    then 
+      return MatrixLib.flattenMatrix(m->at(1))->union(MatrixLib.flattenMatrix(m->tail()))
+    else 
+      return m; 
+
+   static query elementwiseApply(m : Sequence(OclAny), f : Function(double,double)) : Sequence(OclAny)
+  pre: true 
+  post: true
+  activity: 
+    if m->size() = 0 
+    then 
+      return Sequence{}
+    else skip; 
+
+    if m->at(1)->oclIsTypeOf(Sequence) 
+    then 
+      return MatrixLib.elementwiseApply(m->at(1),f)->union(MatrixLib.elementwiseApply(m->tail(), f))
+    else 
+      skip;
+
+    for ind : Integer.subrange(1,m->size()) 
+    do 
+      m[ind] := f->apply(m->at(ind)->oclAsType(double)); 
+    return m;  
+
+
+   static query elementwiseMult(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+  pre: true 
+  post: true
+  activity: 
+    if m->size() = 0 
+    then 
+      return Sequence{}
+    else skip; 
+
+    if m->at(1)->oclIsTypeOf(Sequence) 
+    then 
+      return MatrixLib.elementwiseMult(m->at(1), x)->union(MatrixLib.elementwiseMult(m->tail(), x))
+    else 
+      skip;
+
+    for ind : Integer.subrange(1,m->size()) 
+    do 
+      m[ind] := (m->at(ind)->oclAsType(double))*x; 
+    return m;  
+ }
+
+
+}

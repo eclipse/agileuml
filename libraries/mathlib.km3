@@ -324,7 +324,35 @@ package mathlib {
    pre: true 
    post: result = lambda x : double in MathLib.definiteIntegral(0,x,f); 
 
+   static query numericRange(st : double, en : double, step : double) : Sequence(double) 
+   pre: step > 0
+   post: true
+   activity: 
+     var res : Sequence(double) := Sequence{st}; 
+     var x : double := st + step; 
+     while x < en 
+     do 
+       (res := res->append(x) ; 
+        x := x + step); 
+     return res; 
+
+   static query numericSeries(st : double, en : double, steps : int) : Sequence(double) 
+   pre: steps > 1
+   post: true
+   activity: 
+     var res : Sequence(double) := Sequence{st};
+     var step : double := (en - st)/(steps - 1);  
+     var x : double := st + step; 
+     while x < en 
+     do 
+       (res := res->append(x) ; 
+        x := x + step); 
+     return res; 
+ 
  }
+
+
+
 
   class FinanceLib {
 
@@ -344,11 +372,6 @@ package mathlib {
   pre: rate > -1
   post: 
     result = Integer.subrange(1,values->size())->collect( _ind | FinanceLib.discountDiscrete(values->at(_ind), rate, (_ind - 1) ) )->sum(); 
-
-  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
-  pre: rate > -1
-  post: 
-    result = Integer.subrange(1,values->size())->collect( _ind | FinanceLib.discountDiscrete(values->at(_ind), rate, _ind) )->sum(); 
 
   static query irrDiscrete(values: Sequence(double)) : double
   pre: true post: true; 
