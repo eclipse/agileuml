@@ -1,0 +1,20 @@
+decl::
+_* : _2 |-->_* : _2<action> _* all _2
+
+iden::
+_1 |-->_1<action>_1`isDefined true
+
+type::
+_1 |-->_1
+
+
+
+
+
+
+
+
+
+
+
+

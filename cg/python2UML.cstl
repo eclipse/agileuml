@@ -229,6 +229,8 @@ random _1 |-->_1`randomTrailer
 pickle _1 |-->_1`pickleTrailer
 datetime _1 |-->_1`datetimeTrailer
 asyncio _1 |-->_1`asyncioTrailer
+np _1 |-->_1`numpyTrailer
+numpy _1 |-->_1`numpyTrailer
 
 
 _1 ** _2 |-->(_1)->pow(_2)
@@ -237,12 +239,17 @@ _1 ** _2 |-->(_1)->pow(_2)
 ~ _1 |-->MathLib.bitwiseNot(_1)
 
 _1 * _2 |-->StringLib.nCopies(_1, _2)<when> _1 String
+_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1`ocltype Sequence, _2`ocltype int
+_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1`ocltype Sequence, _2`ocltype double
+_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2`ocltype Sequence, _1`ocltype int
+_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2`ocltype Sequence, _1`ocltype double
 _1 * _2 |-->_1 * _2
+
 _1 / _2 |-->_1 / _2
 _1 % _2 |-->StringLib.format(_1,_2)<when> _1 String
 _1 % _2 |-->_1 mod _2
 _1 // _2 |-->_1 div _2
-_1 @ _2 |-->MathLib.matrixMultiplication(_1,_2)
+_1 @ _2 |-->MatrixLib.matrixMultiplication(_1,_2)
 
 _1 + _2 |-->_1->union(_2)<when> _1 Sequence
 _1 + _2 |-->_1 + _2
@@ -255,6 +262,8 @@ _1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
 _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 
 _1 _2 _3 |-->_1_2<when> _2`isBasicTypeTrailer true, _3 matches .value
+
+_1 _2 |-->MatrixLib.shape(_1)<when> _2 matches .shape
 
 _1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 trailer
 
@@ -518,7 +527,10 @@ _1 |-->_1
 
 
 number::
+_1 |-->("_1")->toReal()<when> _1 matches .*E.*
+_1 |-->("_1")->toReal()<when> _1 matches .*e.*
 _1 |-->_1
+
 
 integer::
 _1 |-->_1
@@ -799,8 +811,16 @@ _1 |-->_1`argCount<when> _1 trailer
 _1 |-->_1`argCount<when> _1 arguments
 
 ( ) |-->0
-( _1 ) |-->_1`arity<when> _1 multiple
+( _1 ) |-->_1`argsCount<when> _1 arglist
 ( _1 ) |-->1
+
+
+argsCount::
+_1 , _2 , _3 , _4 , _5 |-->9
+_1 , _2 , _3 , _4 |-->7
+_1 , _2 , _3 |-->5
+_1 , _2 |-->3
+_1 |-->1
 
 
 argList::
@@ -861,6 +881,54 @@ randomTrailer::
 _1 |-->
 
 
+numpyTrailer::
+. arange _1 |-->MathLib.numericRange(0, _1, 1)<when> _1`argCount 1
+. arange _1 |-->MathLib.numericRange(_1`firstArg, _1`secondArg, 1)<when> _1`argCount 3
+. arange _1 |-->MathLib.numericRange(_1`firstArg, _1`secondArg, _1`thirdArg)<when> _1`argCount 5
+
+. linspace _1 |-->MathLib.numericSeries(_1`firstArg, _1`secondArg, 50)<when> _1`argCount 3
+. linspace _1 |-->MathLib.numericSeries(_1`firstArg, _1`secondArg, _1`thirdArg->oclAsType(int))<when> _1`argCount 5
+
+. shape _1 |-->MatrixLib.shape_1
+
+. empty _1 |-->MatrixLib.setSingleValue(_1`firstArg, 0.0)
+. empty_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), 0.0)
+. eye _1 |-->MatrixLib.identityMatrix(_1`firstArg)
+. identity _1 |-->MatrixLib.identityMatrix(_1`firstArg)
+. ones _1 |-->MatrixLib.setSingleValue(_1`firstArg, 1.0)
+. ones_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), 1.0)
+. zeros _1 |-->MatrixLib.setSingleValue(_1`firstArg, 0.0)
+. zeros_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), 0.0)
+. full _1 |-->MatrixLib.setSingleValue(_1`firstArg, _1`secondArg)
+. full_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), _1`secondArg)
+
+. ravel _1 |-->MatrixLib.flattenMatrix(_1`firstArg)
+. reshape _1 |-->MatrixLib.setValues(_1`firstArg, _1`secondArg)
+
+. sin _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->sin()))
+. cos _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->cos()))
+. tan _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->tan()))
+
+. arcsin _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->asin()))
+. arccos _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->acos()))
+. arctan _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->atan()))
+
+. sqrt _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->sqrt()))
+. round _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->round()))
+. floor _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->floor()))
+. ceil _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->ceil()))
+
+. sinh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->sinh()))
+. cosh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->cosh()))
+. tanh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->tanh()))
+
+. arcsinh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (MathLib.asinh(x)))
+. arccosh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (MathLib.acosh(x)))
+. arctanh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (MathLib.atanh(x)))
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
 
 mathTrailer::
 . cosin _1 |-->_1->cos()
@@ -1130,6 +1198,20 @@ _1 _2 |-->Async$_1.newAsync$_1_2
 
 
 
+hasTrailer::
+_1 _2 |-->true<when> _2 trailer
+
+_1 |-->_1`hasTrailer<when> _1 comparison 
+_1 |-->_1`hasTrailer<when> _1 logical_test
+_1 |-->_1`hasTrailer<when> _1 test
+_1 |-->_1`hasTrailer<when> _1 testlist
+_1 |-->_1`hasTrailer<when> _1 testlist_star_expr
+_1 |-->_1`hasTrailer<when> _1 expr 
+
+_1 |-->false
+
+ 
+
 
 argument::
 _1 |-->_1
@@ -1147,8 +1229,12 @@ _1 , _2 , _3 |-->Integer.subrange(_1, _2-1)->select( $x | ($x - _1) mod _3 = 0 )
  
 
 subscriptlist::
+: |-->
 _1 |-->_1
+: , _1 |-->->collect( _r | _r_1 )
+_1 , : |-->_1
 _1 , _* |-->_1_*`recurse
+
 
 subscript::
 ... |-->
@@ -1198,7 +1284,9 @@ for _1 in _2 : _3 |-->    for _1 : _2 do (_3)
 
 try : _1 |-->    try (_1)
 try : _1 _* |-->    try (_1)\n_*
-
+with _1 : _2 |-->    try (_1_2)\n    catch (_e : OclException) do skip
+with _1 , _2 : _3 |-->    try (_1    _2_3)\n    catch (_e : OclException) do skip
+ 
 _1 |-->    skip
 
 
@@ -1217,12 +1305,16 @@ else_clause::
 else : _1 |-->    else (\n  _1\n    )
 
 except_clause::
-except : _1 |-->     catch true do (_1)\n
+except : _1 |-->     catch (_e : OclException) do (_1)\n
 except _1 as _2 : _3 |-->    catch (_2 : _1) do (_3)\n
 except _1 , _2 : _3 |-->    catch (_2 : _1) do (_3)\n
 
 finally_clause::
 finally : _1 |-->    finally (_1)
+
+with_item::
+_1 as _2 |-->var _2 : _1`ocltype := _1;\n
+( _* ) |-->_*`with_item
 
 
 simple_stmt::
@@ -1244,6 +1336,8 @@ _1 _2 |-->    var _1 _2<when> _2`colonAssign true <action> _1`defined true
 
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1`defined true
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1 matches .*\..*
+_1 _2 |-->    _1 _2<when> _2`equalAssign true, _1`hasTrailer true
+
 _1 _2 |-->    var _1 : _2`ocltype _2<when> _2`equalAssign true <action> _1`defined true, _1 _2`ocltype
 
 _1 _2 |-->    _1 := _1_2<when> _2 assign_part
@@ -1436,6 +1530,7 @@ equalAssign::
 _1 _2 |-->false
 _* |-->false
 
+
 colonAssign::
 : _1 = _2 |-->true
 : _1 |-->true
@@ -1611,6 +1706,8 @@ r _1 |-->String
 R _1 |-->String
 f _1 |-->String
 
+_1 _2 |-->Sequence<when> _2 matches .shape
+
 _1 _2 |-->OclIterator<when> _1 generator, _2 trailer
 
 _1 _2 |-->_1<when> _1 Class, _2 trailer
@@ -1731,7 +1828,23 @@ trailerOclType::
 . _1 |-->OclAny
 . _1 _2 |-->OclAny
 . _* |-->OclAny
+_1 |-->_1`argsOclType<when> _1 arguments
 _1 |-->OclAny
+
+
+argsOclType::
+( ) |-->OclAny
+( _1 ) |-->OclAny
+[ ] |-->OclAny
+[ _1 ] |-->_1`subslistOclType
+
+
+subslistOclType::
+: |-->Sequence
+_1 |-->OclAny
+: _* |-->Sequence
+_1 , : |-->Sequence
+_1 , _* |-->_*`recurse
 
 
 

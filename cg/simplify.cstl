@@ -181,6 +181,10 @@ _1 |-->_1
 equalityExpression::
 _1 = _1 |-->true
 _1 = _2 |-->_1`fArgument = _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
+
+_1 = _2 |-->log(_1) = _2`fArgument<when> _2`functor exp
+_1 = _2 |-->_1`fArgument = log(_2)<when> _1`functor exp
+
 _1 = _2 |-->_1 = _2
 
 _1 /= _1 |-->false

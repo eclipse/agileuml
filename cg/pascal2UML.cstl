@@ -1,0 +1,549 @@
+program::
+_1 interface _2 . _3 |-->
+_1 _2 . _3 |-->_1_2}\n\n
+
+
+programHeading::
+program _1 ; |-->class _1_Class {\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n
+program _1 ( _2 ) ; |-->class _1_Class {\n_2`progParsToAttributes\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n
+
+
+progParsToAttributes::
+input |-->  attribute input : OclFile := OclFile["System.in"];\n
+output |-->  attribute output : OclFile := OclFile["System.out"];\n
+_1 |-->  attribute _1 : OclFile;\n
+
+, input |-->  attribute input : OclFile := OclFile["System.in"];\n
+, output |-->  attribute output : OclFile := OclFile["System.out"];\n
+, _1 |-->  attribute _1 : OclFile;\n
+
+
+input , _* |-->  attribute input : OclFile := OclFile["System.in"];\n_*`recurse
+output , _* |-->  attribute output : OclFile := OclFile["System.out"];\n_*`recurse
+_1 , _* |-->  attribute _1 : OclFile;\n_*`recurse
+, _* |-->_*`recurse
+
+
+
+identifier::
+maxint |-->(2->pow(31) - 1)->oclAsType(int)
+_1 |-->_1
+
+
+block::
+_1 |-->  operation initialise()\n  pre: true post: true\n  activity:_1;\n
+_1 _* |-->_1\n_*`recurse
+
+
+constantDefinitionPart::
+const _1 ; |-->_1
+
+constantDefinition::
+_1 = _2 |-->  attribute _1 : _2`ocltype := _2;\n
+
+constant::
+- _1 |-->-_1
++ _1 |-->_1
+_1 |-->_1
+
+unsignedNumber::
+_1 |-->_1
+
+unsignedInteger::
+_1 |-->_1
+
+unsignedReal::
+_1 |-->("_1"->toReal())<when> _1 matches .*E.*
+_1 |-->("_1"->toReal())<when> _1 matches .*e.*
+_1 |-->_1
+
+sign::
++ |-->
+- |-->-
+
+bool_::
+true |-->true
+false |-->false
+TRUE |-->true
+FALSE |-->false
+
+
+string::
+_1 |-->_1
+
+
+
+ocltype::
+nil |-->OclAny
+maxint |-->int
+NIL |-->OclAny
+MAXINT |-->int
+
+_1 |-->int<when> _1 unsignedInteger
+_1 |-->double<when> _1 unsignedReal
+@ _1 |-->Ref
++ _1 |-->_1`ocltype
+- _1 |-->_1`ocltype
+
+_1 |-->String<when> _1 string
+_1 |-->String<when> _1 constantChr
+_1 |-->boolean<when> _1 bool_
+_1 |-->Set<when> _1 set_
+
+_1 |-->_1`ocltype<when> _1 unsignedNumber
+_1 |-->_1`ocltype<when> _1 constant
+_1 |-->_1`ocltype<when> _1 unsignedConstant
+_1 |-->_1`ocltype<when> _1 factor
+_1 |-->_1`ocltype<when> _1 term
+_1 |-->_1`ocltype<when> _1 signedFactor
+_1 |-->_1`ocltype<when> _1 expression
+_1 |-->_1`ocltype<when> _1 simpleExpression
+_1 |-->_1`ocltype<when> _1 functionDesignator
+_1 |-->_1`ocltype<when> _1 variable
+_1 |-->_1`typName<when> _1 identifier
+
+_1 |-->String<when> _1 String
+_1 |-->int<when> _1 int
+_1 |-->double<when> _1 real
+_1 |-->Set<when> _1 Set
+
+( _1 ) |-->_1`ocltype
+
+not _1 |-->boolean
+_1 = _2 |-->boolean
+_1 <> _2 |-->boolean
+_1 < _2 |-->boolean
+_1 <= _2 |-->boolean
+_1 > _2 |-->boolean
+_1 >= _2 |-->boolean
+_1 in _2 |-->boolean
+_1 or _2 |-->boolean
+_1 and _2 |-->boolean
+
+_1 + _2 |-->_1`ocltype
+_1 - _2 |-->_1`ocltype
+_1 * _2 |-->_1`ocltype
+_1 div _2 |-->int
+_1 mod _2 |-->int
+_1 / _2 |-->double
+
+sin ( _1 ) |-->double
+cos ( _1 ) |-->double
+
+odd ( _1 ) |-->boolean
+
+arctan ( _1 ) |-->double
+
+abs ( _1 ) |-->double
+exp ( _1 ) |-->double
+ln ( _1 ) |-->double
+round ( _1 ) |-->int
+trunc ( _1 ) |-->int
+
+sqr ( _1 ) |-->double
+sqrt ( _1 ) |-->double
+
+chr ( _1 ) |-->String
+eof ( _1 ) |-->boolean
+
+_1 ( _2 ) |-->OclAny
+
+
+
+
+typeDefinitionPart::
+type _* |-->_*`typeDefns\n
+
+
+typeDefns::
+_1 = _2 |-->\n  enumeration _1 { _2 }<when> _2`isScalarType true
+_1 = _2 |-->\n  datatype _1 = _2<action> _1`actualType _2
+
+
+functionType::
+function : _1 |-->Function(OclAny,_1)
+function _1 : _2 |-->Function(_1,_2)
+
+procedureType::
+procedure |-->Function(OclAny,OclAny)
+procedure _1 |-->Function(_1,OclAny)
+
+
+isScalarType::
+_1 |-->true<when> _1 scalarType
+_1 |-->_1`isScalarType<when> _1 type_
+_1 |-->_1`isScalarType<when> _1 simpleType
+_1 |-->false
+
+
+type_::
+_1 |-->_1
+
+simpleType::
+_1 |-->_1
+
+scalarType::
+( _1 ) |-->_1`scalarLiterals
+
+
+scalarLiterals::
+_1 |--> literal _1;
+_1 , _* |--> literal _1; _*`recurse
+
+
+subrangeType::
+_1 .. _2 |-->int<when> _1`ocltype int
+_1 .. _2 |-->_1.._2
+
+
+structuredType::
+packed _1 |-->_1
+_1 |-->_1
+
+
+unpackedStructuredType::
+_1 |-->_1
+
+
+stringtype::
+STRING [ _1 ] |-->String
+string [ _1 ] |-->String
+
+
+indexType::
+_1 |-->_1
+
+
+componentType::
+_1 |-->_1
+
+
+setType::
+SET OF _1 |-->Set(_1)
+set of _1 |-->Set(_1)
+
+
+baseType::
+_1 |-->_1
+
+
+fileType::
+file of _1 |-->OclFile
+file |-->OclFile
+
+
+pointerType::
+^ _1 |-->Ref(_1)
+
+
+arrayType::
+array [ _1 ] of _2 |-->Map(_1,_2)
+
+
+typeList::
+_* |-->_*
+
+
+
+typeIdentifier::
+CHAR |-->String
+BOOLEAN |-->boolean
+INTEGER |-->int
+REAL |-->double
+STRING |-->String
+char |-->String
+boolean |-->boolean
+integer |-->int
+real |-->double
+string |-->String
+word |-->long
+_1 |-->_1
+
+
+
+
+
+
+variableDeclarationPart::
+var _1 ; |-->_1\n
+var _* |-->_*\n
+
+
+variableDeclaration::
+_1 : _2 |-->_1`varDeclns<when> _1 multiple <action> _90 _2
+_1 : _2 |-->\n    attribute _1 : _2<action> _1 _2, _1`typName _2
+
+
+varDeclns::
+_* |-->_*`varDeclar
+
+varDeclar::
+, |-->;
+_1 |-->\n    attribute _1 : _90<action> _1 _90, _1`typName _90
+
+
+
+statements::
+_1 |-->_1
+_* |-->_*
+
+
+statement::
+_1 |-->_1
+_1 : _2 |-->_2
+
+
+unlabelledStatement::
+_1 |-->_1
+
+
+simpleStatement::
+emptyStatement_ |-->\n    skip
+_1 |-->_1
+
+
+assignmentStatement::
+_1 := _2 |-->\n    _1 := _2
+
+
+compoundStatement::
+begin _1 end |-->\n    (_1  )
+
+
+procedureStatement::
+writeln |-->\n    execute ""->display()
+readln |-->\n    execute ""->display()
+
+read ( _1 ) |-->_1`readStatement
+
+write ( _1 ) |-->_1`writeStatement
+writeln ( _1 ) |-->_1`writelnStatement
+    
+rewrite ( _1 ) |-->_1`rewriteStatement
+reset ( _1 ) |-->_1`resetStatement
+
+new ( _1 ) |-->\n    _1 := Ref(OclAny){1}
+dispose ( _1 ) |-->\n    execute _1->isDeleted()
+
+_1 ( _2 ) |-->_1(_2)
+
+
+
+readStatement::
+_1 |-->\n    _1`first := input.read()<when> _1`numberOfArguments 1
+_1 |-->\n    _1`third := _1`first.read()
+
+
+writeStatement::
+_1 |-->\n    output.print("" + _1`first)<when> _1`numberOfArguments 1
+_1 |-->\n    _1`first.print("" + _1`third)
+
+
+writelnStatement::
+_1 |-->\n    output.println("" + _1`first)<when> _1`numberOfArguments 1
+_1 |-->\n    _1`first.println("" + _1`third)
+
+
+rewriteStatement::
+_1 |-->\n    _1`first := OclFile.newOclFile_Write(_1`first)<when> _1`numberOfArguments 1
+_1 |-->\n    _1`first := OclFile.newOclFile_Write(OclFile.newOclFile(_1`third))
+
+
+resetStatement::
+_1 |-->\n    _1`first := OclFile.newOclFile_Read(_1`first)<when> _1`numberOfArguments 1
+_1 |-->\n    _1`first := OclFile.newOclFile_Read(OclFile.newOclFile(_1`third))
+
+
+actualParameter::
+_1 |-->_1
+_1 _* |-->_1
+
+
+parameterwidth::
+: _1 |-->
+   
+
+structuredStatement::
+_1 |-->_1
+
+conditionalStatement::
+_1 |-->_1
+
+
+ifStatement::
+if _1 then _2 |-->\n    if _1 then _2 else skip
+if _1 then _2 else _3 |-->\n    if _1 then _2 else (_3)
+
+
+caseStatement::
+case _1 of _2 end |-->\n    var _case_var : _1`ocltype := _1;_2
+case _1 of _* end |-->\n    var _case_var : _1`ocltype := _1;_*
+
+
+caseListElement::
+_1 : _2 |-->\n    if _1`caseTests then _2 else skip
+
+
+caseTests::
+_1 |-->_case_var = _1
+_1 , _2 |-->_case_var = _1 or _case_var = _2
+_1 , _2 , _3 |-->_case_var = _1 or _case_var = _2 or _case_var = _3
+
+
+
+repetetiveStatement::
+_1 |-->_1
+
+
+whileStatement::
+while _1 do _2  |-->\n    while _1 do _2
+
+repeatStatement::
+repeat _1 until _2 |-->\n    _1; while not(_2) do _1
+
+
+forStatement::
+FOR _1 := _2 DO _3 |-->\n    for _1 : _2 do _3
+for _1 := _2 do _3 |-->\n    for _1 : _2 do _3
+
+
+forList::
+_1 TO _2 |-->Integer.subrange(_1,_2)
+_1 to _2 |-->Integer.subrange(_1,_2)
+_1 DOWNTO _2 |-->Integer.subrange(_2,_1)->reverse()
+_1 downto _2 |-->Integer.subrange(_2,_1)->reverse()
+
+
+initialValue::
+_1 |-->_1
+
+finalValue::
+_1 |-->_1
+
+
+gotoStatement::
+goto _1 |-->\n    _1()
+
+
+
+variable::
+_1 |-->_1
+@ _1 |-->?_1
+_1 ^ |-->!_1
+_1 [ _2 ] |-->_1[_2]
+_1 [ _2 ] [ _3 ] |-->_1[_2][_3]
+_1 . _2 |-->_1._2
+
+
+expression::
+_1 |-->_1
+_1 = _2 |-->_1 = _2
+_1 <> _2 |-->_1 /= _2
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_2->includesAll(_1)<when> _1 Set
+_1 <= _2 |-->_1 <= _2
+_1 > _2 |-->_1 > _2
+_1 >= _2 |-->_1->includesAll(_2)<when> _1 Set
+_1 >= _2 |-->_1 >= _2
+_1 in _2 |-->_2->includes(_1)
+
+
+simpleExpression::
+_1 |-->_1
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 or _2 |-->_1 or _2
+
+
+term::
+_1 |-->_1
+_1 * _2 |-->_1->intersection(_2)<when> _1 Set
+_1 * _2 |-->(_1*_2)
+
+_1 div _2 |-->(_1 div _2)
+_1 mod _2 |-->(_1 mod _2)
+_1 and _2 |-->(_1 & _2)
+
+
+signedFactor::
++ _1 |-->_1
+- _1 |-->-(_1)
+_1 |-->_1
+
+
+factor::
+_1 |-->_1
+( _1 ) |-->(_1)
+not _1 |-->not(_1)
+
+
+unsignedConstant::
+nil |-->null
+_1 |-->_1
+
+
+functionDesignator::
+sin ( _1 ) |-->(_1)->sin()
+cos ( _1 ) |-->(_1)->cos()
+
+odd ( _1 ) |-->((_1 % 2) = 1)
+
+arctan ( _1 ) |-->(_1)->atan()
+
+abs ( _1 ) |-->(_1)->abs()
+exp ( _1 ) |-->(_1)->exp()
+ln ( _1 ) |-->(_1)->log()
+round ( _1 ) |-->(_1)->round()
+trunc ( _1 ) |-->(_1)->oclAsType(int)
+
+sqr ( _1 ) |-->(_1)->sqr()
+sqrt ( _1 ) |-->(_1)->sqrt()
+
+chr ( _1 ) |-->(_1)->byte2char()
+
+eof ( _1 ) |-->_1.getEof()
+
+_1 ( _2 ) |-->_1(_2)
+
+
+parameterList::
+_1 |-->_1
+_* |-->_*
+
+
+set_::
+[ ] |-->Set{}
+[ _1 ] |-->Set{_1}
+
+
+elementList::
+_1 |-->_1
+_* |-->_*
+
+
+element::
+_1 |-->_1
+_1 .. _2 |-->_1.._2
+
+
+identifierList::
+_1 |-->_1
+_* |-->_*
+
+
+constList::
+_1 |-->_1
+_* |-->_*
+
+
+
+numberOfArguments::
+_1 , _2 , _3 |-->3
+_1 , _2 |-->2
+_1 |-->1
+
+
+
+
+
+
