@@ -6640,7 +6640,7 @@ public class ASTCompositeTerm extends ASTTerm
       ImplicitInvocationStatement ee = 
         new ImplicitInvocationStatement(delarg); 
       return ee; 
-    } 
+    } // But !p is deleted, not p?
     else if ("abort".equals(fname) && args.size() == 0)
     { Expression fail = 
         BasicExpression.newStaticCallBasicExpression("exit",

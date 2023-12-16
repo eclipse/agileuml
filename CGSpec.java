@@ -199,7 +199,7 @@ public class CGSpec
   public Vector getRulesForCategory(String category)
   { Vector res = (Vector) categoryRules.get(category); 
     if (res == null) 
-    { System.err.println("!! Warning: no rules for category " + category); 
+    { System.err.println("! Warning: no rules for category " + category); 
       res = new Vector(); 
     } 
     return res; 

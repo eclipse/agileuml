@@ -39,7 +39,8 @@ public abstract class ASTTerm
 
   static Entity currentClass = null; // Current context class
 
-  static java.util.Map metafeatures = new java.util.HashMap(); 
+  static java.util.Map metafeatures; 
+  static { metafeatures = new java.util.HashMap(); } 
      // String --> Vector(String), 
      // eg., recording the conceptual
      // type of the element & stereotypes. 
@@ -55,6 +56,8 @@ public abstract class ASTTerm
 
   static java.util.Map cg_cache = new java.util.HashMap(); 
      // CGSpec --> (ASTTerm --> String)
+     // But invalid to do this if the denotation needs to 
+     // change, eg., a[x] is different for array/map a
 
   static java.util.Map mathoclvars; 
   static 
@@ -551,6 +554,11 @@ public abstract class ASTTerm
       ASTTerm.metafeatures.put(lit,mfs); 
     } 
 
+    JOptionPane.showMessageDialog(null, 
+      "Looking up: " + str + " of: " + lit + 
+              " in: " + ASTTerm.metafeatures,   "",
+              JOptionPane.INFORMATION_MESSAGE);
+
     // System.out.println("*** " + lit + 
     //                    " gets tagged values: " + 
     //                    mfs); 
@@ -622,6 +630,12 @@ public abstract class ASTTerm
     { ASTTerm e1 = (ASTTerm) eargs.get(0); 
       ASTTerm e2 = (ASTTerm) eargs.get(1); 
       return ASTTerm.symbolicLeq(e1,e2); 
+    } 
+
+    if ("symbolicDeterminant".equals(opname) && 
+        eargs.size() == 1)
+    { ASTTerm m = (ASTTerm) eargs.get(0); 
+      return ASTTerm.symbolicDeterminant(m); 
     } 
 
     if ("expressAsPolynomial".equals(opname) && 
@@ -5650,6 +5664,25 @@ public abstract class ASTTerm
       return ASTTerm.symbolicEvaluation(trm); 
     } 
 
+    if (tg.equals("setExpression"))
+    { ASTTerm kind = e1.getTerm(0); 
+      ASTTerm elems = e1.getTerm(1); 
+      if ("}".equals(elems.literalForm()))
+      { return kind.literalForm() + "}"; } 
+
+      Vector elemterms = elems.getTerms(); 
+      String res = kind.literalForm(); 
+
+      for (int j = 0; j < elemterms.size(); j++) 
+      { ASTTerm et = (ASTTerm) elemterms.get(j); 
+        String eval = ASTTerm.symbolicEvaluation(et);
+        res = res + eval; 
+        if (j < elemterms.size()-1)
+        { res = res + ", "; } 
+      } 
+      return res + "}"; 
+    }         
+
     if (tg.equals("additiveExpression") && 
         n > 2 && 
         "+".equals(e1.getTerm(1) + ""))
@@ -5716,6 +5749,43 @@ public abstract class ASTTerm
     } 
 
     return a; 
+  } 
+
+  public static String symbolicDeterminant(ASTTerm m)
+  { // convert m to a Vector of Vector of numbers
+    // and apply AuxMath.determinant
+
+    Vector mrows = ASTTerm.mathOCLsequenceElements(m);
+    return "" + AuxMath.determinant(mrows.size(), mrows);  
+  } 
+
+  public static Vector mathOCLsequenceElements(ASTTerm t)
+  { String tg = t.getTag();
+    Vector res = new Vector(); 
+ 
+    if (tg.equals("setExpression"))
+    { ASTTerm elems = t.getTerm(1); 
+      if ("}".equals(elems.literalForm()))
+      { return new Vector(); } 
+
+      Vector elemterms = elems.getTerms(); 
+      
+      for (int j = 0; j < elemterms.size(); j++) 
+      { ASTTerm et = (ASTTerm) elemterms.get(j); 
+        String eval = ASTTerm.symbolicEvaluation(et);
+        res.add(AuxMath.generalNumericValue(eval)); 
+      } // but for matrix, do recursively
+
+      return res; 
+    } 
+
+    Vector trms = t.getTerms(); 
+    if (trms.size() == 1)
+    { ASTTerm elems = (ASTTerm) trms.get(0); 
+      return ASTTerm.mathOCLsequenceElements(elems); 
+    } 
+  
+    return res; 
   } 
 
   public static String symbolicLess(ASTTerm e1, ASTTerm e2)

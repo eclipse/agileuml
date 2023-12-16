@@ -18,7 +18,8 @@ public class CSTL
 { // All *.cstl files in output directory are loaded
 
   static boolean isCSTLVariable(String lex)
-  { if ("_*".equals(lex) || "_+".equals(lex)) 
+  { if ("_*".equals(lex) || "_+".equals(lex) || 
+        "_$".equals(lex)) 
     { return true; } 
     for (int i = 0; i <= 99; i++) 
     { if (("_" + i).equals(lex))

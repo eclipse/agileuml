@@ -2087,6 +2087,7 @@ public class Compiler2
     // _i not v
     // e / x
     // _* all v
+    // _i`f with w
 
     Vector conds = new Vector();
     Compiler2 newc = new Compiler2(); 
@@ -2126,6 +2127,11 @@ public class Compiler2
       } 
       else if (se.equals("all"))
       { cg.setUniversal(); 
+        expectVar = false; 
+        expectStereo = true;
+      } 
+      else if (se.equals("with"))
+      { cg.setIsWith(true); 
         expectVar = false; 
         expectStereo = true;
       } 

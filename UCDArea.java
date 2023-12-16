@@ -27040,6 +27040,8 @@ public void produceCUI(PrintWriter out)
     Vector v1 = new Vector();
     Vector v2 = new Vector(); 
 
+    ASTTerm.metafeatures = new java.util.HashMap(); 
+
     Vector expr = 
      ((ASTCompositeTerm) xx).jsprogramToKM3(
                                        m1,m2,v1,v2); 
@@ -27208,6 +27210,8 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    ASTTerm.metafeatures = new java.util.HashMap(); 
+
     Vector decs = new Vector(); 
 
     if (zz instanceof ASTCompositeTerm)
@@ -27374,12 +27378,111 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    ASTTerm.metafeatures = new java.util.HashMap(); 
+
     File python2uml = new File("cg/python2UML.cstl"); 
     Vector vbs = new Vector(); 
     CGSpec spec = loadCSTL(python2uml,vbs); 
 
     if (spec == null) 
     { System.err.println("!! ERROR: No file " + python2uml.getName()); 
+      return; 
+    } 
+
+    if (xx == null) 
+    { System.err.println("!! ERROR: Null AST"); 
+      return; 
+    } 
+
+    // Vector decs = new Vector(); 
+
+    // if (zz instanceof ASTCompositeTerm)
+    // { decs = ((ASTCompositeTerm) zz).vbProcessDeclarations(); }
+    
+    String reskm3 = xx.cg(spec); 
+    String arg1 = CGRule.correctNewlines(reskm3); 
+    System.out.println(arg1); 
+
+    loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
+ 
+    long t2 = (new java.util.Date()).getTime(); 
+
+    System.out.println(">> Time taken = " + (t2 - t1)); 
+
+    // set all classes concrete
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      ent.removeStereotype("abstract"); 
+      ent.setAbstract(false); 
+    } 
+
+    repaint(); 
+  }
+
+  public void loadFromPascal()
+  { BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.err.println("!! File not found: " + sourcefile);
+      return; 
+    }
+
+    long t1 = (new java.util.Date()).getTime(); 
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println("!! Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+   
+    if (xx instanceof ASTCompositeTerm)  { } 
+    else 
+    { System.err.println("!! Not a valid Pascal AST:"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    ASTTerm.metafeatures = new java.util.HashMap(); 
+
+    File pascal2uml = new File("cg/pascal2UML.cstl"); 
+    Vector vbs = new Vector(); 
+    CGSpec spec = loadCSTL(pascal2uml,vbs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + pascal2uml.getName()); 
       return; 
     } 
 
@@ -27469,6 +27572,8 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    ASTTerm.metafeatures = new java.util.HashMap(); 
+
     File sql2uml = new File("cg/sqlToUML.cstl"); 
     Vector vbs = new Vector(); 
     CGSpec spec = loadCSTL(sql2uml,vbs); 
@@ -27554,6 +27659,8 @@ public void produceCUI(PrintWriter out)
       System.err.println(c.lexicals); 
       return; 
     } 
+
+    ASTTerm.metafeatures = new java.util.HashMap(); 
 
     // remove all whitespace \n \r characters. 
     ASTTerm zz = xx.removeWhitespaceTerms();

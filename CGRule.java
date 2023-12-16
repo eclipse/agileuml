@@ -15,6 +15,8 @@
 import java.util.Vector; 
 import java.util.regex.Matcher; 
 import java.util.regex.Pattern; 
+
+import javax.swing.*;
 import java.io.*; 
 
 
@@ -24,7 +26,7 @@ public class CGRule
   Vector variables; // The _i or _*, _+ in the lhs -- 
                     // used to hold matched source elements
   Vector rhsVariables = new Vector(); 
-                    // The additional _i in the rhs -- 
+                    // The additional _i or _$ in the rhs -- 
                     // these are global variables.
   Vector metafeatures; // The _i`f in rhs
   String lhsop = "";
@@ -45,7 +47,7 @@ public class CGRule
     
     if (lvars.containsAll(rvars)) {}
     else
-    { System.err.println("!! Error: some extra metavariables on RHS of " + lexp + " |--> " + rexp); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + lexp + " |--> " + rexp); }
     lhs = lexp + "";
     rhs = rexp + "";
     variables = lvars;
@@ -62,7 +64,7 @@ public class CGRule
     Vector rvariables = metavariables(rgt); 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); }
 
     conditions = whens;
     metafeatures = metafeatures(rhs); 
@@ -77,7 +79,7 @@ public class CGRule
     Vector rvariables = metavariables(rgt); 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); }
 
     conditions = new Vector();
     metafeatures = metafeatures(rhs); 
@@ -91,7 +93,7 @@ public class CGRule
     Vector rvariables = metavariables(rgt); 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); }
 
     conditions = whens;
     metafeatures = metafeatures(rhs); 
@@ -105,7 +107,7 @@ public class CGRule
     Vector rvariables = metavariables(rgt); 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); }
 
     conditions = new Vector();
     metafeatures = metafeatures(rhs); 
@@ -119,7 +121,7 @@ public class CGRule
     Vector rvariables = metavariables(rgt); 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); }
 
     conditions = whens;
     metafeatures = metafeatures(rhs); 
@@ -134,7 +136,7 @@ public class CGRule
     Vector rvariables = metavariables(rgt); 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); }
 
     conditions = new Vector();
     metafeatures = metafeatures(rhs); 
@@ -246,7 +248,9 @@ public class CGRule
       if ('_' == c & i + 2 < str.length() && 
           Character.isDigit(str.charAt(i+1)) && 
           Character.isDigit(str.charAt(i+2))) 
-      { res.add(c + "" + str.charAt(i+1) + "" + str.charAt(i+2)); }
+      { res.add(c + "" + str.charAt(i+1) + "" + 
+                str.charAt(i+2)); 
+      }
       else if ('_' == c && 
                Character.isDigit(str.charAt(i+1))) 
       { res.add(c + "" + str.charAt(i+1)); }
@@ -257,6 +261,9 @@ public class CGRule
 
     if (str.indexOf("_+") > -1)
     { res.add("_+"); } 
+
+    if (str.indexOf("_$") > -1)
+    { res.add("_$"); } 
 
     return res; 
   } 
@@ -591,6 +598,11 @@ public class CGRule
                                         CGSpec cgs, Vector entities)
   { System.out.println(">***> Applying " + mffeat + " to ASTTerm " + term); 
     System.out.println(); 
+    JOptionPane.showMessageDialog(null, 
+      "Trying to compute: " + mffeat + " of: " + term + 
+              " in: " + ASTTerm.metafeatures,   "",
+              JOptionPane.INFORMATION_MESSAGE);
+
 
     ASTTerm obj = term; 
      
@@ -598,7 +610,7 @@ public class CGRule
     { CGSpec template = CSTL.getTemplate(mffeat + ".cstl"); 
           
       if (template != null) 
-      { System.out.println(">>> Applying CSTL template " + mffeat + ".cstl to " + term); 
+      { System.out.println(">>> Applying CSTL script " + mffeat + ".cstl to " + term); 
 
         String repl = null; 
         repl = term.cg(template);
@@ -913,7 +925,8 @@ public class CGRule
        if (repl != null) 
        { return repl; } 
        else 
-       { System.out.println(">!!!> no ruleset: " + mffeat); 
+       { System.out.println(">!!!> cannot apply ruleset: " + mffeat + " to " + term); 
+ 
          if (term.hasMetafeature(mffeat))
          { String replx = term.getMetafeatureValue(mffeat); 
            if (replx != null) 

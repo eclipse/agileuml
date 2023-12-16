@@ -20,6 +20,7 @@ public class CGCondition
      // e/x means replace x by e 
   boolean isMatches = false; 
      // compare variable to stereotype
+  boolean isWith = false; 
 
   public CGCondition()
   { } 
@@ -131,6 +132,9 @@ public class CGCondition
   public void setUniversal()
   { quantifier = "all"; }
 
+  public void setIsWith(boolean w)
+  { isWith = w; } 
+
   public String toString()
   { String res = variable;
 
@@ -142,6 +146,8 @@ public class CGCondition
     { res = res + " /"; }  
     else if (isMatches)
     { res = res + " matches"; }  
+    else if (isWith)
+    { res = res + " with"; }  
  
     if (positive) { } 
     else  
@@ -227,6 +233,8 @@ public class CGCondition
     // _* all stereo 
     // sets the stereotype for each term in the _* list
 
+    // _i`f with _j  uses _j as the parameter _$ in f::
+
     if (isSubstitute || isMatches) 
     { return; } 
 
@@ -268,11 +276,11 @@ public class CGCondition
       if (varValue != null) 
       { stereo = stereo.replace(rvar,varValue); 
 
-        /* JOptionPane.showMessageDialog(null, 
+        JOptionPane.showMessageDialog(null, 
           "Global variable " + rvar + " value is " + stereo,   "",
           JOptionPane.INFORMATION_MESSAGE);
 
-        System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); */ 
+        System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
       }
     } 
 
@@ -307,6 +315,12 @@ public class CGCondition
       return;  
     }
 
+    if (isWith)
+    { ASTTerm.setStereotypeValue("_$", stereo);
+      JOptionPane.showMessageDialog(null, 
+          "Global variable _$ value is " + stereo,   "",
+          JOptionPane.INFORMATION_MESSAGE);
+    }
 
     Vector metafs = CGRule.metafeatures(variable); 
 
@@ -341,23 +355,35 @@ public class CGCondition
         // if there is a metafeature of variable, apply it: 
 
         if (mffeat != null) 
-        { String repl = CGRule.applyMetafeature(
+        { if (cgs.hasRuleset(mffeat))
+          { String repl = CGRule.applyMetafeature(
                              mffeat,ast,cgs,entities); 
 
-          // System.out.println("***>> Action " + ast + "`" + mffeat + " = " + repl); 
+            // Evaluate ast`mffeat and set its stereo 
 
-          if (positive && repl != null) 
-          { ASTTerm.setType(repl,stereo);
-            ASTTerm.addStereo(repl,stereo); 
-          } 
-          else if (repl != null) 
-          { ASTTerm.setType(repl,null);
-            ASTTerm.removeStereo(repl,stereo);
-          } 
-          else // repl == null; stereotype is mffeat=stereo
+            JOptionPane.showMessageDialog(null, 
+              "repl: " + repl + " Ruleset mffeat: " + mffeat + 
+              " stereo: " + stereo,   "",
+              JOptionPane.INFORMATION_MESSAGE);
+    
+            if (isWith) { } 
+            else if (positive && repl != null) 
+            { ASTTerm.setType(repl,stereo);
+              ASTTerm.addStereo(repl,stereo); 
+            } 
+            else if (repl != null) 
+            { ASTTerm.setType(repl,null);
+              ASTTerm.removeStereo(repl,stereo);
+            } 
+          }
+          else // No ruleset, set ast`mffeat=stereo
           { ASTTerm.setTaggedValue(ast, mffeat, stereo); 
-            System.out.println("***>>> Executed action " + ast + "`" + mffeat + " = " + stereo);  
-            repl = varx + "`" + mffeat; 
+            
+            JOptionPane.showMessageDialog(null,
+              "Executed action " + ast + "`" + mffeat + 
+              " = " + stereo + " Tagged values = " + ASTTerm.metafeatures, 
+              "", JOptionPane.INFORMATION_MESSAGE);  
+            // repl = stereo; 
           }  
     
           /* System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
@@ -366,7 +392,8 @@ public class CGCondition
              JOptionPane.INFORMATION_MESSAGE); */ 
         } 
         else 
-        { if (positive) 
+        { if (isWith) { } 
+          else if (positive) 
           { // ast.addStereotype(stereo); 
             ASTTerm.addStereo(lit,stereo); 
           } 
@@ -380,10 +407,10 @@ public class CGCondition
         }  
       }  
     }
-    else // global variable
-    { /* JOptionPane.showMessageDialog(null, 
+    else // varx is a global variable
+    { JOptionPane.showMessageDialog(null, 
              "Set global variable " + varx + " " + mffeat + " " + stereo,   "",
-             JOptionPane.INFORMATION_MESSAGE); */ 
+             JOptionPane.INFORMATION_MESSAGE);  
 
       if (mffeat == null || mffeat.length() == 0) 
       { ASTTerm.setStereotypeValue(varx,stereo); }
