@@ -1,10 +1,11 @@
 program::
 _1 interface _2 . _3 |-->
-_1 _2 . _3 |-->_1_2}\n\n
+_1 _2 . _3 |-->_2`classDefinitions\n\n_1_2}\n\n
 
 
 programHeading::
 program _1 ; |-->class _1_Class {\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n
+
 program _1 ( _2 ) ; |-->class _1_Class {\n_2`progParsToAttributes\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n
 
 
@@ -35,11 +36,22 @@ _1 |-->  operation initialise()\n  pre: true post: true\n  activity:_1;\n
 _1 _* |-->_1\n_*`recurse
 
 
+functionBlock::
+_1 |-->_1
+_1 _* |-->_1\n_*`recurse
+
+
+classDefinitions::
+_1 |-->
+_1 _* |-->_1`recordClassDefinitions<when> _1 typeDefinitionPart
+_1 _* |-->_*`recurse
+
+
 constantDefinitionPart::
-const _1 ; |-->_1
+const _* |-->_*\n
 
 constantDefinition::
-_1 = _2 |-->  attribute _1 : _2`ocltype := _2;\n
+_1 = _2 |-->\n  attribute _1 : _2`ocltype := _2<action> _1 _2`ocltype
 
 constant::
 - _1 |-->-_1
@@ -84,12 +96,15 @@ _1 |-->double<when> _1 unsignedReal
 @ _1 |-->Ref
 + _1 |-->_1`ocltype
 - _1 |-->_1`ocltype
+. _1 |-->_1`ocltype
 
 _1 |-->String<when> _1 string
 _1 |-->String<when> _1 constantChr
 _1 |-->boolean<when> _1 bool_
 _1 |-->Set<when> _1 set_
 
+_1 |-->_1`ocltype<when> _1 finalValue
+_1 |-->_1`ocltype<when> _1 initialValue
 _1 |-->_1`ocltype<when> _1 unsignedNumber
 _1 |-->_1`ocltype<when> _1 constant
 _1 |-->_1`ocltype<when> _1 unsignedConstant
@@ -100,12 +115,14 @@ _1 |-->_1`ocltype<when> _1 expression
 _1 |-->_1`ocltype<when> _1 simpleExpression
 _1 |-->_1`ocltype<when> _1 functionDesignator
 _1 |-->_1`ocltype<when> _1 variable
-_1 |-->_1`typName<when> _1 identifier
 
 _1 |-->String<when> _1 String
 _1 |-->int<when> _1 int
 _1 |-->double<when> _1 real
 _1 |-->Set<when> _1 Set
+_1 |-->Entity<when> _1 Entity
+
+_1 |-->_1`typName<when> _1 identifier
 
 ( _1 ) |-->_1`ocltype
 
@@ -120,8 +137,11 @@ _1 in _2 |-->boolean
 _1 or _2 |-->boolean
 _1 and _2 |-->boolean
 
+_1 + _2 |-->int<when> _1`ocltype int, _2`ocltype int
 _1 + _2 |-->_1`ocltype
+_1 - _2 |-->int<when> _1`ocltype int, _2`ocltype int
 _1 - _2 |-->_1`ocltype
+_1 * _2 |-->int<when> _1`ocltype int, _2`ocltype int
 _1 * _2 |-->_1`ocltype
 _1 div _2 |-->int
 _1 mod _2 |-->int
@@ -146,6 +166,10 @@ sqrt ( _1 ) |-->double
 chr ( _1 ) |-->String
 eof ( _1 ) |-->boolean
 
+ord ( _1 ) |-->int
+succ ( _1 ) |-->_1`ocltype
+pred ( _1 ) |-->_1`ocltype
+
 _1 ( _2 ) |-->OclAny
 
 
@@ -154,19 +178,36 @@ _1 ( _2 ) |-->OclAny
 typeDefinitionPart::
 type _* |-->_*`typeDefns\n
 
+recordClassDefinitions::
+type _* |-->_*`recordClassDefinitions
+_1 = _2 |-->_2`nestedClasses\nclass _1 {\n_2`attributesFromFields\n\n  static operation new_1()\n  pre: true\n  post: _1->exists( _x | result = _x );\n}\n\n<when> _2`isRecordType true <action> _1 Entity
+
+_1 = _2 |-->\n  enumeration _1 { _2 }\n\n<when> _2`isScalarType true
+_1 = _2 |-->\n  datatype _1 = _2;\n<when> _2 functionType <action> _1 Function
+_1 = _2 |-->\n  datatype _1 = _2;\n<when> _2 procedureType <action> _1 Function
+_1 = _2 |-->\n  datatype _1 = _2;\n<when> _2`isSetType true <action> _1 Set
+_1 = _2 |-->\n  datatype _1 = _2;\n<when> _2`isArrayType true <action> _1 Map
+_1 = _2 |-->\n  datatype _1 = _2;\n<when> _2`isFileType true <action> _1 OclFile
+_1 = _2 |-->\n  datatype _1 = _2`felemType;\n<when> _2`isSubrangeType
+_1 = _2 |-->\n  datatype _1 = _2;\n<action> _1`actualType _2
+_1 |-->
+
+
 
 typeDefns::
-_1 = _2 |-->\n  enumeration _1 { _2 }<when> _2`isScalarType true
-_1 = _2 |-->\n  datatype _1 = _2<action> _1`actualType _2
+_1 = _2 |--><when> _2 functionType <action> _1 Function
+_1 = _2 |--><when> _2`isRecordType true <action> _1 Entity
+_1 = _2 |--><when> _2`isScalarType true <action> _2`scalarLiterals with _1
+_* |-->
 
 
 functionType::
 function : _1 |-->Function(OclAny,_1)
-function _1 : _2 |-->Function(_1,_2)
+function _1 : _2 |-->Function(_1`parsToFunctionDomain,_2)
 
 procedureType::
 procedure |-->Function(OclAny,OclAny)
-procedure _1 |-->Function(_1,OclAny)
+procedure _1 |-->Function(_1`parsToFunctionDomain,OclAny)
 
 
 isScalarType::
@@ -176,6 +217,116 @@ _1 |-->_1`isScalarType<when> _1 simpleType
 _1 |-->false
 
 
+isSubrangeType::
+_1 |-->true<when> _1 subrangeType
+_1 |-->_1`isSubrangeType<when> _1 type_
+_1 |-->_1`isSubrangeType<when> _1 simpleType
+_1 |-->false
+
+
+isPointerType::
+_1 |-->true<when> _1 pointerType
+_1 |-->_1`isPointerType<when> _1 type_
+_1 |-->_1`isPointerType<when> _1 simpleType
+_1 |-->false
+
+
+isSetType::
+_1 |-->true<when> _1 setType
+_1 |-->_1`isSetType<when> _1 type_
+_1 |-->_1`isSetType<when> _1 structuredType
+_1 |-->_1`isSetType<when> _1 unpackedStructuredType
+packed _1 |-->_1`isSetType
+_1 |-->false
+
+
+isArrayType::
+_1 |-->true<when> _1 arrayType
+_1 |-->_1`isArrayType<when> _1 type_
+_1 |-->_1`isArrayType<when> _1 structuredType
+_1 |-->_1`isArrayType<when> _1 unpackedStructuredType
+packed _1 |-->_1`isArrayType
+_1 |-->false
+
+
+isFileType::
+_1 |-->true<when> _1 fileType
+_1 |-->_1`isFileType<when> _1 type_
+_1 |-->_1`isFileType<when> _1 structuredType
+_1 |-->_1`isFileType<when> _1 unpackedStructuredType
+packed _1 |-->_1`isFileType
+_1 |-->false
+
+
+isRecordType::
+_1 |-->true<when> _1 recordType
+_1 |-->_1`isRecordType<when> _1 type_
+_1 |-->_1`isRecordType<when> _1 structuredType
+_1 |-->_1`isRecordType<when> _1 unpackedStructuredType
+packed _1 |-->_1`isRecordType
+_1 |-->false
+
+
+attributesFromFields::
+record _1 end |-->_1
+record end |-->
+_1 |-->_1`attributesFromFields<when> _1 type_
+_1 |-->_1`attributesFromFields<when> _1 structuredType
+_1 |-->_1`attributesFromFields<when> _1 unpackedStructuredType
+_1 |-->_1`attributesFromFields<when> _1 recordType
+packed _1 |-->_1`attributesFromFields
+_1 |-->
+
+
+nestedClasses::
+record _1 end |-->_1`innerClasses
+record end |-->
+_1 |-->_1`nestedClasses<when> _1 type_
+_1 |-->_1`nestedClasses<when> _1 structuredType
+_1 |-->_1`nestedClasses<when> _1 unpackedStructuredType
+_1 |-->_1`nestedClasses<when> _1 recordType
+packed _1 |-->_1`nestedClasses
+_1 |-->
+
+
+fieldList::
+_1 ; _2 |-->_1_2
+_1 |-->_1
+
+fixedPart::
+_1 ; _* |-->_1_*`recurse
+_1 |-->_1
+
+
+recordSection::
+_1 : _2 |-->\n  reference _1 : _1_Class := _1_Class.new_1_Class();<when> _2`isRecordType true
+_1 : _2 |-->\n  attribute _1 : _2;
+
+variantPart::
+case _1 of _2 |-->_1_2
+case _1 of _2 _* |-->_1_2_*
+
+tag::
+_1 : _2 |-->\n  attribute _1 : _2;
+_1 |-->
+
+variant::
+_1 : ( _2 ) |-->_2
+
+
+innerClasses::
+_1 ; _2 |-->_1`innerClasses_2`innerClasses
+_1 ; _* |-->_1`innerClasses_*`recurse
+_1 : _2 |-->class _1_Class {\n_2`attributesFromFields\n\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _cc | result = _cc );\n\n}\n\n<when> _2`isRecordType true
+_1 : _2 |-->
+case _1 of _2 |-->_2`innerClasses
+case _1 of _2 _* |-->2`innerClasses_*`innerClasses
+_1 : ( _2 ) |-->_2`innerClasses
+_1 |-->_1`innerClasses<when> _1 fixedPart
+_1 |-->_1`innerClasses<when> _1 variantPart
+_1 |-->
+
+
 type_::
 _1 |-->_1
 
@@ -183,17 +334,36 @@ simpleType::
 _1 |-->_1
 
 scalarType::
-( _1 ) |-->_1`scalarLiterals
+( _1 ) |-->_1`scalarItems
 
-
-scalarLiterals::
+scalarItems::
 _1 |--> literal _1;
 _1 , _* |--> literal _1; _*`recurse
+
+scalarLiterals::
+_1 |-->_1`scalarLiterals<when> _1 type_
+_1 |-->_1`scalarLiterals<when> _1 simpleType
+_1 |-->_1`scalarLiterals<when> _1 scalarType
+( _1 ) |-->_1`scalarLiterals
+_1 |-->_1<when> _1 identifier <action> _1`typName _$
+_1 , _* |-->_*`recurse<when> _1 identifier <action> _1`typName _$
+
+
+felemType::
+_1 |-->_1`felemType<when> _1 type_
+_1 |-->_1`felemType<when> _1 simpleType
+_1 |-->_1`felemType<when> _1 scalarType
+( _1 ) |-->_1`felemType
+_1 |-->_1`typName<when> _1 identifier
+_1 , _* |-->_1`typName<when> _1 identifier
+
 
 
 subrangeType::
 _1 .. _2 |-->int<when> _1`ocltype int
-_1 .. _2 |-->_1.._2
+_1 .. _2 |-->String<when> _1`ocltype String
+_1 .. _2 |-->_1`typName
+
 
 
 structuredType::
@@ -237,12 +407,19 @@ pointerType::
 
 
 arrayType::
-array [ _1 ] of _2 |-->Map(_1,_2)
+array [ _1 ] of _2 |-->_1`typesToMapDomains_2_1`closeBracketsMapDomains
 
 
 typeList::
 _* |-->_*
 
+typesToMapDomains::
+_1 |-->Map(_1,
+_1 , _* |-->Map(_1,_*`recurse
+
+closeBracketsMapDomains::
+_1 |-->)
+_1 , _* |-->)_*`recurse
 
 
 typeIdentifier::
@@ -266,12 +443,19 @@ _1 |-->_1
 
 variableDeclarationPart::
 var _1 ; |-->_1\n
-var _* |-->_*\n
+var _* |-->_*`recurse
+_1 ; _* |-->_1_*`recurse
+_1 ; |-->_1\n
 
 
 variableDeclaration::
 _1 : _2 |-->_1`varDeclns<when> _1 multiple <action> _90 _2
-_1 : _2 |-->\n    attribute _1 : _2<action> _1 _2, _1`typName _2
+_1 : _2 |-->\n    attribute _1 : _2;<when> _2 Set <action> _1 Set, _1`typName _2
+_1 : _2 |-->\n    attribute _1 : _2;<when> _2 Function <action> _1 Function, _1`typName _2
+_1 : _2 |-->\n    reference _1 : _2 := _2.new_2();<when> _2 Entity <action> _1 Entity, _1`typName _2
+_1 : _2 |-->\n    attribute _1 : _2;<when> _2`isPointerType true <action> _1 Ref, _1`typName _2
+_1 : _2 |-->\n    attribute _1 : _2;<action> _1 _2, _1`typName _2
+_1 |-->
 
 
 varDeclns::
@@ -279,7 +463,21 @@ _* |-->_*`varDeclar
 
 varDeclar::
 , |-->;
+_1 |-->\n    attribute _1 : _90<when> _90 Set <action> _1 Set, _1`typName Set
+_1 |-->\n    attribute _1 : _90<when> _90 Function <action> _1 Function, _1`typName Function
+_1 |-->\n    reference _1 : _90 := _90.new_90()<when> _90 Entity <action> _1 Entity, _1`typName _90
 _1 |-->\n    attribute _1 : _90<action> _1 _90, _1`typName _90
+
+
+procedureAndFunctionDeclarationPart::
+_1 ; |-->_1
+
+procedureOrFunctionDeclaration::
+_1 |-->_1
+
+functionDeclaration::
+function _1 _2 : _3 ; _4 |-->\n  operation _1_operation_2 : _3\n  pre: true post: true\n  activity: var _1 : _3;  _4`functionBlock;\n    return _1;\n\n  attribute _1 : Function(_2`parsToFunctionDomain, _3) := lambda _2`second in self._1_operation(_2`parsToFunctionParlist);\n
+function _1 : _2 ; _3 |-->\n  operation _1_operation() : _2\n  pre: true post: true\n  activity: _3;\n    return _1;\n\n
 
 
 
@@ -303,7 +501,7 @@ _1 |-->_1
 
 
 assignmentStatement::
-_1 := _2 |-->\n    _1 := _2
+_1 := _2 |-->\n    _1 := _2<action> _1 _2`ocltype
 
 
 compoundStatement::
@@ -322,8 +520,8 @@ writeln ( _1 ) |-->_1`writelnStatement
 rewrite ( _1 ) |-->_1`rewriteStatement
 reset ( _1 ) |-->_1`resetStatement
 
-new ( _1 ) |-->\n    _1 := Ref(OclAny){1}
-dispose ( _1 ) |-->\n    execute _1->isDeleted()
+new ( _1 ) |-->\n    _1 := _1`typName{1}
+dispose ( _1 ) |-->\n    execute (!_1)->isDeleted(); _1 := null
 
 _1 ( _2 ) |-->_1(_2)
 
@@ -335,13 +533,13 @@ _1 |-->\n    _1`third := _1`first.read()
 
 
 writeStatement::
-_1 |-->\n    output.print("" + _1`first)<when> _1`numberOfArguments 1
-_1 |-->\n    _1`first.print("" + _1`third)
+_1 |-->\n    output.print("" + (_1`first))<when> _1`numberOfArguments 1
+_1 |-->\n    _1`first.print("" + (_1`third))
 
 
 writelnStatement::
-_1 |-->\n    output.println("" + _1`first)<when> _1`numberOfArguments 1
-_1 |-->\n    _1`first.println("" + _1`third)
+_1 |-->\n    output.println("" + (_1`first))<when> _1`numberOfArguments 1
+_1 |-->\n    _1`first.println("" + (_1`third))
 
 
 rewriteStatement::
@@ -408,10 +606,19 @@ for _1 := _2 do _3 |-->\n    for _1 : _2 do _3
 
 
 forList::
-_1 TO _2 |-->Integer.subrange(_1,_2)
-_1 to _2 |-->Integer.subrange(_1,_2)
-_1 DOWNTO _2 |-->Integer.subrange(_2,_1)->reverse()
-_1 downto _2 |-->Integer.subrange(_2,_1)->reverse()
+_1 TO _2 |-->Integer.subrange(_1,_2)<when> _1`ocltype int
+_1 to _2 |-->Integer.subrange(_1,_2)<when> _1`ocltype int
+_1 TO _2 |-->Integer.subrange(_1->char2byte(),_2->char2byte())->collect( _b | _b->byte2char() )<when> _1`ocltype String
+_1 to _2 |-->Integer.subrange(_1->char2byte(),_2->char2byte())->collect( _b | _b->byte2char() )<when> _1`ocltype String
+_1 TO _2 |-->_1`typName.subrange(_1,_2)
+_1 to _2 |-->_1`typName.subrange(_1,_2)
+
+_1 DOWNTO _2 |-->Integer.subrange(_2,_1)->reverse()<when> _1`ocltype int
+_1 downto _2 |-->Integer.subrange(_2,_1)->reverse()<when> _1`ocltype int
+_1 DOWNTO _2 |-->Integer.subrange(_2->char2byte(),_1->char2byte())->reverse()->collect( _b | _b->byte2char() )<when> _1`ocltype String
+_1 downto _2 |-->Integer.subrange(_2->char2byte(),_1->char2byte())->reverse()->collect( _b | _b->byte2char() )<when> _1`ocltype String
+_1 DOWNTO _2 |-->_1`typName.subrange(_2,_1)->reverse()
+_1 downto _2 |-->_1`typName.subrange(_2,_1)->reverse()
 
 
 initialValue::
@@ -427,12 +634,20 @@ goto _1 |-->\n    _1()
 
 
 variable::
-_1 |-->_1
 @ _1 |-->?_1
-_1 ^ |-->!_1
+@ _* |-->?(_*`recurse)
+_* ^ |-->!(_*`recurse)
+_* ^ _+ |-->!(_*`recurse)_+`recurse
 _1 [ _2 ] |-->_1[_2]
-_1 [ _2 ] [ _3 ] |-->_1[_2][_3]
+_1 [ _2 ] _* |-->_1[_2]_*`recurse
+_1 [ _2 , _* |-->_1[_2][_*`recurse
+_1 ] |-->_1]
+_1 ] _* |-->_1]_*`recurse
 _1 . _2 |-->_1._2
+_1 . _* |-->_1._*`recurse
+. _1 |-->._1
+. _* |-->._*`recurse
+_1 |-->_1<when> _1 identifier
 
 
 expression::
@@ -450,6 +665,7 @@ _1 in _2 |-->_2->includes(_1)
 
 simpleExpression::
 _1 |-->_1
+_1 + _2 |-->_1->union(_2)<when> _1 Set
 _1 + _2 |-->_1 + _2
 _1 - _2 |-->_1 - _2
 _1 or _2 |-->_1 or _2
@@ -503,12 +719,15 @@ chr ( _1 ) |-->(_1)->byte2char()
 
 eof ( _1 ) |-->_1.getEof()
 
+_1 ( _2 ) |-->_1->apply(_2)<when> _1 Function
 _1 ( _2 ) |-->_1(_2)
 
 
 parameterList::
 _1 |-->_1
 _* |-->_*
+
+
 
 
 set_::
@@ -538,12 +757,57 @@ _* |-->_*
 
 
 numberOfArguments::
+_1 , _2 , _3 , _4 |-->4
 _1 , _2 , _3 |-->3
 _1 , _2 |-->2
 _1 |-->1
 
 
 
+
+formalParameterList::
+( _1 ) |-->(_1)
+( _* ) |-->( _* )
+
+
+formalParameterSection::
+var _1 |-->_1
+function _1 |-->_1
+procedure _1 |-->_1
+_1 |-->_1
+
+parameterGroup::
+_1 : _2 |-->_1 : _2<action> _1 _2, _1`typName _2
+_1 |-->_1
+
+parsToFunctionDomain::
+( _1 ) |-->_1`parsToFunctionDomain
+( _* ) |-->_*`parsToFunctionDomain
+var _1 |-->_1`parFunctionDomains
+function _1 |-->Function
+procedure _1 |-->Function
+_1 |-->_1`parFunctionDomains
+
+parFunctionDomains::
+_1 : _2 |-->_2
+_1 |-->
+
+
+parsToFunctionParlist::
+( _1 ) |-->_1`parsToFunctionParlist
+( _* ) |-->_*`parsToFunctionParlist
+var _1 |-->_1`parFunctionPars
+function _1 |-->Function
+procedure _1 |-->Function
+_1 |-->_1`parFunctionPars
+
+parFunctionPars::
+_1 : _2 |-->_1
+_1 |-->_1
+
+
+resultType::
+_1 |-->_1
 
 
 

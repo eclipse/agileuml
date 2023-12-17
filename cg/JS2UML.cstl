@@ -933,6 +933,8 @@ _1 |-->_1
 _* |-->_
 
 numericLiteral::
+_1 |-->("_1"->toReal())<when> _1 matches .*E.*
+_1 |-->("_1"->toReal())<when> _1 matches .*e.*
 _1 |-->_1
 
 bigintLiteral::

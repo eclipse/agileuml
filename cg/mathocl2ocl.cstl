@@ -373,6 +373,8 @@ max ( _1 ) |-->(_1)->max()
 
 var ( _1 ) |-->_1.variance()
 
+len ( _1 ) |-->(_1)->size()
+
 Date ( _1 ) |-->OclDate.newOclDate_String(_1)
 Time ( _1 ) |-->OclDate.newOclDate_Time(_1)
 
@@ -380,6 +382,8 @@ accumulatedInterest ( _1 ) |-->FinanceLib.accumulatedInterest(_1)
 Binomial ( _1 ) |-->Excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
 bondPrice ( _1 ) |-->FinanceLib.bondPrice(_1)
 bondPriceClean ( _1 ) |-->FinanceLib.bondPriceClean(_1)
+
+determinant ( _1 ) |-->MatrixLib.determinant(_1)
 
 _1 ( _2 ) |-->_1(_2)
 _1 ( ) |-->_1()

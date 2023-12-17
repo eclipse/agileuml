@@ -109,6 +109,8 @@ _1 |-->_1
 
 
 comparison::
+_1 < _2 |-->MatrixLib.matrixLess(_1,_2)<when> _1 Sequence, _2 Sequence
+_1 < _2 |-->MatrixLib.elementwiseLess(_1,_2)<when> _1 Sequence, _2 real
 _1 < _2 |-->_1 < _2<when> _1 String
 _1 < _2 |-->_1 < _2<when> _1 real
 _1 < _2 |-->_1 < _2<when> _2 String
@@ -160,6 +162,8 @@ await _1 |-->_1.join()
 bool _1 |-->_1->toBoolean()
 
 dict _1 |-->_1
+set _1 |-->_1
+
 divmod _1 |-->Sequence{(_1`firstArg div _1`secondArg), (_1`firstArg mod _1`secondArg)}
  
 filter _1 |-->(_1`secondArg)->select( _x | (_1`firstArg)->apply(_x) = true )
@@ -239,10 +243,9 @@ _1 ** _2 |-->(_1)->pow(_2)
 ~ _1 |-->MathLib.bitwiseNot(_1)
 
 _1 * _2 |-->StringLib.nCopies(_1, _2)<when> _1 String
-_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1`ocltype Sequence, _2`ocltype int
-_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1`ocltype Sequence, _2`ocltype double
-_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2`ocltype Sequence, _1`ocltype int
-_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2`ocltype Sequence, _1`ocltype double
+_1 * _2 |-->MatrixLib.dotProduct(_1,_2)<when> _1 Sequence, _2 Sequence
+_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1 Sequence
+_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2 Sequence
 _1 * _2 |-->_1 * _2
 
 _1 / _2 |-->_1 / _2
@@ -451,6 +454,7 @@ _1 _2 |-->    _1.closeFile()<when> _1 atom, _2`second close
 _1 _2 |-->    _1.write_2`third<when> _1 atom, _2`second write
 pickle _1 |-->    _1`thirdSecondArg.writeObject(_1`thirdFirstArg)<when> _1`second dump
 asyncio _1 |-->    _1`asyncioTrailer
+numpy _1 |-->    _1`numpyTrailer
 
 _1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer, _2`isUpdating true
 _1 _2 |-->    _1_2<when> _1 atom, _2 trailer
@@ -882,6 +886,22 @@ _1 |-->
 
 
 numpyTrailer::
+. inf |-->Math_PINFINITY
+. Inf |-->Math_PINFINITY
+. Infinity |-->Math_PINFINITY
+. infty |-->Math_PINFINITY
+. PINF |-->Math_PINFINITY
+. NINF |-->Math_NINFINITY
+. nan |-->Math_NaN
+. NaN |-->Math_NaN
+. NAN |-->Math_NaN
+. NZERO |-->-0.0
+. PZERO |-->0.0
+. newaxis |-->null
+. pi |-->MathLib.piValue()
+. e |-->MathLib.eValue()
+. euler_gamma |-->MathLib.gammaValue()
+
 . arange _1 |-->MathLib.numericRange(0, _1, 1)<when> _1`argCount 1
 . arange _1 |-->MathLib.numericRange(_1`firstArg, _1`secondArg, 1)<when> _1`argCount 3
 . arange _1 |-->MathLib.numericRange(_1`firstArg, _1`secondArg, _1`thirdArg)<when> _1`argCount 5
@@ -889,21 +909,26 @@ numpyTrailer::
 . linspace _1 |-->MathLib.numericSeries(_1`firstArg, _1`secondArg, 50)<when> _1`argCount 3
 . linspace _1 |-->MathLib.numericSeries(_1`firstArg, _1`secondArg, _1`thirdArg->oclAsType(int))<when> _1`argCount 5
 
+. prod _1 |-->MatrixLib.prdMatrix(_1`firstArg)
+. sum _1 |-->MatrixLib.sumMatrix(_1`firstArg)
+
 . shape _1 |-->MatrixLib.shape_1
 
-. empty _1 |-->MatrixLib.setSingleValue(_1`firstArg, 0.0)
-. empty_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), 0.0)
+. copyto _1 |-->_1`firstArg := (_1`secondArg)->copy()
+
+. empty _1 |-->MatrixLib.singleValueMatrix(_1`firstArg, 0.0)
+. empty_like _1 |-->MatrixLib.singleValueMatrix(MatrixLib.shape(_1`firstArg), 0.0)
 . eye _1 |-->MatrixLib.identityMatrix(_1`firstArg)
 . identity _1 |-->MatrixLib.identityMatrix(_1`firstArg)
-. ones _1 |-->MatrixLib.setSingleValue(_1`firstArg, 1.0)
-. ones_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), 1.0)
-. zeros _1 |-->MatrixLib.setSingleValue(_1`firstArg, 0.0)
-. zeros_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), 0.0)
-. full _1 |-->MatrixLib.setSingleValue(_1`firstArg, _1`secondArg)
-. full_like _1 |-->MatrixLib.setSingleValue(MatrixLib.shape(_1`firstArg), _1`secondArg)
+. ones _1 |-->MatrixLib.singleValueMatrix(_1`firstArg, 1.0)
+. ones_like _1 |-->MatrixLib.singleValueMatrix(MatrixLib.shape(_1`firstArg), 1.0)
+. zeros _1 |-->MatrixLib.singleValueMatrix(_1`firstArg, 0.0)
+. zeros_like _1 |-->MatrixLib.singleValueMatrix(MatrixLib.shape(_1`firstArg), 0.0)
+. full _1 |-->MatrixLib.singleValueMatrix(_1`firstArg, _1`secondArg)
+. full_like _1 |-->MatrixLib.singleValueMatrix(MatrixLib.shape(_1`firstArg), _1`secondArg)
 
 . ravel _1 |-->MatrixLib.flattenMatrix(_1`firstArg)
-. reshape _1 |-->MatrixLib.setValues(_1`firstArg, _1`secondArg)
+. reshape _1 |-->MatrixLib.fillMatrixFrom(_1`firstArg, _1`secondArg)
 
 . sin _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->sin()))
 . cos _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->cos()))
@@ -926,9 +951,22 @@ numpyTrailer::
 . arccosh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (MathLib.acosh(x)))
 . arctanh _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (MathLib.atanh(x)))
 
+. rint _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->round()))
+. trunc _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->oclAsType(int)))
+. exp _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->exp()))
+. log _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->log()))
+. log10 _1 |-->MatrixLib.elementwiseApply(_1`firstArg, lambda x : double in (x->log10()))
+
+. transpose _1 |-->MatrixLib.transpose(_1`firstArg)
+. add _1 |-->MatrixLib.matrixAddition(_1`firstArg, _1`secondArg)
+. multiply _1 |-->MatrixLib.dotProduct(_1`firstArg, _1`secondArg)
+. subtract _1 |-->MatrixLib.matrixSubtraction(_1`firstArg, _1`secondArg)
+. divide _1 |-->MatrixLib.dotDivide(_1`firstArg, _1`secondArg)
+
 . _1 |-->
 . _1 _* |-->
 _1 |-->
+
 
 mathTrailer::
 . cosin _1 |-->_1->cos()
@@ -1002,6 +1040,22 @@ _1 |-->OclAny
 
 
 numpyType::
+. inf |-->double
+. Inf |-->double
+. Infinity |-->double
+. infty |-->double
+. PINF |-->double
+. NINF |-->double
+. nan |-->double
+. NaN |-->double
+. NAN |-->double
+. NZERO |-->double
+. PZERO |-->double
+. newaxis |-->OclAny
+. pi |-->double
+. e |-->double
+. euler_gamma |-->double
+
 . arange _1 |-->Sequence
 . shape _1 |-->Sequence
 . empty _1 |-->Sequence
@@ -1022,6 +1076,43 @@ numpyType::
 . copy _1 |-->Sequence
 . fromstring _1 |-->Sequence
 . linspace _1 |-->Sequence
+. transpose _1 |-->Sequence
+
+. sin _1 |-->Sequence
+. cos _1 |-->Sequence
+. tan _1 |-->Sequence
+
+. arcsin _1 |-->Sequence
+. arccos _1 |-->Sequence
+. arctan _1 |-->Sequence
+
+. sqrt _1 |-->Sequence
+. round _1 |-->Sequence
+. floor _1 |-->Sequence
+. ceil _1 |-->Sequence
+
+. sinh _1 |-->Sequence
+. cosh _1 |-->Sequence
+. tanh _1 |-->Sequence
+
+. arcsinh _1 |-->Sequence
+. arccosh _1 |-->Sequence
+. arctanh _1 |-->Sequence
+
+. rint _1 |-->Sequence
+. trunc _1 |-->Sequence
+. exp _1 |-->Sequence
+. log _1 |-->Sequence
+. log10 _1 |-->Sequence
+
+. add _1 |-->Sequence
+. subtract _1 |-->Sequence
+. multiply _1 |-->Sequence
+. divide _1 |-->Sequence
+
+. sum _1 |-->double
+. prod _1 |-->double
+
 
 
 pickleTrailer::
@@ -1062,7 +1153,7 @@ _1 |-->
 
 trailerUpdateForm::
 . append _1 |-->->including_1
-. extend _1 |-->->union(_1->characters())<when> _1`ocltype String
+. extend _1 |-->->union(_1->characters())<when> _1 String
 . extend _1 |-->->union_1
 . insert _1 |-->.insertAt(_1`firstArg+1, _1`lastArg)
 . remove _1 |-->->excludingFirst_1
@@ -1663,12 +1754,19 @@ _1 if _2 else _3 |-->_1`ocltype
 lambda _1 : _2 |-->Function
 lambda : _1 |-->Function
 
+* _1 |-->Sequence
+** _1 |-->Map
+
 _1 ** _2 |-->double
 + _1 |-->_1`ocltype
 - _1 |-->_1`ocltype
 ~ _1 |-->int
 _1 * _2 |-->String<when> _1 String
+_1 * _2 |-->Sequence<when> _1 Sequence
+_1 * _2 |-->Sequence<when> _2 Sequence
+_1 * _2 |-->int<when> _1 int, _2 int
 _1 * _2 |-->double
+
 _1 / _2 |-->double
 _1 % _2 |-->String<when> _1 String
 _1 % _2 |-->int
@@ -1686,7 +1784,9 @@ not _1 |-->boolean
 _1 and _2 |-->boolean
 _1 or _2 |-->boolean
 
+_1 < _2 |-->Sequence<when> _1 Sequence
 _1 < _2 |-->boolean
+_1 > _2 |-->Sequence<when> _1 Sequence
 _1 > _2 |-->boolean
 _1 == _2 |-->boolean
 _1 >= _2 |-->boolean
@@ -1727,6 +1827,7 @@ _1 |-->_1`ocltype<when> _1 logical_test
 _1 |-->_1`ocltype<when> _1 comparison
 _1 |-->_1`ocltype<when> _1 expr
 _1 |-->_1`ocltype<when> _1 atom
+_1 |-->_1`ocltype<when> _1 name
 _1 |-->_1`numberType<when> _1 number
 
 _1 |-->OclAny
@@ -1938,13 +2039,13 @@ _* |-->
 
 
 classdef::
-class _1 ( Enum ) : _3 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_3`classcontent}\n\n<action> _1 Class
+class _1 ( Enum ) : _3 |-->class _1 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_3`classcontent}\n\n<action> _1 Class
 
-class _1 ( _2 ) : _3 |-->class _1 extends _2 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_3`classcontent}\n\n<action> _1 Class
+class _1 ( _2 ) : _3 |-->class _1 extends _2 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_3`classcontent}\n\n<action> _1 Class
 
-class _1 ( ) : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_2`classcontent}\n\n<action> _1 Class
+class _1 ( ) : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_2`classcontent}\n\n<action> _1 Class
 
-class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var _x : _1 := create_1(); return _x;\n\n_2`classcontent}\n\n<action> _1 Class
+class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_2`classcontent}\n\n<action> _1 Class
 
 
 classcontent::

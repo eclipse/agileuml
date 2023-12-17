@@ -1592,19 +1592,20 @@ _1 _* TO _3  |-->    _3 := (_3 + _1 + _*`sum)_3`roundFunction ;\n
 
 
 addToGivingStatement::
-_1 TO _2 GIVING _3  |-->    _2 := _2 + _1 ;\n    _3 := _2_3`roundFunction;\n
-_1 _* TO _3 GIVING _4  |-->    _3 := _3 + (_1 + _*`sum);\n    _4 := _3_4`roundFunction;\n
+_1 TO _2 GIVING _3  |-->    _3 := (_1 + _2)_3`roundFunction;\n
+_1 _* TO _3 GIVING _4  |-->    _4 := _3 + (_1 + _*`sum)_4`roundFunction;\n
 _1 _* TO _3 GIVING _4 _+  |-->    (var _addGivingTmp : double ; _addGivingTmp := _3 + (_1 + _*`sum) ;\n      _4 := _addGivingTmp_4`roundFunction;\n_+`addGivingAssigns      skip) ;\n
 _1 _* GIVING _3 _+ |-->    (var _addGivingTmp : double ; _addGivingTmp := _1 + _*`sum ;\n      _3 := _addGivingTmp_3`roundFunction ; \n_+`addGivingAssigns      skip) ;\n
 _1 _* GIVING _3  |-->    _3 := (_1 + _*`sum)_3`roundFunction ;\n
 
 
 overflowTest::
-_1 TO _2 GIVING _3  |-->MathLib.isIntegerOverflow(_2, _2`integerWidth) or MathLib.isIntegerOverflow(_3, _3`integerWidth)
-_1 _* TO _3 GIVING _4  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth) or MathLib.isIntegerOverflow(_4, _4`integerWidth)
-_1 _* TO _3 GIVING _4 _+  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth) or MathLib.isIntegerOverflow(_4, _4`integerWidth)_+`overflowItemTest
+_1 TO _2 GIVING _3  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth)
+_1 _* TO _3 GIVING _4  |-->MathLib.isIntegerOverflow(_4, _4`integerWidth)
+_1 _* TO _3 GIVING _4 _+  |-->MathLib.isIntegerOverflow(_4, _4`integerWidth)_+`overflowItemTest
 _1 _* GIVING _3 _+ |-->MathLib.isIntegerOverflow(_3, _3`integerWidth)_+`overflowItemTest
 _1 _* GIVING _3  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth)
+
 
 overflowItemTest::
 _1 |--> or MathLib.isIntegerOverflow(_1, _1`integerWidth)

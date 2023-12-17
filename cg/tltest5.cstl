@@ -1,0 +1,29 @@
+decs::
+_1 |-->_1
+_1 _* |-->_1_*
+
+
+typedec::
+_1 = set of _2 |-->  _1 = Set(_2)\n<action> _1 Set
+_1 = _2 |-->  _1 = _2\n
+
+dec::
+_1 : _2 |-->  attribute _1 : _2\n<when> _2 Set <action> _1 Set
+_1 : _2 |-->  attribute _1 : _2\n
+
+
+identifier::
+integer |-->int
+real |-->double
+_1 |-->_1
+
+
+
+
+
+
+
+
+
+
+

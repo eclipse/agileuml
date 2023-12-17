@@ -1,0 +1,10 @@
+dec::
+_1 = _2 |-->_1 = _2;\n<action> _2`f with _1
+
+
+f::
+_1 |-->_1<action> _1`typName _$
+
+
+iden::
+_1 |-->_1

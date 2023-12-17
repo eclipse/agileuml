@@ -440,6 +440,8 @@ ceil ( _1 ) |-->_1<when> _1 integer
 
 pdf ( _1 ) |-->_1`evaluatePdf
 
+len ( _1 ) |-->_1`collectionSize
+
 _1 ( _2 ) |-->_1(_2)
 _1 ( ) |-->_1()
 
@@ -792,6 +794,27 @@ _1 |-->_1`evaluatePdf<when> _1 expression
 _1 |-->pdf(_1)
 _* |-->pdf(_*)
 
+
+collectionSize::
+Sequence{ } |-->0
+Sequence{ _1 } |-->(_1`arity)
+
+_1 |-->_1`collectionSize<when> _1 basicExpression
+_1 |-->_1`collectionSize<when> _1 factorExpression
+_1 |-->_1`collectionSize<when> _1 factor2Expression
+_1 |-->_1`collectionSize<when> _1 setExpression
+_1 |-->_1`collectionSize<when> _1 logicalExpression
+_1 |-->_1`collectionSize<when> _1 equalityExpression
+_1 |-->_1`collectionSize<when> _1 additiveExpression
+_1 |-->_1`collectionSize<when> _1 expression
+
+_0 |-->len(_0)
+
+
+arity::
+_1 |-->1
+_1 , _2 |-->2
+_1 , _* |-->1 + _*`recurse
 
 
 negate::
