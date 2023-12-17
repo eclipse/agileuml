@@ -363,6 +363,13 @@ public void findPlugins()
       "Creates UML/OCL from AST produced by Antlr Python parser, in output/ast.txt");
     fileMenu.add(fromPython);
 
+    JMenuItem fromPascal = 
+      new JMenuItem("From Pascal AST",openIcon);
+    fromPascal.addActionListener(this);
+    fromPascal.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr pascal parser, in output/ast.txt");
+    fileMenu.add(fromPascal);
+
     JMenuItem fromSQL = 
       new JMenuItem("From SQL AST",openIcon);
     fromSQL.addActionListener(this);
@@ -1771,6 +1778,10 @@ public void findPlugins()
       }
       else if (label.equals("From Python AST")) 
       { ucdArea.loadFromPython();
+        saved = true; 
+      }
+      else if (label.equals("From Pascal AST")) 
+      { ucdArea.loadFromPascal();
         saved = true; 
       }
       else if (label.equals("From SQL AST")) 

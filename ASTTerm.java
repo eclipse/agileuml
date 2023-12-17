@@ -4768,9 +4768,15 @@ public abstract class ASTTerm
     } 
 
     String v = var.literalForm(); 
+    String elit = expr.literalForm(); 
 
-    if (v.equals(expr.literalForm()))
+    if (v.equals(elit))
     { res.add(1); 
+      return res; 
+    } 
+
+    if ((v + "^{2}").equals(elit))
+    { res.add(2); 
       return res; 
     } 
 
@@ -5563,6 +5569,20 @@ public abstract class ASTTerm
         return "0"; 
       }  
 
+      if ("factor2Expression".equals(ct.tag))
+      { if (subterms.size() == 4 && 
+            "^{".equals(subterms.get(1) + ""))
+        { // expr^{power}
+          ASTTerm tt = (ASTTerm) subterms.get(0); 
+          ASTTerm power = (ASTTerm) subterms.get(2); 
+          String powlit = power.literalForm(); 
+
+          String coef1 = ASTTerm.constantTerms(vars, tt); 
+          if ("0".equals(coef1))
+          { return "0"; } 
+          return "(" + coef1 + ")^{" + powlit + "}"; 
+        } 
+      }           
 
       if ("factorExpression".equals(ct.tag))
       { if (subterms.size() == 2)

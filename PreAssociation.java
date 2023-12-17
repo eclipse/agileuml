@@ -1,7 +1,7 @@
 import java.util.Vector;
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -19,6 +19,7 @@ public class PreAssociation
   int ys, ye;
   String role2;
   String role1;
+  Expression initialExpression; 
   Vector stereotypes; 
   Vector wpoints; 
 
@@ -45,6 +46,9 @@ public class PreAssociation
     stereotypes = sts; 
     wpoints = wps; 
   }
+
+  public void setInitialExpression(Expression expr)
+  { initialExpression = expr; } 
 
   public boolean isDualTo(PreAssociation pinv)
   { if (pinv.role1 != null && pinv.role1.equals(role2) && 

@@ -33,6 +33,8 @@ public class Association extends ModelElement
   private Vector constraints = new Vector(); // those that involve this association
   private Attribute qualifier = null; // non-null for qualified associations
   private boolean instanceScope = true; 
+
+  private Expression initialExpression = null; 
  
   public Association(Entity e1, Entity e2, int c1,
                      int c2, String r1, String r2)
@@ -120,6 +122,9 @@ public class Association extends ModelElement
     role1 = r1;
     role2 = r2;
   }
+
+  public void setInitialExpression(Expression init)
+  { initialExpression = init; } 
 
   public void setType(Type t) { } 
 

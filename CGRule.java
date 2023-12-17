@@ -598,10 +598,10 @@ public class CGRule
                                         CGSpec cgs, Vector entities)
   { System.out.println(">***> Applying " + mffeat + " to ASTTerm " + term); 
     System.out.println(); 
-    JOptionPane.showMessageDialog(null, 
+    /* JOptionPane.showMessageDialog(null, 
       "Trying to compute: " + mffeat + " of: " + term + 
               " in: " + ASTTerm.metafeatures,   "",
-              JOptionPane.INFORMATION_MESSAGE);
+              JOptionPane.INFORMATION_MESSAGE); */ 
 
 
     ASTTerm obj = term; 

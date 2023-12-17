@@ -7317,16 +7317,18 @@ public class UCDArea extends JPanel
   private void reconstructAssociation(String ename1,
                  String ename2, int xs, int ys, int xe,
                  int ye, int c1, int c2, String role2,
-                 String role1, Vector stereotypes, Vector wpoints)
+                 String role1, Vector stereotypes, Vector wpoints, Expression initExpr)
   { Entity e1 =
       (Entity) ModelElement.lookupByName(ename1,entities);
     Entity e2 =
       (Entity) ModelElement.lookupByName(ename2,entities);
+
     if (e1 == null || e2 == null)
     { System.out.println("!! Error in data, no entities " +
                          e1 + " " + e2);
       return;
     }
+
     if ("null".equals(role1))
     { role1 = null; }
 
@@ -7369,6 +7371,7 @@ public class UCDArea extends JPanel
       ast.unsetQualifier(); 
       ast.setQualifier(qatt);   
     }          
+
     if (stereotypes.contains("associationClass"))
     { int acind = stereotypes.indexOf("associationClass"); 
       if (acind + 1 < stereotypes.size())
@@ -7387,8 +7390,12 @@ public class UCDArea extends JPanel
           } 
         } 
       } 
+
       System.out.println(">> Reconstructed association class: " + acent + " " + sline); 
     }             
+
+    if (initExpr != null) 
+    { ast.setInitialExpression(initExpr); } 
 
     associations.add(ast);
     e1.addAssociation(ast);
@@ -15892,7 +15899,7 @@ public void produceCUI(PrintWriter out)
         (PreAssociation) preassociations.get(i);
       reconstructAssociation(p.e1name,p.e2name,p.xs,p.ys,
                              p.xe,p.ye,p.card1,p.card2,
-                             p.role2,p.role1,p.stereotypes, p.wpoints);
+                             p.role2,p.role1,p.stereotypes, p.wpoints, p.initialExpression);
     }
 
     for (int j = 0; j < preentities.size(); j++)
@@ -16143,7 +16150,7 @@ public void produceCUI(PrintWriter out)
         (PreAssociation) preassociations.get(i);
       reconstructAssociation(p.e1name,p.e2name,p.xs,p.ys,
                              p.xe,p.ye,p.card1,p.card2,
-                             p.role2,p.role1,p.stereotypes, p.wpoints);
+                             p.role2,p.role1,p.stereotypes, p.wpoints, p.initialExpression);
     }
 
     for (int j = 0; j < preentities.size(); j++)
@@ -17849,7 +17856,7 @@ public void produceCUI(PrintWriter out)
         reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
                     xe,ye,pa.card1,pa.card2,
                     pa.role2, pa.role1, pa.stereotypes, 
-                    new Vector());
+                    new Vector(), pa.initialExpression);
       } 
     } 
 
@@ -18019,7 +18026,7 @@ public void produceCUI(PrintWriter out)
 
           reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
                              xe,ye,pa.card1,pa.card2,
-                             pa.role2, pa.role1, pa.stereotypes, new Vector());
+                             pa.role2, pa.role1, pa.stereotypes, new Vector(), pa.initialExpression);
         } 
       } 
     } 

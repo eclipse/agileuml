@@ -8032,6 +8032,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       res.card2 = ModelElement.MANY; 
       res.stereotypes.add("ordered"); 
     }
+    else if (":=".equals(rlex))
+    { Expression init = 
+              parse_expression(0,reached+1,en-1,entities,types); 
+      if (init != null) 
+      { res.setInitialExpression(init); 
+        System.out.println(">>> Reference " + res.role2 + ". Initial expression = " + init); 
+      }
+    } 
+          
     return res; 
   } 
 
