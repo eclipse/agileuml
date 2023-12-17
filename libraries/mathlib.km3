@@ -29,7 +29,7 @@ package mathlib {
 
     static query piValue() : double
     pre: true
-    post: result = 3.14159265;
+    post: result = 3.1415926535897932384626433;
 
     static query e() : double
     pre: true
@@ -37,7 +37,11 @@ package mathlib {
 
     static query eValue() : double
     pre: true
-    post: result = 1->exp();
+    post: result = 2.71828182845904523536028747135266249775724709369995;
+
+    static query gammaValue() : double
+    pre: true
+    post: result = 0.5772156649015328606065120900824024310421;
 
     static operation setSeeds(x : int , y : int , z : int ) : void
     pre: true
