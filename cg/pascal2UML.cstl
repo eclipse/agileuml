@@ -47,6 +47,13 @@ _1 _* |-->_1`recordClassDefinitions<when> _1 typeDefinitionPart
 _1 _* |-->_*`recurse
 
 
+labelDeclarationPart::
+label _* |-->
+
+label:: 
+_1 |-->label__1
+
+
 constantDefinitionPart::
 const _* |-->_*\n
 
@@ -428,6 +435,10 @@ BOOLEAN |-->boolean
 INTEGER |-->int
 REAL |-->double
 STRING |-->String
+Char |-->String
+Boolean |-->boolean
+Integer |-->int
+Real |-->double
 char |-->String
 boolean |-->boolean
 integer |-->int
@@ -533,13 +544,27 @@ _1 |-->\n    _1`third := _1`first.read()
 
 
 writeStatement::
-_1 |-->\n    output.print("" + (_1`first))<when> _1`numberOfArguments 1
-_1 |-->\n    _1`first.print("" + (_1`third))
+_1 |-->\n    output.print("" + _1`first)
+_1 _* |-->\n    _1`first.print("" _*`writeArguments)
 
 
 writelnStatement::
-_1 |-->\n    output.println("" + (_1`first))<when> _1`numberOfArguments 1
-_1 |-->\n    _1`first.println("" + (_1`third))
+_1 |-->\n    output.println("" + _1)
+_1 _* |-->\n    _1.println("" _*`writeArguments)
+
+
+writeArguments::
+, |--> +
+
+_1 _2 _3 |--> StringLib.format("%_2._3f", Sequence{_1})<when> _1`ocltype double
+_1 _2 _3 |--> StringLib.format("%_2._3d", Sequence{_1})<when> _1`ocltype int
+_1 _2 _3 |--> StringLib.format("%_2._3s", Sequence{_1})
+
+_1 _2 |--> StringLib.format("%_2f", Sequence{_1})<when> _1`ocltype double
+_1 _2 |--> StringLib.format("%_2d", Sequence{_1})<when> _1`ocltype int
+_1 _2 |--> StringLib.format("%_2s", Sequence{_1})
+
+_1 |--> _1
 
 
 rewriteStatement::
@@ -557,8 +582,9 @@ _1 |-->_1
 _1 _* |-->_1
 
 
+
 parameterwidth::
-: _1 |-->
+: _1 |-->_1
    
 
 structuredStatement::
@@ -716,6 +742,14 @@ sqr ( _1 ) |-->(_1)->sqr()
 sqrt ( _1 ) |-->(_1)->sqrt()
 
 chr ( _1 ) |-->(_1)->byte2char()
+ord ( _1 ) |-->(_1)->char2byte()<when> _1`ocltype String
+ord ( _1 ) |-->_1`typName.ord(_1)
+
+succ ( _1 ) |-->((_1)->char2byte() + 1)->byte2char()<when> _1`ocltype String
+succ ( _1 ) |-->_1`typName.succ(_1)
+
+pred ( _1 ) |-->((_1)->char2byte() - 1)->byte2char()<when> _1`ocltype String
+pred ( _1 ) |-->_1`typName.pred(_1)
 
 eof ( _1 ) |-->_1.getEof()
 

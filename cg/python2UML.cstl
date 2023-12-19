@@ -617,13 +617,13 @@ _1 , _* |-->_1`asSetting_*`recurse
 
 
 def_parameter::
-_1 = _2 |-->_1`parameterName : String<when> _2 String, _1 1ary <action> _1`parameterName String
-_1 = _2 |-->_1`parameterName : int<when> _2 int, _1 1ary <action> _1`parameterName int
-_1 = _2 |-->_1`parameterName : double<when> _2 real, _1 1ary <action> _1`parameterName real
-_1 = _2 |-->_1
+_1 = _2 |-->_1`parameterName : String<when> _2 String, _1 1ary <action> _1`parameterName String, _1`defined true
+_1 = _2 |-->_1`parameterName : int<when> _2 int, _1 1ary <action> _1`parameterName int, _1`defined true
+_1 = _2 |-->_1`parameterName : double<when> _2 real, _1 1ary <action> _1`parameterName real, _1`defined true
+_1 = _2 |-->_1<action> _1`defined true
 
+_1 |-->_1<action> _1`defined true
 * |-->
-_1 |-->_1
 
 
 paramDefaultCode::
@@ -1152,7 +1152,7 @@ _1 |-->
 
 
 trailerUpdateForm::
-. append _1 |-->->including_1
+. append _1 |-->->append_1
 . extend _1 |-->->union(_1->characters())<when> _1 String
 . extend _1 |-->->union_1
 . insert _1 |-->.insertAt(_1`firstArg+1, _1`lastArg)
@@ -1502,6 +1502,8 @@ try : _1 |-->_1`hasValueReturn
 try : _1 _* |-->true<when> _1`hasValueReturn true
 try : _1 _* |-->_*`recurse
 
+with _1 : _2 |-->_2`hasValueReturn
+
 elif _1 : _2 |-->_2`hasValueReturn
 
 else : _1 |-->_1`hasValueReturn
@@ -1571,6 +1573,8 @@ for _1 in _2 : _3 |-->_3`hasYieldStatement
 try : _1 |-->_1`hasYieldStatement
 try : _1 _* |-->true<when> _1`hasYieldStatement true
 try : _1 _* |-->_*`recurse
+
+with _1 : _2 |-->_2`hasYieldStatement
 
 elif _1 : _2 |-->_2`hasYieldStatement
 
@@ -1977,13 +1981,13 @@ _* |-->
 
 
 funcdef::
-async def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
-def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
+async def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_4;\n\n
+def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_4;\n\n
 
-async def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n<when> _3`hasValueReturn true
-async def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n\n
+async def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_3;\n\n<when> _3`hasValueReturn true
+async def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_3;\n\n
 
-def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n<when> _3`hasValueReturn true
+def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_3;\n\n<when> _3`hasValueReturn true
 def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_2`defaultParamSettings_3;\n\n
 
 async def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
@@ -1999,7 +2003,7 @@ def _1 ( ) : _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n
 
 
 methodDefinition::
-def __init__ ( _1 ) : _2 |-->_2`attributeDefinitions\n  operation initialise(_1`parametersTail) : OclAny\n  pre: true post: true\n  activity:\n_2;\n    return self;\n\n
+def __init__ ( _1 ) : _2 |-->_2`attributeDefinitions\n  operation initialise(_1`parametersTail) : _$\n  pre: true post: true\n  activity:\n_2;\n    return self;\n\n
 
 def _1 ( _2 ) -> _3 : _4 |-->\n  operation _1(_2`parametersTail) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
 
@@ -2045,7 +2049,7 @@ class _1 ( _2 ) : _3 |-->class _1 extends _2 {\n  static operation new_1() : _1\
 
 class _1 ( ) : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_2`classcontent}\n\n<action> _1 Class
 
-class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_2`classcontent}\n\n<action> _1 Class
+class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true\n  post: _1->exists( _x | result = _x );\n\n_2`classcontent}\n\n<action> _1 Class, _$ _1
 
 
 classcontent::
@@ -2123,6 +2127,8 @@ except _1 as _2 : _3 |-->_3`nestedAttributeDefinitions
 except _1 , _2 : _3 |-->_3`nestedAttributeDefinitions
 
 finally : _1 |-->_1`nestedAttributeDefinitions
+
+with _1 : _2 |-->_2`nestedAttributeDefinitions
 
 global _* |-->_*`attributeDecln
 nonlocal _* |-->_*`attributeDecln
