@@ -12880,7 +12880,7 @@ public void produceCUI(PrintWriter out)
       out.close(); 
     } 
     catch (IOException e) 
-    { System.out.println("!!! Error saving data"); } 
+    { System.err.println("!!! Error saving data"); } 
 
     for (int i = 0; i < useCases.size(); i++)
     { Object obj = useCases.get(i); 
@@ -12919,7 +12919,7 @@ public void produceCUI(PrintWriter out)
       out.close(); 
     } 
     catch (IOException e) 
-    { System.out.println("Error saving data"); } 
+    { System.err.println("!! Error saving data"); } 
   } 
 
 
@@ -12963,7 +12963,7 @@ public void produceCUI(PrintWriter out)
         out.close(); 
       }
       catch (IOException e) 
-      { System.out.println("Error saving data"); } 
+      { System.err.println("!! Error saving data"); } 
     }
   }
 
@@ -13002,7 +13002,7 @@ public void produceCUI(PrintWriter out)
       out.close(); 
     }
     catch (IOException e) 
-    { System.out.println("Error saving data"); } 
+    { System.err.println("!! Error saving data"); } 
   }
 
   public void saveEMFToFile()
@@ -13021,7 +13021,7 @@ public void produceCUI(PrintWriter out)
         out.close(); 
       }
       catch (IOException e) 
-      { System.out.println("Error saving EMF"); } 
+      { System.err.println("!! Error saving EMF"); } 
     }
   }
 
@@ -13041,7 +13041,7 @@ public void produceCUI(PrintWriter out)
         out.close(); 
       }
       catch (IOException e) 
-      { System.out.println("Error saving KM3"); } 
+      { System.err.println("!! Error saving KM3"); } 
     }
   }
 
@@ -13061,7 +13061,7 @@ public void produceCUI(PrintWriter out)
         out.close(); 
       }
       catch (IOException e) 
-      { System.out.println("Error saving KM3"); } 
+      { System.err.println("!! Error saving KM3"); } 
     }
   }
 
@@ -13082,7 +13082,7 @@ public void produceCUI(PrintWriter out)
         out.close(); 
       }
       catch (IOException e) 
-      { System.out.println("Error saving Ecore"); } 
+      { System.err.println("!! Error saving Ecore"); } 
     }
   }
 
@@ -13104,7 +13104,7 @@ public void produceCUI(PrintWriter out)
       out.close(); 
     }
     catch (IOException e) 
-    { System.out.println("Error saving model"); } 
+    { System.err.println("!! Error saving model"); } 
   }
    
     
@@ -13143,7 +13143,7 @@ public void produceCUI(PrintWriter out)
         out.close(); 
       }
       catch (IOException e) 
-      { System.out.println("Error saving model"); } 
+      { System.err.println("!! Error saving model"); } 
     }
   }
 
@@ -13176,7 +13176,43 @@ public void produceCUI(PrintWriter out)
       out.close(); 
     }
     catch (IOException e) 
-    { System.out.println("Error saving data"); } 
+    { System.err.println("!! Error saving data"); } 
+  }
+
+  public void savePlantUMLToFile(String f)
+  { File file = new File("output/" + f);
+    // Vector locals = new Vector(); 
+
+    try
+    { PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(file)));
+      out.println("@startuml"); 
+
+      for (int p = 0; p < entities.size(); p++) 
+      { Entity ent = (Entity) entities.get(p); 
+        out.println(ent.saveAsPlantUML()); 
+        // locals.addAll(ent.getInvariants()); 
+      } 
+
+      for (int i = 0; i < associations.size(); i++) 
+      { Association ast = (Association) associations.get(i); 
+        ast.saveAsPlantUML(out); 
+      } 
+
+      /* if (locals.size() > 0)
+      { out.println("constraints\n\n"); } 
+
+      for (int q = 0; q < locals.size(); q++)
+      { Constraint cc = (Constraint) locals.get(q); 
+        out.println(cc.saveAsUSEData()); 
+      } */ 
+
+      out.println("@enduml"); 
+      out.close(); 
+    }
+    catch (IOException e) 
+    { System.err.println("!! Error saving data"); } 
   }
 
 

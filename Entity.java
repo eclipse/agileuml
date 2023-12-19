@@ -11794,6 +11794,39 @@ public class Entity extends ModelElement implements Comparable
     return res + "end\n\n";
   }   // for each op, save name, type, parameters, pre, post
 
+  public String saveAsPlantUML() 
+  { String nme = getName(); 
+
+    String inheritstring = ""; 
+
+    if (superclass != null) 
+    { inheritstring = superclass.getName() + " <|-- " + nme + "\n\n"; } 
+
+    for (int i = 0; i < interfaces.size(); i++) 
+    { Entity intf = (Entity) interfaces.get(i); 
+
+      inheritstring = inheritstring + 
+          intf.getName() + " <|.. " + nme + "\n\n"; 
+    }    
+
+    String res =  inheritstring + 
+                  "class " + nme + " {\n";
+    
+    for (int i = 0; i < attributes.size(); i++)
+    { Attribute att = (Attribute) attributes.get(i);
+      String aname = att.getName();
+      Type t = att.getType();
+      res = res + aname + " : " + t.getUMLName() + "\n";
+    }
+
+    for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i);
+      res = res + op.saveAsPlantUML();
+    }
+
+    return res + "}\n\n";
+  }   // for each op, save name, type, parameters, pre, post
+
   public String saveAsZ3Data() 
   { String ename = getName(); 
     String res =  "(declare-sort " + ename + ")\n";

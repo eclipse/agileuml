@@ -3631,10 +3631,27 @@ class BasicExpression extends Expression
                objectRef.type.isEntity(entities)) 
       { context.add(0,objectRef.type.getEntity(entities)); }
       else 
-      { System.err.println("! Warning: Cannot locate class of " + objectRef); 
-        /* JOptionPane.showMessageDialog(null, 
-           "Warning!: Cannot locate class of " + objectRef, 
-           "Semantic error", JOptionPane.ERROR_MESSAGE); */ 
+      { System.out.println(">>> Searching for class of " + objectRef);
+
+        // Search for a class with data. 
+
+        for (int i = 0; i < entities.size(); i++) 
+        { Entity ex = (Entity) entities.get(i); 
+          if (ex.hasAttribute(data)) 
+          { JOptionPane.showMessageDialog(null, 
+              "Located possible class " + ex + " of " + objectRef, 
+              "", JOptionPane.INFORMATION_MESSAGE);
+            objectRef.type = new Type(ex);
+
+            vartypes.put("" + objectRef, objectRef.type); 
+
+            Attribute attx = ex.getAttribute(data); 
+            type = attx.getType(); 
+            elementType = attx.getElementType();  
+
+            vartypes.put(data, type); 
+          } 
+        }
       } 
     }
     else // objectRef == null

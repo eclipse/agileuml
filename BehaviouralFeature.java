@@ -5120,6 +5120,61 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   }  // multiple pre, post, and stereotypes
 
+  public String saveAsPlantUML()
+  { if (derived) { return ""; } 
+   
+    String res = ""; 
+   
+    if (instanceScope) 
+    { if (isAbstract()) 
+      { res = res + "{abstract} "; }
+    }  
+    else 
+    { res = res + "{static} "; } 
+
+    res = res + getName() + "(";
+
+    for (int i = 0; i < parameters.size(); i++)
+    { Attribute par = (Attribute) parameters.get(i);
+      String pnme = par.getName();
+      String tnme = par.getType().getUMLName();
+      String elemt = ""; 
+      if ("Set".equals(tnme) || "Sequence".equals(tnme))
+      { if (par.getElementType() != null) 
+        { elemt = "(" + par.getElementType().getUMLName() + ")"; } 
+      } 
+      res = res + pnme + " : " + tnme + elemt;
+      if (i < parameters.size() - 1) { res = res + ", "; } 
+    }
+    res = res + ") "; 
+
+    if (resultType != null)
+    { String rtname = resultType.getName(); 
+      if (rtname.equals("Set") || rtname.equals("Sequence"))
+      { if (elementType != null) 
+        { res = res + " : " + resultType.getUMLName() + "(" + elementType.getUMLName() + ")"; } 
+        else 
+        { res = res + " : " + resultType.getUMLName() + "()"; } 
+      } 
+      else 
+      { res = res + " : " + resultType.getUMLName(); }
+    } 
+    res = res + "\n"; 
+    
+  /*  java.util.Map env = new java.util.HashMap(); 
+
+    if (pre == null) 
+    { pre = new BasicExpression("true"); }  
+    
+    if (post == null) 
+    { post = new BasicExpression("true"); } 
+
+    res = res + "pre pre1:\n  " + pre.toOcl(env,true) + "\n";
+    res = res + "post post1:\n   " + post.toOcl(env,true); 
+    res = res + "\n\n"; */ 
+
+    return res; 
+  }  // multiple pre, post, and stereotypes
 
   public static Expression wpc(Expression pst, String op, String feat, 
                                String val)

@@ -459,6 +459,10 @@ public void findPlugins()
     saveUSEMI.addActionListener(this); 
     saveMenu.add(saveUSEMI); 
 
+    JMenuItem saveplantMI = new JMenuItem("Save as PlantUML"); 
+    saveplantMI.addActionListener(this); 
+    saveMenu.add(saveplantMI); 
+
 
     JMenuItem saveCSVMI = new JMenuItem("Save as CSV"); 
     saveCSVMI.addActionListener(this); 
@@ -1705,6 +1709,10 @@ public void findPlugins()
       else if (label.equals("Save as USE"))
       { ucdArea.saveUSEDataToFile("mm.use"); 
         thisLabel.setText("Model saved to output/mm.use"); 
+      } 
+      else if (label.equals("Save as PlantUML"))
+      { ucdArea.savePlantUMLToFile("mm.plantuml"); 
+        thisLabel.setText("Model saved to output/mm.plantuml"); 
       } 
       else if (label.equals("Save as CSV"))
       { ucdArea.saveCSV(); } 

@@ -5806,9 +5806,11 @@ String qual = "";
     String opp = ""; 
     if (role1 != null && role1.length() > 0)
     { opp = " oppositeOf " + role1; } 
+    else if (initialExpression != null)
+    { opp = " := " + initialExpression; } 
 	
-	if (isQualified())
-	{ return "    reference " + role2 + mult + " qualified " + ord + agg + ": " + entity2 + opp + ";"; }
+    if (isQualified())
+    { return "    reference " + role2 + mult + " qualified " + ord + agg + ": " + entity2 + opp + ";"; }
 
     return "    reference " + role2 + mult + " " + ord + agg + ": " + entity2 + opp + ";";  
   } 
@@ -5848,6 +5850,36 @@ String qual = "";
     { res = res + " ordered=\"false\""; }
 
     out.println(res + "/>");  
+  } // ordering? 
+
+  public void saveAsPlantUML(PrintWriter out)
+  { String c1 = ""; 
+
+    if (card1 == ONE) 
+    { c1 = "1"; } 
+    else if (card1 == ZEROONE) 
+    { c1 = "0..1"; }
+    else if (card1 == MANY)
+    { c1 = "*"; }
+
+    String c2 = ""; 
+
+    if (card2 == ONE) 
+    { c2 = "1"; } 
+    else if (card2 == ZEROONE) 
+    { c2 = "0..1"; }
+    else if (card2 == MANY)
+    { c2 = "*"; }
+ 
+    String arrow = " --> "; 
+    if (aggregation)
+    { arrow = " *--> "; } 
+
+    if (ordered)
+    { c2 = c2 + " {ordered}"; }
+
+    String res = " " + entity1 + " \"" + c1 + "\"" + arrow + " \"" + c2 + "\" " + entity2 + " : " + role2; 
+    out.println(res + "\n");  
   } // ordering? 
 
   public String xmiSaveModel(String domain) 
