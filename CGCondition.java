@@ -215,6 +215,65 @@ public class CGCondition
     return res; 
   } // Either could have a metafeature. 
 
+  public String evaluateProperty(Vector vars, Vector eargs, 
+                  Vector reps, CGSpec cgs, 
+                  Vector entities, Vector globalVariables)
+  { // stereotype can be _i, _$ for LHS or global 
+    // variables, or _i`f for metafeature f, or a value 
+    // without variables. 
+    // Result is evaluation in ruleset cgs with actual args
+    // eargs, reps
+
+    String stereo = new String(stereotype); 
+    for (int x = 0; x < reps.size() && x < vars.size(); x++)
+    { String var = (String) vars.get(x);
+      String arg1 = (String) reps.get(x); 
+
+      String svarx = var; 
+      String smffeat = null; 
+      Vector stereomfs = CGRule.metafeatures(stereo); 
+      if (stereomfs.size() > 0)
+      { 
+        // If stereo is variable with a metafeature: _i`mf
+        // evaluate _i`mf in cgs and substitute in stereo
+
+        String smf = (String) stereomfs.get(0); 
+        int smfindex = smf.indexOf("`"); 
+        svarx = smf.substring(0,smfindex); 
+        smffeat = smf.substring(smfindex+1,smf.length()); 
+        if (smffeat != null && var.equals(svarx)) 
+        { int indv = vars.indexOf(svarx);
+ 
+          if (indv >= 0 && eargs.get(indv) instanceof ASTTerm)
+          {  
+            ASTTerm earg = (ASTTerm) eargs.get(indv); 
+            stereo = CGRule.applyMetafeature(
+                               smffeat,earg,cgs,entities); 
+          }
+        } 
+      } 
+
+      stereo = stereo.replace(var,arg1);
+    }
+
+    for (int y = 0; y < globalVariables.size(); y++) 
+    { String rvar = (String) globalVariables.get(y);
+      String varValue = ASTTerm.getStereotypeValue(rvar); 
+      if (varValue != null) 
+      { stereo = stereo.replace(rvar,varValue); 
+
+        // JOptionPane.showMessageDialog(null, 
+        //   "Global variable " + rvar + " value is " + stereo,   "",
+        //   JOptionPane.INFORMATION_MESSAGE);
+
+        System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
+      }
+    } // No metafeatures allowed
+
+    return stereo;  
+  }
+
+
   public void applyAction(Vector vars, Vector eargs, 
                   Vector reps, CGSpec cgs, 
                   Vector entities, Vector globalVariables)
@@ -227,8 +286,11 @@ public class CGCondition
     // If vv has no corresponding eargs, then it is a global
     // variable, vv stereo sets its value to stereo. 
 
-    // If vv is ww`mf then evaluate ww`mf, if null then 
-    // it is intended as stereotype mf=stereo for ww.
+    // If vv is ww`mf then evaluate ww`mf (for ruleset
+    // or built-in function mf) and add stereo to 
+    // stereotypes of the result. If mf is neither
+    // a ruleset nor a built-in function, then 
+    // it is tagged value setting mf=stereo for ww.
 
     // _* all stereo 
     // sets the stereotype for each term in the _* list
@@ -276,9 +338,9 @@ public class CGCondition
       if (varValue != null) 
       { stereo = stereo.replace(rvar,varValue); 
 
-        JOptionPane.showMessageDialog(null, 
-          "Global variable " + rvar + " value is " + stereo,   "",
-          JOptionPane.INFORMATION_MESSAGE);
+        // JOptionPane.showMessageDialog(null, 
+        //   "Global variable " + rvar + " value is " + stereo,   "",
+        //   JOptionPane.INFORMATION_MESSAGE);
 
         System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
       }
@@ -317,9 +379,9 @@ public class CGCondition
 
     if (isWith)
     { ASTTerm.setStereotypeValue("_$", stereo);
-      JOptionPane.showMessageDialog(null, 
-          "Global variable _$ value is " + stereo,   "",
-          JOptionPane.INFORMATION_MESSAGE);
+      // JOptionPane.showMessageDialog(null, 
+      //     "Global variable _$ value is " + stereo,   "",
+      //     JOptionPane.INFORMATION_MESSAGE);
     }
 
     Vector metafs = CGRule.metafeatures(variable); 
@@ -361,10 +423,10 @@ public class CGCondition
 
             // Evaluate ast`mffeat and set its stereo 
 
-            JOptionPane.showMessageDialog(null, 
+            /* JOptionPane.showMessageDialog(null, 
               "repl: " + repl + " Ruleset mffeat: " + mffeat + 
               " stereo: " + stereo,   "",
-              JOptionPane.INFORMATION_MESSAGE);
+              JOptionPane.INFORMATION_MESSAGE); */ 
     
             if (isWith) { } 
             else if (positive && repl != null) 
@@ -376,6 +438,26 @@ public class CGCondition
               ASTTerm.removeStereo(repl,stereo);
             } 
           }
+          else if (CSTL.isInbuiltFunction(mffeat))
+          { // standard metafeature such as `first etc
+            String repl = CGRule.applyMetafeature(
+                             mffeat,ast,cgs,entities); 
+
+            if (positive && repl != null) 
+            { ASTTerm.setType(repl,stereo);
+              ASTTerm.addStereo(repl,stereo); 
+            } 
+            else if (repl != null) 
+            { ASTTerm.setType(repl,null);
+              ASTTerm.removeStereo(repl,stereo);
+            } 
+
+            JOptionPane.showMessageDialog(null,
+              "Executed action " + repl + 
+              " |-> " + stereo + " Tagged values = " + ASTTerm.metafeatures, 
+              "", JOptionPane.INFORMATION_MESSAGE);  
+            
+          } 
           else // No ruleset, set ast`mffeat=stereo
           { ASTTerm.setTaggedValue(ast, mffeat, stereo); 
             
@@ -408,9 +490,9 @@ public class CGCondition
       }  
     }
     else // varx is a global variable
-    { JOptionPane.showMessageDialog(null, 
+    { /* JOptionPane.showMessageDialog(null, 
              "Set global variable " + varx + " " + mffeat + " " + stereo,   "",
-             JOptionPane.INFORMATION_MESSAGE);  
+             JOptionPane.INFORMATION_MESSAGE);  */ 
 
       if (mffeat == null || mffeat.length() == 0) 
       { ASTTerm.setStereotypeValue(varx,stereo); }
@@ -501,6 +583,10 @@ public class CGCondition
               Vector entities, CGSpec cgs, Vector gvars) 
   { boolean res = true; 
     
+    // JOptionPane.showMessageDialog(null, 
+    //      "|||| Checking conditions " + conditions + " with global variables " + gvars,   "",
+    //     JOptionPane.INFORMATION_MESSAGE); 
+
     for (int j = 0; j < conditions.size(); j++) 
     { CGCondition cond = (CGCondition) conditions.get(j); 
       if (cond.variable != null) 
@@ -512,7 +598,40 @@ public class CGCondition
         int ind = r.variables.indexOf(cvar); 
           // variablePosition for CGTL rules
 
-        if (ind >= 0 && ind < eargs.size())
+        if (ind < 0) 
+        { // Global variable or unknown thing.
+
+          String evaluatedStereo = 
+              cond.evaluateProperty(vars, eargs, 
+                      reps, cgs, 
+                      entities, gvars); 
+          String gval = 
+              (String) ASTTerm.metafeatures.get(cvar);
+            
+          if (gvars.contains(cvar))
+          { // and evaluate its metafeature if any
+
+            /* JOptionPane.showMessageDialog(null, 
+              "|||| Checking condition " + gval + " = " + cond.stereotype + "~" + evaluatedStereo,   "",
+              JOptionPane.INFORMATION_MESSAGE); */ 
+
+            if (evaluatedStereo.equals(gval))
+            { } 
+            else if (gval != null & 
+              ASTTerm.metafeatures.get(gval) instanceof Vector &&
+              ((Vector) ASTTerm.metafeatures.get(gval)).contains(evaluatedStereo))
+            { } 
+            else 
+            { return false; } 
+          }
+          else // not a variable on LHS
+          { return false; } 
+
+          /* JOptionPane.showMessageDialog(null, 
+              "|||| Condition " + gval + " " + evaluatedStereo + " is true",   "",
+              JOptionPane.INFORMATION_MESSAGE); */  
+        } 
+        else if (ind >= 0 && ind < eargs.size())
         { Object m = eargs.get(ind); 
 
           if ("_*".equals(cvar) && 
@@ -566,6 +685,7 @@ public class CGCondition
         } 
       } 
     } 
+
     return res; 
   } 
 
@@ -593,7 +713,7 @@ public class CGCondition
     if (t instanceof ASTTerm) 
     { Vector vars = new Vector(); 
       Vector eargs = new Vector(); 
-	  Vector reps = new Vector(); 
+      Vector reps = new Vector(); 
       return conditionSatisfiedASTTerm((ASTTerm) t,
                           vars, eargs, reps,  
                           entities, cgs, gvars); 
@@ -1074,7 +1194,8 @@ public class CGCondition
     { AssignStatement st = (AssignStatement) e; 
       Expression left = st.getLeft(); 
       return conditionSatisfied(left,entities,cgs); 
-    } 
+    }
+ 
     return false; 
   } // and for other kinds of statement also 
 
@@ -1083,11 +1204,22 @@ public class CGCondition
                   Vector reps, Vector entities, 
                   CGSpec cgs, Vector gvars)
   { // Condition variable keyword stereotype is true
-    // for a, when reps are substituted for vars 
+    // for a, when reps are substituted for vars in possibly
+    // both variable and stereotype. 
+
+    // _i`f P 
+    // valid if f is not a ruleset/built-in function
+    // and _i has tagged value  f=P
+    // Or if _i`f evaluates equal to P, 
+    // or if it has stereotype P 
 
     String alit = a.literalForm(); 
 
     String stereo = "" + stereotype; 
+
+    // JOptionPane.showMessageDialog(null, 
+    //      "|||| Checking condition " + alit + " " + stereo,   "",
+    //     JOptionPane.INFORMATION_MESSAGE); 
 
     /* In stereo and variable: 
          Replace vars[i] by eargs[i].cg(cgs) or reps[i] */ 
@@ -1149,6 +1281,10 @@ public class CGCondition
     { String var = (String) vars.get(x);
       String arg1 = (String) reps.get(x); 
 
+      // JOptionPane.showMessageDialog(null, 
+      //   "||| Argument " + arg1 + " replacing " + var,   "",
+      //   JOptionPane.INFORMATION_MESSAGE); 
+
      /* String svarx = var; 
       String smffeat = null; 
       Vector stereomfs = CGRule.metafeatures(stereo); 
@@ -1176,27 +1312,29 @@ public class CGCondition
       stereo = stereo.replace(var,arg1);
     }
  
-    if (gvars.size() > 0)
+    if (gvars.size() > 0) // variable is a global
     { for (int y = 0; y < gvars.size(); y++) 
       { String rvar = (String) gvars.get(y);
         String varValue = ASTTerm.getStereotypeValue(rvar); 
         if (varValue != null) 
         { stereo = stereo.replace(rvar,varValue); 
 
-        // JOptionPane.showMessageDialog(null, 
-        //   "Global variable " + rvar + " value is " + stereo,   "",
-        //  JOptionPane.INFORMATION_MESSAGE);
+        /* JOptionPane.showMessageDialog(null, 
+           "Global variable " + rvar + " value is " + stereo,   "",
+          JOptionPane.INFORMATION_MESSAGE); 
 
-          System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
+        JOptionPane.showMessageDialog(null,
+          ">--> Replacing global variable " + rvar + " by " + varValue + " in " + alit + " = " + stereo, "", 
+          JOptionPane.INFORMATION_MESSAGE);  */ 
         }
       }
 
-      // JOptionPane.showMessageDialog(null, 
-      //     "||| Condition " + alit + " = " + stereo,   "",
-      //     JOptionPane.INFORMATION_MESSAGE);
+      /* JOptionPane.showMessageDialog(null, 
+          "||| Condition " + alit + " = " + stereo,   "",
+          JOptionPane.INFORMATION_MESSAGE); */ 
 
       if (alit.equals(stereo)) 
-      { return positive; }  
+      { return positive; }  // or it has the stereo
     }
 
     Vector metafs = CGRule.metafeatures(variable); 
@@ -1228,7 +1366,7 @@ public class CGCondition
                  " Evaluated " + a + 
                  "`" + mffeat + " = " + repl, 
                  "", 
-                 JOptionPane.INFORMATION_MESSAGE); */ 
+                 JOptionPane.INFORMATION_MESSAGE);  */ 
 
       if (isMatches)
       { // check that edata matches the stereo
@@ -1243,10 +1381,18 @@ public class CGCondition
         return false; 
       } 
 
-      if (repl != null && repl.equals(stereo))
+      Vector stereosOfVar = 
+        (Vector) ASTTerm.metafeatures.get(repl); 
+
+      if (repl != null && 
+          repl.equals(stereo))
       { return positive; } 
+      else if (stereosOfVar != null && 
+          stereosOfVar.contains(stereo))
+      { return positive; }  
       else 
       { return !positive; } 
+
     } 
 
     // System.out.println(">|>|> Testing " + alit + " with " + stereo); 
@@ -1328,9 +1474,11 @@ public class CGCondition
       return positive; 
     } 
 
-    if ("Class".equals(stereotype))
+    if ("Class".equals(stereotype) || 
+        "Entity".equals(stereotype))
     { if (Type.isOclEntityType(alit,entities) || 
-          a.hasStereotype("Class")) 
+          a.hasStereotype("Class") || 
+          a.hasStereotype("Entity")) 
       { return positive; } 
       else 
       { return !positive; } 

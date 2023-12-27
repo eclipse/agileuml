@@ -1701,6 +1701,19 @@ abstract class Expression
     { return false; } 
   } 
 
+  public static boolean isDecimalInteger(String val)
+  { try
+    { Integer intx = Integer.decode(val); 
+      if (intx == null) 
+      { return false; } 
+      int nn = intx.intValue(); 
+      return true; 
+    } 
+    catch (Exception e) 
+    { return false; } 
+  } 
+
+
   public static boolean isLong(Object ob) 
   { if (ob == null) 
     { return false; } 

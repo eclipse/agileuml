@@ -270,7 +270,13 @@ public class ASTBasicTerm extends ASTTerm
 
         Vector ents = new Vector(); 
 
-        if (r.satisfiesConditions(eargs,ents,cgs))
+        /* JOptionPane.showMessageDialog(null, 
+           "Checking basic term rule " + r + " for " + 
+           args + " " + eargs,   "",
+           JOptionPane.INFORMATION_MESSAGE); */ 
+
+        if (r.satisfiesAllConditions(args,eargs,ents,cgs)) 
+             // r.satisfiesConditions(eargs,ents,cgs))
         { System.out.println(">>>> Applying basic term " + tag + " rule " + r + " for " + this); 
           return r.applyRule(args,eargs,cgs); 
         }  
@@ -2948,9 +2954,10 @@ public class ASTBasicTerm extends ASTTerm
 
       Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
-      { JOptionPane.showMessageDialog(null, 
-          "Warning!: variable " + vv + " does not have a definition",   "",
-          JOptionPane.WARNING_MESSAGE); 
+      { // JOptionPane.showMessageDialog(null, 
+        //   "Warning!: variable " + vv + " does not have a definition",   "",
+        //   JOptionPane.WARNING_MESSAGE);
+        System.err.println("!! Warning: " + vv + " has no definition");  
       } 
     }
   } 

@@ -2230,6 +2230,16 @@ public class Type extends ModelElement
 
   public boolean isDatatype()
   { return values == null && alias != null; } 
+
+  public boolean isAliasType()
+  { return values == null && alias != null; }
+
+  public Type getActualType()
+  { if (alias == null) 
+    { return this; } 
+    return alias.getActualType(); 
+  } // assume no cycles. 
+ 
      
   public boolean isPrimitive()
   { String nme = getName();
@@ -2621,7 +2631,7 @@ public class Type extends ModelElement
   { String res = ""; 
     if (values == null)  // for basic types only
     { if (alias != null) 
-      { res = "  datatype " + name + " = " + alias.getName() + ";\n"; } 
+      { res = "  datatype " + name + " = " + alias + ";\n"; } 
       else 
       { res = "  datatype " + name + ";\n"; } 
 

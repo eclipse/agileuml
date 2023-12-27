@@ -1168,12 +1168,14 @@ public void findPlugins()
       new JMenuItem("CGBE"); 
     cgbe.addActionListener(this);
     cgbe.setToolTipText(
-      "Learns CSTL from output/typeExamples.txt, expressionExamples, statementExamples, declarationExamples, paired text example files. Needs configuration.txt, output/mmCGBE.txt, output/forwardCGBE.txt");
+      "Learns CSTL from output/typeExamples.txt, expressionExamples, statementExamples, declarationExamples, paired source-target text example files. Needs configuration.txt, output/mmCGBE.txt, output/forwardCGBE.txt");
     synthMenu.add(cgbe);
 
     JMenuItem ltbeFromText = 
       new JMenuItem("LTBE from text"); 
     ltbeFromText.addActionListener(this);
+    ltbeFromText.setToolTipText(
+      "Learns CSTL from source-target paired text example files. Needs ANTLR parsers for source & target languages");
     synthMenu.add(ltbeFromText);
 
     JMenuItem ltbeFromASTs = 

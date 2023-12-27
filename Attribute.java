@@ -437,8 +437,20 @@ public class Attribute extends ModelElement
       Vector env = new Vector(); 
       initialExpression.typeCheck(types,entities,cntx,env);
  
+      if (type != null && type.isAliasType())
+      { type = type.getActualType(); 
+        elementType = type.getElementType(); 
+      } 
+
       System.out.println(">> Type of attribute: " + name + " is " + type + "(" + elementType + ")");
 
+      if (initialExpression.type != null && 
+          initialExpression.type.isAliasType())
+      { initialExpression.type = 
+            initialExpression.type.getActualType(); 
+        elementType = initialExpression.type.getElementType(); 
+      } 
+      
       if (Type.isVacuousType(type) && 
           !Type.isVacuousType(initialExpression.type)) 
       { type = initialExpression.type; 

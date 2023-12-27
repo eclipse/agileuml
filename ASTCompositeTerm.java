@@ -28622,7 +28622,7 @@ public class ASTCompositeTerm extends ASTTerm
                                    selrng); 
           } 
 
-          return callp1 + "->oclType().allInstances()->select( _xx | _xx >= " + callp1 + " & _xx <= " + callp2 + ")"; 
+          return "(" + callp1 + "->oclType()).allInstances()->select( _xx | _xx >= " + callp1 + " & _xx <= " + callp2 + ")"; 
         } 
         else if ("keySet".equals(called) && arg.isMap())
         { ASTTerm.setType(thisliteral,"Set");

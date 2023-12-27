@@ -2806,6 +2806,9 @@ public class AuxMath
      return true; 
    } 
 
+   public static double parseGeneralNumeric(String val)
+   { return AuxMath.generalNumericValue(val); } 
+
    public static double generalNumericValue(String val)
    { if (val.startsWith("(") && 
          val.endsWith(")"))

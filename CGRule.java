@@ -627,6 +627,9 @@ public class CGRule
       return repl;  
     }   
 
+    if ("hashCode".equals(mffeat))
+    { return "" + term.hashCode(); }   
+
     if ("trimQuotes".equals(mffeat)) 
     { String rep = term.cg(cgs); 
       if (rep.endsWith("\""))
@@ -679,11 +682,11 @@ public class CGRule
       } 
     }   
           
-      if ("third".equals(mffeat) || 
-          "3rd".equals(mffeat) || 
-          "3".equals(mffeat))
-      { // get third subterm of obj
-        if (term instanceof ASTCompositeTerm)
+    if ("third".equals(mffeat) || 
+        "3rd".equals(mffeat) || 
+        "3".equals(mffeat))
+    { // get third subterm of obj
+      if (term instanceof ASTCompositeTerm)
         { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
           if (ct.terms.size() > 2)
           { ASTTerm ct1 = (ASTTerm) ct.terms.get(2); 
@@ -916,7 +919,7 @@ public class CGRule
      }   
  
      if (cgs.hasRuleset(mffeat))
-     { System.out.println(">***> Valid ruleset " + mffeat);  
+     { // System.out.println(">***> Valid ruleset " + mffeat);  
        System.out.println(); 
        String repl = cgs.applyRuleset(mffeat,term);
        System.out.println(">***> Applying ruleset " + mffeat + " to ASTTerm " + term); 
@@ -1390,6 +1393,10 @@ public class CGRule
             { rep = rep.substring(1); } 
             res = replaceByMetafeatureValue(res,mf,rep);   
           }  
+          else if ("hashCode".equals(mffeat))
+          { ASTTerm tt = (ASTTerm) obj; 
+            res = replaceByMetafeatureValue(res,mf,"" + tt.hashCode()); 
+          }   
           else if ("first".equals(mffeat) || 
                    "1st".equals(mffeat) || 
                    "1".equals(mffeat))

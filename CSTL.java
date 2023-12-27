@@ -34,6 +34,27 @@ public class CSTL
     return false; 
   } 
 
+  static boolean isInbuiltFunction(String mf)
+  { if ("hashCode".equals(mf)) { return true; } 
+    if ("trimQuotes".equals(mf)) { return true; } 
+    if ("type".equals(mf)) { return true; } 
+    if ("first".equals(mf)) { return true; } 
+    if ("second".equals(mf)) { return true; } 
+    if ("third".equals(mf)) { return true; }  
+    if ("fourth".equals(mf)) { return true; } 
+    if ("fifth".equals(mf)) { return true; } 
+    if ("sixth".equals(mf)) { return true; } 
+    if ("seventh".equals(mf)) { return true; } 
+    if ("last".equals(mf)) { return true; } 
+    if ("tail".equals(mf)) { return true; } 
+    if ("tail2".equals(mf)) { return true; } 
+    if ("tail3".equals(mf)) { return true; } 
+    if ("tail4".equals(mf)) { return true; } 
+    if ("front".equals(mf)) { return true; } 
+    if ("toInteger".equals(mf)) { return true; } 
+    return false; 
+  } 
+
   static java.util.Map templates = new java.util.HashMap();
 
   public static void loadTemplates(Vector types, Vector entities)

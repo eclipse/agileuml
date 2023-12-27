@@ -2126,7 +2126,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->toBoolean") || 
         operator.equals("->char2byte") || 
         operator.equals("->byte2char") || 
-        operator.equals("->isEmpty") || operator.equals("->notEmpty")) 
+        operator.equals("->ord") || 
+        operator.equals("->succ") || 
+        operator.equals("->pred") || 
+        operator.equals("->isEmpty") || 
+        operator.equals("->notEmpty")) 
     { return true; } 
 
     // otherwise, if the argument element type is primitive
@@ -2173,12 +2177,22 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->ceil") || 
         operator.equals("->round") ||
         operator.equals("->char2byte") || 
-        operator.equals("->floor"))
+        operator.equals("->floor") ||
+        operator.equals("->ord") 
+       )
     { type = new Type("int",null); 
       elementType = type; 
       return res; 
     } 
 
+    if (operator.equals("->succ") || 
+        operator.equals("->pred"))
+    { type = argument.getType(); 
+      elementType = argument.getElementType(); 
+      return res; 
+    } 
+ 
+       
     if (operator.equals("->toLong"))
     { type = new Type("long",null); 
       elementType = type; 
@@ -2621,6 +2635,20 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
       return res; 
     } 
+
+    if (operator.equals("->ord") ||
+        operator.equals("->succ") || 
+        operator.equals("->pred"))
+    { if (argumentType.isString() || 
+          argumentType.isInteger() || 
+          argumentType.isEnumeratedType()) 
+      { } 
+      else 
+      { System.err.println("!! Argument of " + operator + 
+          " must be String, enumeration or integer, not " + argumentType); 
+      } 
+    }
+    
 
     if (operator.equals("->toInteger") ||
         operator.equals("->char2byte"))
@@ -3783,6 +3811,24 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->trim")) 
     { return qf + ".trim()"; } 
 
+    if (operator.equals("->ord"))
+    { if (argument.isString())
+      { return "Set.char2byte(" + qf + ")"; } 
+      return qf; 
+    } 
+
+    if (operator.equals("->succ"))
+    { if (argument.isString())
+      { return "Set.byte2char(1 + Set.char2byte(" + qf + "))"; } 
+      return "(" + qf + " + 1)"; 
+    } 
+
+    if (operator.equals("->pred"))
+    { if (argument.isString())
+      { return "Set.byte2char(Set.char2byte(" + qf + ") - 1)"; } 
+      return "(" + qf + " - 1)"; 
+    } 
+
     if (operator.equals("->oclIsUndefined")) 
     { if (argument.isNumeric())
       { return "Double.isNaN((double) " + qf + ")"; } 
@@ -4067,6 +4113,24 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->byte2char")) 
     { return "Set.byte2char(" + qf + ")"; } 
+
+    if (operator.equals("->ord"))
+    { if (argument.isString())
+      { return "Set.char2byte(" + qf + ")"; } 
+      return qf; 
+    } 
+
+    if (operator.equals("->succ"))
+    { if (argument.isString())
+      { return "Set.byte2char(1 + Set.char2byte(" + qf + "))"; } 
+      return "(" + qf + " + 1)"; 
+    } 
+
+    if (operator.equals("->pred"))
+    { if (argument.isString())
+      { return "Set.byte2char(Set.char2byte(" + qf + ") - 1)"; } 
+      return "(" + qf + " - 1)"; 
+    } 
 
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 
@@ -4437,6 +4501,24 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->byte2char")) 
     { return "Ocl.byte2char(" + qf + ")"; } 
+
+    if (operator.equals("->ord"))
+    { if (argument.isString())
+      { return "Ocl.char2byte(" + qf + ")"; } 
+      return qf; 
+    } 
+
+    if (operator.equals("->succ"))
+    { if (argument.isString())
+      { return "Ocl.byte2char(1 + Ocl.char2byte(" + qf + "))"; } 
+      return "(" + qf + " + 1)"; 
+    } 
+
+    if (operator.equals("->pred"))
+    { if (argument.isString())
+      { return "Ocl.byte2char(Ocl.char2byte(" + qf + ") - 1)"; } 
+      return "(" + qf + " - 1)"; 
+    } 
 
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 

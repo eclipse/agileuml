@@ -27483,6 +27483,12 @@ public void produceCUI(PrintWriter out)
     String sourcestring = ""; 
     int noflines = 0; 
 
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
@@ -27551,11 +27557,63 @@ public void produceCUI(PrintWriter out)
 
     // set all classes concrete
 
+    System.out.println(">> Metainformation: " + ASTTerm.metafeatures); 
+
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       ent.removeStereotype("abstract"); 
       ent.setAbstract(false); 
     } 
+
+    java.util.Set keys = ASTTerm.metafeatures.keySet(); 
+    Vector kvect = new Vector(); 
+    kvect.addAll(keys); 
+    for (int i = 0; i < kvect.size(); i++) 
+    { String ky = (String) kvect.get(i); 
+      Object val = ASTTerm.metafeatures.get(ky); 
+      if (val instanceof Vector && 
+          Expression.isDecimalInteger(ky))
+      { Vector vals = (Vector) val; 
+        // First is the argument list
+        // Second is the code
+
+        if (vals.size() == 2)
+        { String args = (String) vals.get(0); 
+          String code = (String) vals.get(1); 
+          
+          Compiler2 comp = new Compiler2(); 
+          comp.nospacelexicalanalysis(code); 
+          Statement stat = comp.parseStatement(entities,types); 
+
+          if (args.indexOf(",") < 0) 
+          { String argtype = 
+              ASTTerm.getTaggedValue(args, "typName"); 
+            if (argtype != null) 
+            { System.out.println(">>> Additional operation of class " + argtype); 
+              System.out.println(); 
+              System.out.println("  operation with_op" + ky + 
+                           "()"); 
+              System.out.println("  pre: true post: true"); 
+              System.out.println("  activity: " + stat + ";");
+
+              BehaviouralFeature bf = 
+                new BehaviouralFeature("with_op" + ky, 
+                      new Vector(), false, null); 
+              bf.setActivity(stat);
+              bf.setPost(new BasicExpression(true)); 
+ 
+              Entity ent = 
+                (Entity) ModelElement.lookupByName(
+                                        argtype,entities); 
+              if (ent != null) 
+              { ent.addOperation(bf); 
+                bf.setOwner(ent); 
+              }  
+            } 
+          }  
+        } 
+      }
+    }  
 
     repaint(); 
   }

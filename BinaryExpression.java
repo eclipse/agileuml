@@ -4497,6 +4497,9 @@ public void findClones(java.util.Map clones,
              operator.equals("/<:") || 
              operator.equals("->excludesAll"))
     { // both are maps or both are collections
+      left.multiplicity = ModelElement.MANY; 
+      right.multiplicity = ModelElement.MANY; 
+
       if (left.isMap() && !right.isMap())
       { System.err.println("!! RHS of " + this + 
                            " must be map"); 
@@ -4551,6 +4554,36 @@ public void findClones(java.util.Map clones,
           vartypes.put(vname, left.getType()); 
         } 
       } 
+      else 
+      { System.err.println("!! Arguments of " + this + 
+                           " must be collections");
+        Type ltype = left.getType(); 
+        if (ltype.getAlias() != null && 
+            ltype.getAlias().isCollectionType()) 
+        { left.setType(ltype.getAlias()); 
+          right.setType(ltype.getAlias()); 
+        } 
+        else  
+        { Type newsettype = new Type("Set", null); 
+          newsettype.setElementType(new Type("OclAny", null)); 
+          left.setType(newsettype);
+          right.setType(newsettype); 
+        } 
+        type = left.getType(); 
+        elementType = left.getElementType();
+
+        if (left instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        }
+ 
+        if (right instanceof BasicExpression)
+        { String vname = 
+            ((BasicExpression) right).basicString(); 
+          vartypes.put(vname, right.getType()); 
+        } 
+      }
     }
     else if (operator.equals("^")  || 
              "->concatenate".equals(operator))
@@ -5688,6 +5721,7 @@ public void findClones(java.util.Map clones,
       else  
       { System.err.println("!! WARNING: unknown type for LHS of " + this);  
         type = new Type("Set",null); 
+        elementType = new Type("OclAny", null); 
       } 
     } 
     else if (operator.equals("->union") || operator.equals("\\/")) 
@@ -7519,6 +7553,24 @@ public boolean conflictsWithIn(String op, Expression el,
       return lqf; 
     } 
 
+    if (operator.equals("\\/") || 
+        operator.equals("->union")) 
+    { if (left.isMap() || right.isMap())
+      { res = "Ocl.unionMap(" + lqf + "," + rqf + ")"; }
+      else if (left.isOrdered() && right.isOrdered())
+      { res = "Ocl.concatenate(" + lqf + ", " + rqf + ")"; } 
+      else 
+      { res = "Ocl.union(" + lqf + "," + rqf + ")"; }
+    }
+
+    if (operator.equals("/\\") || 
+        operator.equals("->intersection"))
+    { if (left.isMap() && right.isMap())
+      { res = "Ocl.intersectionMap(" + lqf + "," + rqf + ")"; } 
+      else 
+      { res = "Ocl.intersection(" + lqf + "," + rqf + ")"; }
+    } 
+ 
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opjava = Expression.getOperatorJava(op); 

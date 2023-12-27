@@ -5048,8 +5048,16 @@ class WhileStatement extends Statement
 
   public String updateFormJava7(java.util.Map env, boolean local)
   { if (loopKind == FOR)
-    { if (loopVar != null && loopRange != null)
-      { String lv = loopVar.queryFormJava7(new java.util.HashMap(), local);  // env?
+    { // JOptionPane.showMessageDialog(null, "For loop " + loopVar + " " + env, "", JOptionPane.ERROR_MESSAGE);  
+          
+
+      if (loopVar != null && loopRange != null)
+      { String lv = 
+          loopVar.queryFormJava7(new java.util.HashMap(), local);  // env?
+
+        if (env.values().contains(loopVar))
+        { lv = loopVar + ""; } 
+
         String lr; 
         if (loopRange instanceof BasicExpression)
         { BasicExpression lran = (BasicExpression) loopRange; 
@@ -5079,6 +5087,7 @@ class WhileStatement extends Statement
         String newbody = processPreTermsJava7(body, preterms, env1, local); 
 
         String extract = "(" + etr + ") " + rang + ".get(" + ind + ")"; 
+
         if ("int".equals(etr))
         { extract = "((Integer) " + rang + ".get(" + ind + ")).intValue()"; } 
         else if ("double".equals(etr))
@@ -5090,11 +5099,20 @@ class WhileStatement extends Statement
 
         String wrappedElemType = Type.typeWrapperJava(et); 
 
-        return "  ArrayList<" + wrappedElemType + "> " + rang + " = new ArrayList<" + wrappedElemType + ">();\n" +
-               "    " + rang + ".addAll(" + lr + ");\n" + 
-               "    for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n" + 
-               "    { " + etr + " " + lv + " = " + extract + ";\n" +
-               "    " + newbody + "\n" + 
+        String res = 
+          "  ArrayList<" + wrappedElemType + "> " + rang + " = new ArrayList<" + wrappedElemType + ">();\n" +
+          "    " + rang + ".addAll(" + lr + ");\n" + 
+          "    for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n"; 
+        if (env.values().contains(loopVar))
+        { res = res +  
+               "    { " + lv + " = " + extract + ";\n"; 
+        } 
+        else 
+        { res = res + 
+               "    { " + etr + " " + lv + " = " + extract + ";\n"; 
+        } 
+    
+        return res + "    " + newbody + "\n" + 
                "  }"; 
       } 
       else if (loopTest != null && (loopTest instanceof BinaryExpression))
@@ -5113,7 +5131,7 @@ class WhileStatement extends Statement
         { lr = lt.right.queryFormJava7(env, local); } 
         Type et = lt.right.getElementType(); 
         if (et == null) 
-        { System.err.println("Warning!: no element type for loop iteration " + this); 
+        { System.err.println("! Warning!: no element type for loop iteration " + this); 
           et = new Type("OclAny", null); 
         } 
 

@@ -708,6 +708,7 @@ public class Association extends ModelElement
     { qual = "final ";
       initialiser = ""; 
     }
+
     if (role2 != null)  // attribute of entity1
     { if (entity1.isAbstract())
       { out.print("  protected " + qual); } 
@@ -716,6 +717,12 @@ public class Association extends ModelElement
 
       if (qualifier != null)
       { out.println("java.util.HashMap " + role2 + " = new java.util.HashMap();"); } 
+      else if (card2 == ONE && entity2 != null && 
+               initialExpression != null)
+      { java.util.HashMap env = new java.util.HashMap(); 
+        out.println(entity2.getName() + " " + role2 + " = " + 
+                    initialExpression + ";"); 
+      }
       else if (card2 == ONE && entity2 != null)
       { out.println(entity2.getName() + " " + role2 + ";"); }
       else if (entity2 != null)
@@ -723,8 +730,8 @@ public class Association extends ModelElement
                     role2 + initialiser + "; // of " +
                     entity2.getName());
       }
-	  else 
-	  { out.println("Object " + role2 + "; // Undefined class type"); }
+      else 
+      { out.println("Object " + role2 + "; // Undefined class type"); }
     }
   }  // not valid for a..b a > 0. Should be array then?
 
@@ -750,6 +757,11 @@ public class Association extends ModelElement
 
       if (qualifier != null)
       { out.println("java.util.HashMap " + role2 + " = new java.util.HashMap();"); } 
+      else if (card2 == ONE && initialExpression != null)
+      { java.util.HashMap env = new java.util.HashMap(); 
+        out.println(entity2.getName() + " " + role2 + " = " + 
+                    initialExpression + ";"); 
+      }
       else if (card2 == ONE)
       { out.println(entity2.getName() + " " + role2 + ";"); }
       else if (ordered)
@@ -772,10 +784,10 @@ public class Association extends ModelElement
     String initialiser = ""; 
     String reltype = e2name; 
 	
-	if (card2 == ONE)
-	{ initialiser = " = null"; 
-	  reltype = e2name; 
-	}
+    if (card2 == ONE)
+    { initialiser = " = null"; 
+      reltype = e2name; 
+    }
     else if (ordered)
     { initialiser = " = new ArrayList<" + e2name + ">()"; 
       reltype = "ArrayList<" + e2name + ">"; 
@@ -807,6 +819,11 @@ public class Association extends ModelElement
       { out.println("java.util.HashMap<String, " + reltype + "> " + role2 + 
                             " = new java.util.HashMap<String, " + reltype + ">();"); 
       } 
+      else if (card2 == ONE && initialExpression != null)
+      { java.util.HashMap env = new java.util.HashMap(); 
+        out.println(entity2.getName() + " " + role2 + " = " + 
+                    initialExpression + ";"); 
+      }
       else if (card2 == ONE)
       { out.println(entity2.getName() + " " + role2 + ";"); }
       else 
