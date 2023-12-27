@@ -603,6 +603,8 @@ class OclFile {
       { 
         int ch = inputStreamReader.read();
         position++;
+        if (ch == -1) 
+        { eof = true; } 
         return Ocl.byte2char(ch);   
       } catch (Exception _e) 
         { eof = true; } 
