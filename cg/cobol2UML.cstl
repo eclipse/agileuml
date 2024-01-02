@@ -2566,6 +2566,7 @@ READ _1 NEXT RECORD _2 _3  |-->    if _1_Position > _1->size() then (_3      ski
 
 READ _1 NEXT RECORD _2 _3 END-READ  |-->    _1_Position := _1_Position + 1;\n    if _1_Position <= _1->size() then (_3    _1_Record := _1[_1_Position] ; _2 := _1_Record ) else skip ;\n<when>  _2 readInto, _3 notAtEndPhrase
 READ _1 NEXT RECORD _2 _3  |-->    _1_Position := _1_Position + 1;\n    if _1_Position <= _1->size() then (_3      _1_Record := _1[_1_Position] ; _2 := _1_Record ) else skip ;\n<when>  _2 readInto, _3 notAtEndPhrase
+
 READ _1 NEXT RECORD _2 END-READ  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n    _2 := _1_Record;\n<when>  _2 readInto
 READ _1 NEXT RECORD _2  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];    _2 := _1_Record;\n<when> _2 readInto
 
@@ -2587,6 +2588,8 @@ READ _1 _2  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->si
 READ _1 END-READ  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position] ;\n    _
 READ _1  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n
 
+READ _1 _2 |-->    _1_Position := _1_Index->keys()->select(_key | _2)->collect(_key | _1_Index[_key])->min() ;\n    _1_Record := _1->at(_1_Position) ;\n<when> _2 readKey
+
 READ _1 _2 _3 _4 END-READ  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase, _4 notAtEndPhrase
 READ _1 _2 _3 _4  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase, _4 notAtEndPhrase
 READ _1 _2 _3 END-READ  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase
@@ -2599,6 +2602,13 @@ READ _1 _2  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record
 
 READ _1 RECORD _2 END-READ  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record := _1[_1`fileKey] else (_2      skip) ;\n<when>  _2 invalidKeyPhrase
 READ _1 _2  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record := _1[_1`fileKey] else (_2      skip) ;\n<when> _2 invalidKeyPhrase
+
+READ _1 NEXT |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n
+READ _1 NEXT _2  |-->        _1_Position := _1_Position + 1;\n    if _1_Position > _1->size()\n    then (_2      skip)\n    else (_1_Record := _1[_1_Position]) ;\n<when> _2 atEndPhrase
+
+READ _1 NEXT _2  |-->    _1_Position := _1_Position + 1;\n    if _1_Position <= _1->size()\n    then (_1_Record := _1[_1_Position]; _2    skip)\n    else skip ;\n<when>  _2 notAtEndPhrase
+READ _1 NEXT _2 _3  |-->    _1_Position := _1_Position + 1;\n    if _1_Position <= _1->size()\n    then (_1_Record := _1[_1_Position]; _3    skip)\n    else (_2    skip) ;\n<when>   _2 atEndPhrase, _3 notAtEndPhrase
+
 
 
 readInto::
@@ -2615,13 +2625,17 @@ WAIT  |-->
 
 
 readKey::
-KEY IS _1  |--> <when> _1 qualifiedDataName
-KEY _1  |--> <when> _1 qualifiedDataName
+KEY IS _1  |-->_key.subrange(_1`startPosition,_1`endPosition)->toInteger() >= _1<when> _1 qualifiedDataName, _1`oclType int
+KEY IS _1  |-->_key.subrange(_1`startPosition,_1`endPosition) >= _1<when> _1 qualifiedDataName
+
+KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition)->toInteger() >= _1<when> _1 qualifiedDataName, _1`oclType int
+KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition) >= _1<when> _1 qualifiedDataName
 
 
 receiveStatement::
 RECEIVE _1 END-RECEIVE |-->_1
 RECEIVE _1 |-->_1
+
 
 receiveFromStatement::
 _1 FROM _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
@@ -2857,51 +2871,73 @@ DUPLICATES |-->
 
 
 startStatement::
-START _1 END-START |-->    _1_Position := _1_Index[_1`fileKey] ;\n
-START _1 |-->    _1_Position := _1_Index[_1`fileKey] ;\n
+START _1 END-START |-->    _1_Position := _1_Index[_1_Record] ;\n
+START _1 |-->    _1_Position := _1_Index[_1_Record] ;\n
 
-START _1 _2 END-START |-->    _1`fileKey := _1_Index->keys()->select(_key | _2)->any() ;\n    _1_Position := _1_Index[_1`fileKey] ;\n<when> _2 startKey
-START _1 _2 |-->    _1`recordKey := _1_Index->keys()->select(_key | _2)->any() ;\n    _1_Position := _1_Index[_1`fileKey] ;\n<when> _2 startKey
+START _1 _2 END-START |-->    _1_Position := _1_Index->keys()->select(_key | _2)->collect(_key | _1_Index[_key])->min() ;\n    _1_Record := _1->at(_1_Position) ;\n<when> _2 startKey
 
-START _1 _2 _3 END-START |-->    if _1_Index->keys()->exists( _key | _2 ) then (_1`fileKey := _1_Index->keys()->select(_key | _2)->any() ;\n      _1_Position := _1_Index[_1`fileKey]) else (_3      skip) ;\n<when> _2 startKey, _3 invalidKeyPhrase
-START _1 _2 _3 |-->    if _1_Index->keys()->exists( _key | _2 ) then (_1`fileKey := _1_Index->keys()->select(_key | _2)->any() ;\n      _1_Position := _1_Index[_1`fileKey]) else (_3      skip) ;\n<when> _2 startKey, _3 invalidKeyPhrase
+START _1 _2 |-->    _1_Position := _1_Index->keys()->select(_key | _2)->collect(_key | _1_Index[_key])->min() ;\n    _1_Record := _1->at(_1_Position) ;\n<when> _2 startKey
+
+START _1 _2 _3 END-START |-->    if _1_Index->keys()->exists( _key | _2 ) then\n    (_1_Record := _1_Index->keys()->select(_key | _2)->min() ;\n     _1_Position := _1_Index[_1_Record])\n    else (_3      skip) ;\n<when> _2 startKey, _3 invalidKeyPhrase
+
+START _1 _2 _3 |-->    if _1_Index->keys()->exists( _key | _2 ) then\n    (_1_Record := _1_Index->keys()->select(_key | _2)->min() ;\n     _1_Position := _1_Index[_1_Record])\n    else (_3      skip) ;\n<when> _2 startKey, _3 invalidKeyPhrase
 
 
 startKey::
-KEY IS EQUAL TO _1 |-->_key = _1
-KEY EQUAL TO _1 |-->_key = _1
-KEY IS EQUAL _1 |-->_key = _1
-KEY EQUAL _1 |-->_key = _1
-KEY IS = _1 |-->_key = _1
-KEY = _1 |-->_key = _1
+KEY IS EQUAL TO _1 |-->_key_1`keyValue = _1
+KEY EQUAL TO _1 |-->_key_1`keyValue = _1
+KEY IS EQUAL _1 |-->_key_1`keyValue = _1
+KEY EQUAL _1 |-->_key_1`keyValue = _1
+KEY IS = _1 |-->_key_1`keyValue = _1
+KEY = _1 |-->_key_1`keyValue = _1
 
-KEY IS GREATER THAN _1 |-->_key->compareTo(_1) > 0
-KEY GREATER THAN _1 |-->_key->compareTo(_1) > 0
-KEY IS GREATER _1 |-->_key->compareTo(_1) > 0
-KEY GREATER _1 |-->_key->compareTo(_1) > 0
-KEY IS > _1 |-->_key->compareTo(_1) > 0
-KEY > _1 |-->_key->compareTo(_1) > 0
+KEY IS GREATER THAN _1 |-->_key_1`keyValue > _1
+KEY GREATER THAN _1 |-->_key_1`keyValue > _1
+KEY IS GREATER _1 |-->_key_1`keyValue->compareTo(_1) > 0
+KEY GREATER _1 |-->_key_1`keyValue->compareTo(_1) > 0
+KEY IS > _1 |-->_key_1`keyValue->compareTo(_1) > 0
+KEY > _1 |-->_key_1`keyValue->compareTo(_1) > 0
 
-KEY IS NOT LESS THAN _1 |-->_key->compareTo(_1) >= 0
-KEY NOT LESS THAN _1 |-->_key->compareTo(_1) >= 0
-KEY IS NOT LESS _1 |-->_key->compareTo(_1) >= 0
-KEY NOT LESS _1 |-->_key->compareTo(_1) >= 0
-KEY IS NOT < _1 |-->_key->compareTo(_1) >= 0
-KEY NOT < _1 |-->_key->compareTo(_1) >= 0
+KEY IS NOT LESS THAN _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY NOT LESS THAN _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY IS NOT LESS _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY NOT LESS _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY IS NOT < _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY NOT < _1 |-->_key_1`keyValue->compareTo(_1) >= 0
 
-KEY IS GREATER THAN OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
-KEY GREATER THAN OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
-KEY IS GREATER OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
-KEY GREATER OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
-KEY IS GREATER THAN OR EQUAL _1 |-->_key->compareTo(_1) >= 0
-KEY GREATER THAN OR EQUAL _1 |-->_key->compareTo(_1) >= 0
-KEY IS GREATER OR EQUAL _1 |-->_key->compareTo(_1) >= 0
-KEY GREATER OR EQUAL _1 |-->_key->compareTo(_1) >= 0
-KEY IS >= _1 |-->_key->compareTo(_1) >= 0
-KEY >= _1 |-->_key->compareTo(_1) >= 0
+KEY IS GREATER THAN OR EQUAL TO _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY GREATER THAN OR EQUAL TO _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY IS GREATER OR EQUAL TO _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY GREATER OR EQUAL TO _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY IS GREATER THAN OR EQUAL _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY GREATER THAN OR EQUAL _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY IS GREATER OR EQUAL _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY GREATER OR EQUAL _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY IS >= _1 |-->_key_1`keyValue->compareTo(_1) >= 0
+KEY >= _1 |-->_key_1`keyValue->compareTo(_1) >= 0
 
 
+keyValue::
+KEY _* TO _1 |-->_1`keyValue
+KEY _* EQUAL _1 |-->_1`keyValue
+KEY EQUAL _1 |-->_1`keyValue
+KEY IS = _1 |-->_1`keyValue
+KEY = _1 |-->_1`keyValue
 
+KEY _* THAN _1 |-->_1`keyValue
+KEY IS GREATER _1 |-->_1`keyValue
+KEY GREATER _1 |-->
+KEY IS > _1 |-->
+KEY > _1 |-->
+
+KEY _* LESS _1 |-->_key->compareTo(_1) >= 0
+KEY _* < _1 |-->_key->compareTo(_1) >= 0
+
+KEY IS >= _1 |-->_1`keyValue
+KEY >= _1 |-->_1`keyValue
+
+_1 |-->.subrange(_1`startPosition,_1`endPosition)->toInteger()<when> _1`oclType int
+_1 |-->.subrange(_1`startPosition,_1`endPosition)
 
 
 
@@ -3105,11 +3141,13 @@ TALLYING _1 |-->      _1 := _unstringTally
 
 
 writeStatement::
-WRITE _1 _2 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 writeAdvancingPhrase
-WRITE _1 _2  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 writeAdvancingPhrase
+WRITE _1 _2 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n    _1`ownerFile := _1`ownerFile->concatenate(Integer.subrange(1,_2`advancingAfterIncrement)->collect(" "));\n    _1`ownerFile_Position := _1`ownerFile_Position + _2`advancingAfterIncrement ;\n<when> _2 writeAdvancingPhrase
 
-WRITE _1 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
-WRITE _1  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+WRITE _1 _2  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n    _1`ownerFile := _1`ownerFile->concatenate(Integer.subrange(1,_2`advancingAfterIncrement)->collect(" "));\n    _1`ownerFile_Position := _1`ownerFile_Position + _2`advancingAfterIncrement ;\n<when> _2 writeAdvancingPhrase
+
+WRITE _1 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+
+WRITE _1  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
 
 
 writeAdvancingPhrase::
@@ -3130,6 +3168,17 @@ _1 LINES  |-->
 writeAdvancingMnemonic::
 _1  |--> <when> _1 mnemonicName
 
+
+advancingAfterIncrement::
+BEFORE ADVANCING _1  |-->_1`advancingAfterIncrement
+BEFORE _1  |-->_1`advancingAfterIncrement
+AFTER ADVANCING _1  |-->_1`advancingAfterIncrement
+AFTER _1  |-->_1`advancingAfterIncrement
+PAGE  |-->10
+_1 LINE |-->(_1-1)
+_1 LINES |-->(_1-1)
+_1 |-->(_1-1)
+ 
 
 writeAtEndOfPagePhrase::
 AT END_OF_PAGE  |--> 
