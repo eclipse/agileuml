@@ -346,7 +346,50 @@ class OclFile:
         s = input("")
         self.lastRead = s
         return True
-      except EOFError : 
+      except : 
+        self.eof = True
+        self.lastRead = None
+        return False
+
+    if self.actualFile != None :
+      if self.eof == True : 
+        return False 
+      try :  
+        s = self.actualFile.read(1)
+        if s == '' : 
+          self.eof = True
+          self.lastRead = None
+          return False
+        self.position = self.position + 1
+        while s.isspace() : 
+          try : 
+            s = self.actualFile.read(1)
+            if s == '' : 
+              self.eof = True
+              self.lastRead = None
+              return False
+            self.position = self.position + 1
+          except : 
+            self.eof = True
+            self.lastRead = None
+            return False
+ 
+        self.lastRead = ""
+ 
+        while not(s.isspace()) : 
+          try : 
+            self.lastRead = self.lastRead + s
+            s = self.actualFile.read(1)
+            if s == '' : 
+              self.eof = True
+              return True
+            self.position = self.position + 1
+          except : 
+            self.eof = True
+            return True
+
+        return True
+      except : 
         self.eof = True
         self.lastRead = None
         return False
@@ -360,7 +403,7 @@ class OclFile:
         s = input("")
         self.lastRead = s
         return True
-      except EOFError : 
+      except : 
         self.eof = True
         self.lastRead = None
         return False
@@ -377,7 +420,10 @@ class OclFile:
     if self.actualFile != None :
       try :  
         s = self.actualFile.read(1)
-        self.lastRead = s
+        if s == '' : 
+          self.eof = True
+          self.lastRead = None
+          return s
         self.position = self.position + 1
         return s
       except EOFError : 
@@ -565,6 +611,7 @@ class OclFile:
       self.readable = False
       self.writable = False
       self.actualFile = None
+      self.lastRead = None
 
   def isOpen(self) : 
     if self.actualFile == None : 
@@ -619,3 +666,4 @@ System_err = OclFile.newOclFile("System.err")
 # for f in dirfiles : 
 #   f.openRead()
 #   print(f.getName() + " " + str(f.lineCount()))
+

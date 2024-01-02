@@ -34,6 +34,7 @@ class OclFile {
 
   private long position = 0L; 
   private long markedPosition = 0L; 
+  private String lastRead = null; 
   private boolean eof = false; 
 
   String name = ""; /* primary */
@@ -290,6 +291,7 @@ class OclFile {
 
     inputStream = null; 
     outputStream = null; 
+    lastRead = null; 
 
     position = 0; 
   }
@@ -463,6 +465,67 @@ class OclFile {
     return result;
   }
 
+  public boolean hasNext() 
+  { if ("System.in".equals(name))
+    { if (eof) 
+      { return false; } 
+      try  
+      { lastRead = readLine();
+        return true;
+      }
+      catch (Throwable _e)  
+      { eof = true;
+        lastRead = null; 
+        return false;
+      }
+    }
+
+    if (inputStreamReader != null) 
+    { try 
+      { 
+        int ch = inputStreamReader.read();
+        position++;
+        
+        if (ch == -1) 
+        { eof = true;
+          lastRead = null;  
+          return false; 
+        } 
+
+        while (Character.isWhitespace(ch))
+        { ch = inputStreamReader.read();
+          position++;
+          if (ch == -1) 
+          { eof = true;
+            lastRead = null;  
+            return false; 
+          }
+        } 
+
+        /* There is some text to return */ 
+        lastRead = ""; 
+        while (!Character.isWhitespace(ch)) 
+        { lastRead = lastRead + Ocl.byte2char(ch); 
+
+          ch = inputStreamReader.read();
+          position++;
+          if (ch == -1) 
+          { eof = true;
+            return true; 
+          }
+        } 
+
+        return true; 
+      } catch (Exception _e) 
+        { eof = true;} 
+    } 
+
+    return false;
+  }  
+
+  public String getCurrent() 
+  { return lastRead; } 
+  
   public void write(String s)
   { 
     if (outputStreamWriter != null)
@@ -584,12 +647,13 @@ class OclFile {
         inputStreamReader instanceof BufferedReader) 
     { try 
       { 
-        String ss = ((BufferedReader) inputStreamReader).readLine(); 
-        position += ss.length() + 1; 
-        return ss; 
+        lastRead = ((BufferedReader) inputStreamReader).readLine(); 
+        position += lastRead.length() + 1; 
+        return lastRead; 
       } catch (Exception _e) { 
-          _e.printStackTrace(); 
-          eof = true; 
+          // _e.printStackTrace(); 
+          eof = true;
+          lastRead = null;  
           return null; 
       } 
     } 
@@ -603,11 +667,19 @@ class OclFile {
       { 
         int ch = inputStreamReader.read();
         position++;
+        
         if (ch == -1) 
-        { eof = true; } 
-        return Ocl.byte2char(ch);   
+        { eof = true;
+          lastRead = null;  
+          return ""; 
+        } 
+
+        lastRead = Ocl.byte2char(ch);
+        return lastRead;   
       } catch (Exception _e) 
-        { eof = true; } 
+        { eof = true;
+          lastRead = null;
+        } 
     } 
  
     return ""; 
@@ -626,6 +698,11 @@ class OclFile {
           position++;
           ind++; 
         } 
+ 
+        if (ch == -1) 
+        { eof = true; } 
+
+        lastRead = Ocl.sumString(res); 
         return res;   
       } catch (Exception _e) 
         { eof = true; } 
@@ -639,6 +716,12 @@ class OclFile {
       { 
         int ch = inputStreamReader.read();
         position++;
+
+        lastRead = Ocl.byte2char(ch); 
+
+        if (ch == -1) 
+        { eof = true; } 
+
         return ch;   
       } catch (Exception _e) 
         { eof = true; } 
@@ -649,17 +732,27 @@ class OclFile {
 
   public ArrayList<Integer> readNbytes(int n)
   { ArrayList<Integer> res = new ArrayList<Integer>(); 
+    String sres = ""; 
+
     if (inputStreamReader != null) 
     { try 
       { int ind = 0; 
         int ch = inputStreamReader.read();
         position++;
+
         while (ch != -1 && ind < n)
         { res.add(ch); 
+          sres = sres + Ocl.byte2char(ch); 
+
           ch = inputStreamReader.read();
           position++;
           ind++; 
         } 
+
+        if (ch == -1) 
+        { eof = true; } 
+
+        lastRead = sres; 
         return res;   
       } catch (Exception _e) 
         { eof = true; } 
@@ -679,6 +772,10 @@ class OclFile {
           ch = inputStreamReader.read();
           position++;
         } 
+
+        if (ch == -1) 
+        { eof = true; } 
+
         return res;   
       } catch (Exception _e) 
         { eof = true; } 
@@ -694,7 +791,8 @@ class OclFile {
       { String lne = 
           ((BufferedReader) inputStreamReader).readLine();
         while (lne != null) 
-        { br.append(lne + "\n"); 
+        { br.append(lne + "\n");
+          lastRead = lne;  
           lne = 
             ((BufferedReader) inputStreamReader).readLine();
         } 
@@ -717,6 +815,7 @@ class OclFile {
           ((BufferedReader) inputStreamReader).readLine();
         while (lne != null) 
         { res.add(lne); 
+          lastRead = lne; 
           lne = 
             ((BufferedReader) inputStreamReader).readLine();
         } 
@@ -740,6 +839,8 @@ class OclFile {
         while (ch != -1)
         { target.writeByte(ch); 
           ch = source.inputStreamReader.read();
+          if (ch == -1) 
+          { source.eof = true; } 
           source.position++;
         } 
         
@@ -842,17 +943,17 @@ class OclFile {
   protected void finalize()
   { closeFile(); } 
 
- /* public static void main(String[] args)
+ public static void main(String[] args)
   { OclFile ff = OclFile.newOclFile("ff.txt"); 
     OclFile gg = OclFile.newOclFile_Read(ff); 
     ArrayList<Integer> ss = gg.readNbytes(4);
     System.out.println(ss); 
-    // gg.skipBytes(20); 
+    System.out.println(gg.getCurrent()); 
     ArrayList<String> cc = gg.readN(4);
     cc = gg.readN(4); 
     System.out.println(cc); 
     gg.closeFile(); 
-  }  */ 
+  }  
 
 }
 
