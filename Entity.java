@@ -6524,6 +6524,8 @@ public class Entity extends ModelElement implements Comparable
         { System.out.println(">>> Adding operation " + opname);
           op = new BehaviouralFeature(opname, new Vector(),
                                       false, null);
+          op.setPost(new BasicExpression(true)); 
+
           SequenceStatement seqstat =
                         new SequenceStatement(); 
           String nxt = (String) paras.get(p+1); 
@@ -6603,6 +6605,8 @@ public class Entity extends ModelElement implements Comparable
                        e1ParName + "$" + e2ParName,
                        corrpars,
                        false, new Type("String", null));
+          bf.setPost(new BasicExpression(true)); 
+
           SequenceStatement stats = 
                 new SequenceStatement(); 
           Vector commonAtts1 = 

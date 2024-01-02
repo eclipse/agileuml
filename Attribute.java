@@ -458,6 +458,12 @@ public class Attribute extends ModelElement
         type.elementType = elementType;   
       } 
 
+      if (Type.isVacuousType(elementType) && 
+          !Type.isVacuousType(initialExpression.elementType)) 
+      { elementType = initialExpression.elementType;
+        type.elementType = elementType;   
+      } 
+
       System.out.println(">> Type of initialiser: " + initialExpression + " is " + initialExpression.type + "(" + initialExpression.elementType + ")");
 
       if (initialExpression.type == null) 

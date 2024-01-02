@@ -4007,15 +4007,25 @@ public void findClones(java.util.Map clones,
     }  // and right for map must be of keytype of left.
     else if ("->apply".equals(operator)) 
     { // lhs must be a function
+
       if (left.hasFunctionType()) 
-      { Type ftype = left.getType(); 
-        type = type.getElementType();
+      { Type ftype = left.getType();
+        if (ftype != null)  
+        { type = ftype.getElementType(); }
+
         if (Type.isVacuousType(type))
         { Type vtype = (Type) vartypes.get(left + ""); 
           if (vtype != null && 
               !Type.isVacuousType(vtype.getElementType()))
           { type = vtype.getElementType(); } 
         }  
+
+        if (ftype != null) 
+        { Type ktype = ftype.getKeyType(); 
+          if (Type.isVacuousType(ktype) && 
+              !Type.isVacuousType(right.getType()))
+          { ftype.setKeyType(right.getType()); } 
+        } 
       } 
       else 
       { System.err.println("!! LHS of " + this + " must be a function"); 
@@ -5289,8 +5299,13 @@ public void findClones(java.util.Map clones,
       { type = ftype.getElementType(); }
 
       if (type == null) 
-      { System.err.println("! Warning: no function result type in " + this); 
-        type = new Type("OclAny", null); 
+      { System.err.println("!! Warning: no function result type in " + this); 
+        type = new Type("OclAny", null);
+        if (ftype == null) 
+        { ftype = new Type("Function", null); 
+          ftype.setKeyType(right.getType()); 
+        }
+        ftype.setElementType(type);  
       } 
       else 
       { elementType = type.elementType; } 
@@ -6471,7 +6486,7 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
-      { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      { res = "(" + lqf + " - (" + rqf + "))"; } 
       else if (left.isString())
       { res = "((Comparable) " + lqf + ").compareTo(\"\" + " + rqf + ")"; } 
       else if (left.hasSequenceType() && right.hasSequenceType())
@@ -6995,7 +7010,7 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
-      { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      { res = "(" + lqf + " - (" + rqf + "))"; } 
       else if (left.isString())
       { res = "((Comparable) " + lqf + ").compareTo(\"\" + " + rqf + ")"; } 
       else if (left.hasSequenceType() && right.hasSequenceType())
@@ -7451,7 +7466,7 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
-      { res = "(" + lqf + " < " + rqf + ") ? -1 : ((" + lqf + " > " + rqf + ") ? 1 : 0)"; } 
+      { res = "(" + lqf + " - (" + rqf + "))"; } 
       else if (left.isString())
       { res = "((Comparable) " + lqf + ").compareTo(\"\" + " + rqf + ")"; } 
       else if (left.hasSequenceType() && right.hasSequenceType())

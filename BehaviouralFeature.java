@@ -3406,6 +3406,21 @@ public class BehaviouralFeature extends ModelElement
     } 
   } 
 
+  private void typeInferenceParameters(Vector pars, Vector types, Vector entities)
+  { for (int i = 0; i < pars.size(); i++) 
+    { Attribute par = (Attribute) pars.get(i); 
+      Type partype = par.getType();
+      if (partype != null && 
+          partype.isAliasType())
+      { partype = partype.getActualType(); }  
+      Type newtype = Type.typeCheck(partype,types,entities);   
+      par.setType(newtype); 
+      par.setElementType(newtype.getElementType()); 
+      System.out.println(">> parameter " + par.getName() + 
+                         " has type " + newtype); 
+    } 
+  } 
+
   public Vector allTypeParameterEntities(Entity ent)
   { Vector localEntities = new Vector();
  
@@ -3500,7 +3515,7 @@ public class BehaviouralFeature extends ModelElement
     { localEntities.add(0,entity); } 
  
     Vector env = new Vector();
-    typeCheckParameters(parameters,types,localEntities);  
+    typeInferenceParameters(parameters,types,localEntities);  
     env.addAll(parameters);
 
     for (int i = 0; i < parameters.size(); i++) 

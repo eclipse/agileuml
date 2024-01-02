@@ -10791,6 +10791,10 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.Map;"); 
     out.println("import java.util.HashMap;"); 
     out.println("import java.util.Vector;\n");
+
+    out.println("import java.util.function.Predicate;"); 
+    out.println("import java.util.function.Function;\n\n"); 
+
     out.println("public interface SystemTypes");
     out.println("{");
     for (int i = 0; i < types.size(); i++)
@@ -11002,6 +11006,10 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.Collections;");
     out.println("import java.util.List;");
     out.println("import java.util.Vector;\n");
+
+    /* Java 8 */ 
+    out.println("import java.util.function.Predicate;"); 
+    out.println("import java.util.function.Function;\n\n"); 
 
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);

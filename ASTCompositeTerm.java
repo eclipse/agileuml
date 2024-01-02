@@ -278,7 +278,7 @@ public class ASTCompositeTerm extends ASTTerm
       Vector nterms = new Vector(); 
       nterms.add(terms.get(0)); 
       ASTTerm.cobolFillerCount++; 
-      nterms.add(new ASTSymbolTerm("FILLER_" + 
+      nterms.add(new ASTSymbolTerm("FILLER_F" + 
                     ASTTerm.cobolFillerCount));
       /* JOptionPane.showMessageDialog(null, this + 
               " added filler " + ASTTerm.cobolFillerCount, 
@@ -322,7 +322,7 @@ public class ASTCompositeTerm extends ASTTerm
     { ASTTerm trm = (ASTTerm) terms.get(i);
       if ("FILLER".equals(trm.literalForm()))
       { ASTTerm.cobolFillerCount++; 
-        newterms.add(new ASTSymbolTerm("FILLER_" + 
+        newterms.add(new ASTSymbolTerm("FILLER_F" + 
                            ASTTerm.cobolFillerCount));
     /*    JOptionPane.showMessageDialog(null, this + 
               " replaced filler " + ASTTerm.cobolFillerCount, 
@@ -33181,24 +33181,25 @@ public class ASTCompositeTerm extends ASTTerm
 
             return args + ".getCurrent()->toBoolean()"; 
           } 
-     }
-     else if ("getBuffer".equals(called) || 
-              "toString".equals(called))
-     { expression = BasicExpression.newCallBasicExpression(
+        }
+        else if ("getBuffer".equals(called) || 
+                 "toString".equals(called))
+        { expression = BasicExpression.newCallBasicExpression(
                               "readAll", arg.expression);
-       ASTTerm.setType(this, "String"); 
-       return args + ".readAll()"; 
-     } // for StringWriter        
-     else if ("size".equals(called))
-     { expression = BasicExpression.newCallBasicExpression(
+          ASTTerm.setType(this, "String"); 
+          return args + ".readAll()"; 
+        } // for StringWriter        
+        else if ("size".equals(called))
+        { expression = BasicExpression.newCallBasicExpression(
                               "length", arg.expression);
-       ASTTerm.setType(this, "long"); 
-       return args + ".length()"; 
-     } // for StringWriter        
-     else if ("write".equals(called) && arg.isFile())
-     { if (cargs.size() == 1)
-       { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
-         String callp1 = callarg1.toKM3();
+          ASTTerm.setType(this, "long"); 
+          return args + ".length()"; 
+        } // for StringWriter        
+        else if ("write".equals(called) && arg.isFile())
+        { if (cargs.size() == 1)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3();
+
             if (callarg1.isStringSequence())
             { if (arg.expression != null && 
                   callarg1.expression != null) 
@@ -33216,32 +33217,32 @@ public class ASTCompositeTerm extends ASTTerm
               return args + ".write(" + callp1 + "->sum())"; 
             }
         
-         if (callarg1.isIntegerSequence())
-         { if (arg.expression != null && 
-               callarg1.expression != null) 
-           { Expression zExpr =
+            if (callarg1.isIntegerSequence())
+            { if (arg.expression != null && 
+                  callarg1.expression != null) 
+              { Expression zExpr =
                   BasicExpression.newVariableBasicExpression(
                     "_z");
-             Expression inarg = 
+                Expression inarg = 
                   new BinaryExpression(":", zExpr,
                                        callarg1.expression); 
-             Expression b2char = 
+                Expression b2char = 
                   new UnaryExpression("->byte2char", zExpr);  
-             Expression col = 
+                Expression col = 
                   new BinaryExpression("|C", inarg, b2char); 
-             Expression par = 
+                Expression par = 
                   new UnaryExpression("->sum", 
                                       col); 
-             expression = 
+                expression = 
                   BasicExpression.newCallBasicExpression(
                     "write", arg.expression, par);
-             statement = 
+                statement = 
                   InvocationStatement.newInvocationStatement(
                     expression, par);  
-           } 
+              } 
 
-           return args + ".write(" + callp1 + "->collect( _z | _z->byte2char() )->sum())"; 
-         }        
+              return args + ".write(" + callp1 + "->collect( _z | _z->byte2char() )->sum())"; 
+            }        
 
 
             if (arg.expression != null && 
@@ -41928,7 +41929,7 @@ public class ASTCompositeTerm extends ASTTerm
           else if (levelNumber < prevLevel) 
           { // attribute of another container 
             if ("FILLER".equals(fieldName)) 
-            { fieldName = "FILLER_" + startPos + "_" + endPos; }
+            { fieldName = "FILLER_F" + startPos + "_T" + endPos; }
             else 
             { Attribute att = 
                 new Attribute(fieldName, typ, 
@@ -42306,12 +42307,12 @@ public class ASTCompositeTerm extends ASTTerm
 
         ASTTerm t2 = (ASTTerm) ctrm.terms.get(1);
         String t2lit = t2.literalForm();  
-        if (t2lit.startsWith("FILLER_") || 
+        if (t2lit.startsWith("FILLER_F") || 
             t2.getTag().equals("dataName"))
         { fieldName = t2lit; }
         else // anonymous filler
         { ASTTerm.cobolFillerCount++; 
-          fieldName = "FILLER_" + ASTTerm.cobolFillerCount; 
+          fieldName = "FILLER_F" + ASTTerm.cobolFillerCount; 
         } 
 
         Entity container = cent; 

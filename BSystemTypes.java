@@ -6597,10 +6597,17 @@ public class BSystemTypes extends BComponent
   }
 
   public static String generateUnionOpJava7()
-  { String res = "  public static <T> HashSet<T> union(HashSet<T> a, Collection<T> b)\n" +
+  { String res = "  public static <T> HashSet<T> union(HashSet<Object> a, Collection<T> b)\n" +
       "  { HashSet<T> res = new HashSet<T>(); \n" +
-      "    res.addAll(a); res.addAll(b);\n" +
-      "    return res; }\n\n" + 
+      "    for (Object x : a)\n" +
+      "    { try \n" +
+      "      { T y = (T) x; \n" +
+      "        res.add(y); \n" +
+      "      } catch (Exception _e) { }\n" + 
+      "    }\n" +
+      "    res.addAll(b);\n" +
+      "    return res;\n" + 
+      "  }\n\n" + 
       "  public static <T> TreeSet<T> union(TreeSet<T> a, Collection<T> b)\n" +
       "  { TreeSet<T> res = new TreeSet<T>(); \n" +
       "    res.addAll(a); res.addAll(b);\n" +

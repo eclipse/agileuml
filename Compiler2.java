@@ -465,8 +465,9 @@ public class Compiler2
     }
     if (invalidLexical(str))
     { messages.add("Error: " + str + " invalid lexical");
-      JOptionPane.showMessageDialog(null, "Error: " + str + " invalid lexical",
-                                    "Syntax error", JOptionPane.ERROR_MESSAGE);  
+      JOptionPane.showMessageDialog(null, 
+           "Error: " + str + " invalid lexical",
+           "Syntax error", JOptionPane.ERROR_MESSAGE);  
       return false; 
     }
     // also if contains "_"
@@ -1352,9 +1353,9 @@ public class Compiler2
                 return tt;
               } 
               else if (t1 == null) 
-              { System.err.println(">>> Invalid type at: " + showLexicals(st+2,i-1)); } 
+              { System.err.println("!! Invalid type at: " + showLexicals(st+2,i-1)); } 
               else if (t2 == null) 
-              { System.err.println(">>> Invalid type at: " + showLexicals(i+1,en-1)); } 
+              { System.err.println("!! Invalid type at: " + showLexicals(i+1,en-1)); } 
             }
           } 
         }
@@ -1386,7 +1387,7 @@ public class Compiler2
             return tt; 
           }
           else 
-          { System.err.println(">>> Unknown type in Set/Sequence argument: " + showLexicals(st+2,en-1)); } 
+          { System.err.println("!! Error: Unknown type in Set/Sequence argument: " + showLexicals(st+2,en-1)); } 
         } 
       }  
       // return tt; 
@@ -1418,7 +1419,7 @@ public class Compiler2
       } // should not have parameters.  
     } 
 
-    System.err.println("ERROR: unknown type: " + typ + " in " + showLexicals(st,en)); 
+    System.err.println("!! ERROR: unknown type: " + typ + " in " + showLexicals(st,en)); 
         
     return null; 
   } // also need OrderedSet, Bag, Tuple for ATL. 
@@ -2692,7 +2693,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     Expression e1 = null; 
     Expression e2 = null;
 
-    System.out.println("Trying to parse or expression"); 
+    // System.out.println("Trying to parse or expression"); 
     
     for (int i = pstart; i < pend; i++)
     { 
@@ -2718,7 +2719,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     Expression e1 = null;
     Expression e2 = null;
  
-    System.out.println("Trying to parse and expression");
+    // System.out.println("Trying to parse and expression");
     int best = getBestAndOpOccurrence(pstart,pend); 
   
     // for (int i = pstart; i < pend; i++)
@@ -2786,7 +2787,8 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         if (e1 == null || e2 == null)
         { } // return null; }
         else
-        { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
+        { BinaryExpression ee = 
+            new BinaryExpression(ss,e1,e2);
           // System.out.println("Parsed additive expression: " + ee);
           return ee;
         } 
@@ -2805,10 +2807,29 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           // System.out.println("Parsed additive expression: " + ee);
           return ee;
         } 
-      }     
+      }
+      /* else if (ss.equals(".") && 
+           i + 1 < pend && 
+           ".".equals(lexicals.get(i+1) + "")) 
+      { Expression e1 = 
+            parse_factor_expression(
+                         bc,pstart,i-1, entities, types);
+        Expression e2 = 
+            parse_factor_expression(
+                         bc,i+2, pend, entities, types);
+        if (e1 == null || e2 == null)         
+        { } // return null; }
+        else
+        { BinaryExpression ee = 
+              new BinaryExpression("..",e1,e2);
+          System.out.println(">>>>> Parsed additive expression: " + ee);
+          return ee;
+        } 
+      } */ 
     } 
 
-    return parse_factor_expression(bc,pstart,pend,entities,types); 
+    return parse_factor_expression(
+                          bc,pstart,pend,entities,types); 
   } // reads left to right, a - b + c parsed as 
     // (a - b) + c
 
@@ -3246,7 +3267,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     if (pstart < pend && "?".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_basic_expression(bc,pstart+1,pend,entities,types); 
       if (arg == null) 
-      { System.err.println(">> references must be applied to basic expressions: " + showLexicals(pstart+1, pend)); 
+      { System.err.println("!! Error: references must be applied to basic expressions: " + showLexicals(pstart+1, pend)); 
         return null; 
       } 
       return new UnaryExpression("?",arg); 
@@ -3255,7 +3276,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     if (pstart < pend && "!".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_basic_expression(bc,pstart+1,pend,entities,types); 
       if (arg == null) 
-      { System.err.println(">> dereferences must be applied to basic expressions: " + showLexicals(pstart+1, pend)); 
+      { System.err.println("!! Error: dereferences must be applied to basic expressions: " + showLexicals(pstart+1, pend)); 
         return null; 
       } 
       return new UnaryExpression("!",arg); 
@@ -3391,17 +3412,26 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
             
         Expression op = 
           parse_basic_expression(bc+1,
-                               pstart+1,pend-2,entities,types); 
-        if (op != null && op instanceof BasicExpression) // must be
-        { BasicExpression beop = (BasicExpression) op;  
-          BasicExpression te = 
+                        pstart+1,pend-2,entities,types);
+
+        BasicExpression te = 
             // new BasicExpression(ss,0);   // (ss) surely?
             new BasicExpression(tail,0); 
+           
+        if (op != null && op instanceof BasicExpression) // must be
+        { BasicExpression beop = (BasicExpression) op;  
           Expression ef = te.checkIfSetExpression(); 
           if (ef != null && (ef instanceof BasicExpression)) 
           { ((BasicExpression) ef).setInnerObjectRef(beop); }  
           return ef;  
         }
+        else if (op instanceof UnaryExpression && 
+                 "!".equals(((UnaryExpression) op).operator))
+        { Expression ef = te.checkIfSetExpression(); 
+          if (ef != null && (ef instanceof BasicExpression)) 
+          { ((BasicExpression) ef).setInnerObjectRef(op); }  
+          return ef;  
+        } 
       } 
       // return null; 
     }       
@@ -3416,7 +3446,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       if (brack.equals(")") && brack2.equals("(") && 
 	      strs.length() > 1 && '.' == strs.charAt(0))
       { Expression op = parse_basic_expression(bc, pstart+1, i-2, entities,types);
-        System.out.println("*** Parsing extended basic expression " + op + strs + "(...)");
+        // System.out.println("*** Parsing extended basic expression " + op + strs + "(...)");
         if (op != null && op instanceof BasicExpression)
         { Vector ve = parse_fe_sequence(bc,i+2,pend-1,entities,types);
           if (ve != null)
@@ -3500,16 +3530,18 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   
 
   public Expression parse_set_expression(int bc,int pstart,int pend, Vector entities, Vector types)
-  { Vector ve = parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
+  { Vector ve = 
+      parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
     if (ve == null) 
     { return null; } 
     Expression res = new SetExpression(ve,false); 
-    // System.out.println("Parsed set expression: " + res); 
+    System.out.println(">>> Parsed set expression: " + res); 
     return res; 
   } 
 
   public Expression parse_sequence_expression(int bc,int pstart,int pend, Vector entities, Vector types)
-  { Vector ve = parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
+  { Vector ve = 
+      parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
     if (ve == null) 
     { return null; } 
     Expression res = new SetExpression(ve,true); 
@@ -3608,7 +3640,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   { // Scans the lexicals inside the outer brackets of 
     // a potential fe-sequence
 
-     int bcnt = 0; int sqbcnt = 0; int cbcnt = 0;
+     int bcnt = 0; 
+     int sqbcnt = 0; 
+     int cbcnt = 0;
+
      Vector res = new Vector();
      int st0 = st;
      String buff = "";
@@ -3627,11 +3662,14 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
        else if (",".equals(lx))
        { if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
          { // top-level ,
-           Expression exp = parse_additive_expression(bc,st0,i-1,entities,types);
+           Expression exp = 
+             parse_additive_expression(
+                     bc,st0,i-1,entities,types);
            if (exp == null) 
-           { System.out.println("Invalid additive exp: " + buff);
+           { System.out.println("!! Invalid additive exp: " + buff);
              return null;
            }
+
            res.add(exp);
            st0 = i + 1;
            buff = "";
@@ -3640,9 +3678,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
      }
        // at the end:
      if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
-     { Expression exp = parse_additive_expression(bc,st0,en,entities,types);
+     { Expression exp = 
+         parse_additive_expression(bc,st0,en,entities,types);
        if (exp == null) 
-       { System.out.println("Invalid additive/lambda expression: " + buff);
+       { System.out.println("!! Invalid additive/lambda expression: " + buff);
          return null;
        }
        res.add(exp);
@@ -6825,7 +6864,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
     } 
        
-    Vector resp = parseKM3package(prevstart,en-1,entities,types,gens,pasts,pnames); 
+    Vector resp = parseKM3package(prevstart,en-1,entities,
+                                  types,gens,pasts,pnames); 
     res.addAll(resp); 
     return res; 
   } 
@@ -6838,7 +6878,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
   public Vector parseKM3package(int st, int en, 
-                                Vector entities, Vector types, Vector gens, Vector pasts, Vector pnames)
+                     Vector entities, Vector types, 
+                     Vector gens, Vector pasts, Vector pnames)
   { Vector res = new Vector(); 
     if ("package".equals(lexicals.get(st) + "") && 
         "{".equals(lexicals.get(st+2) + ""))
@@ -6848,8 +6889,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
       for (int i = st+3; i < en;  i++) 
       { String lx = lexicals.get(i) + ""; 
-        if ("class".equals(lx) || "abstract".equals(lx) || "enumeration".equals(lx) || 
-            "interface".equals(lx) || "datatype".equals(lx) || "usecase".equals(lx))
+        if ("class".equals(lx) || "abstract".equals(lx) || 
+            "enumeration".equals(lx) || 
+            "interface".equals(lx) || "datatype".equals(lx) || 
+            "usecase".equals(lx))
         { Vector v = parseKM3PackageContents(i,en,entities,types,gens,pasts); 
           res.addAll(v); 
           return res; 
@@ -6957,8 +7000,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           } 
         }
  
-		// else if (e != null && e instanceof Entity && "interface".equals(lx))
-		// { ((Entity) e).setInterface(true); } 
+	  // else if (e != null && e instanceof Entity && "interface".equals(lx))
+        // { ((Entity) e).setInterface(true); } 
         // Vector remainder = parseKM3PackageContents(i,en,entities,types,gens,pasts);  
         // if (e != null) { res.add(0,e); }
 		// res.addAll(remainder);   
@@ -7078,12 +7121,22 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { String aname = lexicals.get(st+3) + ""; 
         // start = st+4; 
           dt.setAlias(new Type(aname,null)); 
+
+          JOptionPane.showMessageDialog(null, 
+             "Simple datatype - should be removed before code-generation: " + dt + " = " + aname, 
+             "", JOptionPane.INFORMATION_MESSAGE);  
+
           return dt;
         } 
-        else if (en > st + 4)
+        else 
         { Type aliasType = 
             parseType(st+3,en-1,entities,types);
-          dt.setAlias(aliasType); 
+          dt.setAlias(aliasType);
+
+          JOptionPane.showMessageDialog(null, 
+             "Complex datatype - should be removed before code-generation: " + dt + " = " + aliasType, 
+             "", JOptionPane.INFORMATION_MESSAGE);  
+           
           return dt; 
         }  
       }  
@@ -7171,15 +7224,30 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if (dt == null) 
       { dt = new Type(tname, null); }
 
-      if (st + 3 < lexicals.size() && 
-          "=".equals(lexicals.get(st+2) + ""))
+      if (en <= st+4)
       { String aname = lexicals.get(st+3) + ""; 
-        start = st+4; 
+        // start = st+4; 
         dt.setAlias(new Type(aname,null)); 
+
+        JOptionPane.showMessageDialog(null, 
+             "Simple datatype -- remove before code-generation: " + dt + " = " + aname, 
+             "", JOptionPane.INFORMATION_MESSAGE);  
+
+        return dt;
+      } 
+      else 
+      { Type aliasType = 
+            parseType(st+3,en-1,entities,types);
+        dt.setAlias(aliasType);
+
+        JOptionPane.showMessageDialog(null, 
+             "Complex datatype -- remove before code-generation: " + dt + " = " + aliasType, 
+             "", JOptionPane.INFORMATION_MESSAGE);  
+           
         return dt; 
       }  
-      dt.setAlias(new Type("String", null)); 
-      return dt; 
+      // dt.setAlias(new Type("String", null)); 
+      // return dt; 
     } 
     else if ("enumeration".equals(lx))
     { int j = st + 2; 
@@ -10640,29 +10708,33 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
-    String testast = "(expression (logicalExpression (equalityExpression (additiveExpression (factorExpression C_{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 2))))))) } ^{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 4))))))) })))))"; 
+  /*  String testast = "(expression (logicalExpression (equalityExpression (additiveExpression (factorExpression C_{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 2))))))) } ^{ (expression (logicalExpression (equalityExpression (additiveExpression (factorExpression (factor2Expression (basicExpression 4))))))) })))))"; */ 
 
     // ASTTerm asst = c.parseGeneralAST(testast); 
     // System.out.println(asst); 
 
-    ASTTerm asst = c.parseMathOCLAST(testast); 
-    System.out.println(asst.literalForm());
-    System.out.println(asst.literalFormSpaces());
+    // ASTTerm asst = c.parseMathOCLAST(testast); 
+    // System.out.println(asst.literalForm());
+    // System.out.println(asst.literalFormSpaces());
 
-          Vector ents = new Vector(); 
-          Vector typs = new Vector(); 
-          CGSpec cgs = new CGSpec(ents,typs); 
-          File fs = new File("cg/simplify.cstl"); 
-          CSTL.loadCSTL(cgs,fs,ents,typs);
+       //   Vector ents = new Vector(); 
+       //   Vector typs = new Vector(); 
+       //   CGSpec cgs = new CGSpec(ents,typs); 
+       //   File fs = new File("cg/simplify.cstl"); 
+       //   CSTL.loadCSTL(cgs,fs,ents,typs);
  
-          String entcode = asst.cg(cgs);
+       //   String entcode = asst.cg(cgs);
 
-          System.out.println(entcode); 
+       //   System.out.println(entcode); 
  
 
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
-    // Expression zz = c.parseExpression(); 
+    c.nospacelexicalanalysis("Set{x,a..b,y}"); 
+    Expression zz = c.parseExpression(); 
+
+    System.out.println(zz); 
+
 
     // Compiler2 ccx = new Compiler2(); 
     // ccx.nospacelexicalanalysis("x : int"); 

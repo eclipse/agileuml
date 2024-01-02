@@ -521,7 +521,8 @@ public class KM3Editor extends JFrame implements DocumentListener
         Vector preassocs = new Vector(); 
         Vector errors = new Vector(); 
 
-        Object cls = comp.parseKM3classifier(entities,types,pregens,preassocs,errors);
+        Object cls = comp.parseKM3classifier(entities,types,
+                                   pregens,preassocs,errors);
         // classArea.processKM3(ents,typs,pregens,preassocs,items); 
 
         System.out.println(">>> Types = " + types); 
@@ -645,8 +646,10 @@ public class KM3Editor extends JFrame implements DocumentListener
       Vector preassocs = new Vector(); 
       Vector pnames = new Vector(); 
 
-      Vector items = comp.parseKM3(ents,typs,pregens,preassocs,pnames);
-      classArea.processKM3(ents,typs,pregens,preassocs,items); 
+      Vector items = comp.parseKM3(ents,typs,
+                                   pregens,preassocs,pnames);
+      classArea.processKM3(ents,typs,pregens,preassocs,items);
+ 
       if (pnames.size() > 0) 
       { classArea.setSystemName((String) pnames.get(0)); }
 
@@ -659,7 +662,7 @@ public class KM3Editor extends JFrame implements DocumentListener
         out.close(); 
       }
       catch (IOException ioe) 
-      { System.out.println("Error saving data"); } 
+      { System.out.println("!! Error saving data"); } 
       
       // setVisible(false); 
     } 

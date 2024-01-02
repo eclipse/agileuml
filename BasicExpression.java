@@ -7989,14 +7989,16 @@ class BasicExpression extends Expression
       { String ind = arrayIndex.queryFormJava7(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
         if (type != null)
-        { if (variable != null && "String".equals(variable.getType() + ""))
+        { if (variable != null && 
+              "String".equals(variable.getType() + ""))
           { return "(" + data + ".charAt(" + indopt + ") + \"\")"; } 
 
           if (arrayIndex.type != null && 
               arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); }
-          else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+          else if (arrayIndex.type != null && 
+                   arrayIndex.type.getName().equals("String"))
           { return unwrap(data + ".get(\"\" + " + ind + ")"); }
           else if (arrayType != null && arrayType.isMap())
           { return unwrap(data + ".get(" + ind + ")"); }
@@ -8141,8 +8143,10 @@ class BasicExpression extends Expression
         String tname = sumtype.getName(); // must be int, double, long
         return "Ocl.prd" + tname + "(" + pre + ")"; 
       } 
-      else if (data.equals("reverse") || data.equals("sort") ||
-               data.equals("asSet") || data.equals("characters")) 
+      else if (data.equals("reverse") || 
+               data.equals("sort") ||
+               data.equals("asSet") || 
+               data.equals("characters")) 
       { return "Ocl." + data + "(" + pre + ")"; }  // what about an index? 
       else if (data.equals("subrange") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
@@ -8219,7 +8223,8 @@ class BasicExpression extends Expression
           return "Ocl.count(" + pre + "," + par1 + ")";  
         } 
       }   
-      else if (objectRef != null && (objectRef.getType() + "").equals("String"))
+      else if (objectRef != null && 
+               (objectRef.getType() + "").equals("String"))
       { // last,first,front,tail on strings
         if (data.equals("first") || data.equals("any"))
         { return "(" + pre + ".charAt(0) + \"\")"; } 
@@ -8242,7 +8247,8 @@ class BasicExpression extends Expression
         else 
         { return "((" + ctname + ") Ocl." + data + "(" + pre + "))"; }
       } 
-      else if (data.equals("any") || data.equals("last") || data.equals("first"))
+      else if (data.equals("any") || data.equals("last") || 
+               data.equals("first"))
       { Type et = objectRef.elementType; 
         if (et != null) 
         { if ("String".equals("" + et) || et.isEntity())
@@ -8311,9 +8317,12 @@ class BasicExpression extends Expression
 
             if (arrayIndex.isString())
             { return unwrap(data + ".get(\"\" + " + ind + ")"); }
-            else if (arrayType != null && arrayType.isMap())
+            
+            if (arrayType != null && arrayType.isMap())
             { return unwrap(data + ".get(" + ind + ")"); }
-            else if (arrayType != null && arrayType.isSequence())
+            
+            if (arrayType != null && 
+                     arrayType.isSequence())
             { return unwrap(data + ".get(" + indopt + ")"); }
 
             if (type.getName().equals("String"))
@@ -8366,9 +8375,11 @@ class BasicExpression extends Expression
           { return var + ".get" + data + "(" + ind + ")"; } 
 
           String indopt = evaluateString("-",ind,"1"); // not for qualified   
+          
           if (arrayType != null && arrayType.isMap())
           { return unwrap(var + ".get" + data + "().get(" + ind + ")"); }
-          else if (arrayType != null && arrayType.isSequence())
+          
+          if (arrayType != null && arrayType.isSequence())
           { return unwrap(var + ".get" + data + "().get(" + indopt + ")"); }
 
           if (type.getName().equals("String"))
@@ -8771,15 +8782,35 @@ class BasicExpression extends Expression
       else // entity == null) 
       if (arrayIndex != null)
       { String ind = arrayIndex.queryFormCSharp(env,local); 
-        String indopt = evaluateString("-",ind,"1"); 
-        if (variable != null && "String".equals(variable.getType() + ""))
-        { return data + ".Substring(" + indopt + ", 1)"; } 
-        if (variable != null && variable.getType() != null && "Map".equals(variable.getType().getName()))
+        String indopt = evaluateString("-",ind,"1");
+
+        // JOptionPane.showMessageDialog(null, "Variable: " + this + " arrayType: " + arrayType + " variable: " + variable, 
+        //    "Error", JOptionPane.ERROR_MESSAGE); 
+        
+        if (arrayType != null && arrayType.isSequence())
+        { return data + "[" + indopt + "]"; }
+
+        if (arrayIndex.type != null && 
+            arrayIndex.type.getName().equals("String"))
+        { return data + "[\"\" + " + ind + "]"; }
+
+        if (arrayType != null && arrayType.isMap())
+        { return data + "[" + ind + "]"; }
+        
+        if (variable != null && 
+            "String".equals(variable.getType() + ""))
+        { return data + ".Substring(" + indopt + ", 1)"; }
+ 
+        if (variable != null && variable.getType() != null && 
+            "Map".equals(variable.getType().getName()))
         { return data + "[" + ind + "]"; } 
+
         String cstype = type.getCSharp(); 
         return "((" + cstype + ") " + data + "[" + indopt + "])";
       }
-      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      else if (parameters != null && variable != null && 
+               variable.getType().isFunctionType()) 
+           // application of a Function(S,T)
       { return data + "(" + pars + ")"; }
 
       return data;  
@@ -9083,46 +9114,67 @@ class BasicExpression extends Expression
 
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
-      { if (local) 
-        { if (arrayIndex != null) 
+      { if (local) { 
+          if (arrayIndex != null) 
           { String etype = type.getCSharp(); 
-            String ind = arrayIndex.queryFormCSharp(env,local); 
+            String ind = 
+                 arrayIndex.queryFormCSharp(env,local); 
+        
             if (isQualified())
             { return "((" + etype + ") " + data + "[" + ind + "])"; } 
-            String indopt = evaluateString("-",ind,"1"); // not for qualified ones
+            String indopt = evaluateString("-",ind,"1"); 
+            // not for qualified ones
+
             if (arrayIndex.isString())
             { return data + "[\"\" + " + ind + "]"; }
-            // if (type.getName().equals("String"))
-            // { return data + ".Substring(" + indopt + ",1)"; } 
-            else if (arrayType != null && arrayType.isMap())
+            
+            if (arrayType != null && arrayType.isMap())
             { return "((" + etype + ") " + data + "[" + ind + "])"; }
-            else if (arrayType != null && arrayType.isSequence())
+            
+            if (arrayType != null && 
+               arrayType.getName().startsWith("Sequence"))
             { return "((" + etype + ") " + data + "[" + indopt + "])"; }
-            else if (type.getName().equals("String"))
+            
+            if (type.getName().equals("String"))
             { return "(\"\" + " + 
-                   data + ".charAt(" + indopt + "))";
+                     data + ".Substring(" + indopt + ",1))";
             } 
-            else 
-            { return "((" + type.getCSharp() + ") " + data + "[" + indopt + "])"; }
+            
+            return "((" + etype + ") " + data + "[" + indopt + "])"; 
           }
+
           return data; 
         } 
-
+ 
         if (entity == null) { return data; } 
 
         String nme = entity.getName();
 
         if (entity.isClassScope(data))   // entity cannot be an interface
         { if (arrayIndex != null) 
-          { String ind = arrayIndex.queryFormCSharp(env,local); 
-            String indopt = evaluateString("-",ind,"1"); // not for qualified ones
+          { String ind = 
+              arrayIndex.queryFormCSharp(env,local); 
+            String indopt = evaluateString("-",ind,"1"); 
+                // not for qualified ones
+            String etype = type.getCSharp(); 
+            
+            if (arrayType != null && 
+                arrayType.getName().startsWith("Sequence"))
+            { return "((" + etype + ") " + data + "[" + indopt + "])"; }
+
+            if (arrayIndex.isString())
+            { return data + "[\"\" + " + ind + "]"; }
+            
+            if (arrayType != null && arrayType.isMap())
+            { return "((" + etype + ") " + data + "[" + ind + "])"; }
+ 
             if (type.getName().equals("String"))
             { return "(\"\" + " + 
                    nme + "." + data + ".Substring(" + indopt + ",1))";
             } 
             else 
-            { String jtype = type.getCSharp();
-              return "((" + jtype + ") " + nme + "." + data + "[" + indopt + "])"; 
+            { 
+              return "((" + etype + ") " + nme + "." + data + "[" + indopt + "])"; 
             }
           } 
           return nme + "." + data; 
@@ -9140,11 +9192,26 @@ class BasicExpression extends Expression
           if (isQualified())
           { return "((" + etype + ") " + res + "[" + ind + "])"; } 
 
+            /* JOptionPane.showMessageDialog(null, 
+              "Attribute: " + this + " arrayType: " + arrayType + 
+              " variable: " + variable + 
+              " type: " + type, 
+              "Error", JOptionPane.ERROR_MESSAGE); */ 
+
           String indopt = evaluateString("-",ind,"1"); // not for qualified   
+   
+          if (arrayType != null && arrayType.isMap())
+          { return "((" + etype + ") " + var + ".get" + data + "()[" + ind + "])"; }
+          
+          if (arrayType != null && arrayType.isSequence())
+          { return "((" + etype + ") " + var + ".get" + data + "()[" + indopt + "])"; }
+
           if (type.getName().equals("String"))
           { return data + ".Substring(" + indopt + ", 1)"; } 
-          return "((" + type.getCSharp() + ") " + res + "[" + indopt + "])";
+
+          return "((" + etype + ") " + res + "[" + indopt + "])";
         } // not for strings 
+   
         return res; 
       } // valid but unecesary for static attributes
     }
@@ -11119,6 +11186,14 @@ public Statement generateDesignSubtract(Expression rhs)
     else // objectRef != null
     { String pre = objectRef.queryForm(env,local);
 
+      if (objectRef instanceof UnaryExpression && 
+          "!".equals(((UnaryExpression) objectRef).operator))
+      { // !x.data := val  is setdata(x[0],val)
+
+        return cont + ".set" + data + "(" + pre + ", " +
+                                        val2 + ");";
+      } 
+
       if (entity.isClassScope(data))
       { if (arrayIndex != null) 
         { String ind1 = arrayIndex.queryForm(env,local);
@@ -11354,6 +11429,14 @@ public Statement generateDesignSubtract(Expression rhs)
     }
     else // objectRef != null
     { String pre = objectRef.queryFormJava6(env,local);
+
+      if (objectRef instanceof UnaryExpression && 
+          "!".equals(((UnaryExpression) objectRef).operator))
+      { // !x.data := val  is setdata(x[0],val)
+
+        return cont + ".set" + data + "(" + pre + ", " +
+                                        val2 + ");";
+      } 
 
       if (entity != null && entity.isClassScope(data))
       { if (arrayIndex != null) 
@@ -11688,6 +11771,14 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         String cobjs = cont + "." + cname.toLowerCase() + "s";  
         return cref + ".setAll" + data + "(" + cobjs + "," + val2 + ");"; 
+      } 
+
+      if (objectRef instanceof UnaryExpression && 
+          "!".equals(((UnaryExpression) objectRef).operator))
+      { // !x.data := val  is setdata(x[0],val)
+
+        return cont + ".set" + data + "(" + pre + ", " +
+                                        val2 + ");";
       } 
 
       if (entity != null && objectRef.isMultiple()) 
