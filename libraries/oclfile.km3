@@ -192,6 +192,9 @@ class OclFile
   operation writeNbytes(s : Sequence(int), n : int) : void
   pre: true post: true; 
 
+  operation writeAllLines(sq : Sequence(String)) : void
+  pre: true post: true; 
+
   operation writeObject(s : OclAny) : void
   pre: true post: true; 
 

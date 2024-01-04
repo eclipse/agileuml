@@ -258,6 +258,15 @@ class OclFile:
     else : 
       self.writeln(s)
 
+  def writeAllLines(self, sq) : 
+    if self.name == "System.out" or self.name == "System.err" : 
+      for x in sq : 
+        print(str(x))
+    else : 
+      for x in sq : 
+        self.writeln(x)
+    
+
   def printf(self, f, sq) :
     if self.name == "System.out" or self.name == "System.err" :
       print(f % tuple(sq), end="")

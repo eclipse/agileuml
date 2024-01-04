@@ -554,6 +554,20 @@ class OclFile {
     } 
   }
 
+  public void writeAllLines(ArrayList<String> sq)
+  { 
+    if (outputStreamWriter != null)
+    { try { 
+        for (int i = 0; i < sq.size(); i++) 
+        { String s = sq.get(i); 
+          outputStreamWriter.write(s + "\n"); 
+        }
+      } 
+      catch (Exception _e) 
+      { _e.printStackTrace(); } 
+    } 
+  }
+
   public void writeByte(int c)
   { 
     if (outputStreamWriter != null)

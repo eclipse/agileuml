@@ -442,6 +442,19 @@
             { writeln(s); }
         }
 
+        public void writeAllLines(ArrayList sq)
+        {
+            if ("System.out".Equals(name) ||
+                "System.err".Equals(name))
+            { for (int i = 0; i < sq.Count; i++) 
+              { Console.WriteLine(sq[i] + ""); }
+            } 
+            else
+            { for (int i = 0; i < sq.Count; i++) 
+              { writeln(sq[i] + ""); }
+            }
+        }
+
         public void printf(string f, ArrayList sq)
         {
             object[] args = new object[sq.Count];
