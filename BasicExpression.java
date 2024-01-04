@@ -4,7 +4,7 @@ import javax.swing.JOptionPane;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -11733,7 +11733,7 @@ public Statement generateDesignSubtract(Expression rhs)
           if ("String".equals(type.getName())) 
           { return cont + ".set" + data + "(" + target + "\"\" + " + val2 + ");"; }
           else if ("String".equals(var.type.getName()) &&
-                     type.isNumeric())
+                   type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
             return cont + ".set" + data + "(" + target + " Ocl.to" + cname + "(" + val2 + "));"; 
           }
@@ -12052,7 +12052,10 @@ public Statement generateDesignSubtract(Expression rhs)
           if (isQualified() ||
               "String".equals(arrayIndex.type + "") ||
               BasicExpression.isMapAccess(this))
-          { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
+          { return 
+            // cont + ".set" + data + "(" + target + ind + ", " + val2 + ");";
+              varx + ".set" + data + "(" + ind + ", " + val2 + ");";  
+          } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
         }

@@ -71,7 +71,7 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTTerm replaceCobolIdentifiers()
   { if ("FILLER".equals(symbol))
     { ASTTerm.cobolFillerCount++; 
-      return new ASTSymbolTerm("FILLER$" + ASTTerm.cobolFillerCount); 
+      return new ASTSymbolTerm("FILLER_F" + ASTTerm.cobolFillerCount); 
     } 
     return this; 
   } 

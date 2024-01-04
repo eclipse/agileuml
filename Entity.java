@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -10564,8 +10564,10 @@ public class Entity extends ModelElement implements Comparable
       if (att.isFrozen()) { } 
       else 
       { String par = att.setOperationCSharp(this,invariants,entities,types);
+
         if (par != null)
         { out.println("  " + par + "\n"); }
+
         if (att.isSequence())
         { String par1 = att.setIndexOperationCSharp(this, invariants, entities, types);
           if (par1 != null) 
@@ -10573,6 +10575,12 @@ public class Entity extends ModelElement implements Comparable
           par = att.addremOperationCSharp(this); 
           if (par != null) 
           { out.println("  " + par + "\n"); }
+        } 
+        else if (att.isMap())
+        { String par1 = 
+            att.setMapIndexOperationCSharp(this, invariants, entities, types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
         } 
 
         par = att.setAllOperationCSharp(this, getName());

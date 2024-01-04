@@ -4,7 +4,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2865,6 +2865,75 @@ public class Attribute extends ModelElement
     }
     else 
     { code = nme + ".put(_key, " + val + ");"; } 
+ 
+    String opheader; 
+    opheader = "public" + sync + qual + "void set" + nme + "(String _key, " + t +
+             " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "public" + sync + " void localSet" + nme + "(String _key, " + t +
+             " " + val + ") { "; 
+    }
+       
+    return opheader + "  }\n"; 
+  }  
+
+  // setattindex operation for the entity:
+  public String setMapIndexOperationCSharp(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(String index, elementType vx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+    if (type == null || ent == null || entity == null) // error
+    { System.err.println("!! ERROR: null type or entity in attribute " + nme); 
+      return ""; 
+    } 
+    
+    Type eType = elementType; 
+    if (eType == null || "OclAny".equals("" + eType)) 
+    { eType = type.elementType; } 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    String val = nme + "_x"; 
+    Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
+    // par.setElementType(elementType); 
+    Attribute ind = new Attribute("_key", new Type("String", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String t = eType.getCSharp(); 
+    // if (v == null) // int or double, String or boolean
+    // { t = type.getName(); }
+    // else 
+    // { t = "int"; } 
+
+    if (ent.isInterface())
+    { return " void set" + nme + "(string _key, " + t + " _x);\n"; } 
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
+    
+    if (ent != entity && !entity.isInterface()) 
+    { code = "super.set" + nme + "(_key, " + val + ");"; }
+    else if (!instanceScope)
+    { qual = " static "; 
+      code = nme + "[_key] = " + val + ";";
+    }
+    else 
+    { code = nme + "[_key] = " + val + ";"; } 
  
     String opheader; 
     opheader = "public" + sync + qual + "void set" + nme + "(String _key, " + t +

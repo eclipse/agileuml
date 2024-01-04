@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -301,13 +301,14 @@ public class CGCondition
     { return; } 
 
     String stereo = new String(stereotype); 
+    Vector stereomfs = CGRule.metafeatures(stereo); 
+
     for (int x = 0; x < reps.size() && x < vars.size(); x++)
     { String var = (String) vars.get(x);
       String arg1 = (String) reps.get(x); 
 
       String svarx = var; 
       String smffeat = null; 
-      Vector stereomfs = CGRule.metafeatures(stereo); 
       if (stereomfs.size() > 0)
       { 
         // If stereo has a metafeature: _i`mf
@@ -330,20 +331,53 @@ public class CGCondition
       } 
 
       stereo = stereo.replace(var,arg1);
+
+      /* JOptionPane.showMessageDialog(null, 
+          "LHS variable " + var + " value is " + arg1 + "\n" + 
+          " New stereotype value is: " + stereo,   "",
+          JOptionPane.INFORMATION_MESSAGE); */
     }
 
     for (int y = 0; y < globalVariables.size(); y++) 
     { String rvar = (String) globalVariables.get(y);
-      String varValue = ASTTerm.getStereotypeValue(rvar); 
-      if (varValue != null) 
-      { stereo = stereo.replace(rvar,varValue); 
 
-        // JOptionPane.showMessageDialog(null, 
-        //   "Global variable " + rvar + " value is " + stereo,   "",
-        //   JOptionPane.INFORMATION_MESSAGE);
+      String varValue = ASTTerm.getStereotypeValue(rvar); 
+
+      JOptionPane.showMessageDialog(null, 
+          "Global variable " + rvar + " value is " + varValue + "\n" + 
+          "Old stereotype value is: " + stereo + "\n" + 
+          "Metafeatures " + stereomfs,   "",
+          JOptionPane.INFORMATION_MESSAGE);
+
+      if (stereomfs.size() > 0)
+      { 
+        // If stereo has a metafeature: rvar`mf
+        // evaluate rvar`mf in cgs and set stereo to result 
+
+        String gmf = (String) stereomfs.get(0); 
+        int gmfindex = gmf.indexOf("`"); 
+        String gvarx = gmf.substring(0,gmfindex); 
+        String gmffeat = 
+                     gmf.substring(gmfindex+1,gmf.length());
+ 
+        if (gmffeat != null && rvar.equals(gvarx)) 
+        { // find the value of varValue`gmffeat
+          if (varValue != null) 
+          { // stereo = stereo.replace(rvar,varValue); 
+
+            String gmfvalue = 
+              ASTTerm.getTaggedValue(varValue, gmffeat); 
+            if (gmfvalue != null) 
+            { stereo = stereo.replace(gmf,gmfvalue); }
+          }
+        } 
+      } 
+      else if (varValue != null) // no stereotype
+      { stereo = stereo.replace(rvar,varValue); 
 
         System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
       }
+
     } 
 
   
@@ -452,11 +486,11 @@ public class CGCondition
               ASTTerm.removeStereo(repl,stereo);
             } 
 
-            JOptionPane.showMessageDialog(null,
+          /*  JOptionPane.showMessageDialog(null,
               "Executed action " + repl + 
               " |-> " + stereo + " Tagged values = " + ASTTerm.metafeatures, 
               "", JOptionPane.INFORMATION_MESSAGE);  
-            
+            */
           } 
           else // No ruleset, set ast`mffeat=stereo
           { ASTTerm.setTaggedValue(ast, mffeat, stereo); 
