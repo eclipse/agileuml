@@ -184,11 +184,18 @@ _1 |-->_1
 
 
 fileControlParagraph::
-FILE-CONTROL . _* . |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*\n\n
-FILE-CONTROL _* . |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*\n\n
+FILE-CONTROL . _* . |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*`initialiseFiles\n\n
+
+FILE-CONTROL . _* |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*`initialiseFiles\n\n
+
+FILE-CONTROL _* . |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*`initialiseFiles\n\n
 
 
 fileControlEntry::
+_1 _* |-->
+
+initialiseFiles::
+. |-->
 _1 _* |-->_1 _*
 
 selectClause::
@@ -209,7 +216,7 @@ _* |-->
 organizationClause::
 ORGANIZATION _* SEQUENTIAL |-->
 ORGANIZATION _* RELATIVE |-->
-ORGANIZATION _* INDEXED |-->\n\n  attribute _99_Index : Map(String,int) ;\n\n  operation initialise_99_Index()\n  pre: true post: true\n  activity: for _key : _99 do _99_Index[_key] := _99->indexOf(_key);\n\n
+ORGANIZATION _* INDEXED |-->\n\n  attribute _99_Index : Map(String,int) ;\n\n  operation initialise_99_Index()\n  pre: true post: true\n  activity: _99_Index := _99_Index->restrict(_99); for _key : _99 do _99_Index[_key] := _99->indexOf(_key);\n\n<action> _99`isIndexed true
 
 
 paddingCharacterClause::
@@ -828,9 +835,11 @@ _1 FILLER . |-->
 77 FILLER _* . |-->
 _1 FILLER _* . |-->
 
-01 _1 . |-->  attribute _1 : String;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55
 
-01 _1 _* . |-->  attribute _1 : _*`oclDataType;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55
+01 _1 . |-->  attribute _1 : String;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55, _1`isIndexed _55`isIndexed
+
+
+01 _1 _* . |-->  attribute _1 : _*`oclDataType;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55, _1`isIndexed _55`isIndexed
 
 _1 _2 . |-->  attribute _2 : String;\n
 
@@ -1985,7 +1994,7 @@ CLOSE _* |-->_*
 
 closeFile::
 _1 _2 |-->
-_1 |-->
+_1 |-->    var _1_Result : OclFile := OclFile.newOclFile_Write(OclFile.newOclFile("_1.txt"));\n    _1_Result.writeAllLines(_1);\n    _1_Result.flush();\n    _1_Result.closeFile();\n
 
 
 computeStatement::
@@ -2071,9 +2080,24 @@ DEALLOCATE _1 |-->    _1->isDeleted() ;\n
 
 
 deleteStatement::
+DELETE _1 RECORD END-DELETE |-->    _1 := _1->excludingAt(_1_Position) ;\n    self.initialise_1_Index();\n<when> _1`isIndexed true
+
 DELETE _1 RECORD END-DELETE |-->    _1 := _1->excludingAt(_1_Position) ;\n
+
+DELETE _1 END-DELETE |-->    _1 := _1->excludingAt(_1_Position) ;\n    self.initialise_1_Index();\n<when> _1`isIndexed true
+
 DELETE _1 END-DELETE |-->    _1 := _1->excludingAt(_1_Position) ;\n
+
+DELETE _1 |-->    _1 := _1->excludingAt(_1_Position) ;\n    self.initialise_1_Index();\n<when> _1`isIndexed true
+
 DELETE _1 |-->    _1 := _1->excludingAt(_1_Position) ;\n
+
+DELETE _1 _2 _3 |-->    _1 := _1->excludingAt(_1_Position) ;\n<when> _2 invalidKeyPhrase, _3 notInvalidKeyPhrase
+
+DELETE _1 _2 |-->    _1 := _1->excludingAt(_1_Position) ;\n<when> _2 invalidKeyPhrase
+
+DELETE _1 _2 |-->    _1 := _1->excludingAt(_1_Position) ;\n<when> _2 notInvalidKeyPhrase
+
 
 
 
@@ -2425,8 +2449,8 @@ OUTPUT _*  |-->_*
 
 openOutput::
 _1  |-->    _1_Position := 0;\n
-_1 WITH NO REWIND  |-->    _1_Position := 0;\n
-_1 NO REWIND  |-->    _1_Position := 0;\n
+_1 WITH NO REWIND  |-->    _1_Position := _1->size();\n
+_1 NO REWIND  |-->    _1_Position := _1->size();\n
 
 
 openIOStatement::
@@ -2625,11 +2649,11 @@ WAIT  |-->
 
 
 readKey::
-KEY IS _1  |-->_key.subrange(_1`startPosition,_1`endPosition)->toInteger() >= _1<when> _1 qualifiedDataName, _1`oclType int
-KEY IS _1  |-->_key.subrange(_1`startPosition,_1`endPosition) >= _1<when> _1 qualifiedDataName
+KEY IS _1  |-->_key.subrange(_1`startPosition,_1`endPosition)->toInteger() = _1<when> _1 qualifiedDataName, _1`oclType int
+KEY IS _1  |-->_key.subrange(_1`startPosition,_1`endPosition) = _1<when> _1 qualifiedDataName
 
-KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition)->toInteger() >= _1<when> _1 qualifiedDataName, _1`oclType int
-KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition) >= _1<when> _1 qualifiedDataName
+KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition)->toInteger() = _1<when> _1 qualifiedDataName, _1`oclType int
+KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition) = _1<when> _1 qualifiedDataName
 
 
 receiveStatement::
@@ -2676,6 +2700,9 @@ REWRITE _1 _2 END-REWRITE |-->    _1 := _2 ;\n    _1`ownerFile[_1`ownerFile_Posi
 REWRITE _1 _2 |-->    _1 := _2 ;\n    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 rewriteFrom
 
 REWRITE _1 END-REWRITE |-->    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+
+REWRITE _1 |-->    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n    self.initialise_1`ownerFile_Index();\n<when> _1`isIndexed true
+
 REWRITE _1 |-->    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
 
 
@@ -3146,6 +3173,8 @@ WRITE _1 _2 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 
 WRITE _1 _2  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n    _1`ownerFile := _1`ownerFile->concatenate(Integer.subrange(1,_2`advancingAfterIncrement)->collect(" "));\n    _1`ownerFile_Position := _1`ownerFile_Position + _2`advancingAfterIncrement ;\n<when> _2 writeAdvancingPhrase
 
 WRITE _1 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+
+WRITE _1  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n    self.initialise_1`ownerFile_Index();\n<when> _1`isIndexed true
 
 WRITE _1  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->append(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
 
