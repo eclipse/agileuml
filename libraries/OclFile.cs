@@ -539,23 +539,48 @@
             { outputStream.Flush(); }
         }
 
-        public bool hasNext()
+       public bool hasNext()
         {
             bool result = false;
             if ("System.in".Equals(name))
             {
                 lastRead = Console.ReadLine();
                 if (lastRead != null)
-                { return true; }
+                { position = position + lastRead.Length; 
+                  return true; 
+                }
                 eof = true;
                 return result;
             }
             else if (inputStream != null &&
                      inputStream.Peek() > -1)
-            { return true; }
+            {
+                int c = inputStream.Read();
+                while (c != -1 && Char.IsWhiteSpace((char)c))
+                {
+                    position++;
+                    c = inputStream.Read();
+                } 
+
+                if (c == -1) 
+                { eof = true; return false; }
+                
+                lastRead = "";
+                while (c != -1 && !Char.IsWhiteSpace((char) c))
+                { lastRead = lastRead + SystemTypes.byte2char(c);
+                  position++;
+                  c = inputStream.Read(); 
+                }
+
+                if (c == -1) 
+                { eof = true; return true; }
+
+                return true; 
+            }
+            else
+            { eof = true; }
             return result;
         }
-
 
         public string getCurrent()
         { return lastRead; }

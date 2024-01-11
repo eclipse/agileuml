@@ -484,6 +484,13 @@
             return z / Math.Pow(10.0, n);
         }
 
+        public static double leftTruncateTo(double x, int m)
+        {
+            int integerPart = (int)x;
+            double fractionPart = x - integerPart;
+            return (integerPart % ((int)Math.Pow(10, m))) + fractionPart;
+        }
+
         public static bool isIntegerOverflow(double x, int m)
         {
             bool result = false;

@@ -266,6 +266,10 @@ package mathlib {
   post: y = x->oclAsType(int) & ( (y > 0 => result = (y->log10()->oclAsType(int) + 1 > m)) & 
 (y < 0 => result = ((-y)->log10()->oclAsType(int) + 1 > m)) & (true => result = (m < 1)) ); 
 
+  static query leftTruncateTo(x : double, m : int) : double
+  pre: true 
+  post: y = x->oclAsType(int) & result = (y mod (10->pow(m)->oclAsType(int))) + (x - y); 
+
   static query mean(sq : Sequence(double)) : double
   pre: sq->size() > 0
   post: result = (sq->sum())/(sq->size()); 

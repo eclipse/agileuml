@@ -295,6 +295,9 @@ class MathLib:
       return int(math.log10(-y)) + 1 > m
     return False 
 
+  def leftTruncateTo(x, m) : 
+    y = int(x)
+    return (y % int(math.pow(10,m))) + (x - y)
 
   def mean(sq) : 
     n = len(sq)
@@ -695,35 +698,38 @@ class FinanceLib :
 # print(MathLib.definiteIntegral(1,2,lin))
 
 
-mat = OclDate.newOclDate_String("2022/01/01")  #change this
-sett = OclDate.newOclDate_String("2019/05/02")  #change this
-issu = OclDate.newOclDate_String("2019/01/01")  #change this
-coup=0.08  #change this
-dc="Actual/ActualICMA"  #change this
-f=2  #change this
-Y=0.06  #change this
+# mat = OclDate.newOclDate_String("2022/01/01")  #change this
+# sett = OclDate.newOclDate_String("2019/05/02")  #change this
+# issu = OclDate.newOclDate_String("2019/01/01")  #change this
+# coup=0.08  #change this
+# dc="Actual/ActualICMA"  #change this
+# f=2  #change this
+# Y=0.06  #change this
 
-bcfs = FinanceLib.bondCashFlows(sett,mat,coup,dc,f)
-print(bcfs)
-dds = bcfs[1]
-for dx in dds : 
-  print(str(dx))
+# bcfs = FinanceLib.bondCashFlows(sett,mat,coup,dc,f)
+# print(bcfs)
+# dds = bcfs[1]
+# for dx in dds : 
+#   print(str(dx))
 
-print(FinanceLib.bondPrice(Y,sett,mat,coup,dc,f))
-print('%.6f'% FinanceLib.accumulatedInterest(issu,sett,f,coup,dc,mat))
+# print(FinanceLib.bondPrice(Y,sett,mat,coup,dc,f))
+# print('%.6f'% FinanceLib.accumulatedInterest(issu,sett,f,coup,dc,mat))
 
-print(FinanceLib.bondPriceClean(Y,issu,sett,mat,coup,dc,f))
+# print(FinanceLib.bondPriceClean(Y,issu,sett,mat,coup,dc,f))
 
-f = lambda x : (x*x)
-g = MathLib.differential(f)
-print(g(0))
-print(g(1))
-print(g(2))
-k = lambda x : x
-print(MathLib.definiteIntegral(0,1,k))
-print(MathLib.definiteIntegral(0,2,k))
-print(MathLib.definiteIntegral(0,3,k))
-p = MathLib.indefiniteIntegral(k)
-print(p(1))
-print(p(2))
-print(p(3))
+# f = lambda x : (x*x)
+# g = MathLib.differential(f)
+# print(g(0))
+# print(g(1))
+# print(g(2))
+# k = lambda x : x
+# print(MathLib.definiteIntegral(0,1,k))
+# print(MathLib.definiteIntegral(0,2,k))
+# print(MathLib.definiteIntegral(0,3,k))
+# p = MathLib.indefiniteIntegral(k)
+# print(p(1))
+# print(p(2))
+# print(p(3))
+
+
+print(MathLib.leftTruncateTo(1024.55,3))

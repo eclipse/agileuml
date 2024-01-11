@@ -22,6 +22,16 @@ package stringlib {
     pre: true
     post: result = s.subrange(s->indexOf(s->trim())); 
 
+    static query leftTrimWith(s: String, ch : String) : String
+    pre: true
+    post: true
+    activity:
+      var trm : String := s;  
+      while trm->size() > 0 & trm->at(1) = ch
+      do 
+        trm := trm.subrange(2,trm->size()); 
+      return trm; 
+
     static query rightTrim(s: String) : String
     pre: true
     post: result = s->before(s->trim()) + s->trim();

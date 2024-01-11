@@ -471,6 +471,15 @@ class MathLib
     return ((int) Math.log10(-y)) + 1 > m;
   }  
 
+  public static int leftTruncateTo(int x, int m)
+  { return x % ((int) Math.pow(10,m)); }  
+
+  public static double leftTruncateTo(double x, int m)
+  { int integerPart = (int) x;
+    double fractionPart = x - integerPart;  
+    return (integerPart % ((int) Math.pow(10,m))) + fractionPart; 
+  }  
+
   public static ArrayList<Double> rowMult(ArrayList<Double> s, ArrayList<ArrayList<Double>> m)
   {
     ArrayList<Double> result = new ArrayList<Double>();
@@ -519,39 +528,10 @@ class MathLib
     return result;
   }
 
-  /* public static void main(String[] args)
-  { ArrayList<Double> row1 = new ArrayList<Double>(); 
-    ArrayList<Double> row2 = new ArrayList<Double>(); 
-    row1.add(1.0); row1.add(3.0); 
-    row2.add(7.0); row2.add(5.0); 
-    ArrayList<ArrayList<Double>> m1 = new ArrayList<ArrayList<Double>>(); 
-    m1.add(row1); m1.add(row2); 
-
-    ArrayList<Double> row3 = new ArrayList<Double>(); 
-    ArrayList<Double> row4 = new ArrayList<Double>(); 
-    row3.add(6.0); row3.add(8.0); 
-    row4.add(4.0); row4.add(2.0); 
-    ArrayList<ArrayList<Double>> m2 = new    ArrayList<ArrayList<Double>>(); 
-    m2.add(row3); m2.add(row4); 
-
-    System.out.println(MathLib.matrixMultiplication(m1,m2));
-  } 
-
   public static void main(String[] args)
-  { Function<Double,Double> f = (x) -> { return x*x; };
-    Function<Double,Double> g = MathLib.differential(f);
-    System.out.println(g.apply(0.0));
-    System.out.println(g.apply(1.0));
-    System.out.println(g.apply(2.0));
-    Function<Double,Double> k = (x) -> { return x; }; 
-    System.out.println(MathLib.definiteIntegral(0,1,k));
-    System.out.println(MathLib.definiteIntegral(0,2,k));
-    System.out.println(MathLib.definiteIntegral(0,3,k));
-    Function<Double,Double> p = MathLib.indefiniteIntegral(k); 
-    System.out.println(p.apply(1.0));
-    System.out.println(p.apply(2.0));
-    System.out.println(p.apply(3.0));
-  } */ 
+  { System.out.println(MathLib.leftTruncateTo(1024,3)); 
+    System.out.println(MathLib.leftTruncateTo(1024.55,3)); 
+  }  
 
 }
 

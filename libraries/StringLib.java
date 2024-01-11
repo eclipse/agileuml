@@ -24,7 +24,16 @@ public class StringLib
   
     return result;
   }
-
+  
+  public static String leftTrimWith(String str, String ch)
+  {
+    if (str == null || str.length() == 0) 
+    { return str; } 
+    String trm = str; 
+    while (trm.length() > 0 && ch.equals("" + trm.charAt(0)))
+    { trm = trm.substring(1); }
+	return trm;
+  }
 
   public static String rightTrim(String s)
   { String result = "";
@@ -346,5 +355,6 @@ public class StringLib
 
     System.out.println(StringLib.rawString(ss + ss1 + ss2)); 
   
+    System.out.println(StringLib.leftTrimWith("00012", "0")); 
   }  
 } 

@@ -5,9 +5,20 @@
 
         public static string leftTrim(string s)
         {
-            string result = "";
-            result = (string)(SystemTypes.subrange(s, (s.IndexOf(s.Trim()) + 1), (s).Length));
-            return result;
+          string result = "";
+          string trm = s.Trim(); 
+          result = SystemTypes.subrange(s, (s.IndexOf(trm) + 1), (s).Length);
+          return result;
+        }
+
+        public static string leftTrimWith(string str, string ch)
+        {
+          if (str == null || str.Length == 0) 
+          { return str; } 
+          string trm = str; 
+          while (trm.Length > 0 && ch.Equals("" + trm[0]))
+          { trm = trm.Substring(1); }
+          return trm;
         }
 
 

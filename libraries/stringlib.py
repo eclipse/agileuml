@@ -11,6 +11,14 @@ class StringLib :
     result = s[s.find(ocl.trim(s)):]
     return result
 
+  def leftTrimWith(s,ch) :
+    if s == None : 
+      return None
+    trm = s
+    while len(trm) > 0 and trm[0:1] == ch :
+      trm = trm[1:]
+    return trm
+
   def rightTrim(s) :
     result = ocl.before(s, ocl.trim(s)) + ocl.trim(s)
     return result
@@ -40,6 +48,11 @@ class StringLib :
       if n > len(s) :
         result = ocl.sumString([" " for self in range(1, n - len(s) +1)]) + s
     return result
+
+  def capitalise(s) : 
+    if len(s) == 0 : 
+      return s
+    return s.capitalize()
 
   def toTitleCase(s) : 
     result = str(s) + ""
@@ -106,6 +119,6 @@ class StringLib :
       i = i + 1
     return result 
 
-
+# print(StringLib.leftTrimWith("00012", "0"))
 # print(StringLib.scan("30##text\t", "%d##%s\t"))
 # print(StringLib.swapCase("a Long String"))
