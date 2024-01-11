@@ -4,9 +4,9 @@ _1 _2 . _3 |-->_2`classDefinitions\n\n_1_2}\n\n
 
 
 programHeading::
-program _1 ; |-->class _1_Class {\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n
+program _1 ; |-->class _1_Class {\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n<action> _1 Program
 
-program _1 ( _2 ) ; |-->class _1_Class {\n_2`progParsToAttributes\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n
+program _1 ( _2 ) ; |-->class _1_Class {\n_2`progParsToAttributes\n  static operation new_1_Class() : _1_Class\n  pre: true\n  post: _1_Class->exists( _x | _x.initialise() & result = _x );\n\n<action> _1 Program
 
 
 progParsToAttributes::
@@ -43,11 +43,30 @@ functionBlock::
 _1 |-->_1`localConstDec<when> _1 constantDefinitionPart
 _1 |-->_1<when> _1 variableDeclarationPart
 _1 |-->_1<when> _1 compoundStatement
+_1 |-->_1`nestedFunctionVariables<when> _1 procedureAndFunctionDeclarationPart
+
 _1 _* |-->_1`localConstDec\n_*`recurse<when> _1 constantDefinitionPart
 _1 _* |-->_1`localVariableDecs\n_*`recurse<when> _1 variableDeclarationPart
+_1 _* |-->_1`nestedFunctionVariables\n_*`recurse<when> _1 procedureAndFunctionDeclarationPart
 _1 _* |-->_*`recurse
 _1 |-->_1`functionBlock<when> _1 block
 _1 |-->
+
+
+nestedFunctions::
+_1 |--><when> _1 constantDefinitionPart
+_1 |--><when> _1 variableDeclarationPart
+_1 |--><when> _1 compoundStatement
+_1 |-->_1`nestedFunctionDeclarations<when> _1 procedureAndFunctionDeclarationPart
+
+_1 _* |-->_*`recurse<when> _1 constantDefinitionPart
+_1 _* |-->_*`recurse<when> _1 variableDeclarationPart
+_1 _* |-->_1`nestedFunctionDeclarations\n_*`recurse<when> _1 procedureAndFunctionDeclarationPart
+_1 _* |-->_*`recurse
+
+_1 |--><when> _1 block
+_1 |-->
+
 
 
 classDefinitions::
@@ -387,9 +406,11 @@ _1 : _2 |-->_1`allReferenceFields<when> _1 multiple, _2`isRecordType true <actio
 _1 : _2 |-->_1`allEntityFields<when> _1 multiple, _2 Entity <action> _93 _2
 _1 : _2 |-->_1`allRecordFields<when> _1 multiple <action> _91 _2
 
-_1 : String |-->\n  attribute _1 : String;
-_1 : _2 |-->\n  reference _1 : _1_Class := _1_Class.new_1_Class();<when> _2`isRecordType true
-_1 : _2 |-->\n  reference _1 : _2 := _2.new_2();<when> _2 Entity
+_1 : String |-->\n  attribute _1 : String;<action> _1 String, _1`typName String
+
+_1 : _2 |-->\n  reference _1 : _1_Class := _1_Class.new_1_Class();<when> _2`isRecordType true <action> _1 Entity, _1`typName _1_Class
+_1 : _2 |-->\n  reference _1 : _2 := _2.new_2();<when> _2 Entity <action> _1 Entity, _1`typName _2
+
 _1 : _2 |-->\n  attribute _1 : _2;
 
 
@@ -408,7 +429,7 @@ _* |-->_*`allRefFields
 
 allRefFields::
 , |-->
-_1 |-->\n  reference _1 : _92_Class := _92_Class.new_92_Class();
+_1 |-->\n  reference _1 : _92_Class := _92_Class.new_92_Class();<action> _1 Entity, _1`typName _92_Class
 
 
 allEntityFields::
@@ -417,7 +438,7 @@ _* |-->_*`allEntFields
 
 allEntFields::
 , |-->
-_1 |-->\n  reference _1 : _93 := _93.new_93();
+_1 |-->\n  reference _1 : _93 := _93.new_93();<action> _1 Entity, _1`typName _93
 
 
 variantPart::
@@ -742,19 +763,98 @@ _1 |-->\n    var _1 : _90<action> _1 _90, _1`typName _90
 procedureAndFunctionDeclarationPart::
 _1 ; |-->_1
 
+
 procedureOrFunctionDeclaration::
 _1 |-->_1
 
-functionDeclaration::
-function _1 _2 : _3 ; _4 |-->\n  operation _1_operation_2`parDecList : _3\n  pre: true post: true\n  activity: var _1 : _3;  _4`functionBlock;\n    return _1;\n\n  attribute _1 : _2`parsToFunctionDomain_3_2`parsFDomainsCloseBrackets := _2`parsToLambdaDefinition (self._1_operation(_2`parsToFunctionParlist));\n
 
-function _1 : _2 ; _3 |-->\n  operation _1_operation() : _2\n  pre: true post: true\n  activity:  var _1 : _2;  _3`functionBlock;\n    return _1;\n\n  attribute _1 : Function(OclAny,_2) := lambda x : OclAny in (self._1_operation());\n
+functionDeclaration::
+function _1 _2 : _3 ; _4 |-->_4`nestedFunctions\n  operation _1_operation_2`parDecList : _3\n  pre: true post: true\n  activity: var _1 : _3;_2`copyValParameters  _4`functionBlock;\n    return _1;\n\n  attribute _1 : _2`parsToFunctionDomain_3_2`parsFDomainsCloseBrackets := _2`parsToLambdaDefinition (_1_operation(_2`parsToFunctionParlist));\n<action> _1`typName _3
+
+function _1 : _2 ; _3 |-->_4`nestedFunctions\n  operation _1_operation() : _2\n  pre: true post: true\n  activity:  var _1 : _2;  _3`functionBlock;\n    return _1;\n\n  attribute _1 : Function(OclAny,_2) := lambda x : OclAny in (_1_operation());\n<action> _1`typName _2
 
 
 procedureDeclaration::
-procedure _1 _2 ; _3 |-->\n  operation _1_2`parDecList\n  pre: true post: true\n  activity: _3`functionBlock;\n
+procedure _1 _2 ; _3 |-->_3`nestedFunctions\n  operation _1_2`parDecList\n  pre: true post: true\n  activity: _3`functionBlock;\n
 
-procedure _1 ; _2 |-->\n  operation _1()\n  pre: true post: true\n  activity: _2`functionBlock;\n
+procedure _1 ; _2 |-->_2`nestedFunctions\n  operation _1()\n  pre: true post: true\n  activity: _2`functionBlock;\n
+
+
+
+nestedFunctionDeclarations::
+_1 |-->_1`nestedFunctionDeclarations<when> _1 procedureOrFunctionDeclaration
+_1 ; |-->_1`nestedFunctionDeclarations<when> _1 procedureOrFunctionDeclaration
+
+_1 |-->_1`nestedFunctionDeclarations<when> _1 functionDeclaration
+_1 |-->_1`nestedFunctionDeclarations<when> _1 procedureDeclaration
+
+function _1 _2 : _3 ; _4 |-->_4`nestedFunctions\n  operation _1_operation_2`parDecList : _3\n  pre: true post: true\n  activity: var _1 : _3;  _4`functionBlock;\n    return _1;\n
+
+function _1 : _2 ; _3 |-->_3`nestedFunctions\n  operation _1_operation() : _2\n  pre: true post: true\n  activity:  var _1 : _2;  _3`functionBlock;\n    return _1;\n
+
+procedure _1 _2 ; _3 |-->_3`nestedFunctions\n  operation _1_2`parDecList\n  pre: true post: true\n  activity: _3`functionBlock;\n
+
+procedure _1 ; _2 |-->_2`nestedFunctions\n  operation _1()\n  pre: true post: true\n  activity: _2`functionBlock;\n
+
+
+
+nestedFunctionVariables::
+_1 |-->_1`nestedFunctionVariables<when> _1 procedureOrFunctionDeclaration
+_1 ; |-->_1`nestedFunctionVariables<when> _1 procedureOrFunctionDeclaration
+
+_1 |-->_1`nestedFunctionVariables<when> _1 functionDeclaration
+_1 |--><when> _1 procedureDeclaration
+
+function _1 _2 : _3 ; _4 |-->\n  var _1 : _2`parsToFunctionDomain_3_2`parsFDomainsCloseBrackets := _2`parsToLambdaDefinition (self._1_operation(_2`parsToFunctionParlist));\n
+
+function _1 : _2 ; _3 |-->\n  var _1 : Function(OclAny,_2) := lambda x : OclAny in (self._1_operation());\n
+
+
+rdFrame::
+_1 ; _* |-->_1`rdFrame_*`recurse<when> _1 statement
+
+_1 |-->_1`rdFrame<when> _1 statement
+_1 |-->_1`rdFrame<when> _1 unlabelledStatement
+_1 |--><when> _1 emptyStatement_
+_1 |-->_1`rdFrame<when> _1 simpleStatement
+_1 |-->_1`rdFrame<when> _1 assignmentStatement
+_1 |-->_1`rdFrame<when> _1 compoundStatement
+_1 |-->_1`rdFrame<when> _1 procedureStatement
+_1 |-->_1`rdFrame<when> _1 structuredStatement 
+_1 |-->_1`rdFrame<when> _1 conditionalStatement
+_1 |-->_1`rdFrame<when> _1 repetetiveStatement
+_1 |-->_1`rdFrame<when> _1 whileStatement
+_1 |-->_1`rdFrame<when> _1 repeatStatement
+_1 |-->_1`rdFrame<when> _1 forStatement
+_1 |--><when> _1 gotoStatement
+_1 |-->_1`rdFrame<when> _1 withStatement
+
+_1 : _2 |-->_2`rdFrame
+begin _1 end |-->_1`rdFrame
+_1 := _2 |-->_2`readFrame
+_1 ( _2 ) |-->
+
+
+if _1 then _2 |-->_1`readFrame_2`rdFrame
+if _1 then _2 else _3 |-->_1`readFrame_2`rdFrame_3`rdFrame
+
+case _1 of _* else _2 end |-->_1`readFrame_*`rdCases_2`rdFrame
+case _1 of _* end |-->_1`readFrame_*`rdCases
+
+while _1 do _2  |-->_1`readFrame_2`rdFrame
+repeat _1 until _2 |-->_1`rdFrame_2`readFrame
+
+for _1 := _2 do _3 |-->_2`readFrame_3`rdFrame
+
+with _1 to _2 |-->_2`rdFrame
+
+_* |-->
+
+
+
+rdCases::
+_1 : _2 |-->_1`readFrame_2`rdFrame 
+_1 |-->
 
 
 statements::
@@ -905,13 +1005,23 @@ _1 |-->_1
 
 
 ifStatement::
+IF _1 THEN _2 |-->\n    if _1\n    then _2 else skip
+IF _1 THEN _2 ELSE _3 |-->\n    if _1\n     then _2\n    else (_3)
+
 If _1 Then _2 |-->\n    if _1\n    then _2 else skip
 If _1 Then _2 Else _3 |-->\n    if _1\n    then _2\n    else (_3)
+
 if _1 then _2 |-->\n    if _1\n    then _2 else skip
 if _1 then _2 else _3 |-->\n    if _1\n     then _2\n    else (_3)
 
 
 caseStatement::
+CASE _1 OF _* ELSE _2 END |-->\n    var _case_var : _1`ocltype := _1;_*`caseCase (_2)
+CASE _1 OF _* END |-->\n    var _case_var : _1`ocltype := _1;_*`caseCase skip
+
+Case _1 Of _* Else _2 End |-->\n    var _case_var : _1`ocltype := _1;_*`caseCase (_2)
+Case _1 Of _* End |-->\n    var _case_var : _1`ocltype := _1;_*`caseCase skip
+
 case _1 of _* else _2 end |-->\n    var _case_var : _1`ocltype := _1;_*`caseCase (_2)
 case _1 of _* end |-->\n    var _case_var : _1`ocltype := _1;_*`caseCase skip
 
@@ -941,6 +1051,7 @@ whileStatement::
 WHILE _1 DO _2  |-->\n    while _1 do _2
 While _1 Do _2  |-->\n    while _1 do _2
 while _1 do _2  |-->\n    while _1 do _2
+
 
 repeatStatement::
 REPEAT _1 UNTIL _2 |-->\n    _1;\n    while not(_2) do _1
@@ -1045,7 +1156,8 @@ goto _1 |-->\n    self.label__1(); return
 
 
 withStatement::
-with _1 do _2 |-->\n    _1`first.with_op_2`hashCode()<action> _2`hashCode _2, _2`hashCode _1
+with _1 do _2 |-->\n    _1`first.with_op_2`hashCode(_2`rdFrame self)<action> _2`hashCode _2, _2`hashCode _1, _2`hashCode _2`rdFrame
+
 
 recordVariableList::
 _1 |-->_1
@@ -1093,10 +1205,15 @@ _1 . _* |-->_1`readFrame
 . _1 |-->
 . _* |-->
 
+_1 to _2 |-->_1`readFrame_2`readFrame
+_1 downto _2  |-->_1`readFrame_2`readFrame
+
 _1 |-->_1,<when> _1 identifier
 _1 |--><when>_1 unsignedNumber
 _1 |--><when> _1 unsignedInteger
+_1 |--><when> _1 unsignedConstant
 _1 |--><when> _1 unsignedReal
+_1 |--><when> _1 string
 _1 |-->_1`readFrame<when> _1 finalValue
 _1 |-->_1`readFrame<when> _1 initialValue
 _1 |-->_1`readFrame<when> _1 constant
@@ -1311,12 +1428,21 @@ formalParameterSection::
 var _1 |-->_1
 function _1 |-->_1
 procedure _1 |-->_1
-_1 |-->_1
+_1 |-->_1`valueParameterGroup
 
 parameterGroup::
 _1 : _2 |-->_1 : _2<when> _2 Function <action> _1 Function, _1`typName _2
 _1 : _2 |-->_1 : _2<action> _1 _2, _1`typName _2
 _1 |-->_1
+
+
+valueParameterGroup::
+_1 : _2 |-->_1 : _2<when> _2 Function <action> _1 Function, _1`typName _2
+_1 : _2 |-->_1_copy : _2<when> _2 Map <action> _1 Map, _1`typName _2
+
+_1 : _2 |-->_1 : _2<action> _1 _2, _1`typName _2
+_1 |-->_1
+
 
 parsToFunctionDomain::
 ( _1 ) |-->_1`parsToFunctionDomain
@@ -1358,6 +1484,7 @@ functionParInit::
 ; |-->
 _1 : _2 |--> lambda _1 : _2 in 
 
+
 parsToFunctionParlist::
 ( _1 ) |-->_1`parsToFunctionParlist
 ( _* ) |-->_*`parsToFunctionParlist
@@ -1380,12 +1507,32 @@ var _1 |-->_1`parsDecs
 function _1 |-->_1`parsDecs
 procedure _1 |-->_1`parsDecs
 ; |-->,
-_1 |-->_1`parsDecs
+_1 |-->_1`valParsDecs
 
 parsDecs::
 ; |-->,
 _1 : _2 |-->_1 : _2
 _1 |-->_1
+
+valParsDecs::
+; |-->,
+_1 : _2 |-->_1_copy : _2<when> _2 Map
+_1 : _2 |-->_1 : _2
+_1 |-->_1
+
+
+copyValParameters::
+_1 : _2 |-->\n    var _1 : _2 := _1_copy->copy();<when> _2 Map
+_1 : _2 |-->
+
+( _1 ) |-->_1`copyValParameters
+( _* ) |-->_*`copyValParameters
+var _1 |-->
+function _1 |-->
+procedure _1 |-->
+; |-->
+_1 |-->_1`copyValParameters<when> _1 parameterGroup
+_1 |-->
 
 
 parsToLambdaDefinition::

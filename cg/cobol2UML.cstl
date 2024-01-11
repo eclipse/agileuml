@@ -945,21 +945,37 @@ OCCURS _* |-->
 
 
 dataOccursIndexes::
+OCCURS _1 INDEXED BY LOCAL _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+OCCURS _1 _* INDEXED BY LOCAL _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+
 OCCURS _1 INDEXED BY _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
 OCCURS _1 _* INDEXED BY _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+
+OCCURS _1 INDEXED _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+OCCURS _1 _* INDEXED _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+
 OCCURS _1 |-->
 OCCURS _1 _* |-->
-_1 |-->_1`oclOccursIndexes<when> _1 dataOccursClause
+
+_1 |-->_1`dataOccursIndexes<when> _1 dataOccursClause
 _1 _* |-->
 _1 |-->
 
 
 dataOccursInitialisation::
+OCCURS _1 INDEXED BY LOCAL _2 |--> := Integer.subrange(1,_1)->collect(
+OCCURS _1 _* INDEXED BY LOCAL _2 |--> := Integer.subrange(1,_1)->collect(
+
 OCCURS _1 INDEXED BY _2 |--> := Integer.subrange(1,_1)->collect(
 OCCURS _1 _* INDEXED BY _2 |--> := Integer.subrange(1,_1)->collect(
+
+OCCURS _1 INDEXED _2 |--> := Integer.subrange(1,_1)->collect(
+OCCURS _1 _* INDEXED _2 |--> := Integer.subrange(1,_1)->collect(
+
 OCCURS _1 |--> := Integer.subrange(1,_1)->collect(
 OCCURS _1 _* |--> := Integer.subrange(1,_1)->collect(
-_1 |-->_1`oclOccursInitialisation<when> _1 dataOccursClause
+
+_1 |-->_1`dataOccursInitialisation<when> _1 dataOccursClause
 _1 _* |-->
 _1 |-->
 
@@ -1502,27 +1518,37 @@ _1 |-->_1
 acceptStatement::
 ACCEPT _1 _2 _3 END-ACCEPT  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
 ACCEPT _1 _2 _3  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+
 ACCEPT _1 _2 END-ACCEPT  |-->    try _1 := (OclFile["System.in"]).readLine() catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
 ACCEPT _1 _2  |-->    try _1 := (OclFile["System.in"]).readLine() catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
+
 ACCEPT _1 _2 END-ACCEPT  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
 ACCEPT _1 _2  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
+
 ACCEPT _1 END-ACCEPT  |-->    _1 := (OclFile["System.in"]).readLine() ;\n
 ACCEPT _1  |-->    _1 := (OclFile["System.in"]).readLine() ;\n
+
 ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause, _4 notOnExceptionClause
 ACCEPT _1 _2 _3 _4  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause, _4 notOnExceptionClause
+
 ACCEPT _1 _2 _3 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause
 ACCEPT _1 _2 _3  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause
+
 ACCEPT _1 _2 _3 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
 ACCEPT _1 _2 _3  |-->(var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
+
 ACCEPT _1 _2 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement
 ACCEPT _1 _2  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement
 
 ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
 ACCEPT _1 _2 _3 _4  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
+
 ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause
 ACCEPT _1 _2 _3  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause
+
 ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 notOnExceptionClause
 ACCEPT _1 _2 _3  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 notOnExceptionClause
+
 ACCEPT _1 _2 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n
 ACCEPT _1 _2  |-->    _1 := (OclFile["_2"]).readLine() ;\n
 
@@ -1575,12 +1601,15 @@ ADD _1 _2  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<
 ADD _1 END-ADD  |-->_1<when> _1 addToStatement
 ADD _1  |-->_1<when> _1 addToStatement
 
-ADD _1 _2 _3 END-ADD  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
-ADD _1 _2 _3  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
-ADD _1 _2 END-ADD  |-->    try ( _1      skip ) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
+ADD _1 _2 _3 END-ADD  |-->    _1\n    if _1`overflowTest then (_2      skip) else (_3       skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 _3  |-->    _1\n    if _1`overflowTest then (_2      skip) else (_3       skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+
+ADD _1 _2 END-ADD  |-->    _1\n    if _1`overflowTest then (_2      skip) else skip;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase    
 ADD _1 _2  |-->    _1\n    if _1`overflowTest then (_2      skip) else skip;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
-ADD _1 _2 END-ADD  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
-ADD _1 _2  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
+
+ADD _1 _2 END-ADD  |-->    _1\n    if _1`overflowTest then skip else (_2      skip) ; \n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
+ADD _1 _2  |-->    _1\n    if _1`overflowTest then skip else (_2      skip) ; \n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
+
 ADD _1 END-ADD  |-->_1<when> _1 addToGivingStatement
 ADD _1  |-->_1<when> _1 addToGivingStatement
 
