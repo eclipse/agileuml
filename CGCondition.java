@@ -343,11 +343,11 @@ public class CGCondition
 
       String varValue = ASTTerm.getStereotypeValue(rvar); 
 
-      JOptionPane.showMessageDialog(null, 
+      /* JOptionPane.showMessageDialog(null, 
           "Global variable " + rvar + " value is " + varValue + "\n" + 
           "Old stereotype value is: " + stereo + "\n" + 
           "Metafeatures " + stereomfs,   "",
-          JOptionPane.INFORMATION_MESSAGE);
+          JOptionPane.INFORMATION_MESSAGE); */ 
 
       if (stereomfs.size() > 0)
       { 

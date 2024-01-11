@@ -1,6 +1,6 @@
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -27567,61 +27567,15 @@ public void produceCUI(PrintWriter out)
 
     System.out.println(">> Metainformation: " + ASTTerm.metafeatures); 
 
+    
+
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       ent.removeStereotype("abstract"); 
       ent.setAbstract(false); 
     } 
 
-    java.util.Set keys = ASTTerm.metafeatures.keySet(); 
-    Vector kvect = new Vector(); 
-    kvect.addAll(keys); 
-    for (int i = 0; i < kvect.size(); i++) 
-    { String ky = (String) kvect.get(i); 
-      Object val = ASTTerm.metafeatures.get(ky); 
-      if (val instanceof Vector && 
-          Expression.isDecimalInteger(ky))
-      { Vector vals = (Vector) val; 
-        // First is the argument list
-        // Second is the code
-
-        if (vals.size() == 2)
-        { String args = (String) vals.get(0); 
-          String code = (String) vals.get(1); 
-          
-          Compiler2 comp = new Compiler2(); 
-          comp.nospacelexicalanalysis(code); 
-          Statement stat = comp.parseStatement(entities,types); 
-
-          if (args.indexOf(",") < 0) 
-          { String argtype = 
-              ASTTerm.getTaggedValue(args, "typName"); 
-            if (argtype != null) 
-            { System.out.println(">>> Additional operation of class " + argtype); 
-              System.out.println(); 
-              System.out.println("  operation with_op" + ky + 
-                           "()"); 
-              System.out.println("  pre: true post: true"); 
-              System.out.println("  activity: " + stat + ";");
-
-              BehaviouralFeature bf = 
-                new BehaviouralFeature("with_op" + ky, 
-                      new Vector(), false, null); 
-              bf.setActivity(stat);
-              bf.setPost(new BasicExpression(true)); 
- 
-              Entity ent = 
-                (Entity) ModelElement.lookupByName(
-                                        argtype,entities); 
-              if (ent != null) 
-              { ent.addOperation(bf); 
-                bf.setOwner(ent); 
-              }  
-            } 
-          }  
-        } 
-      }
-    }  
+    Entity.addPascalWithOperations(entities,types); 
 
     repaint(); 
   }

@@ -6826,6 +6826,127 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public static void addPascalWithOperations(Vector entities, Vector types)
+  { java.util.Set keys = ASTTerm.metafeatures.keySet();
+ 
+    Vector kvect = new Vector(); 
+    kvect.addAll(keys); 
+
+    String mainProgram = "main_Class";
+    Entity mainClass = 
+      (Entity) ModelElement.lookupByName(mainProgram,
+                                         entities); 
+
+    for (int i = 0; i < kvect.size(); i++) 
+    { String ky = (String) kvect.get(i); 
+      Object val = ASTTerm.metafeatures.get(ky); 
+      if (val instanceof Vector && 
+          ((Vector) val).contains("Program"))
+      { mainProgram = ky + "_Class";
+        mainClass = 
+          (Entity) ModelElement.lookupByName(mainProgram,
+                                             entities); 
+      }
+    }
+
+    for (int i = 0; i < kvect.size(); i++) 
+    { String ky = (String) kvect.get(i); 
+      Object val = ASTTerm.metafeatures.get(ky); 
+      if (val instanceof Vector && 
+          Expression.isDecimalInteger(ky))
+      { Vector vals = (Vector) val; 
+        // First is the argument list
+        // Second is the code
+
+        if (vals.size() == 3)
+        { String rdfr = (String) vals.get(0);
+          String args = (String) vals.get(1); 
+          String code = (String) vals.get(2); 
+          
+          Compiler2 comp = new Compiler2(); 
+          comp.nospacelexicalanalysis(code); 
+          Statement stat = 
+            comp.parseStatement(entities,types); 
+ 
+          Vector rds = new Vector(); 
+          Vector pars = new Vector(); 
+
+          if (rdfr != null) 
+          { String[] splits = rdfr.split(",");
+            for (int j = 0; j < splits.length; j++)
+            { String par = splits[j]; 
+              rds.add(par);
+              String ptype = 
+                ASTTerm.getTaggedValue(par, "typName");
+
+              if (ptype != null) 
+              { Type partyp = 
+                  Type.getTypeFor(ptype,types,entities);
+                Attribute attr = 
+                  new Attribute(par, partyp, 
+                                ModelElement.INTERNAL); 
+                pars.add(attr);  
+              }
+            }
+          }
+
+          pars.add(new Attribute("_parent", 
+                          new Type("OclAny", null), 
+                          ModelElement.INTERNAL)); 
+
+          Vector vars = new Vector(); 
+
+          if (args != null) 
+          { String[] asplits = args.split(",");
+            for (int j = 0; j < asplits.length; j++)
+            { vars.add(asplits[j]); }
+          }
+
+          if (vars.size() > 0) 
+          { String var = (String) vars.get(0); 
+
+            String argtype = 
+              ASTTerm.getTaggedValue(var, "typName"); 
+            if (argtype != null) 
+            { System.out.println(
+                ">>> Additional operation of class " + argtype); 
+              System.out.println(); 
+              System.out.println("  operation with_op" + ky + 
+                           "()"); 
+              System.out.println("  pre: true post: true"); 
+              System.out.println("  activity: " + stat + ";");
+              System.out.println(
+                ">>> main program: " + mainProgram); 
+              
+              System.out.println(
+                ">>> Read frame " + rds); 
+
+              BehaviouralFeature bf = 
+                new BehaviouralFeature("with_op" + ky, 
+                      pars, false, null); 
+              bf.setActivity(stat);
+              bf.setPost(new BasicExpression(true)); 
+ 
+              Entity ent = 
+                (Entity) ModelElement.lookupByName(
+                                        argtype,entities); 
+              if (ent != null) 
+              { ent.addOperation(bf); 
+                bf.setOwner(ent); 
+              }  
+
+              bf.typeCheck(types,entities); 
+              // if (stat != null) 
+              // { rds = stat.readFrame(); }
+
+              // System.out.println(
+              //   ">>> Read frame " + rds); 
+            } 
+          }  
+        } 
+      }
+    }  
+  }
 
   public void createPrimaryKey()
   { String key = getName().toLowerCase() + "Id"; 

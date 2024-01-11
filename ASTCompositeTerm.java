@@ -5,7 +5,7 @@ import javax.swing.*;
 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -868,10 +868,10 @@ public class ASTCompositeTerm extends ASTTerm
     { ASTTerm trm = (ASTTerm) terms.get(i); 
       resx = trm.hasMatch(rterm,res);
 
-      JOptionPane.showMessageDialog(null, 
+      /* JOptionPane.showMessageDialog(null, 
        "### Bindings: " + resx + 
        " Math vars: " + vars,   "",
-       JOptionPane.INFORMATION_MESSAGE);  
+       JOptionPane.INFORMATION_MESSAGE);  */ 
  
       if (resx != null && vars.equals(resx.keySet())) 
       { return resx; } 
@@ -42910,11 +42910,11 @@ public class ASTCompositeTerm extends ASTTerm
             int fwdth = newent.totalWidth; 
             int totwdth = newent.totalWidth * multiplicity;
 
-            JOptionPane.showMessageDialog(null, 
+            /* JOptionPane.showMessageDialog(null, 
                  newent + 
                  " total width = " + totwdth, 
                  "", 
-                 JOptionPane.INFORMATION_MESSAGE);
+                 JOptionPane.INFORMATION_MESSAGE); */ 
 
             att.setWidth(totwdth); 
             ASTTerm.setTaggedValue(fieldName, "width", 
@@ -42960,10 +42960,11 @@ public class ASTCompositeTerm extends ASTTerm
                     new BinaryExpression("=", attr, 
                                        convertedExpr);
 
-                  JOptionPane.showMessageDialog(null, 
+                  /* JOptionPane.showMessageDialog(null, 
                      progname + ":: " + inv, 
                           "", 
-                          JOptionPane.INFORMATION_MESSAGE);
+                          JOptionPane.INFORMATION_MESSAGE); */ 
+
                   Constraint cons = 
                     Constraint.getConstraint(inv); 
                   cons.ownerName = progname;  
@@ -43890,17 +43891,21 @@ public class ASTCompositeTerm extends ASTTerm
       String vname = var.literalForm();
       Object olddef = ASTTerm.mathoclvars.get(vname); 
       if (olddef != null) 
-      { JOptionPane.showMessageDialog(null, 
-          "!! Warning: " + vname + " is being re-defined", 
-          "", 
-          JOptionPane.WARNING_MESSAGE);
+      { System.err.println("!! Warning: " + vname + " is being re-defined"); 
+        // JOptionPane.showMessageDialog(null, 
+        //   "!! Warning: " + vname + " is being re-defined", 
+        //   "", 
+        //   JOptionPane.WARNING_MESSAGE);
       } 
       ASTTerm.mathoclvars.put(vname, expr); 
-      JOptionPane.showMessageDialog(null, 
+      /* JOptionPane.showMessageDialog(null, 
                ">> " + vname + " now defined as " + 
                expr.literalFormSpaces(), 
                "", 
-               JOptionPane.INFORMATION_MESSAGE);
+               JOptionPane.INFORMATION_MESSAGE); */
+ 
+      System.out.println(">> " + vname + " now defined as " + 
+               expr.literalFormSpaces()); 
 
       if (expr.getTag().equals("expression") && 
           "=".equals(terms.get(2) + ""))
@@ -43918,10 +43923,11 @@ public class ASTCompositeTerm extends ASTTerm
       ASTBasicTerm nullTerm = 
         new ASTBasicTerm("basicExpression", "null");  
       ASTTerm.mathoclvars.put(vname, nullTerm); 
-      JOptionPane.showMessageDialog(null, 
-        ">> " + vname + " defined as arbitrary real number", 
-        "", 
-        JOptionPane.INFORMATION_MESSAGE);
+      System.out.println(">> " + vname + " defined as arbitrary real number"); 
+      // JOptionPane.showMessageDialog(null, 
+      //   ">> " + vname + " defined as arbitrary real number", 
+      //   "", 
+      //   JOptionPane.INFORMATION_MESSAGE);
       return; 
     }
 
@@ -43976,9 +43982,12 @@ public class ASTCompositeTerm extends ASTTerm
 
       Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
-      { JOptionPane.showMessageDialog(null, 
-          "Warning!: variable " + vv + " does not have a definition",   "",
-          JOptionPane.WARNING_MESSAGE); 
+      { // JOptionPane.showMessageDialog(null, 
+        //   "!! Warning!: variable " + vv + " does not have a definition",   "",
+        //   JOptionPane.WARNING_MESSAGE);
+
+        System.err.println("!! Warning!: variable " + vv + " does not have a definition"); 
+ 
       } 
       return; 
     } 

@@ -10271,7 +10271,13 @@ public class BSystemTypes extends BComponent
 
     res = res + 
       " public static int toInt(String str)\n" + 
-      "  { try { int x = Integer.parseInt(str.trim());\n" + 
+      "  { /* Trim leading 0's */\n" +  
+      "    if (str == null || str.length() == 0)\n" + 
+      "    { return 0; }\n" + 
+      "    String trm = str.trim();\n" + 
+      "    while (trm.length() > 0 && trm.charAt(0) == '0')\n" +
+      "    { trm = trm.substring(1); }\n" + 
+      "    try { int x = Integer.parseInt(trm.trim());\n" + 
       "          return x; }\n" + 
       "    catch (Exception _e) { return 0; }\n" + 
       "  }\n\n"; 
@@ -10327,8 +10333,14 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
     res = res + 
-      " public static int toInt(String str)\n" + 
-      "  { try { int x = int.Parse(str.Trim());\n" + 
+      " public static int toInt(string str)\n" + 
+      "  { /* Trim leading 0's */\n" +  
+      "    if (str == null || str.Length == 0)\n" + 
+      "    { return 0; }\n" + 
+      "    string trm = str.Trim();\n" + 
+      "    while (trm.Length > 0 && trm[0] == '0')\n" +
+      "    { trm = trm.Substring(1); }\n" + 
+      "    try { int x = int.Parse(trm.Trim());\n" + 
       "          return x; }\n" + 
       "    catch (Exception _e) { return 0; }\n" + 
       "  }\n\n"; 
