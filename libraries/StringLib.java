@@ -163,6 +163,13 @@ public class StringLib
     return res; 
   }
 
+  public static String format(String s, Object x)
+  { Object[] args = new Object[1]; 
+    args[0] = x; 
+    String formattedString = String.format(s,args);  
+    return formattedString; 
+  } 
+
   public static String format(String s, List sq)
   { Object[] args = new Object[sq.size()]; 
     for (int i = 0; i < sq.size(); i++) 
@@ -248,11 +255,73 @@ public class StringLib
   public static String interpolateStrings(String s, List sq)
   { /* s written with {ind} to denote the ind element of sq */ 
 
+  
+    String fmt = ""; 
+    int argcount = 0; 
+	 
+    for (int i = 0; i < s.length(); i++)
+    { char ch = s.charAt(i); 
+      if (ch == '{') 
+      { if (i + 1 < s.length() && '}' == s.charAt(i+1))
+        { fmt = fmt + "{" + argcount + "}"; 
+          argcount++; 
+          i++; 
+        }
+        else 
+        { fmt = fmt + ch; }
+      } 
+      else 
+      { fmt = fmt + ch; }
+    } 
+
+    String realFormat = StringLib.reduceFormat(fmt); 
+
     Object[] args = new Object[sq.size()]; 
     for (int i = 0; i < sq.size(); i++) 
     { args[i] = "" + sq.get(i); }
-    String formattedString = MessageFormat.format(s,args);  
+    String formattedString = 
+        MessageFormat.format(realFormat,args);  
     return formattedString; 
+  } 
+
+  private static String reduceFormat(String f)
+  { /* Remove fmt from {v:fmt} terms */ 
+
+    String res = "";
+    boolean inElement = false;
+    boolean inFormat = false;
+    String var = "";   
+    for (int i = 0; i < f.length(); i++) 
+    { char c = f.charAt(i); 
+      if (inElement) 
+      { if (':' == c) 
+        { res = res + var; 
+          var = ""; 
+          inFormat = true; 
+        } 
+        else if ('}' == c)
+        { if (inFormat) { }
+          else 
+          { res = res + var; }
+          inElement = false;
+          inFormat = false;  
+          var = ""; 
+          res = res + "}"; 
+        } 
+        else if (inFormat) 
+        { } // skip the format
+        else 
+        { var = var + c; } // var name character
+      } 
+      else if ('{' == c) 
+      { inElement = true; 
+        res = res + "{"; 
+      } 
+      else 
+      { res = res + c; } // literal character
+    }  
+
+    return res; 
   } 
 
   public static String rawString(String s)
