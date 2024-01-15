@@ -109,6 +109,8 @@ _1 |-->_1
 
 
 comparison::
+_1 < _2 |-->_1 & (_1`last < _2)<when> _1 comparison, _1 multiple
+
 _1 < _2 |-->MatrixLib.matrixLess(_1,_2)<when> _1 Sequence, _2 Sequence
 _1 < _2 |-->MatrixLib.elementwiseLess(_1,_2)<when> _1 Sequence, _2 real
 _1 < _2 |-->_1 < _2<when> _1 String
@@ -128,6 +130,8 @@ _1 >= _2 |-->_1 >= _2<when> _1 real
 _1 >= _2 |-->_1 >= _2<when> _2 String
 _1 >= _2 |-->_1 >= _2<when> _2 real
 _1 >= _2 |-->(_1->compareTo(_2)) >= 0
+
+_1 <= _2 |-->_1 & (_1`last <= _2)<when> _1 comparison, _1 multiple
 
 _1 <= _2 |-->_1 <= _2<when> _1 String
 _1 <= _2 |-->_1 <= _2<when> _1 real
@@ -199,9 +203,10 @@ sum _1 |-->_1->sum()
 type _1 |-->_1->oclType()<when> _1`numberOfArguments 1
 type _1 |-->OclType.newOclType(_1`firstArg)
 
-print _1 |-->_1->display()
-int _1 |-->_1->oclAsType(int)
-float _1 |-->_1->oclAsType(double)
+print _1 |-->_1`printTrailer->display()
+
+int _1 |-->("" + _1)->toInteger()
+float _1 |-->("" + _1)->toReal()
 str _1 |-->(_1 + "")
 chr _1 |-->_1->byte2char()
 unichr _1 |-->_1->byte2char()
@@ -235,6 +240,8 @@ datetime _1 |-->_1`datetimeTrailer
 asyncio _1 |-->_1`asyncioTrailer
 np _1 |-->_1`numpyTrailer
 numpy _1 |-->_1`numpyTrailer
+sys _1 |-->_1`sysTrailer
+sys _1 _2 |-->(_1`sysTrailer)_2
 
 
 _1 ** _2 |-->(_1)->pow(_2)
@@ -445,7 +452,7 @@ _1 |-->_1`updateForm<when> _1 expr
 
 exec _1 |-->_0`pythonExec
 exec _* |-->    execute _*
-print _1 |-->    execute _1->display()
+print _1 |-->    execute _1`printTrailer->display()
 del _1 |-->    execute _1->isDeleted()
 await asyncio _1 |-->    _1`asyncioTrailer<when> _1 trailer
 await _1 |-->    _1.join()
@@ -501,7 +508,10 @@ dotted_name::
 _1 . _2 |-->_1._2
 _1 |-->_1
 
+
 name::
+_ |-->_anon
+
 True |-->true
 False |-->false
 None |-->null
@@ -700,6 +710,12 @@ isBasicTypeTrailer::
 
 
 
+printTrailer::
+_1 |-->_1`printTrailer<when> _1 trailer
+_1 |-->_1`printTrailer<when> _1 arguments
+( _1 ) |-->(_1`printTrailer)
+_1 _* |-->_1
+_1 |-->_1
 
 
 
@@ -746,6 +762,7 @@ trailer::
 . write _1 |-->.write_1
 . seek _1 |-->.setPosition_1
 . tell _1 |-->.getPosition()
+. readline _1 |-->.readLine()
 
 . sleep _1 |-->OclProcess.sleepSeconds_1
 . create_task _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).startProcess()
@@ -863,6 +880,24 @@ reType::
 . _1 |-->OclAny
 . _1 _* |-->OclAny
 _1 |-->OclAny
+
+
+sysTrailer::
+. exception _1 |-->OclException->allInstances()->last()
+. platform |-->OclProcess.getEnvironmentProperty("OS")
+. stdin |-->OclFile["System.in"]
+. stderr |-->OclFile["System.err"]
+. stdout |-->OclFile["System.out"]
+
+
+sysType::
+. exception _1 |-->OclException
+. platform |-->String
+. stdin |-->OclFile
+. stderr |-->OclFile
+. stdout |-->OclFile
+
+
 
 
 randomTrailer::
@@ -1364,7 +1399,12 @@ _1 |-->_1
 compound_stmt::
 if _1 : _2 |-->    if _1 then (\n  _2\n    ) else skip
 if _1 : _2 _3 |-->    if _1 then  (\n  _2\n    )\n_3<when> _3 else_clause
-if _1 : _2 _* |-->    if _1 then  (\n  _2\n    )\n_*
+if _1 : _2 _3 |-->    if _1 then  (\n  _2\n    )\n_3 else skip)<when> _3 elif_clause
+
+if _1 : _2 _* |-->    if _1 then  (\n  _2\n    )\n_*    else skip_*`elifCloseBrackets<when> _* all elif_clause
+
+if _1 : _2 _* |-->    if _1 then  (\n  _2\n    )\n_*_*`elifCloseBrackets
+
 
 while _1 : _2 |-->    while _1 do (_2)
 
@@ -1385,15 +1425,22 @@ suite::
 _1 |-->_1
 _1 _* |-->_1_*`followingStatement
 
+
 followingStatement::
 _1 |--> ;\n_1
 
 
 elif_clause::
-elif _1 : _2 |-->    else if _1 then _2 
+elif _1 : _2 |-->    else (if _1 then\n      _2\n 
 
 else_clause::
-else : _1 |-->    else (\n  _1\n    )
+else : _1 |-->    else (\n  _1\n      )
+
+elifCloseBrackets::
+elif _1 : _2 |-->    )\n
+else : _1 |-->
+_1 |-->
+
 
 except_clause::
 except : _1 |-->     catch (_e : OclException) do (_1)\n
@@ -1410,6 +1457,7 @@ _1 as _2 |-->var _2 : _1`ocltype := _1;\n
 
 simple_stmt::
 _1 |-->_1
+_1 <EOF> |-->_1
 _* |-->_*
 
 
@@ -1421,6 +1469,7 @@ _1 , _* |-->    var _1 : OclAny := null;\n_*`recurse
 
 
 small_stmt::
+_1 _2 |-->_1`declareIfNecessary    Sequence{_1} := Sequence{_2`second}<when> _1 multiple, _2`isMultipleAssignPart true
 _1 _2 |-->_1`declareIfNecessary    Sequence{_1} _2<when> _1 multiple
 
 _1 _2 |-->    var _1 _2<when> _2`colonAssign true <action> _1`defined true
@@ -1433,7 +1482,7 @@ _1 _2 |-->    var _1 : _2`ocltype _2<when> _2`equalAssign true <action> _1`defin
 
 _1 _2 |-->    _1 := _1_2<when> _2 assign_part
 
-print _1 |-->    execute (_1)->display()
+print _1 |-->    execute (_1`printTrailer)->display()
 del _1 |-->    execute (_1)->isDeleted()
 pass |-->    skip
 break |-->    break
@@ -1462,6 +1511,12 @@ _1 |-->_1`updateForm<when> _1 testlist_star_expr
 assertDefined::
 , |-->; 
 _1 |-->    skip<action> _1`defined true
+
+
+isMultipleAssignPart::
+= _1 |-->true<when> _1 multiple
+= _1 |-->false
+_* |-->false
 
  
 hasValueReturn::
@@ -1753,6 +1808,8 @@ math _1 |-->_1`mathType
 re _1 |-->_1`reType
 np _1 |-->_1`numpyType
 numpy _1 |-->_1`numpyType
+sys _1 |-->_1`sysType
+sys _1 _2 |-->_2`trailerOclType<when> _2 trailer
 
 _1 if _2 else _3 |-->_1`ocltype
 lambda _1 : _2 |-->Function
@@ -1903,6 +1960,7 @@ trailerOclType::
 . writable _1 |-->boolean
 . read _1 |-->String
 . tell _1 |-->int
+. readline _1 |-->String
 
 . Random _1 |-->OclRandom
 . gauss _1 |-->double

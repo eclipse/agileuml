@@ -59,6 +59,7 @@ _1 |-->_1
 
 
 structOrUnionSpecifier::
+struct _1 { _2 } ; |-->class _1\n{_2\n}\n\n
 struct _1 { _2 } |-->class _1\n{_2\n}\n\n
 union _1 { _2 } |-->class _1\n{_2\n}\n\n
 struct { _2 } |-->class {_2}

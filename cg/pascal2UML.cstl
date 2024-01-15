@@ -404,6 +404,7 @@ recordSection::
 _1 : String |-->_1`allRecordFields<when> _1 multiple <action> _91 String
 _1 : _2 |-->_1`allReferenceFields<when> _1 multiple, _2`isRecordType true <action> _92 _1`first
 _1 : _2 |-->_1`allEntityFields<when> _1 multiple, _2 Entity <action> _93 _2
+_1 : _2 |-->_1`allMapFields<when> _1 multiple, _2 Map <action> _94 _2
 _1 : _2 |-->_1`allRecordFields<when> _1 multiple <action> _91 _2
 
 _1 : String |-->\n  attribute _1 : String;<action> _1 String, _1`typName String
@@ -439,6 +440,15 @@ _* |-->_*`allEntFields
 allEntFields::
 , |-->
 _1 |-->\n  reference _1 : _93 := _93.new_93();<action> _1 Entity, _1`typName _93
+
+
+allMapFields::
+_* |-->_*`allMpFields
+
+
+allMpFields::
+, |-->
+_1 |-->\n  attribute _1 : _94 := Map{};<action> _1 Map, _1`typName _94
 
 
 variantPart::
@@ -638,7 +648,11 @@ _1 ; |-->_1`localVarDeclaration\n
 
 
 variableDeclaration::
+_1 : _2 |-->_1`allMapVarDeclns<when> _1 multiple, _2 Map <action> _94 _2
+_1 : _2 |-->_1`allMapVarDeclns<when> _1 multiple, _2`isArrayType true <action> _94 _2
+
 _1 : _2 |-->_1`varDeclns<when> _1 multiple <action> _90 _2
+
 _1 : String |-->\n  attribute _1 : String := "";<action> _1 String, _1`typName String
 _1 : integer |-->\n  attribute _1 : int := 0;<action> _1 int, _1`typName int
 _1 : real |-->\n  attribute _1 : double := 0.0;<action> _1 double, _1`typName double
@@ -646,15 +660,22 @@ _1 : boolean |-->\n  attribute _1 : boolean := false;<action> _1 boolean, _1`typ
 
 _1 : _2 |-->\n  attribute _1 : _2 := Set{};<when> _2`isSetType true <action> _1 Set, _1`typName _2
 _1 : _2 |-->\n  attribute _1 : _2 := Set{};<when> _2 Set <action> _1 Set, _1`typName _2
+
 _1 : _2 |-->\n  attribute _1 : _2 := Map{};<when> _2 Map <action> _1 Map, _1`typName _2
 _1 : _2 |-->\n  attribute _1 : _2 := _2`typInit;<when> _2`isArrayType true <action> _1 Map, _1`typName _2
+
 _1 : _2 |-->\n  attribute _1 : _2 := _2`functInit;<when> _2`isFunctionType true <action> _1 Function, _1`typName _2
 _1 : _2 |-->\n  attribute _1 : _2 := _2`initValue;<when> _2 Function <action> _1 Function, _1`typName _2
+
 _1 : _2 |-->\n  attribute _1 : _2;  attribute _1_buffer : String;<when> _2 File <action> _1 File, _1`typName _2
 _1 : _2 |-->\n  attribute _1 : _2;\n  attribute _1_buffer : String;<when> _2`isFileType true <action> _1 File, _1`typName _2
+
 _1 : _2 |-->\n  reference _1 : _2 := _2.new_2();<when> _2 Entity <action> _1 Entity, _1`typName _2
+
 _1 : _2 |-->\n  attribute _1 : _2;<when> _2`isPointerType true, _2`pointedToType Entity <action> _1 Ref, _1`typName _2, _1`isObjectPointer true, _1`referredType _2`pointedToType
+
 _1 : _2 |-->\n  attribute _1 : _2;<when> _2`isPointerType true <action> _1 Ref, _1`typName _2, _1`isObjectPointer false
+
 _1 : _2 |-->\n  attribute _1 : _2;<action> _1 _2, _1`typName _2
 _1 |-->
 
@@ -675,6 +696,16 @@ _1 |-->\n  attribute _1 : _90 := Set{};<when> _90 Set <action> _1 Set, _1`typNam
 _1 |-->\n  attribute _1 : _90 := Map{};<when> _90 Map <action> _1 Map, _1`typName _90
 _1 |-->\n  attribute _1 : _90;<when> _90 Function <action> _1 Function, _1`typName Function
 _1 |-->\n  attribute _1 : _90;<action> _1 _90, _1`typName _90
+
+
+
+allMapVarDeclns::
+_1 |-->_1`mapVarDeclar
+_* |-->_*`mapVarDeclar
+
+mapVarDeclar::
+, |-->
+_1 |-->\n  attribute _1 : _94 := Map{};<action> _1 Map, _1`typName _94
 
 
 typInit::
@@ -775,7 +806,7 @@ function _1 : _2 ; _3 |-->_4`nestedFunctions\n  operation _1_operation() : _2\n 
 
 
 procedureDeclaration::
-procedure _1 _2 ; _3 |-->_3`nestedFunctions\n  operation _1_2`parDecList\n  pre: true post: true\n  activity: _3`functionBlock;\n
+procedure _1 _2 ; _3 |-->_3`nestedFunctions\n  operation _1_2`parDecList\n  pre: true post: true\n  activity: _2`copyValParameters  _3`functionBlock;\n
 
 procedure _1 ; _2 |-->_2`nestedFunctions\n  operation _1()\n  pre: true post: true\n  activity: _2`functionBlock;\n
 
@@ -886,6 +917,7 @@ _1 |-->_1
 
 
 assignmentStatement::
+_1 := _2 |-->\n    _1 := _2->copy()<when> _2 Entity <action> _1 _2`ocltype
 _1 := _2 |-->\n    _1 := _2<action> _1 _2`ocltype
 
 
@@ -1309,7 +1341,7 @@ functionDesignator::
 sin ( _1 ) |-->(_1)->sin()
 cos ( _1 ) |-->(_1)->cos()
 
-odd ( _1 ) |-->((_1 % 2) = 1)
+odd ( _1 ) |-->((_1 mod 2) = 1)
 
 arctan ( _1 ) |-->(_1)->atan()
 
@@ -1517,12 +1549,14 @@ _1 |-->_1
 valParsDecs::
 ; |-->,
 _1 : _2 |-->_1_copy : _2<when> _2 Map
+_1 : _2 |-->_1_copy : _2<when> _2 Entity
 _1 : _2 |-->_1 : _2
 _1 |-->_1
 
 
 copyValParameters::
 _1 : _2 |-->\n    var _1 : _2 := _1_copy->copy();<when> _2 Map
+_1 : _2 |-->\n    var _1 : _2 := _1_copy->copy();<when> _2 Entity
 _1 : _2 |-->
 
 ( _1 ) |-->_1`copyValParameters

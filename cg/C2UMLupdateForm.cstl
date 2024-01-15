@@ -133,7 +133,7 @@ remove ( _1 ) |-->    OclFile.deleteFile(_1) ;\n
 rename ( _1 ) |-->    OclFile.renameFile(_1`first,_1`last) ;\n
 putchar ( _1 ) |-->    System_out.write(_1->byte2char()) ;\n
 puts ( _1 ) |-->    System_out.writeln(_1) ;\n
-printf ( _1 ) |-->    System_out.printf(_1`first,Sequence{_1`tail}) ; \n
+printf ( _1 ) |-->    System_out.printf(_1`first,Sequence{_1`tailtail}) ; \n
 fprintf ( _1 ) |-->    _1`first.printf(_1`third,Sequence{_1`tailtailtailtail}) ; \n
 fputs ( _1 ) |-->    (_1`last).writeln(_1`first) ;\n
 fputc ( _1 ) |-->    (_1`last).write(_1`first->byte2char()) ;\n
