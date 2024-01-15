@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -4191,7 +4191,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return qf; } 
       if (type.isEntity())
       { String tcs = type.getJava6(); 
-        return "((" + tcs + ") " + qf + ".clone()"; 
+        return "((" + tcs + ") " + qf + ".clone())"; 
       }
       String tname = type.getName(); 
       if ("String".equals(tname))
@@ -4572,7 +4572,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { if (type == null) 
       { return qf; } 
       if (type.isEntity())
-      { return qf + ".clone()"; }
+      { String tname = type.getJava7(); 
+        return "((" + tname + ") " + qf + ".clone())";
+      }
       String tname = type.getName(); 
       if ("String".equals(tname))
       { return "(\"\"" + qf + ")"; } 

@@ -1,8 +1,10 @@
 import java.util.Vector;
 import java.io.*; 
+import javax.swing.*;
+
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -773,39 +775,56 @@ public class SetExpression extends Expression
     String res = "";
 
     if (isOrdered())
-    { // if (i < var.size) { elemi := var[i] }
+    { // (var _x : var.type := var; 
+      //  elem1 := var[1]; ...; elemn := var[n])
+
+      String varx = Identifier.nextIdentifier("_var"); 
+      BasicExpression vx = 
+        BasicExpression.newVariableBasicExpression(varx,
+                                   var.getType()); 
+      CreationStatement cs = 
+        CreationStatement.newCreationStatement(varx,
+                                   var.getType(), var); 
+
+      SequenceStatement ss = new SequenceStatement(); 
+      ss.addStatement(cs);  
+      ss.setBrackets(true); 
+
+      for (int i = 0; i < elements.size(); i++)
+      { Expression elem = (Expression) elements.get(i);
+        // BasicExpression vari = (BasicExpression) var.clone();
+        // vari.setArrayIndex(new BasicExpression(i+1));
+        
+        BinaryExpression vari = 
+          new BinaryExpression("->at", vx, 
+                               new BasicExpression(i+1));
+        vari.setType(var.getElementType()); 
+ 
+        AssignStatement seti = 
+            new AssignStatement(elem, vari); 
+        ss.addStatement(seti); 
+      } 
+        
+      JOptionPane.showMessageDialog(null, "Assignment " + this + " := " + var + " code is " + ss); 
+
+      res = ss.updateForm(language,env,local); 
+    }  
+    else 
+    { // if (i < var.size) { elemi := (var -  Set{elem1, ..., elemi-1})->any() }
       for (int i = 0; i < elements.size(); i++)
       { Expression elem = (Expression) elements.get(i);
         BasicExpression vari = (BasicExpression) var.clone();
-        // vari.setArrayIndex(new BasicExpression(i+1));
-        BinaryExpression elemi = 
-          new BinaryExpression("->at", vari, 
-                               new BasicExpression(i+1)); 
-        BinaryExpression seti = 
-            new BinaryExpression("=", elem, elemi); // vari
-        UnaryExpression varsize = 
-            new UnaryExpression("->size", var );
-        BinaryExpression se = 
-            new BinaryExpression(">", varsize, new BasicExpression(i));
-        res = res + "  if (" + se.queryForm(language,env,local) + ") { " + seti.updateForm(language,env,local) + " }\n";
-     }
-   }  
-   else 
-   { // if (i < var.size) { elemi := (var -  Set{elem1, ..., elemi-1})->any() }
-     for (int i = 0; i < elements.size(); i++)
-     { Expression elem = (Expression) elements.get(i);
-       BasicExpression vari = (BasicExpression) var.clone();
-       SetExpression prev = subrange(1,i-1);
-       BinaryExpression subt = new BinaryExpression("-", vari, prev);
-       UnaryExpression varelem = new UnaryExpression("->any", subt); 
-       BinaryExpression seti = new BinaryExpression("=", elem, varelem );
-       UnaryExpression varsize = new UnaryExpression("->size", var );
-       BinaryExpression se = new BinaryExpression(">", varsize, new BasicExpression(i));
-       res = res + "  if (" + se.queryForm(language,env,local) + ") { " +  seti.updateForm(language,env,local) + " }\n";
-     }
-   }  
-   return res;
- } // For maps???
+        SetExpression prev = subrange(1,i-1);
+        BinaryExpression subt = new BinaryExpression("-", vari, prev);
+        UnaryExpression varelem = new UnaryExpression("->any", subt); 
+        BinaryExpression seti = new BinaryExpression("=", elem, varelem );
+        UnaryExpression varsize = new UnaryExpression("->size", var );
+        BinaryExpression se = new BinaryExpression(">", varsize, new BasicExpression(i));
+        res = res + "  if (" + se.queryForm(language,env,local) + ") { " +  seti.updateForm(language,env,local) + " }\n";
+      }
+    }  
+    return res;
+  } // For maps???
 
   public SetExpression subrange(int i, int j)
   { SetExpression res = new SetExpression();

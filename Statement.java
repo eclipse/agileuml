@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane;
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1450,6 +1450,26 @@ abstract class Statement implements Cloneable
 
   public Statement statLC(java.util.Map env, boolean local)
   { return this; }  
+
+  public String updateForm(String lang, java.util.Map env, boolean local)
+  { if ("Java4".equals(lang))
+    { return updateForm(env,local); } 
+    if ("Java6".equals(lang))
+    { return updateFormJava6(env,local); } 
+    if ("Java7".equals(lang))
+    { return updateFormJava7(env,local); } 
+    if ("CSharp".equals(lang))
+    { return updateFormCSharp(env,local); } 
+    else
+    { return updateFormCPP(env,local); } 
+  } 
+
+  public String updateForm(java.util.Map env, boolean local)
+  { Vector entities = new Vector(); 
+    Vector types = new Vector(); 
+    Vector vars = new Vector(); 
+    return updateForm(env,local,types,entities,vars); 
+  } 
 
   public abstract String updateForm(java.util.Map env, boolean local, Vector types, 
                                     Vector entities, Vector vars);

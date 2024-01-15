@@ -9705,6 +9705,8 @@ public class Entity extends ModelElement implements Comparable
 
     if (previous)  // constructor has arguments
     { out.println("  " + vis + " " + nme + "() { }\n"); } 
+
+    buildCloneOperationJava7(out);
   }
 
   private void buildConstructorCodeJava6(PrintWriter out)
@@ -9760,6 +9762,28 @@ public class Entity extends ModelElement implements Comparable
     } 
 
     out.println(code); 
+  } 
+
+  private void buildCloneOperationJava7(PrintWriter out)
+  { String nme = getName(); 
+    
+    out.println("  public Object clone()"); 
+    out.println("  { " + nme + " result = new " + nme + "();"); 
+
+    for (int i = 0; i < attributes.size(); i++)
+    { Attribute att = (Attribute) attributes.get(i);
+      String aname = att.getName();
+      out.println("    result." + aname + " = this." + aname + ";"); 
+    }
+
+    for (int i = 0; i < associations.size(); i++)
+    { Association ast = (Association) associations.get(i);
+      String r2 = ast.getRole2(); 
+      out.println("    result." + r2 + " = this." + r2 + ";"); 
+    }
+
+    out.println("    return result;");
+    out.println("  }\n");  
   } 
 
   private void buildConstructorCodeCSharp(PrintWriter out)

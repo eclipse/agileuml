@@ -15091,6 +15091,68 @@ public void produceCUI(PrintWriter out)
 
   } 
 
+  public void python2java()
+  { 
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    /* File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } */ 
+ 
+    File stringlib = new File("libraries/stringlib.km3"); 
+    if (stringlib.exists())
+    { loadKM3FromFile(stringlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/stringlib.km3"); } 
+ 
+    ASTTerm.metafeatures = new java.util.HashMap(); 
+
+    loadFromPython();
+    typeCheck(); 
+    typeInference(); 
+    typeCheck(); 
+
+    // Show the model: 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ext = (Entity) entities.get(i); 
+      System.out.println(ext.getKM3()); 
+    } 
+
+    // Generate Java7: 
+
+    File file = new File("app/Controller.java");  
+    File file2 = new File("app/SystemTypes.java");
+
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file)));
+      PrintWriter out2 = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file2)));
+         
+      generateJava7(out, out2);
+      out.close();
+      out2.close(); 
+    }
+    catch (Throwable tt)
+    { System.err.println("!! Error generating Java7"); } 
+
+  } 
+
   public void java2cpp()
   { File ocltypes = new File("libraries/ocltype.km3"); 
     if (ocltypes.exists())

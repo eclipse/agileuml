@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -7411,7 +7411,7 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->antirestrict"))
     { return "Ocl.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
-    if (operator.equals("->at") && type != null)
+    if (operator.equals("->at"))
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
       String ind = lqf + ".get(" + rqf + ")"; 
       
