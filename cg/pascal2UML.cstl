@@ -918,6 +918,7 @@ _1 |-->_1
 
 assignmentStatement::
 _1 := _2 |-->\n    _1 := _2->copy()<when> _2 Entity <action> _1 _2`ocltype
+_1 := _2 |-->\n    _1 := _2->copy()<when> _2 Map <action> _1 _2`ocltype
 _1 := _2 |-->\n    _1 := _2<action> _1 _2`ocltype
 
 

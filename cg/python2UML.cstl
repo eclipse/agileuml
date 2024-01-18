@@ -119,17 +119,24 @@ _1 < _2 |-->_1 < _2<when> _2 String
 _1 < _2 |-->_1 < _2<when> _2 real
 _1 < _2 |-->(_1->compareTo(_2)) < 0
 
+
+_1 > _2 |-->_1 & (_1`last > _2)<when> _1 comparison, _1 multiple
+
 _1 > _2 |-->_1 > _2<when> _1 String
 _1 > _2 |-->_1 > _2<when> _1 real
 _1 > _2 |-->_1 > _2<when> _2 String
 _1 > _2 |-->_1 > _2<when> _2 real
 _1 > _2 |-->(_1->compareTo(_2)) > 0
 
+
+_1 >= _2 |-->_1 & (_1`last >= _2)<when> _1 comparison, _1 multiple
+
 _1 >= _2 |-->_1 >= _2<when> _1 String
 _1 >= _2 |-->_1 >= _2<when> _1 real
 _1 >= _2 |-->_1 >= _2<when> _2 String
 _1 >= _2 |-->_1 >= _2<when> _2 real
 _1 >= _2 |-->(_1->compareTo(_2)) >= 0
+
 
 _1 <= _2 |-->_1 & (_1`last <= _2)<when> _1 comparison, _1 multiple
 
@@ -139,15 +146,26 @@ _1 <= _2 |-->_1 <= _2<when> _2 String
 _1 <= _2 |-->_1 <= _2<when> _2 real
 _1 <= _2 |-->(_1->compareTo(_2)) <= 0
 
+_1 == _2 |-->_1 & (_1`last == _2)<when> _1 comparison, _1 multiple
 _1 == _2 |-->_1 = _2
+
+_1 <> _2 |-->_1 & (_1`last <> _2)<when> _1 comparison, _1 multiple
 _1 <> _2 |-->_1 /= _2
+
+_1 != _2 |-->_1 & (_1`last != _2)<when> _1 comparison, _1 multiple
 _1 != _2 |-->_1 /= _2
+
+_1 in _2 |-->_1 & (_2->includes(_1`last))<when> _1 comparison, _1 multiple
+
 _1 not in _2 |-->(_2)->characters()->excludes(_1)<when> _2 String
 _1 in _2 |-->(_2)->characters()->includes(_1)<when> _2 String
+
 _1 not in _2 |-->(_2)->excludes(_1)
 _1 in _2 |-->(_2)->includes(_1)
+
 _1 is not _2 |-->not(_1 <>= _2)
 _1 is _2 |-->_1 <>= _2
+
 _1 |-->_1
 
 
@@ -185,7 +203,12 @@ issubclass _1 |-->(_1`firstArg).isAssignableFrom(_1`secondArg)
 iter _1 |-->OclIterator.newOclIterator_Sequence_1
 
 len _1 |-->_1->size()
+
+list _1 |-->_1->characters()<when> _1`ocltype String
+list _1 |-->_1->keys()->asSequence()<when> _1`ocltype Map
 list _1 |-->_1
+
+
 
 max _1 |-->_1->max()<when> _1`argCount 1
 max _1 |-->Set{_1`argList}->max()
@@ -205,15 +228,15 @@ type _1 |-->OclType.newOclType(_1`firstArg)
 
 print _1 |-->_1`printTrailer->display()
 
-int _1 |-->("" + _1)->toInteger()
-float _1 |-->("" + _1)->toReal()
-str _1 |-->(_1 + "")
+int _1 |-->("" + (_1))->toInteger()
+float _1 |-->("" + (_1))->toReal()
+str _1 |-->("" + (_1))
 chr _1 |-->_1->byte2char()
 unichr _1 |-->_1->byte2char()
 ord _1 |-->_1->char2byte()
 
 pow _1 |-->(_1`firstArg)->pow(_1`secondArg)
-repr _1 |-->(_1 + "")
+repr _1 |-->("" + (_1))
 reversed _1 |-->_1->reverse()
 sorted _1 |-->_1->sort()
 
@@ -1431,7 +1454,7 @@ _1 |--> ;\n_1
 
 
 elif_clause::
-elif _1 : _2 |-->    else (if _1 then\n      _2\n 
+elif _1 : _2 |-->    else (if _1 then\n   (\n  _2    \n)\n 
 
 else_clause::
 else : _1 |-->    else (\n  _1\n      )
@@ -1881,8 +1904,10 @@ _1 |-->String<when> _1 String
 
 _1 |-->_1`ocltype<when> _1 testlist_star_expr
 _1 |-->_1`ocltype<when> _1 testlist
+_1 |-->_1`ocltype<when> _1 trailer
 _1 |-->_1`ocltype<when> _1 arglist
 _1 |-->_1`ocltype<when> _1 argument
+_1 |-->_1`ocltype<when> _1 arguments
 _1 |-->_1`ocltype<when> _1 test
 _1 |-->_1`ocltype<when> _1 logical_test
 _1 |-->_1`ocltype<when> _1 comparison

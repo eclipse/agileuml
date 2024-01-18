@@ -2380,6 +2380,11 @@ moveAll::
 _1 TO _2  |-->    _2 := Integer.subrange(1,_2`fieldWidth)->collect(_1)->sum();\n
 _1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := Integer.subrange(1,_2->size())->collect(_1)->sum();\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
 
+CORRESPONDING _1 TO _2 |-->
+CORRESPONDING _1 TO _*  |-->
+CORR _1 TO _2  |-->
+CORR _1 TO _*  |--> 
+
 
 moveToSendingArea::
 _1  |-->_1
