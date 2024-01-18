@@ -11636,7 +11636,7 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (Type.isSpecialisedOrEqualType(var.type, type))
         { return "  " + datax + " = " + val2 + ";"; } 
         if ("String".equals(type.getName())) 
-        { return "  " + datax + " = \"\" + " + val2 + ";"; }
+        { return "  " + datax + " = \"\" + (" + val2 + ");"; }
         else if ("String".equals(var.type.getName()) &&
                  type.isNumeric())
         { String cname = Named.capitalise(type.getName()); 
@@ -11676,7 +11676,7 @@ public Statement generateDesignSubtract(Expression rhs)
           { if (Type.isSpecialisedOrEqualType(var.type, type))
             { return "  " + datax + " = " + val2 + ";"; } 
             if ("String".equals(type.getName())) 
-            { return "  " + datax + " = \"\" + " + val2 + ";"; }
+            { return "  " + datax + " = \"\" + (" + val2 + ");"; }
             else if ("String".equals(var.type.getName()) &&
                      type.isNumeric())
             { String cname = Named.capitalise(type.getName()); 
@@ -11731,7 +11731,7 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
           { return cont + ".set" + data + "(" + target + val2 + ");"; } 
           if ("String".equals(type.getName())) 
-          { return cont + ".set" + data + "(" + target + "\"\" + " + val2 + ");"; }
+          { return cont + ".set" + data + "(" + target + "\"\" + (" + val2 + "));"; }
           else if ("String".equals(var.type.getName()) &&
                    type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
@@ -11835,7 +11835,7 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
           { return "    " + cont + ".set" + data + "(" + pre + ", " + val2 + ");"; } 
           if ("String".equals(type.getName())) 
-          { return "    " + cont + ".set" + data + "(" + pre + ", \"\" + " + val2 + ");"; }
+          { return "    " + cont + ".set" + data + "(" + pre + ", \"\" + (" + val2 + "));"; }
           else if ("String".equals(var.type.getName()) &&
                      type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
@@ -11853,7 +11853,7 @@ public Statement generateDesignSubtract(Expression rhs)
   }  // arrayIndex != null: setdata(var,arrayIndex,val) ?
 
   public String updateFormEqCSharp(java.util.Map env,
-                             String val2, Expression var, boolean local)
+                  String val2, Expression var, boolean local)
   { String cont = "Controller.inst()"; 
 
     // System.out.println(">>> Assignment " + this + " = " + val2); 
@@ -11974,7 +11974,7 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (Type.isSpecialisedOrEqualType(var.type, type))
         { return "  " + datax + " = " + val2 + ";"; }
         else if ("String".equals(type.getName())) 
-        { return "  " + datax + " = \"\" + " + val2 + ";"; }
+        { return "  " + datax + " = \"\" + (" + val2 + ");"; }
         else if ("String".equals(var.type.getName()) &&
                  type.isNumeric())
         { String cname = Named.capitalise(type.getName()); 
@@ -12016,7 +12016,7 @@ public Statement generateDesignSubtract(Expression rhs)
           { if (Type.isSpecialisedOrEqualType(var.type, type))
             { return data + " = " + val2 + ";"; } 
             else if ("String".equals(type.getName())) 
-            { return "  " + datax + " = \"\" + " + val2 + ";"; }
+            { return "  " + datax + " = \"\" + (" + val2 + ");"; }
             else if ("String".equals(var.type.getName()) &&
                      type.isNumeric())
             { String cname = Named.capitalise(type.getName()); 
@@ -12068,7 +12068,7 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
           { return "    " + cont + ".set" + data + "(" + target + val2 + ");"; } 
           else if ("String".equals(type.getName())) 
-          { return "    " + cont + ".set" + data + "(" + target + "\"\" + " + val2 + ");"; }
+          { return "    " + cont + ".set" + data + "(" + target + "\"\" + (" + val2 + "));"; }
           else if ("String".equals(var.type.getName()) &&
                    type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
@@ -12168,7 +12168,7 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
           { return "    " + cont + ".set" + data + "(" + pre + ", " + val2 + ");"; } 
           else if ("String".equals(type.getName())) 
-          { return "    " + cont + ".set" + data + "(" + pre + ", \"\" + " + val2 + ");"; }
+          { return "    " + cont + ".set" + data + "(" + pre + ", \"\" + (" + val2 + "));"; }
           else if ("String".equals(var.type.getName()) &&
                    type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 

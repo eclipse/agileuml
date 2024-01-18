@@ -7278,7 +7278,8 @@ public boolean conflictsWithIn(String op, Expression el,
     String cont = "Controller.inst()"; 
 
     if (operator.equals("#") || operator.equals("#LC") ||
-        "->existsLC".equals(operator) || operator.equals("->exists"))
+        "->existsLC".equals(operator) || 
+        operator.equals("->exists"))
     { return quantifierQueryFormJava7(env,local); } 
 
     if (operator.equals("#1") || operator.equals("->exists1"))
@@ -7402,7 +7403,15 @@ public boolean conflictsWithIn(String op, Expression el,
       return "Ocl.sortedBy(" + lqf + ", " + col + ")"; 
     }
 
-    if (operator.equals("->count") && !("String".equals(left.type + "")))  // not for strings
+    if (operator.equals("->includes"))
+    { if (left.isString())
+      { return "(" + lqf + ").indexOf(" + rqf + ") >= 0"; } 
+      else 
+      { return lqf + ".contains(" + rqf + ")"; }
+    } 
+
+    if (operator.equals("->count") && 
+        !("String".equals(left.type + "")))  // not for strings
     { return "Collections.frequency(" + lqf + "," + rw + ")"; } 
 
     if (operator.equals("->restrict"))
@@ -7599,7 +7608,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (!lmult && !rmult)
     { if (operator.equals("=")) // and comparitors
       { res = composeEqQueryForms(lqf,rqf,lprim,rprim); }
-      else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
+      else if (operator.equals("/=") || operator.equals("!=") || 
+               operator.equals("<>"))
       { res = composeNeqQueryForms(lqf,rqf,lprim,rprim); }
       else if (comparitors.contains(operator))
       { res = composeComparitorQueryForms(lqf,rqf,lprim,rprim); } 

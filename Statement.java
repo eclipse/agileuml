@@ -483,7 +483,7 @@ abstract class Statement implements Cloneable
   }  
 
   public static Vector getLocalDeclarations(Statement st)
-  { // Local declarations that are not within a loop 
+  { // Local declarations for "hoist declarations" 
 
     Vector res = new Vector(); 
     if (st == null) 
@@ -515,7 +515,7 @@ abstract class Statement implements Cloneable
 
     if (st instanceof WhileStatement) 
     { WhileStatement ws = (WhileStatement) st; 
-      // res.addAll(getLocalDeclarations(ws.getLoopBody())); 
+      res.addAll(getLocalDeclarations(ws.getLoopBody())); 
       return res; 
     } 
 
@@ -1084,7 +1084,7 @@ abstract class Statement implements Cloneable
       return res; 
     } 
 
-    /* if (st instanceof WhileStatement) 
+    if (st instanceof WhileStatement) 
     { WhileStatement ws = (WhileStatement) st; 
       Statement newbody = 
         Statement.replaceLocalDeclarations(
@@ -1095,14 +1095,16 @@ abstract class Statement implements Cloneable
       return res;  
     } 
 
-    if (st instanceof TryStatement) 
+    /* if (st instanceof TryStatement) 
     { TryStatement ts = (TryStatement) st; 
-      res.addAll(getLocalDeclarations(ts.getBody())); 
+      Statement newBody = 
+        Statement.replaceLocalDeclarations(ts.getBody(),vars); 
       Vector stats = ts.getClauses(); 
       for (int i = 0; i < stats.size(); i++) 
       { if (stats.get(i) instanceof Statement)
         { Statement stat = (Statement) stats.get(i); 
-          res.addAll(getLocalDeclarations(stat));
+          Statement newstat = 
+            Statement.replaceLocalDeclarations(stat,vars);
         }  
       } 
       res.addAll(getLocalDeclarations(ts.getEndStatement())); 

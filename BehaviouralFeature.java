@@ -11242,6 +11242,8 @@ public class BehaviouralFeature extends ModelElement
         continue;
       } 
 
+      System.out.println(">>> Local declaration " + cs); 
+
       varnames.add(vname); 
       initialDecs.add(cs.defaultVersion()); 
     } 

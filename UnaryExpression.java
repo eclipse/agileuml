@@ -3659,6 +3659,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return cont + "." + qf.toLowerCase() + "s.size()"; } 
       if (argument.getType() != null && argument.getType().getName().startsWith("String"))
       { return "(" + qf + ").length()"; } 
+      if (argument.isNumeric())
+      { return "(\"\" + " + qf + ").length()"; } 
       return "(" + qf + ").size()";
     } 
 
@@ -4070,6 +4072,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return cont + "." + qf.toLowerCase() + "s.size()"; } 
       if (argument.type != null && argument.type.getName().equals("String"))
       { return qf + ".length()"; } 
+      if (argument.isNumeric())
+      { return "(\"\" + " + qf + ").length()"; } 
       return qf + ".size()";
     } 
 
@@ -4458,6 +4462,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return cont + "." + qf.toLowerCase() + "s.size()"; } 
       if (argument.type != null && argument.type.getName().equals("String"))
       { return "(" + qf + ").length()"; } 
+      if (argument.isNumeric())
+      { return "(\"\" + " + qf + ").length()"; } 
       return "(" + qf + ").size()";
     } 
 

@@ -8958,9 +8958,9 @@ public class BSystemTypes extends BComponent
 
   public static String charactersOpJava7()
   { String res = 
-      "  public static List<String> characters(String str)\n" + 
+      "  public static ArrayList<String> characters(String str)\n" + 
       "  { char[] _chars = str.toCharArray();\n" +  
-      "    List<String> _res = new ArrayList<String>();\n" +  
+      "    ArrayList<String> _res = new ArrayList<String>();\n" +  
       "    for (int i = 0; i < _chars.length; i++)\n" +  
       "    { _res.add(\"\" + _chars[i]); }\n" +  
       "    return _res;\n" + 
@@ -10078,8 +10078,8 @@ public class BSystemTypes extends BComponent
   }
 
   public static String generateAsSequenceOpJava7()
-  { String res = "    public static <T> List<T> asSequence(Collection<T> c)\n" +
-    "    { List res = new ArrayList<T>();\n" +
+  { String res = "    public static <T> ArrayList<T> asSequence(Collection<T> c)\n" +
+    "    { ArrayList res = new ArrayList<T>();\n" +
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
@@ -10276,7 +10276,9 @@ public class BSystemTypes extends BComponent
       "    { return 0; }\n" + 
       "    String trm = str.trim();\n" + 
       "    while (trm.length() > 0 && trm.charAt(0) == '0')\n" +
-      "    { trm = trm.substring(1); }\n" + 
+      "    { trm = trm.substring(1); }\n" +
+      "    if (trm.indexOf(\".\") > 0)\n" +
+      "    { trm = trm.substring(0,trm.indexOf(\".\")); }\n" +  
       "    try { int x = Integer.parseInt(trm.trim());\n" + 
       "          return x; }\n" + 
       "    catch (Exception _e) { return 0; }\n" + 
@@ -10289,6 +10291,8 @@ public class BSystemTypes extends BComponent
       "    String trm = str.trim();\n" + 
       "    while (trm.length() > 0 && trm.charAt(0) == '0')\n" +
       "    { trm = trm.substring(1); }\n" + 
+      "    if (trm.indexOf(\".\") > 0)\n" +
+      "    { trm = trm.substring(0,trm.indexOf(\".\")); }\n" + 
       "    try { int x = Integer.decode(trm).intValue();\n" + 
       "      return x; \n" +
       "    }\n" +
