@@ -240,6 +240,26 @@ public abstract class ASTTerm
     } 
     return res; 
   } 
+
+  public static Vector allTagsAtIndex(int index, ASTTerm[] sasts)
+  { // tags for each i'th term of sasts
+
+    Vector alltags = new Vector(); 
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < sasts.length; i++) 
+    { ASTTerm trm = (ASTTerm) sasts[i];
+      ASTTerm termi = (ASTTerm) trm.getTerm(index);  
+      String tagi = termi.getTag(); 
+      if (tagi != null)
+      { if (alltags.contains(tagi)) { } 
+        else 
+        { alltags.add(tagi); } 
+      } 
+    } 
+
+    return alltags; 
+  } 
     
   public abstract Vector allNestedTagsArities(); 
 
@@ -2011,6 +2031,23 @@ public abstract class ASTTerm
     return true; 
   } 
 
+  public static boolean alwaysBasic(int ind, ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+    
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null || ind >= tx.arity()) 
+      { return false; } 
+      ASTTerm tsx = tx.getTerm(ind); 
+      if (tsx instanceof ASTBasicTerm) { } 
+      else 
+      { return false; } 
+    } 
+      
+    return true; 
+  } 
+
   public static boolean allCompositeSameLength(
                                    ASTTerm[] trees)
   { if (trees == null || trees.length == 0) 
@@ -2051,6 +2088,8 @@ public abstract class ASTTerm
       ASTTerm tsx = tx.getTerm(ind); 
       if (tsx instanceof ASTSymbolTerm) 
       { res.add(tsx.literalForm()); } 
+      else if (tsx instanceof ASTBasicTerm) 
+      { res.add(tsx.literalForm()); } 
     } 
       
     return res; 
@@ -2065,6 +2104,19 @@ public abstract class ASTTerm
 
     ASTTerm tsx = trm.getTerm(ind); 
     if (val.equals(tsx.literalForm()))
+    { return true; } 
+    return false; 
+  } 
+
+  public static boolean hasTagValue(ASTTerm trm, int ind, String val) 
+  { if (trm == null) 
+    { return false; } 
+
+    if (ind >= trm.arity())
+    { return false; } 
+
+    ASTTerm tsx = trm.getTerm(ind); 
+    if (val.equals(tsx.getTag()))
     { return true; } 
     return false; 
   } 

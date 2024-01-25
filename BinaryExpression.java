@@ -1315,14 +1315,17 @@ class BinaryExpression extends Expression
              operator.equals("->at") || 
              operator.equals("->apply") ||
              operator.equals("->closure") || 
-             operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
+             operator.equals("->intersection") || 
+             operator.equals("->symmetricDifference"))   
     { basicString = left + operator + "(" + right + ")"; } 
 
     if (operator.startsWith("->"))
     { basicString = left + operator + "(" + right + ")"; }
 	
     if (needsBracket) 
-    { return "( " + basicString + " )"; }  // eg, for or inside &  }
+    { return "( " + basicString + " )"; }  
+       // eg, for or inside &  
+
     return basicString; 
   } 
 
@@ -1477,10 +1480,14 @@ class BinaryExpression extends Expression
              operator.equals("->truncateTo") || 
              operator.equals("->sortedBy") || 
              operator.equals("->hasSuffix") ||
-             operator.equals("->hasPrefix") || "->isUnique".equals(operator) ||
-             operator.equals("->oclAsType") || "->forAll".equals(operator) ||
-             "->exists".equals(operator) || "->exists1".equals(operator) || 
-             "->existsLC".equals(operator) || "->any".equals(operator) ||
+             operator.equals("->hasPrefix") || 
+             "->isUnique".equals(operator) ||
+             operator.equals("->oclAsType") || 
+             "->forAll".equals(operator) ||
+             "->exists".equals(operator) || 
+             "->exists1".equals(operator) || 
+             "->existsLC".equals(operator) || 
+             "->any".equals(operator) ||
              operator.equals("->selectMaximals") || operator.equals("->oclIsKindOf") || 
              operator.equals("->oclIsTypeOf") || operator.equals("->includesKey") || 
              operator.equals("->excludesKey") || operator.equals("->includesValue") || 
@@ -2744,11 +2751,16 @@ class BinaryExpression extends Expression
   } // As above, also for ->select, etc. 
 
   public Vector getBaseEntityUses()  // entities E such that f occurs without an object ref
-  { if (operator.equals("->forAll") || operator.equals("->exists") ||
-        "->existsLC".equals(operator) || operator.equals("->any") ||
-        operator.equals("->exists1") || operator.equals("->sortedBy") ||
-        operator.equals("->select") || operator.equals("->reject") || 
-        "->isUnique".equals(operator) || operator.equals("->unionAll") || 
+  { if (operator.equals("->forAll") || 
+        operator.equals("->exists") ||
+        "->existsLC".equals(operator) || 
+        operator.equals("->any") ||
+        operator.equals("->exists1") || 
+        operator.equals("->sortedBy") ||
+        operator.equals("->select") || 
+        operator.equals("->reject") || 
+        "->isUnique".equals(operator) || 
+        operator.equals("->unionAll") || 
         operator.equals("->intersectAll") || 
         operator.equals("->collect") || operator.equals("->selectMaximals") ||
         operator.equals("->selectMinimals"))
@@ -3804,7 +3816,7 @@ public void findClones(java.util.Map clones,
         } 
       } 
 
-      // right argument should be comparables. 
+      // right argument should be comparable or list. 
 
       type = new Type("Sequence", null); 
       type.setElementType(left.elementType); 
@@ -3827,7 +3839,7 @@ public void findClones(java.util.Map clones,
         } 
       } 
 
-      // right argument should be comparables. 
+      // right argument should be comparable or list. 
 
       type = new Type("Sequence", null); 
       type.setElementType(scope.elementType); 

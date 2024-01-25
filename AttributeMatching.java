@@ -6,7 +6,7 @@ import java.util.List;
 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -111,14 +111,20 @@ public class AttributeMatching
       { return true; } 
     } 
 
-    if (srcname.trim().equals("_1") && trgname.trim().equals("_1"))
-    { return true; } 
-    if (srcname.trim().equals("_0") && trgname.trim().equals("_0"))
+    if (srcname.trim().equals("_1") && 
+        trgname.trim().equals("_1"))
     { return true; } 
 
-    if ((srcvalue + "").equals("_1") && (trgvalue + "").equals("_1"))
+    if (srcname.trim().equals("_0") && 
+        trgname.trim().equals("_0"))
     { return true; } 
-    if ((srcvalue + "").equals("_0") && (trgvalue + "").equals("_0"))
+
+    if ((srcvalue + "").equals("_1") && 
+        (trgvalue + "").equals("_1"))
+    { return true; }
+ 
+    if ((srcvalue + "").equals("_0") && 
+        (trgvalue + "").equals("_0"))
     { return true; } 
     
     return false; 
@@ -351,14 +357,15 @@ public class AttributeMatching
   } 
 
   void displayMappingKind()
-  { if (isExpressionMapping() && !(srcvalue.getType().isString()))
-    { System.out.println("Expression mapping: " + this); } 
+  { if (isExpressionMapping() && 
+        !(srcvalue.getType().isString()))
+    { System.out.println(">>> Expression mapping: " + this); } 
 
     if (isStringAssignment() && srcvalue.getType().isString())
-    { System.out.println("String mapping: " + this); } 
+    { System.out.println(">>> String mapping: " + this); } 
 
     if (isValueAssignment())
-    { System.out.println("Value mapping: " + this); } 
+    { System.out.println(">>> Value mapping: " + this); } 
   } 
 
   boolean isPossibleFeatureMerge()

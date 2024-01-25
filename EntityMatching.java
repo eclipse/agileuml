@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -4479,14 +4479,16 @@ public class EntityMatching implements SystemTypes
     // no condition, creates a valid condition. 
 
     if (realsrc == null || realtrg == null)
-	{ return; }
+    { return; }
 	
     String srcname = realsrc.getName(); 
     String trgname = realtrg.getName(); 
 	
     Vector srcobjects = mod.getObjects(srcname);
     Vector restrictedsources = new Vector();  
-    Vector trgobjects = mod.getCorrespondingObjects(srcobjects,restrictedsources,trgname); 
+    Vector trgobjects = 
+             mod.getCorrespondingObjects(srcobjects,
+                              restrictedsources,trgname); 
 	
 	// If there is a condition Cond, check that all restrictedsources actually satisfy the condition and no other source 
 	// fails the condition.
@@ -4749,15 +4751,15 @@ public class EntityMatching implements SystemTypes
                addCondition(possCond); 
              }
 
-         Expression uepossCond3 = new UnaryExpression("->size", new BasicExpression(att));
-         Expression bcpossCond3 = new BasicExpression(1); 
+             Expression uepossCond3 = new UnaryExpression("->size", new BasicExpression(att));
+             Expression bcpossCond3 = new BasicExpression(1); 
            
-         if (att.isMany())
-         { Expression uepossCond4 = new UnaryExpression("->size", new BasicExpression(att));
-           Expression bcpossCond4 = new BasicExpression(1); 
-           Expression possCond4 = new BinaryExpression(">", uepossCond3, bcpossCond3);  
-           possCond4.setType(new Type("boolean", null)); 
-           System.out.println(">>> Possible source condition is: " + possCond4);
+             if (att.isMany())
+             { Expression uepossCond4 = new UnaryExpression("->size", new BasicExpression(att));
+               Expression bcpossCond4 = new BasicExpression(1); 
+               Expression possCond4 = new BinaryExpression(">", uepossCond3, bcpossCond3);  
+               possCond4.setType(new Type("boolean", null)); 
+               System.out.println(">>> Possible source condition is: " + possCond4);
 		  
            boolean cvalid4 = mod.checkConditionInModel(possCond4,restrictedsources); 
            if (cvalid4) 
@@ -4895,17 +4897,35 @@ public class EntityMatching implements SystemTypes
       { Attribute satt = am.src; 
         Attribute tatt = am.trg; 
         if (satt.isEnumeration() && tatt.isEnumeration())
-        { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
+        { am.checkModel(mod,restrictedsources,
+                    trgobjects,attributeMappings,
+                    removed,added,queries); 
+        }
         else if (satt.isNumeric() && tatt.isNumeric())
-        { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
+        { am.checkModel(mod,restrictedsources,
+                trgobjects,attributeMappings,
+                removed,added,queries); 
+        }
         else if (satt.isBoolean() && tatt.isBoolean())
-        { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
+        { am.checkModel(mod,restrictedsources,
+               trgobjects,attributeMappings,
+               removed,added,queries); 
+        }
         else if (satt.isString() && tatt.isString())
-	    { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
+        { am.checkModel(mod,restrictedsources,
+                 trgobjects,attributeMappings,
+                 removed,added,queries); 
+        }
         else if (satt.isEntity() && tatt.isEntity())
-        { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); } 
+        { am.checkModel(mod,restrictedsources,
+                trgobjects,attributeMappings,
+                removed,added,queries);
+        } 
         else if (satt.isCollection() && tatt.isCollection())
-        { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
+        { am.checkModel(mod,restrictedsources,
+                        trgobjects,attributeMappings,
+                        removed,added,queries); 
+        }
         else if (tatt.isCollection())
         { System.out.println(">>> mapping of non-collection to collection: " + am); 
           am.unionSemantics = true; 
@@ -4918,6 +4938,7 @@ public class EntityMatching implements SystemTypes
 		// Entity to Collection, Collection to Entity. Others are invalid and should be removed. 
       } 
     } 
+
     attributeMappings.removeAll(removed); 
     attributeMappings.addAll(added);
     return new Vector();  

@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -733,11 +733,11 @@ public class ModelMatching implements SystemTypes
   public static Vector sourcesMappedTo(Vector entitymaps, Entity ut)
   { Vector res = new Vector(); 
     for (int i = 0; i < entitymaps.size(); i++) 
-	{ EntityMatching em = (EntityMatching) entitymaps.get(i); 
-	  if (em.realtrg == ut)
-	  { res.add(em.realsrc); }
-	}
-	return res;
+    { EntityMatching em = (EntityMatching) entitymaps.get(i); 
+      if (em.realtrg == ut)
+      { res.add(em.realsrc); }
+    }
+    return res;
   }
 
   public void checkValidity(Vector unusedtargets, Vector entities, Vector sources,
@@ -2478,10 +2478,10 @@ public class ModelMatching implements SystemTypes
     // Are there extra (unexpected) correspondences? 
     Vector extraems = mod.extraEntityMatches(entitymatches); 
     if (extraems.size() > 0)
-    { System.out.println(">>> Additional class mappings discovered in the model: "); 
+    { System.out.println(">?> Additional class mappings discovered in the model: "); 
       for (int j = 0; j < extraems.size(); j++) 
       { EntityMatching emx = (EntityMatching) extraems.get(j); 
-        System.out.println("Additional mapping: \n" + emx); 
+        System.out.println(">> Additional mapping: \n" + emx); 
       }
     }
 
