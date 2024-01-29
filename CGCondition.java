@@ -495,10 +495,10 @@ public class CGCondition
           else // No ruleset, set ast`mffeat=stereo
           { ASTTerm.setTaggedValue(ast, mffeat, stereo); 
             
-            JOptionPane.showMessageDialog(null,
+          /*  JOptionPane.showMessageDialog(null,
               "Executed action " + ast + "`" + mffeat + 
               " = " + stereo + " Tagged values = " + ASTTerm.metafeatures, 
-              "", JOptionPane.INFORMATION_MESSAGE);  
+              "", JOptionPane.INFORMATION_MESSAGE); */   
             // repl = stereo; 
           }  
     
