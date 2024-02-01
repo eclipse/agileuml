@@ -2864,6 +2864,12 @@ SORT _1 _2 _3 _4 _5 _6 |-->    self._5_Call() ;\n    _1 := _1->sortedBy( _sortva
 
 SORT _1 _2 _3 _4 |-->    _1 := _3 ;\n    _1 := _1->sortedBy( _sortvar | _2) ;\n    self._4_Call() ;\n<when> _2 sortOnKeyClause, _3 sortUsing, _4 sortOutputProcedurePhrase 
 
+SORT _1 _2 _3 _4 _5 |-->    _1 := _4 ;\n    _1 := _1->sortedBy( _sortvar | Sequence{_2, _3}) ;\n    self._5_Call() ;\n<when> _2 sortOnKeyClause, _3 sortOnKeyClause, _4 sortUsing, _5 sortOutputProcedurePhrase 
+
+SORT _1 _2 _3 _4 |-->    self._3_Call() ;\n    _1 := _1->sortedBy( _sortvar | _2) ;\n    self._4_Call() ;\n<when> _2 sortOnKeyClause, _3 sortInputProcedurePhrase, _4 sortOutputProcedurePhrase
+
+SORT _1 _2 _3 _4 _5 |-->    self._4_Call() ;\n    _1 := _1->sortedBy( _sortvar | Sequence{_2, _3}) ;\n    self._5_Call() ;\n<when> _2 sortOnKeyClause, _3 sortOnKeyClause, _4 sortInputProcedurePhrase, _5 sortOutputProcedurePhrase
+
 
 
 sortOnKeyClause::
