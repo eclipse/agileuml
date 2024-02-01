@@ -22509,8 +22509,8 @@ public void produceCUI(PrintWriter out)
 	
       try
       { PrintWriter cout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/tl.cstl")));
+                       new BufferedWriter(
+                     new FileWriter("output/tl.cstl")));
 
         for (int i = 0; i < extraRules.size(); i++) 
         { String xrule = (String) extraRules.get(i);
@@ -22547,7 +22547,8 @@ public void produceCUI(PrintWriter out)
 
   public void cgbeOCL2Program(String config)
   { PreProcessModels.preprocess(config); 
-    // Writes output/out.txt
+    // Writes output/out.txt to set up the 
+    // paired example instances
 
     loadFromFile("mmCGBE.txt");
     // Loads the CGBE metamodel
@@ -22591,14 +22592,14 @@ public void produceCUI(PrintWriter out)
 
     System.out.println();
     String slang = 
-      JOptionPane.showInputDialog("Enter source language name (of Antlr parser): ");
+      JOptionPane.showInputDialog("Enter source language name (of ANTLR parser): ");
     if (slang == null) 
     { return; } 
     sourceLanguage = slang; 
 
     System.out.println();
     String tlang = 
-      JOptionPane.showInputDialog("Enter target language name (of Antlr parser): ");
+      JOptionPane.showInputDialog("Enter target language name (of ANTLR parser): ");
     if (tlang == null) 
     { return; } 
     targetLanguage = tlang; 
@@ -22850,6 +22851,9 @@ public void produceCUI(PrintWriter out)
 
     ASTTerm.entitiesFromASTs(targetasts,"$T",entities);   
 
+    /* One class for each tag in the source grammar 
+       examples and for each arity encountered. */ 
+
     File file = new File("output/mm.km3");
     try
     { PrintWriter out =
@@ -22865,6 +22869,9 @@ public void produceCUI(PrintWriter out)
     tlspecification = new ModelMatching(ems);
 
     System.out.println("***>> TL initial specification: " + tlspecification); 
+
+    /* sourcetag_arity |--> targettag  
+       for the example pairs */ 
 
     File tlfile = new File("output/forward.tl");
     try

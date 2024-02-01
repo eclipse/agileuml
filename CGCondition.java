@@ -60,6 +60,8 @@ public class CGCondition
     if (expr instanceof BinaryExpression) 
     { BinaryExpression ee = (BinaryExpression) expr; 
 
+      String oper = ee.getOperator(); 
+
       Vector vars = ee.metavariables(); 
       if (vars.size() > 0) 
       { var = (String) vars.get(0); } 
@@ -68,8 +70,11 @@ public class CGCondition
       else 
       { var = "_1"; } 
  
-      if ("/=".equals(ee.getOperator()))
+      if ("/=".equals(oper))
       { pos = false; } 
+      else if ("isNested".equals(oper))
+      { // isNested = true 
+      } // otherwise assumed to be "="
 
       stereo = ee.getRight() + ""; 
     }
@@ -79,6 +84,7 @@ public class CGCondition
       res.setPositive(pos); 
       return res; 
     } 
+
     return null;  
   } 
 

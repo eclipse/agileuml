@@ -1174,6 +1174,7 @@ public class EntityMatching implements SystemTypes
 
   public String toCSTL(CGSpec cg, Vector typematches)
   { String res = ""; 
+
     Entity baseclass = realsrc.getRootSuperclass(); 
     if (baseclass != null) 
     { String rootClass = baseclass.getName(); 
@@ -1187,6 +1188,7 @@ public class EntityMatching implements SystemTypes
           am.toCSTL(rootClass,condition,cg,typematches) + "\n"; 
       }
     }  
+
     return res + "\n"; 
   } // All rules of subclasses of rootClass go in its ruleset
 

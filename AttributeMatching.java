@@ -250,7 +250,7 @@ public class AttributeMatching
     { String rulelhs = ((BasicExpression) srcvalue).toCSTL();
       BasicExpression rbe = (BasicExpression) trgvalue; 
 
-      System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
+      // System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
 
       if (rbe.isFunctionApplication() && 
           "_1".equals(rulelhs))
@@ -265,6 +265,7 @@ public class AttributeMatching
       } // It is simply _1 |-->_1`func
  
       String rulerhs = ((BasicExpression) trgvalue).toLiteralCSTL();
+
       CGRule rle = new CGRule(rulelhs, rulerhs);
       Vector vars = rle.getVariables();  
       if (cond != null && vars.size() > 0) 
@@ -278,6 +279,7 @@ public class AttributeMatching
       String res = rulelhs + " |--> " + rulerhs; 
       return res; 
     } 
+
     return ""; 
   } 
 
