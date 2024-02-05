@@ -462,6 +462,16 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public java.util.Set allTagsIn()
+  { java.util.Set res = new java.util.HashSet(); 
+    res.add(tag);  
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm tt = (ASTTerm) terms.get(i); 
+      res.addAll(tt.allTagsIn()); 
+    } 
+    return res; 
+  } 
+
   public Vector getTerms()
   { return terms; }  
 

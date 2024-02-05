@@ -1800,7 +1800,8 @@ public class Compiler2
   { String buff = ""; 
     for (int i = 0; i < rule.length(); i++) 
     { char c = rule.charAt(i); 
-      if (c == '|' && i + 2 < rule.length() && rule.charAt(i+1) == '-' && 
+      if (c == '|' && i + 2 < rule.length() && 
+          rule.charAt(i+1) == '-' && 
           rule.charAt(i+2) == '-' && rule.charAt(i+3) == '>') 
       { String lhs = rule.substring(0,i); 
         // nospacelexicalanalysisText(lhs);
@@ -1822,7 +1823,6 @@ public class Compiler2
           { variables.add(lex); } 
           tokens.add(lex); 
         } 
-
 
         System.out.println(">> Text rule " + rule + " LHS variables = " + variables); 
         System.out.println(">> Text rule " + rule + " LHS tokens = " + tokens); 
@@ -1870,6 +1870,7 @@ public class Compiler2
                   return res; 
                 } 
               }  
+
               String conditions = rhs.substring(j+6,rhs.length()); 
               Vector conds = parse_conditions(conditions); 
               String rhstext = rhs.substring(0,j); 
@@ -1959,7 +1960,7 @@ public class Compiler2
         } 
       } 
     } 
-    System.err.println(">>> Invalid rule: " + rule); 
+    System.err.println("!! Invalid rule: " + rule); 
     return null; 
   } 
 
@@ -1979,7 +1980,7 @@ public class Compiler2
           { variables.add(lex); } 
         } 
 
-        System.out.println("LHS variables = " + variables); 
+        System.out.println(">>> LHS variables = " + variables); 
 
         if (lhs != null) 
         { String rhs = rule.substring(i+4,rule.length());
@@ -2003,7 +2004,8 @@ public class Compiler2
         } 
       } 
     } 
-    System.err.println(">>> Invalid rule: " + rule); 
+
+    System.err.println("!! Invalid rule: " + rule); 
     return null; 
   } 
 
@@ -2073,6 +2075,8 @@ public class Compiler2
       { cg.setUniversal(); } 
       else if (se.equals("matches"))
       { cg.setMatches(); } 
+      else if (se.equals("isNested"))
+      { cg.setIsNested(true); } 
       else if (cg.isMatches)
       { cg.addToStereotype(se); } 
       else 

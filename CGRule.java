@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -355,7 +355,10 @@ public class CGRule
   } 
 
   public int compareTo(CGRule r)
-  { String rlhs = (r.lhs + "").trim(); 
+  { // r1.compareTo(r2) < 0
+    // means r1 is more specific than r2
+
+    String rlhs = (r.lhs + "").trim(); 
     String selflhs = (lhs + "").trim(); 
 
     if ("_*".equals(selflhs) || 
@@ -378,7 +381,7 @@ public class CGRule
       { if (r.conditions.containsAll(conditions))
         { return 0; } // Conflict
         else 
-        { return -1; } 
+        { return -1; } // more conditions, more specialised
       } 
 
       if (conditions != null && r.conditions != null && 
@@ -451,7 +454,26 @@ public class CGRule
   public Expression getLhsExpression()
   { return lhsexp; } 
  
-
+  public void addNewCGConditions(String cat, Expression expr,
+                                 Vector rulevars)
+  { if (expr instanceof BinaryExpression)
+    { BinaryExpression biexpr = (BinaryExpression) expr; 
+      String oper = biexpr.getOperator(); 
+      if ("&".equals(oper))
+      { Expression lexpr = biexpr.getLeft(); 
+        Expression rexpr = biexpr.getRight(); 
+        addNewCGConditions(cat, lexpr, rulevars); 
+        addNewCGConditions(cat, rexpr, rulevars); 
+      } 
+      else 
+      { CGCondition cond = 
+           CGCondition.newCGCondition(cat, expr, rulevars);
+        if (cond != null) 
+        { addCondition(cond); } 
+      } 
+    }
+  } 
+ 
   public void addCondition(CGCondition cond)
   { if (conditions == null) 
     { conditions = new Vector(); } 

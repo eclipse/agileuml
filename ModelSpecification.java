@@ -7188,6 +7188,9 @@ public class ModelSpecification
   { // Look for conditions on sent::ast attribute which 
     // partition the sobjs-->tobjs pairs that satisfy 
     // mappings. 
+    // Conditions: (i) based on symbol at i'th position
+    // (ii) based on tag at i'th position
+    // (iii) based on tags within terms at i'th position
 
     Vector res = new Vector(); 
     Vector ams = new Vector(); 
@@ -7320,10 +7323,10 @@ public class ModelSpecification
 
           if (allValuesHaveMapping)
           { foundConditionalMatching = true;
-            JOptionPane.showMessageDialog(null, 
+            /* JOptionPane.showMessageDialog(null, 
                 "*** Found conditional matching " + 
                 res,   "",
-                JOptionPane.INFORMATION_MESSAGE); 
+                JOptionPane.INFORMATION_MESSAGE); */  
             
             return res; 
           }
@@ -7334,9 +7337,9 @@ public class ModelSpecification
     if (!foundConditionalMatching)
     { // instead, try conditions based on the tag of i'th term
 
-      JOptionPane.showMessageDialog(null, 
+      /* JOptionPane.showMessageDialog(null, 
               "*** Could not find conditional matching for " + sobjs + " ---> " + tobjs,   "",
-              JOptionPane.INFORMATION_MESSAGE); 
+              JOptionPane.INFORMATION_MESSAGE); */ 
 
       for (int i = 0; i < sarity; i++) 
       { if (ASTTerm.alwaysSymbol(i,srcasts))
@@ -7405,6 +7408,105 @@ public class ModelSpecification
 
           if (completeMapping) 
           { return res; } 
+        }    
+      } 
+    } 
+
+    if (!foundConditionalMatching)
+    { // instead, try conditions based on tags in i'th term
+
+      /* JOptionPane.showMessageDialog(null, 
+              "*** Could not find conditional matching for " + sobjs + " ---> " + tobjs,   "",
+              JOptionPane.INFORMATION_MESSAGE); */ 
+
+      for (int i = 0; i < sarity; i++) 
+      { if (ASTTerm.alwaysNestedSymbolTerm(i,srcasts))
+        { 
+          Vector svals = ASTTerm.allTagSetsAtIndex(i,srcasts); 
+          System.out.println(">> Tag sets at index " + i + ": " + svals);
+         /* JOptionPane.showMessageDialog(null, 
+              "*** Tag sets " + svals + " at index " + i,  
+              "",
+              JOptionPane.INFORMATION_MESSAGE); */ 
+
+          if (svals.size() > 1)
+          { // try splitting on this basis
+
+            boolean completeMapping = true; 
+
+            Expression _i = 
+              BasicExpression.newVariableBasicExpression("_" + 
+                                                     (i+1)); 
+            Vector dvals = new Vector(); 
+            dvals.addAll(svals); 
+            for (int j = 0; j < dvals.size(); j++) 
+            { java.util.Set dval = 
+                     (java.util.Set) dvals.get(j);
+              Vector tagsAtj = new Vector(); 
+              tagsAtj.addAll(dval); 
+              String tag1 = (String) tagsAtj.get(0);  
+              Expression condv = 
+                new BinaryExpression("isNested", _i, 
+                    new BasicExpression(tag1));
+              for (int k = 1; k < tagsAtj.size(); k++) 
+              { String tagk = (String) tagsAtj.get(k); 
+                condv =
+                  new BinaryExpression("&", condv, 
+                    new BinaryExpression("isNested", _i, 
+                      new BasicExpression(tagk)));
+              }
+              EntityMatching emx = 
+                new EntityMatching(sent,tent); 
+              emx.setCondition(condv); 
+
+              System.out.println(">>> New candidate Entity matching: " + emx + " for condition " + condv); 
+           /*   JOptionPane.showMessageDialog(null, 
+                "*** New candidate Entity matching: " + emx + " for condition " + condv,  
+                "",
+                JOptionPane.INFORMATION_MESSAGE); */ 
+
+              Vector svalues = new Vector(); 
+              Vector tvalues = new Vector(); 
+
+              for (int k = 0; k < nobjs; k++) 
+              { if (ASTTerm.hasExactNestedTags(
+                                 srcasts[k],i,tagsAtj))
+                { svalues.add(srcasts[k]); 
+                  tvalues.add(trgasts[k]); 
+                } 
+              } 
+              
+              int en = svalues.size();
+              if (en < 2) 
+              { continue; } // next value 
+ 
+              ASTTerm[] sattvalues = new ASTTerm[en]; 
+              ASTTerm[] tattvalues = new ASTTerm[en]; 
+            
+              for (int k = 0; k < en; k++) 
+              { sattvalues[k] = (ASTTerm) svalues.get(k);
+                tattvalues[k] = (ASTTerm) tvalues.get(k); 
+              }
+
+              sattvalueMap.put(sast,sattvalues); 
+
+              AttributeMatching cexpr = 
+                composedTreeFunction(sent,tast,
+                                     sourceattributes,
+                      sattvalueMap,tattvalues,tvalues,
+                      tms,ams);
+           
+              if (cexpr != null) 
+              { emx.addAttributeMapping(cexpr); 
+                res.add(emx); 
+              } 
+              else 
+              { completeMapping = false; }
+            }
+
+            if (completeMapping) 
+            { return res; } 
+          }
         }    
       } 
     } 

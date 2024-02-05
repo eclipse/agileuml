@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -148,6 +148,12 @@ public class ASTBasicTerm extends ASTTerm
     Vector pair = new Vector(); 
     pair.add(tag); pair.add(1); 
     res.add(pair); 
+    return res; 
+  } 
+
+  public java.util.Set allTagsIn()
+  { java.util.Set res = new java.util.HashSet(); 
+    res.add(tag); 
     return res; 
   } 
 

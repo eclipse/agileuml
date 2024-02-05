@@ -264,15 +264,17 @@ public class AttributeMatching
         }  
       } // It is simply _1 |-->_1`func
  
-      String rulerhs = ((BasicExpression) trgvalue).toLiteralCSTL();
+      String rulerhs = 
+        ((BasicExpression) trgvalue).toLiteralCSTL();
 
       CGRule rle = new CGRule(rulelhs, rulerhs);
       Vector vars = rle.getVariables();  
       if (cond != null && vars.size() > 0) 
-      { CGCondition cc = 
-          CGCondition.newCGCondition(category,cond,vars); 
-        if (cc != null) 
-        { rle.addCondition(cc); } 
+      { // CGCondition cc = 
+        //   CGCondition.newCGCondition(category,cond,vars); 
+        // if (cc != null) 
+        // { rle.addCondition(cc); }
+        rle.addNewCGConditions(category,cond,vars);  
       } 
 
       cg.addCategoryRuleInOrder(category,rle); 

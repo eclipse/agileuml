@@ -169,6 +169,33 @@ public abstract class ASTTerm
 
   public abstract String getTag(); 
 
+  public boolean hasNestedTag(String tg)
+  { java.util.Set alltags = allTagsIn(); 
+    if (alltags.contains(tg))
+    { return true; } 
+    return false; 
+  }  
+
+  public boolean hasNestedTags(Vector tgs)
+  { java.util.Set alltags = allTagsIn(); 
+    for (int i = 0; i < tgs.size(); i++) 
+    { String tg = (String) tgs.get(i); 
+      if (alltags.contains(tg))
+      { } 
+      else 
+      { return false; } 
+    } 
+    return true;  
+  }  
+
+  public boolean hasExactNestedTags(Vector tgs)
+  { java.util.Set alltags = allTagsIn(); 
+    if (tgs.containsAll(alltags) && 
+        alltags.containsAll(tgs))
+    { return true; } 
+    return false;   
+  }  
+
   public abstract String literalForm();
 
   public abstract String literalFormSpaces();
@@ -260,10 +287,32 @@ public abstract class ASTTerm
 
     return alltags; 
   } 
+
+  public static Vector allTagSetsAtIndex(int index, ASTTerm[] sasts)
+  { // tags for each i'th term of sasts
+
+    Vector alltags = new Vector(); 
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < sasts.length; i++) 
+    { ASTTerm trm = (ASTTerm) sasts[i];
+      ASTTerm termi = (ASTTerm) trm.getTerm(index);  
+      java.util.Set tagi = termi.allTagsIn(); 
+      if (tagi != null)
+      { if (alltags.contains(tagi)) { } 
+        else 
+        { alltags.add(tagi); } 
+      } 
+    } 
+
+    return alltags; 
+  } 
     
   public abstract Vector allNestedTagsArities(); 
 
   public abstract Vector allTagsArities(); 
+
+  public abstract java.util.Set allTagsIn(); 
 
   public static Vector rulesFromTagsArities(Vector tagsarities)
   { // For each (tag,n) : tagsarities
@@ -2048,6 +2097,26 @@ public abstract class ASTTerm
     return true; 
   } 
 
+  public static boolean alwaysNestedSymbolTerm(int ind, 
+                                          ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+    
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null || ind >= tx.arity()) 
+      { return false; } 
+      ASTTerm tsx = tx.getTerm(ind); 
+      if (tsx == null) 
+      { return false; }
+      if (tsx.isNestedSymbolTerm()) { } 
+      else 
+      { return false; }  
+    } 
+      
+    return true; 
+  } 
+
   public static boolean allCompositeSameLength(
                                    ASTTerm[] trees)
   { if (trees == null || trees.length == 0) 
@@ -2117,6 +2186,35 @@ public abstract class ASTTerm
 
     ASTTerm tsx = trm.getTerm(ind); 
     if (val.equals(tsx.getTag()))
+    { return true; } 
+    return false; 
+  } 
+
+  public static boolean hasNestedTags(ASTTerm trm, int ind, 
+                                      Vector tags) 
+  { if (trm == null) 
+    { return false; } 
+
+    if (ind >= trm.arity())
+    { return false; } 
+
+    ASTTerm tsx = trm.getTerm(ind); 
+    if (tsx != null && tsx.hasNestedTags(tags))
+    { return true; } 
+    return false; 
+  } 
+ 
+  public static boolean hasExactNestedTags(
+                                      ASTTerm trm, int ind, 
+                                      Vector tags) 
+  { if (trm == null) 
+    { return false; } 
+
+    if (ind >= trm.arity())
+    { return false; } 
+
+    ASTTerm tsx = trm.getTerm(ind); 
+    if (tsx != null && tsx.hasExactNestedTags(tags))
     { return true; } 
     return false; 
   } 

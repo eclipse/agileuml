@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -149,14 +149,18 @@ public class CGSpec
     int ind = 0; 
 
     while (ind < rs.size())
-    { if (r.compareTo(fst) == 1) 
+    { int ordering = r.compareTo(fst); 
+
+      System.out.println("++++ " + r + ".compareTo(" + fst + ") = " + ordering); 
+
+      if (ordering == 1) 
       { newres.add(fst); } 
-      else if (r.compareTo(fst) == Integer.MAX_VALUE)
+      else if (ordering == Integer.MAX_VALUE)
       { newres.add(fst); } 
-      // else if (r.compareTo(fst) == 0) 
+      // else if (ordering == 0) 
       // { newres.add(fst); } 
-      else if (r.compareTo(fst) == -1 || 
-               r.compareTo(fst) == 0)
+      else if (ordering == -1 || 
+               ordering == 0)
       { break; } 
 
       if (ind + 1 < rs.size())
