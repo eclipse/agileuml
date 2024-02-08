@@ -91,6 +91,9 @@ public class ASTSymbolTerm extends ASTTerm
   public boolean isNestedSymbolTerm() 
   { return true; } 
 
+  public Vector allNestedSubterms()
+  { return new Vector(); }  
+
   public String cg(CGSpec cgs)
   { return symbol; } 
 

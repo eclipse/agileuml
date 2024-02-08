@@ -151,7 +151,7 @@ public class CGSpec
     while (ind < rs.size())
     { int ordering = r.compareTo(fst); 
 
-      System.out.println("++++ " + r + ".compareTo(" + fst + ") = " + ordering); 
+      // System.out.println("++++ " + r + ".compareTo(" + fst + ") = " + ordering); 
 
       if (ordering == 1) 
       { newres.add(fst); } 

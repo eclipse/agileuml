@@ -54,7 +54,7 @@ operationDefinition
       : ('static')? 'operation' ID 
         '(' parameterDeclarations? ')' ':' type 
         'pre:' expression 'post:' expression 
-        ('activity:' statement)? ';'
+        ('activity:' statementList)? ';'
       ;
 
 parameterDeclarations
@@ -83,7 +83,7 @@ usecaseBodyElement
       | 'precondition' expression ';' 
       | 'extends' ID ';' 
       | 'extendedBy' ID ';' 
-      | 'activity:' statement ';' 
+      | 'activity:' statementList ';' 
       | '::' expression 
       | stereotype
       ;
@@ -111,6 +111,7 @@ type
     | 'Set' '(' type ')'  
     | 'Bag' '(' type ')' 
     | 'OrderedSet' '(' type ')' 
+    | 'Ref' '(' type ')'  
     | 'Map' '(' type ',' type ')' 
     | 'Function' '(' type ',' type ')' 
     | ID
@@ -244,6 +245,7 @@ factor2Expression
    | factor2Expression '->toInteger()'  
    | factor2Expression '->toReal()' 
    | factor2Expression '->toBoolean()' 
+   | factor2Expression '->display()' 
    | factor2Expression '->toUpperCase()'  
    | factor2Expression '->toLowerCase()' 
    | factor2Expression ('->unionAll()' | '->intersectAll()' |
@@ -255,7 +257,7 @@ factor2Expression
             | '->excluding' | '->includesAll'  
             | '->symmetricDifference' 
             | '->excludesAll' | '->prepend' | '->append'  
-            | '->count' | '->apply') 
+            | '->count' | '->apply' ) 
                                    '(' expression ')' 
    | factor2Expression ('->hasMatch' | '->isMatch' |
                        '->firstMatch' | '->indexOf' | 
@@ -311,10 +313,13 @@ statement
    | 'for' ID ':' expression 'do' statement 
    | 'return' expression 
    | basicExpression ':=' expression 
-   | statement ';' statement  
    | 'execute' expression 
    | 'call' basicExpression 
-   | '(' statement ')'
+   | '(' statementList ')'
+   ; 
+
+statementList
+   : statement (';' statement)*  
    ;  
 
 nlpscript 

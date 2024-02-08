@@ -22712,6 +22712,11 @@ public void produceCUI(PrintWriter out)
       }
     }  
 
+    if (srcasts.size() != trgasts.size())
+    { System.err.println("!! ERROR: different numbers of source and target examples: " + srcasts.size() + " /= " + trgasts.size()); 
+      return; 
+    } 
+
     File sfile = new File("output/sourceasts.txt");
     File tfile = new File("output/targetasts.txt");
 
@@ -22719,22 +22724,29 @@ public void produceCUI(PrintWriter out)
     { PrintWriter sout =
           new PrintWriter(
             new BufferedWriter(new FileWriter(sfile)));
-      for (int i = 0; i < srcasts.size(); i++) 
-      { String srcast = (String) srcasts.get(i);
-        sout.println(srcast); 
-      }  
-      sout.close(); 
-    }
-    catch (Exception _ex) { } 
-
-    try
-    { PrintWriter tout =
+      PrintWriter tout =
           new PrintWriter(
             new BufferedWriter(new FileWriter(tfile)));
-      for (int i = 0; i < trgasts.size(); i++) 
-      { String trgast = (String) trgasts.get(i);
+      
+      for (int i = 0; i < srcasts.size(); i++) 
+      { String srcast = (String) srcasts.get(i);
+        sout.println(srcast);
+        String trgast = (String) trgasts.get(i);
         tout.println(trgast); 
+
+        Compiler2 comp = new Compiler2();
+        ASTTerm sast = comp.parseGeneralAST(srcast);
+        if (sast != null) 
+        { Vector subterms = sast.allNestedSubterms(); 
+          for (int j = 0; j < subterms.size(); j++) 
+          { ASTTerm subsrc = (ASTTerm) subterms.get(j); 
+            sout.println("" + subsrc); 
+            tout.println(trgast); 
+          } 
+        } 
       }  
+
+      sout.close(); 
       tout.close(); 
     }
     catch (Exception _ex) { } 

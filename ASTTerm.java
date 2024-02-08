@@ -1707,6 +1707,8 @@ public abstract class ASTTerm
   }   
 
   public abstract boolean isNestedSymbolTerm(); 
+
+  public abstract Vector allNestedSubterms(); 
   
   public static boolean recursivelyNestedEqual(
       ASTTerm[] strees, ASTTerm[] ttrees)

@@ -107,6 +107,9 @@ public class ASTBasicTerm extends ASTTerm
   public boolean isNestedSymbolTerm() 
   { return true; }  
 
+  public Vector allNestedSubterms()
+  { return new Vector(); }  
+
   public int arity()
   { return 1; } 
 

@@ -116,6 +116,17 @@ public class ASTCompositeTerm extends ASTTerm
     return false; 
   }  
 
+  public Vector allNestedSubterms() 
+  { Vector res = new Vector(); 
+    if (terms.size() == 1)
+    { ASTTerm t0 = (ASTTerm) terms.get(0);
+      res.add(t0);  
+      res.addAll(t0.allNestedSubterms()); 
+    }
+
+    return res; 
+  }  
+
   public int arity()
   { return terms.size(); } 
 
