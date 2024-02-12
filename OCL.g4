@@ -16,22 +16,24 @@
 grammar OCL;	
 	
 specification
-  : 'package' ID '{' classifier* '}' EOF
+  : 'package' identifier '{' classifier* '}' EOF
   ;
 
 classifier
     : classDefinition
     | interfaceDefinition
     | usecaseDefinition
+    | datatypeDefinition
     | enumeration
     ;
 
 interfaceDefinition
-    :	'interface' ID ('extends' ID)? '{' classBody? '}'
+    :	'interface' identifier ('extends' identifier)? '{' classBody? '}'
     ; 
 
 classDefinition
-    :	'class' ID ('extends' ID)? ('implements' idList)? '{' classBody? '}'
+    :	'class' identifier ('extends' identifier)? 
+     ('implements' idList)? '{' classBody? '}'
     ; 
 
 classBody
@@ -46,12 +48,12 @@ classBodyElement
     ; 
 
 attributeDefinition 
-    :  'attribute' ID ('identity' | 'derived')? ':' type ';' 
-    | 'static' 'attribute' ID ':' type ';'
+    :  'attribute' identifier ('identity' | 'derived')? ':' type ';' 
+    | 'static' 'attribute' identifier ':' type ';'
     ; 
 
 operationDefinition
-      : ('static')? 'operation' ID 
+      : ('static')? 'operation' identifier 
         '(' parameterDeclarations? ')' ':' type 
         'pre:' expression 'post:' expression 
         ('activity:' statementList)? ';'
@@ -62,16 +64,16 @@ parameterDeclarations
       ;
 
 parameterDeclaration
-      : ID ':' type
+      : identifier ':' type
       ;
 
 idList
-     : (ID ',')* ID
+     : (identifier ',')* identifier
      ; 
 
 usecaseDefinition
-      : 'usecase' ID (':' type)? '{' usecaseBody? '}' 
-      | 'usecase' ID '(' parameterDeclarations ')' (':' type)? '{' usecaseBody? '}'
+      : 'usecase' identifier (':' type)? '{' usecaseBody? '}' 
+      | 'usecase' identifier '(' parameterDeclarations ')' (':' type)? '{' usecaseBody? '}'
       ;
 
 usecaseBody
@@ -79,10 +81,10 @@ usecaseBody
       ; 
 
 usecaseBodyElement
-      : 'parameter' ID ':' type ';' 
+      : 'parameter' identifier ':' type ';' 
       | 'precondition' expression ';' 
-      | 'extends' ID ';' 
-      | 'extendedBy' ID ';' 
+      | 'extends' identifier ';' 
+      | 'extendedBy' identifier ';' 
       | 'activity:' statementList ';' 
       | '::' expression 
       | stereotype
@@ -93,17 +95,25 @@ invariant
       ; 
 
 stereotype
-      : 'stereotype' ID ';'  
-      | 'stereotype' ID '=' STRING_LITERAL ';'  
-      | 'stereotype' ID '=' ID ';' 
+      : 'stereotype' identifier ';'  
+      | 'stereotype' identifier '=' STRING_LITERAL ';'  
+      | 'stereotype' identifier '=' identifier ';' 
       ;
 
+datatypeDefinition
+      : 'datatype' identifier '=' type
+      ; 
+
 enumeration 
-      : 'enumeration' ID '{' enumerationLiteral+ '}'
+      : 'enumeration' identifier '{' enumerationLiterals '}'
       ;  
 
+enumerationLiterals
+      : enumerationLiteral (';' enumerationLiteral)*
+      ;
+
 enumerationLiteral
-      : 'literal' ID
+      : 'literal' identifier
       ;
 
 type
@@ -150,13 +160,13 @@ conditionalExpression
     ; 
 
 lambdaExpression 
-    : 'lambda' ID ':' type 'in' expression
+    : 'lambda' identifier ':' type 'in' expression
     ; 
 
 // A let is just an application of a lambda:
 
 letExpression
-    : 'let' ID ':' type '=' expression 'in' expression
+    : 'let' identifier ':' type '=' expression 'in' expression
     ; 
 
 logicalExpression

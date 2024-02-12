@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -17,6 +17,31 @@ class VectorUtil
   // { for (int i = 0; i < a.size(); i++) 
   //   { a.elementAt(i).display(); } 
   // } 
+
+  static Vector toVector(Object[] arr)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < arr.length; i++) 
+    { res.add(arr[i]); } 
+    return res; 
+  } 
+
+  static Vector toVector(java.util.Collection arr)
+  { Vector res = new Vector(); 
+    for (Object x : arr) 
+    { res.add(x); } 
+    return res; 
+  } 
+
+  static Vector allToVector(java.util.Collection arr)
+  { Vector res = new Vector(); 
+    for (Object x : arr) 
+    { if (x instanceof Object[])
+      { res.addAll(VectorUtil.toVector((Object[]) x)); } 
+      else 
+      { res.add(x); } 
+    } 
+    return res; 
+  } 
 
   static void printCommaList(final Vector a) 
   { for (int i = 0; i < a.size(); i++) 

@@ -324,7 +324,8 @@ class BasicExpression extends Expression
   { if (t instanceof ASTBasicTerm)
     { ASTBasicTerm bt = (ASTBasicTerm) t; 
       data = bt.getTag();
-      BasicExpression arg = new BasicExpression(bt.getValue());
+      BasicExpression arg = 
+         new BasicExpression(bt.getValue());
       arg.umlkind = VALUE;   
       umlkind = QUERY;
       isEvent = true; 
@@ -398,6 +399,48 @@ class BasicExpression extends Expression
       } 
       res.parameters = pars; 
     } 
+    return res; 
+  } 
+
+  public static BasicExpression newASTBasicExpression(ASTTerm t, ASTTerm[] allts)
+  { BasicExpression res = new BasicExpression("");
+ 
+    if (t instanceof ASTBasicTerm)
+    { ASTBasicTerm bt = (ASTBasicTerm) t; 
+      res.data = bt.getTag();
+      BasicExpression arg = new BasicExpression("_1");
+      Vector pars = new Vector(); 
+      pars.add(arg); 
+      res.parameters = pars;
+      return res;   
+    } 
+
+    if (t instanceof ASTSymbolTerm)
+    { res.data = "_1";
+      // Vector pars = new Vector(); 
+      // res.parameters = pars;
+      return res;   
+    } 
+
+    if (t instanceof ASTCompositeTerm)
+    { ASTCompositeTerm tree = (ASTCompositeTerm) t; 
+      res.data = tree.getTag(); 
+      Vector trms = tree.getTerms(); 
+      Vector pars = new Vector(); 
+
+      for (int i = 0; i < trms.size(); i++)
+      { ASTTerm trm = (ASTTerm) trms.get(i); 
+        String val = "_" + (i+1); 
+
+        if (ASTTerm.constantTerms(allts, i))
+        { val = trm.literalForm(); } 
+
+        Expression arg = new BasicExpression(val); 
+        pars.add(arg); 
+      } 
+      res.parameters = pars; 
+    } 
+
     return res; 
   } 
 
