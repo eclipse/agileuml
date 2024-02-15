@@ -428,6 +428,12 @@ class BasicExpression extends Expression
       Vector trms = tree.getTerms(); 
       Vector pars = new Vector(); 
 
+      if (ASTTerm.sameTagSameArity(allts)) { }
+      else 
+      { res.addParameter(new BasicExpression("_*")); 
+        return res; 
+      } 
+
       for (int i = 0; i < trms.size(); i++)
       { ASTTerm trm = (ASTTerm) trms.get(i); 
         String val = "_" + (i+1); 
@@ -438,6 +444,7 @@ class BasicExpression extends Expression
         Expression arg = new BasicExpression(val); 
         pars.add(arg); 
       } 
+
       res.parameters = pars; 
     } 
 
