@@ -2174,6 +2174,28 @@ public abstract class ASTTerm
     return true; 
   } 
 
+  public static boolean allNonSymbolSameLength(
+                                   ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+
+    if (trees[0] == null) 
+    { return false; } 
+
+    int len0 = trees[0].arity(); 
+
+    if (len0 < 1) 
+    { return false; } 
+    
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null || tx.arity() != len0) 
+      { return false; } 
+    } 
+      
+    return true; 
+  } 
+
 
   /* Used by ModelSpecification::conditionalTreeMappings */ 
 
@@ -3974,7 +3996,7 @@ public abstract class ASTTerm
     // 
     // result = null indicates failure. 
 
-    JOptionPane.showInputDialog(">>>> compositeSource2TargetTrees " + xs[0] + " ---> " + ys[0]); 
+    // JOptionPane.showInputDialog(">>>> compositeSource2TargetTrees " + xs[0] + " ---> " + ys[0]); 
 
     AttributeMatching res = null; 
 
@@ -4070,11 +4092,11 @@ public abstract class ASTTerm
         tmnew.addValueMap(amsub);     
         tms.add(tmnew);
 
-        JOptionPane.showInputDialog(">> " + fid + 
+        /* JOptionPane.showInputDialog(">> " + fid + 
               " match from " + 
               (j+1) +   
               " source subterms " + jvect + 
-              " to target: " + amsub); 
+              " to target: " + amsub); */ 
         
         BasicExpression fapp = 
             new BasicExpression(fid); 
@@ -4092,26 +4114,49 @@ public abstract class ASTTerm
       } 
     }
 
+    /* JOptionPane.showInputDialog("!! No match found from " + xs[0] + 
+                      " to " + ys[0] + " " + 
+                      ASTTerm.allSingletonTrees(xs)); */ 
+
     // Try to unwrap the xs subterms. 
     for (int j = 0; j < xarity; j++) 
     { Vector jvect = new Vector(); 
       ASTTerm[] jterms = 
           ASTTerm.subterms(xs,j,jvect); 
 
-      JOptionPane.showInputDialog(">> Trying to find match from " + 
+    /*  JOptionPane.showInputDialog(">> Trying to find match from " + 
           (j+1) +   
-          " source subterms " + jvect + 
-          " to target: " + trgJValues); 
+          " nested source subterms " + jvect + 
+          " to target: " + trgJValues); */ 
 
-      if (ASTTerm.allSingletonTrees(jterms))
-      { Vector srcJValues1 = new Vector(); 
-        ASTTerm[] sourceJValues1 = 
+      Vector srcJValues1 = jvect; 
+      ASTTerm[] sourceJValues1 = jterms;  
+            // ASTTerm.subterms( 
+            //          jterms,0,srcJValues1);
+
+      ASTTerm[] subterms = sourceJValues1; 
+        // Vector subtermsVector = srcJValues1; 
+
+        // Unwrap until they are not all singletons. 
+      int nestingDepth = 1; 
+
+      while (ASTTerm.allSingletonTrees(subterms))
+      { srcJValues1 = new Vector();
+        sourceJValues1 = 
             ASTTerm.subterms( 
-                      jterms,0,srcJValues1);
+                      subterms,0,srcJValues1);
+        subterms = sourceJValues1;
+        nestingDepth++; 
+      }
 
-        java.util.HashMap sattvalueMap = new java.util.HashMap(); 
-        sattvalueMap.put(satt,sourceJValues1); 
-        Vector ams = new Vector(); 
+      java.util.HashMap sattvalueMap = new java.util.HashMap(); 
+      sattvalueMap.put(satt,sourceJValues1); 
+      Vector ams = new Vector(); 
+
+      /* JOptionPane.showInputDialog("?? composedTreeFunction from " + 
+          (j+1) +   
+          " nested source subterms " + srcJValues1 + 
+          " to target: " + trgJValues); */ 
 
         AttributeMatching amsub =  
           /* ASTTerm.compositeSource2TargetTrees(
@@ -4145,10 +4190,10 @@ public abstract class ASTTerm
           fapp.setUmlKind(Expression.FUNCTION);
           fapp.addParameter(var1expr);
 
-          JOptionPane.showInputDialog(">> " + fid + 
+          /* JOptionPane.showInputDialog(">> " + fid + 
               " match from " + 
               (j+1) +   
-              " source subterm 1 to target " + amsub); 
+              " source subterm depth " + nestingDepth + " to target " + amsub); */ 
           
           
           String tim = 
@@ -4171,7 +4216,7 @@ public abstract class ASTTerm
           return amx; 
         } // It is actually sexpr |-->_(j+1)`tim where 
       }   // tim:: _1 |-->_1`fid
-    } 
+     
 
     return null; 
   }

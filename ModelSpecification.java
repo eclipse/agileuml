@@ -5865,7 +5865,7 @@ public class ModelSpecification
           new AttributeMatching(sexpr, texpr);
         return amx;   
       } // sexpr.data:: sexpr.parameters |--> texpr
-      else if (ASTTerm.sameTag(targetValues) && 
+      /* else if (ASTTerm.sameTag(targetValues) && 
                ASTTerm.sameTag(sattvalues) && 
                ASTTerm.allCompositeSameLength(sattvalues)) 
       { AttributeMatching amsub = 
@@ -5877,7 +5877,7 @@ public class ModelSpecification
         { System.out.println(">> Mapping from subterm of source: " + amsub);
           return amsub; 
         } 
-      } // sexpr.data:: sexpr.parameters |--> texpr
+      } */ // sexpr.data:: sexpr.parameters |--> texpr
     } 
 
     System.out.println(">>> Checking composite tree functions for target " + tatt); 
@@ -5980,7 +5980,15 @@ public class ModelSpecification
               if (ASTTerm.hasNullTerm(srcJValues))
               { break; } 
 
-              // JOptionPane.showInputDialog(">->->> Comparing source term " + (sindex+1) + " values " + srcJValues + " to target term " + (tindex+1) + " values " + trgJValues); 
+              if (ASTTerm.functionalTermMapping(srcJValues,                    
+                                                  trgJValues))
+              { System.out.println(">>-->> Functional mapping " + srcJValues + " to " + trgJValues);
+                System.out.println();
+              } 
+              else 
+              { continue; } // try next sindex  
+
+              JOptionPane.showInputDialog(">-> Strategy 1 >->> Comparing source term " + (sindex+1) + " values " + srcJValues + " to target term " + (tindex+1) + " values " + trgJValues); 
 
               int k = tindex+1; 
                 
@@ -6013,10 +6021,10 @@ public class ModelSpecification
               } 
               else if ( 
                  ASTTerm.sameTag(sourceJValues) && 
-                 ASTTerm.allCompositeSameLength(
+                 ASTTerm.allNonSymbolSameLength(
                                  sourceJValues)) 
-              { System.out.println(">> Checking for mapping from subterm of source " + 
-                   (sindex + 1) + " to target " + k);
+              { JOptionPane.showInputDialog("*** Checking compositeSource2TargetTrees " + 
+                   srcJValues + " to target " + trgJValues);
 
                 AttributeMatching amsub = 
                   ASTTerm.compositeSource2TargetTrees(sent, 
@@ -6107,7 +6115,7 @@ public class ModelSpecification
                            tms, locams); 
                    
                    if (amjx1 != null)
-                   { JOptionPane.showInputDialog("$$$ Nested mapping for source terms " + srcJValues1 + " to target terms " + trgJValues + ": " + amjx1);
+                   { // JOptionPane.showInputDialog("$$$ Nested mapping for source terms " + srcJValues1 + " to target terms " + trgJValues + ": " + amjx1);
 
                     // create new TypeMatching for this 
                     // mapping, tim, and return _1 |-->_1`tim
@@ -6131,7 +6139,7 @@ public class ModelSpecification
                   }  
 
                   if (amjx != null) 
-                  { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
+                  { JOptionPane.showInputDialog(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
                     System.out.println(">>-->> " + amjx + " is vacuous: " + amjx.isVacuous() + " Is basic: " + amjx.isBasic());
                     System.out.println(">>-->> Auxiliary maps: " + tms); 
 
@@ -6171,8 +6179,8 @@ public class ModelSpecification
                       // Also the other locams 
                       tms.add(tmnew);
 
-                      JOptionPane.showInputDialog(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
-                      JOptionPane.showInputDialog(">> " + srcJValues + " With maps " + locams); 
+                      // JOptionPane.showInputDialog(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
+                      // JOptionPane.showInputDialog(">> " + srcJValues + " With maps " + locams); 
                       System.out.println(); 
 
                       srcexpr =
@@ -6523,6 +6531,20 @@ public class ModelSpecification
           } 
         } // All the tree-sequence cases
       } // All tests exhausted. 
+
+      if (ASTTerm.sameTag(targetValues) && 
+          ASTTerm.sameTag(sattvalues) && 
+          ASTTerm.allCompositeSameLength(sattvalues)) 
+      { AttributeMatching amsub = 
+          ASTTerm.compositeSource2TargetTrees(sent, 
+                       satt, tatt,
+                       sattvalues,targetValues,this,tms);
+ 
+        if (amsub != null) 
+        { System.out.println(">> Mapping from subterm of source: " + amsub);
+          return amsub; 
+        } 
+      } 
     } 
 
     ams = new Vector();            

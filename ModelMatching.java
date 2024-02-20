@@ -200,6 +200,22 @@ public class ModelMatching implements SystemTypes
       } 
     } 
 
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i);
+      if (usedFunctions.contains(tm.getName())) 
+      { Vector newuses = tm.usesCSTLfunctions(); 
+        usedFunctions.addAll(newuses); 
+      } 
+    } 
+
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i);
+      if (usedFunctions.contains(tm.getName())) 
+      { Vector newuses = tm.usesCSTLfunctions(); 
+        usedFunctions.addAll(newuses); 
+      } 
+    } 
+
     // *only* include them if used (recursively)
     // in some rule. 
 
