@@ -27676,6 +27676,56 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + "->select( x_0 | x_0 >= " + callp + ")"; 
         }
+        else if ("subSet".equals(called) && arg.isSet())
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          ASTTerm.setType(thisliteral,"Set"); 
+
+          if (cargs.size() > 1) 
+          { ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+            String callp2 = callarg2.toKM3(); 
+
+            if (arg.expression != null && 
+                callarg1.expression != null && 
+                callarg2.expression != null) 
+            { Expression keyExpr = 
+                BasicExpression.newVariableBasicExpression(
+                                          "_key"); 
+              Expression tst1 = 
+                new BinaryExpression(">=", 
+                    keyExpr, callarg1.expression); 
+              Expression tst2 = 
+                new BinaryExpression("<", 
+                    keyExpr, callarg2.expression); 
+              Expression par2 = 
+                new BinaryExpression(":", keyExpr,  
+                                     arg.expression);
+              BinaryExpression tst = 
+                new BinaryExpression("&", tst1, tst2);  
+              expression = 
+                new BinaryExpression("|", par2, 
+                                     tst);
+            } 
+
+            return args + "->select( _key | _key >= " + callp1 + " & _key < " + callp2 + ")";
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression keyExpr = 
+              BasicExpression.newVariableBasicExpression("_key"); 
+            Expression tst = 
+              new BinaryExpression(">=", 
+                    keyExpr, callarg1.expression); 
+            Expression par2 = 
+              new BinaryExpression(":", keyExpr, 
+                                   arg.expression); 
+            expression = 
+              new BinaryExpression("|", par2, tst);  
+          } 
+
+          return args + "->select( _key | _key >= " + callp1 + ") )"; 
+        }
         else if ("headMap".equals(called) && arg.isMap())
         { ASTTerm callarg = (ASTTerm) callterms.get(2); 
           String callp = callarg.toKM3(); 
@@ -27756,6 +27806,32 @@ public class ASTCompositeTerm extends ASTTerm
           } 
 
           return args + "->restrict( " + args + "->keys()->select( _key | _key >= " + callp1 + ") )"; 
+        }
+        else if ("tailMap".equals(called) && arg.isMap())
+        { ASTTerm callarg = (ASTTerm) callterms.get(2); 
+          String callp = callarg.toKM3(); 
+          ASTTerm.setType(thisliteral,"Map"); 
+
+          if (arg.expression != null && 
+              callarg.expression != null) 
+          { Expression keyExpr = 
+              BasicExpression.newVariableBasicExpression("_key"); 
+            Expression tst = 
+              new BinaryExpression(">=", 
+                    keyExpr, callarg.expression); 
+            Expression par2 = 
+              new BinaryExpression(":", keyExpr, 
+                new UnaryExpression("->keys", 
+                                    arg.expression)); 
+            Expression selExpr = 
+              new BinaryExpression("|", par2, tst);
+            expression = 
+              new BinaryExpression("->restrict", 
+                    arg.expression, selExpr);  
+          } 
+
+
+          return args + "->restrict( " + args + "->keys()->select( _key | _key >= " + callp + ") )"; 
         }
         else if ("removeRange".equals(called))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0);

@@ -5988,7 +5988,7 @@ public class ModelSpecification
               else 
               { continue; } // try next sindex  
 
-              JOptionPane.showInputDialog(">-> Strategy 1 >->> Comparing source term " + (sindex+1) + " values " + srcJValues + " to target term " + (tindex+1) + " values " + trgJValues); 
+              /* JOptionPane.showInputDialog(">-> Strategy 1 >->> Comparing source term " + (sindex+1) + " values " + srcJValues + " to target term " + (tindex+1) + " values " + trgJValues); */ 
 
               int k = tindex+1; 
                 
@@ -6023,8 +6023,8 @@ public class ModelSpecification
                  ASTTerm.sameTag(sourceJValues) && 
                  ASTTerm.allNonSymbolSameLength(
                                  sourceJValues)) 
-              { JOptionPane.showInputDialog("*** Checking compositeSource2TargetTrees " + 
-                   srcJValues + " to target " + trgJValues);
+              { /* JOptionPane.showInputDialog("*** Checking compositeSource2TargetTrees " + 
+                   srcJValues + " to target " + trgJValues); */ 
 
                 AttributeMatching amsub = 
                   ASTTerm.compositeSource2TargetTrees(sent, 
@@ -6032,7 +6032,7 @@ public class ModelSpecification
                        sourceJValues,targetJValues,this,tms); 
 
                 if (amsub != null) 
-                { JOptionPane.showInputDialog(">>-- Discovered mapping from subterm of source " + amsub);
+                { /* JOptionPane.showInputDialog(">>-- Discovered mapping from subterm of source " + amsub); */ 
                   String fid = 
                     Identifier.nextIdentifier("subruleset");
                   TypeMatching tmnew = new TypeMatching(fid);
@@ -6139,7 +6139,7 @@ public class ModelSpecification
                   }  
 
                   if (amjx != null) 
-                  { JOptionPane.showInputDialog(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
+                  { /* JOptionPane.showInputDialog(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx); */ 
                     System.out.println(">>-->> " + amjx + " is vacuous: " + amjx.isVacuous() + " Is basic: " + amjx.isBasic());
                     System.out.println(">>-->> Auxiliary maps: " + tms); 
 
@@ -6363,8 +6363,8 @@ public class ModelSpecification
       { /* Test 2 */ 
         Vector localams = new Vector();
  
-        JOptionPane.showInputDialog(">> Checking direct correspondence of subterms of trees of varying arity: " + sattvalues[0] + " ---> " + targetValues[0]); 
-        System.out.println();           
+        /* JOptionPane.showInputDialog(">> Checking direct correspondence of subterms of trees of varying arity: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println();           */ 
 
         AttributeMatching amts = 
           treeSequenceMapping(sent,sattvalues,
@@ -6376,8 +6376,8 @@ public class ModelSpecification
           return amts; 
         } 
 
-        JOptionPane.showInputDialog(">++> Checking tree-tree mapping with indirect correspondence of subterms: " + sattvalues[0] + " ---> " + targetValues[0]); 
-        System.out.println();           
+        /* JOptionPane.showInputDialog(">++> Checking tree-tree mapping with indirect correspondence of subterms: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println();         */   
 
         amts = treeSequenceMapping2(satt, sent, tatt, 
                  sourceatts, sattvalues, targetValues, 
@@ -6394,7 +6394,7 @@ public class ModelSpecification
       { /* Test 3 */
         Vector localams = new Vector(); 
         
-        JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with symbol deletion/replacement: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        /* JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with symbol deletion/replacement: " + sattvalues[0] + " ---> " + targetValues[0]); */ 
 
         System.out.println();           
 
@@ -6415,8 +6415,8 @@ public class ModelSpecification
 
         Vector localams = new Vector(); 
         
-        JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with selection/filtering: " + sattvalues[0] + " ---> " + targetValues[0]); 
-        System.out.println();           
+      /*  JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with selection/filtering: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println();   */         
 
         AttributeMatching amts = 
           treeSequenceMapping4(satt, sent, tatt, 
@@ -6438,7 +6438,7 @@ public class ModelSpecification
 
         Vector localams = new Vector(); 
         
-        JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with concatenation: " + sattvalues[0] + " ---> " + targetValues[0]); 
+      /*  JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with concatenation: " + sattvalues[0] + " ---> " + targetValues[0]); */ 
 
         AttributeMatching amts = 
           ASTTerm.concatenationTreeMapping(
@@ -6462,7 +6462,7 @@ public class ModelSpecification
               sattvalues,targetValues,this))
         { Vector localams = new Vector(); 
         
-          JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with suffixes: " + sattvalues[0] + " ---> " + targetValues[0]); 
+          /* JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with suffixes: " + sattvalues[0] + " ---> " + targetValues[0]); */ 
 
           AttributeMatching amts = 
             ASTTerm.suffixTreeMapping(
@@ -6482,7 +6482,7 @@ public class ModelSpecification
                     sattvalues,targetValues,this))
         { Vector localams = new Vector(); 
         
-          JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with suffix function: " + sattvalues[0] + " ---> " + targetValues[0]); 
+          /* JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with suffix function: " + sattvalues[0] + " ---> " + targetValues[0]); */ 
 
           AttributeMatching amts = 
             ASTTerm.suffixTreeFunctionMapping(
@@ -6500,7 +6500,7 @@ public class ModelSpecification
                     sattvalues,targetValues,this))
         { Vector localams = new Vector(); 
         
-          JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with prefix function: " + sattvalues[0] + " ---> " + targetValues[0]); 
+          /* JOptionPane.showInputDialog(">**> Checking tree-2-tree mapping with prefix function: " + sattvalues[0] + " ---> " + targetValues[0]); */ 
 
           AttributeMatching amts = 
             ASTTerm.prefixTreeFunctionMapping(
@@ -6518,7 +6518,7 @@ public class ModelSpecification
                     sattvalues,targetValues,this))
         { Vector localams = new Vector(); 
         
-          JOptionPane.showInputDialog(">&&> Checking tree-2-sequence mapping: " + sattvalues[0] + " ---> " + targetValues[0]); 
+          /* JOptionPane.showInputDialog(">&&> Checking tree-2-sequence mapping: " + sattvalues[0] + " ---> " + targetValues[0]); */  
 
           AttributeMatching amts = 
             ASTTerm.tree2SequenceMap(
@@ -6705,7 +6705,7 @@ public class ModelSpecification
                      targetJValues, tTreeTerms, tms, ams);
  
     if (amjx != null) 
-    { JOptionPane.showInputDialog(">treesequence2>--- List function mapping: " + amjx); 
+    { // JOptionPane.showInputDialog(">treesequence2>--- List function mapping: " + amjx); 
 
       String fid = 
           Identifier.nextIdentifier("seq2subruleset");
@@ -7849,9 +7849,9 @@ public class ModelSpecification
     } 
 
     System.out.println(">>> Target tag_arity values: " + ttagvalues); 
-    JOptionPane.showMessageDialog(null, 
+    /* JOptionPane.showMessageDialog(null, 
          "Target tag_arity values: " + ttagvalues,   "",
-         JOptionPane.INFORMATION_MESSAGE);
+         JOptionPane.INFORMATION_MESSAGE); */ 
 
     if (ttagvalues.size() <= 1)
     { return res; } 
