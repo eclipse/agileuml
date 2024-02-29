@@ -783,6 +783,10 @@ public void findPlugins()
     measuresItem.addActionListener(this);
     analyseMenu.add(measuresItem);
 
+    JMenuItem energyAnal = new JMenuItem("Energy analysis"); 
+    energyAnal.addActionListener(this);
+    analyseMenu.add(energyAnal);
+
     JMenuItem carchItem = new JMenuItem("Clean architecture properties"); 
     carchItem.addActionListener(this);
     analyseMenu.add(carchItem);
@@ -2311,6 +2315,8 @@ public void findPlugins()
 
         new TextDisplay("Measures","output/tmp.txt");
       }  
+      else if (label.equals("Energy analysis"))
+      { ucdArea.energyAnalysis(); }  
       else if (label.equals("Clean architecture properties"))
       { ucdArea.cleanArchitectureCheck(); }
       else if (label.equals("Data dependencies"))

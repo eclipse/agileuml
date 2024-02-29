@@ -313,6 +313,27 @@ class VectorUtil
     return false; 
   } 
 
+  public static boolean haveCommonElementAsString(final Vector v1, final Vector v2) 
+  { for (int i = 0; i < v1.size(); i++) 
+    { Object obj = v1.get(i); 
+      if (VectorUtil.containsEqualString(obj + "", v2))
+      { return true; } 
+    } 
+
+    return false; 
+  } 
+
+  public static Vector commonElementsByString(final Vector v1, final Vector v2) 
+  { Vector res = new Vector(); 
+    for (int i = 0; i < v1.size(); i++) 
+    { Object obj = v1.get(i); 
+      if (VectorUtil.containsEqualString(obj + "", v2))
+      { res.add(obj); } 
+    } 
+
+    return res; 
+  } 
+
   public static boolean haveCommonElementName(final Vector v1, final Vector v2) 
   { for (int i = 0; i < v1.size(); i++) 
     { ModelElement obj = (ModelElement) v1.get(i);

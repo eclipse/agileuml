@@ -193,6 +193,80 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+
+  public static boolean endsWithSelfCall(
+            BehaviouralFeature bf, String nme, Statement st)
+  { if (st == null) 
+    { return false; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      Statement stat = (Statement) stats.get(stats.size()-1); 
+      return Statement.endsWithSelfCall(bf,nme,stat);
+    } 
+
+    if (st instanceof InvocationStatement)
+    { InvocationStatement invok = 
+        (InvocationStatement) st;
+      
+      Expression expr = invok.getCallExp();
+ 
+      if (expr != null && expr.isSelfCall(bf))
+      { return true; } 
+
+      return false; 
+    } 
+
+    if (st instanceof ReturnStatement)
+    { ReturnStatement retstat = (ReturnStatement) st; 
+      
+      Expression expr = retstat.getReturnValue();
+ 
+      if (expr != null && expr.isSelfCall(bf))
+      { return true; } 
+      return false; 
+    } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      if (Statement.endsWithSelfCall(bf,nme,cs.ifPart()))
+      { return Statement.endsWithSelfCall(
+                                 bf,nme,cs.elsePart()); 
+      } 
+      return false; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { return false; } 
+    // Nested loops cannot be handled within a recursion. 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+
+      if (Statement.endsWithSelfCall(bf,nme,ts.getBody())) 
+      { Vector stats = ts.getClauses(); 
+        for (int i = 0; i < stats.size(); i++) 
+        { if (stats.get(i) instanceof Statement)
+          { Statement stat = (Statement) stats.get(i); 
+            if (Statement.endsWithSelfCall(bf,nme,stat)) { } 
+            else 
+            { return false; } 
+          }
+          else 
+          { return false; } 
+        }  
+      }
+      else 
+      { return false; }  
+      if (ts.getEndStatement() == null) { return false; } 
+      return Statement.endsWithSelfCall(
+                               bf,nme,ts.getEndStatement()); 
+    } 
+
+    return false;
+  } // Other cases, for all other forms of statement. 
+
   public static boolean endsWithReturn(Statement st)
   { if (st == null) 
     { return false; }
@@ -216,6 +290,7 @@ abstract class Statement implements Cloneable
 
     if (st instanceof WhileStatement) 
     { return false; } 
+    // Nested loops cannot be handled within a recursion. 
 
     if (st instanceof TryStatement) 
     { TryStatement ts = (TryStatement) st; 
@@ -237,6 +312,161 @@ abstract class Statement implements Cloneable
       { return false; }  
       if (ts.getEndStatement() == null) { return false; } 
       return Statement.endsWithReturn(ts.getEndStatement()); 
+    } 
+
+    return false;
+  } // Other cases, for all other forms of statement. 
+
+  public static boolean endsWithContinue(Statement st)
+  { if (st == null) 
+    { return false; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      Statement stat = (Statement) stats.get(stats.size()-1); 
+      return Statement.endsWithContinue(stat);
+    } 
+    
+    if (st instanceof ContinueStatement)
+    { return true; } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      if (Statement.endsWithContinue(cs.ifPart()))
+      { return Statement.endsWithContinue(cs.elsePart()); } 
+      return false; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { return false; } 
+    // Nested loops cannot be handled within a recursion. 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+
+      if (Statement.endsWithContinue(ts.getBody())) 
+      { Vector stats = ts.getClauses(); 
+        for (int i = 0; i < stats.size(); i++) 
+        { if (stats.get(i) instanceof Statement)
+          { Statement stat = (Statement) stats.get(i); 
+            if (Statement.endsWithContinue(stat)) { } 
+            else 
+            { return false; } 
+          }
+          else 
+          { return false; } 
+        }  
+      }
+      else 
+      { return false; }  
+      if (ts.getEndStatement() == null) { return false; } 
+      return Statement.endsWithContinue(ts.getEndStatement()); 
+    } 
+
+    return false;
+  } // Other cases, for all other forms of statement. 
+
+  public static boolean endsWithBreak(Statement st)
+  { if (st == null) 
+    { return false; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      Statement stat = (Statement) stats.get(stats.size()-1); 
+      return Statement.endsWithBreak(stat);
+    } 
+    
+    if (st instanceof BreakStatement)
+    { return true; } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      if (Statement.endsWithBreak(cs.ifPart()))
+      { return Statement.endsWithBreak(cs.elsePart()); } 
+      return false; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { return false; } 
+    // Nested loops cannot be handled within a recursion. 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+
+      if (Statement.endsWithBreak(ts.getBody())) 
+      { Vector stats = ts.getClauses(); 
+        for (int i = 0; i < stats.size(); i++) 
+        { if (stats.get(i) instanceof Statement)
+          { Statement stat = (Statement) stats.get(i); 
+            if (Statement.endsWithBreak(stat)) { } 
+            else 
+            { return false; } 
+          }
+          else 
+          { return false; } 
+        }  
+      }
+      else 
+      { return false; }  
+      if (ts.getEndStatement() == null) { return false; } 
+      return Statement.endsWithBreak(ts.getEndStatement()); 
+    } 
+
+    return false;
+  } // Other cases, for all other forms of statement. 
+
+  public static boolean endsWithExit(Statement st)
+  { if (st == null) 
+    { return false; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      Statement stat = (Statement) stats.get(stats.size()-1); 
+      return Statement.endsWithExit(stat);
+    } 
+    
+    if (st instanceof InvocationStatement)
+    { String called = 
+        ((InvocationStatement) st).calledOperation(); 
+      if ("exit".equals(called))
+      { return true; }
+      return false; 
+    }  
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      if (Statement.endsWithExit(cs.ifPart()))
+      { return Statement.endsWithExit(cs.elsePart()); } 
+      return false; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { return false; } 
+    // Nested loops cannot be handled within a recursion. 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+
+      if (Statement.endsWithExit(ts.getBody())) 
+      { Vector stats = ts.getClauses(); 
+        for (int i = 0; i < stats.size(); i++) 
+        { if (stats.get(i) instanceof Statement)
+          { Statement stat = (Statement) stats.get(i); 
+            if (Statement.endsWithExit(stat)) { } 
+            else 
+            { return false; } 
+          }
+          else 
+          { return false; } 
+        }  
+      }
+      else 
+      { return false; }  
+      if (ts.getEndStatement() == null) { return false; } 
+      return Statement.endsWithExit(ts.getEndStatement()); 
     } 
 
     return false;
@@ -905,7 +1135,34 @@ abstract class Statement implements Cloneable
 
     Vector vect = new Vector(); 
     if (branch.get(0) instanceof Vector)
-    { vect = (Vector) branch.get(0); }  
+    { vect = (Vector) branch.get(0);
+
+      if (vect.get(0) instanceof Vector)
+      { vect = (Vector) vect.get(0); 
+        System.out.println("+++ REPLACING code: " + vect);
+
+        if (vect.size() == 4 && 
+            "if".equals(vect.get(0) + ""))      
+        { Expression tst = (Expression) vect.get(1);
+          Vector sts = (Vector) vect.get(2); 
+          Statement cde = 
+            Statement.replaceSelfCallByContinue(
+                                      nme,sts,asgns);
+          Statement elsePart = (Statement) vect.get(3); 
+  
+          Statement newelse = 
+            SequenceStatement.combineSequenceStatements(
+                            elsePart,new BreakStatement()); 
+          ConditionalStatement cs = 
+            new ConditionalStatement(tst,
+                cde, 
+                newelse);
+          SequenceStatement res = new SequenceStatement(); 
+          res.addStatement(cs); 
+          return res;
+        } 
+      } 
+    }  
     else 
     { vect.addAll(branch); } 
 
@@ -929,6 +1186,8 @@ abstract class Statement implements Cloneable
            BehaviouralFeature bf, String nme, Statement st)
   { // self.nme(exprs) replaced by pars := exprs; continue
     // Likewise for return self.nme(exprs)
+    // Any branch that does not terminate in nme call/return
+    // or exit/return is ended by break. 
 
     if (st == null) 
     { return st; }
@@ -941,7 +1200,7 @@ abstract class Statement implements Cloneable
       Expression expr = invok.getCallExp();
  
       // if ((expr + "").startsWith("self." + nme + "("))
-      if (expr != null && expr.isSelfCall(nme))
+      if (expr != null && expr.isSelfCall(bf))
       { Statement passigns = 
              bf.parameterAssignments(expr);
         if (passigns == null) 
@@ -949,7 +1208,7 @@ abstract class Statement implements Cloneable
         else if (passigns instanceof SequenceStatement)
         { ((SequenceStatement) passigns).addStatement(res); 
           return passigns; 
-        }  
+        } // passigns.setBrackets(true) 
       }
       return st; 
     } 
@@ -961,7 +1220,7 @@ abstract class Statement implements Cloneable
       Expression expr = retstat.getReturnValue();
  
       // if ((expr + "").startsWith("self." + nme + "("))
-      if (expr != null && expr.isSelfCall(nme))
+      if (expr != null && expr.isSelfCall(bf))
       { Statement passigns = 
              bf.parameterAssignments(expr);
         if (passigns == null) 
@@ -986,7 +1245,23 @@ abstract class Statement implements Cloneable
         if (newstat != null) 
         { res.add(newstat); } 
       } 
-      return new SequenceStatement(res);
+
+      // if res does not end with return, continue or exit, 
+      // add a break statement: 
+
+      SequenceStatement newss = new SequenceStatement(res);
+
+      if (Statement.endsWithReturn(newss) || 
+          Statement.endsWithContinue(newss) ||
+          Statement.endsWithSelfCall(bf,nme,st) ||  
+          Statement.endsWithBreak(newss) || 
+          Statement.endsWithExit(newss)) { } 
+      else 
+      { BreakStatement bs = new BreakStatement(); 
+        newss.addStatement(bs); 
+      } 
+
+      return newss;
     } 
     
     if (st instanceof ConditionalStatement) 
@@ -2808,6 +3083,9 @@ class InvocationStatement extends Statement
 
   public void setCallExp(Expression e)
   { callExp = e; } 
+
+  public String calledOperation()
+  { return action; } 
 
   public void setAssignsTo(String atype, String avar)
   { assignsType = atype; 
@@ -5743,6 +6021,17 @@ class CreationStatement extends Statement
     elementType = vbl.getElementType(); 
     assignsTo = vbl.getName();
     variable = vbl;  
+  }
+
+  public CreationStatement(Attribute vbl, Attribute val)
+  { Type typ = vbl.getType(); 
+    createsInstanceOf = typ.getName();
+    instanceType = typ; 
+    elementType = vbl.getElementType(); 
+    assignsTo = vbl.getName();
+    variable = vbl;  
+    initialExpression = new BasicExpression(val); 
+    initialValue = initialExpression + ""; 
   }
 
   public CreationStatement(BasicExpression vbl)

@@ -10901,7 +10901,9 @@ public class BehaviouralFeature extends ModelElement
   }
 
   public Statement parameterAssignments(Expression call)
-  { // var := expr for corresponding parameters of call
+  { // vars := exprs for corresponding parameters of call
+    // A parallel assignment. Serialise by storing old 
+    // values of LHS variables before overwriting them.
 
     if (parameters == null || parameters.size() == 0) 
     { return null; } 
@@ -10912,20 +10914,64 @@ public class BehaviouralFeature extends ModelElement
 
     Vector stats = new Vector(); 
 
+    Vector previousVars = new Vector(); 
+    Vector declared = new Vector(); // already have var old_v
+
     for (int i = 0; i < parameters.size(); i++) 
-    { Attribute par = (Attribute) parameters.get(i); 
+    { Attribute par = (Attribute) parameters.get(i);
+      
       if (i < exprs.size()) 
       { BasicExpression parexpr = 
             new BasicExpression(par); 
-        Expression expr = (Expression) exprs.get(i); 
+        Expression expr = (Expression) exprs.get(i);
+        Expression newexpr = expr; 
+ 
         if (("" + parexpr).equals(expr + "")) { } 
         else 
-        { AssignStatement asgn = 
-            new AssignStatement(parexpr,expr);       
+        { 
+          Vector vuses = expr.getVariableUses();
+          Vector previousVarOccurs = 
+            VectorUtil.commonElementsByString(
+                              previousVars, vuses); 
+
+          if (previousVarOccurs.size() > 0)
+          { // for each occ : previousVarOccurs, add
+            // var old_occ if occ not already in declared
+            // Substitute old_occ for occ in expr
+
+            for (int j = 0; j < previousVarOccurs.size(); j++)
+            { Attribute occ = 
+                  (Attribute) previousVarOccurs.get(j);
+              String oname = occ.getName(); 
+
+              Attribute old_occ = (Attribute) occ.clone(); 
+              old_occ.setName("old_" + oname); 
+
+              if (declared.contains(occ)) { } 
+              else 
+              { CreationStatement cs = 
+                   new CreationStatement(old_occ,occ); 
+                stats.add(0,cs); 
+                declared.add(occ); 
+              } 
+
+              newexpr = newexpr.substituteEq(oname, 
+                            new BasicExpression(old_occ)); 
+            } 
+          }
+
+          AssignStatement asgn = 
+            new AssignStatement(parexpr,newexpr);       
           stats.add(asgn);
+
+          /* JOptionPane.showInputDialog("## Assignment " + asgn + " variable uses " + vuses + " previous " + previousVars + " clash " + previousVarOccurs); */  
         }  
-      } 
-    } 
+      }
+
+      previousVars.add(par);  
+    } // if expr contains an earlier lhs variable v
+      // insert a var v_pre : vType := v declaration at start 
+      // and use v_pre in expr instead of v. 
 
     if (stats.size() == 0) 
     { return null; } 
@@ -10951,6 +10997,48 @@ public class BehaviouralFeature extends ModelElement
        Statement.unfoldCall(activity, nme, defn); 
     activity = newact; 
   } 
+
+  public Statement replaceRecursionByIteration(Statement act)
+  { // if there are simple calls to itself, replace by 
+    // continue/break in a loop. 
+
+    // ... ; self.nme() ; *** 
+    // is  while true do (...)
+
+    // ... ; self.nme(exprs) ; ***
+    // is  while true do (... ; pars := exprs)
+
+    // ... ; if E then self.nme() else skip ; ***
+    // is   while true do (... ; if E then continue else 
+    //                     skip) ; ***
+
+    // ... ; if E then self.nme(exprs) else skip ; ***
+    // is   while true do (... ; 
+    //         if E then (pars := exprs ; continue) else 
+    //                     skip) ; ***
+    // 
+
+    Statement oldact = act; 
+    if (oldact == null) 
+    { oldact = activity; } 
+    if (oldact == null) 
+    { return act; } 
+
+    String nme = getName(); 
+
+    Statement loopBdy =             
+       Statement.replaceSelfCallsByContinue(
+                                     this,nme,oldact);
+
+    WhileStatement ws = new WhileStatement(
+                                 new BasicExpression(true),
+                                 loopBdy); 
+
+    System.out.println(">>> Restructured code: " + ws); 
+    System.out.println(); 
+
+    return ws;
+  }
 
   public Statement selfCalls2Loops(Statement act)
   { // if there are simple calls to itself, replace by 
@@ -11060,7 +11148,7 @@ public class BehaviouralFeature extends ModelElement
                                  new BasicExpression(true),
                                  loopBody); 
 
-        System.out.println(">>> Restructured code: " + ws); 
+        System.out.println(">A> Restructured code: " + ws); 
         System.out.println(); 
 
         return ws;
@@ -11093,7 +11181,7 @@ public class BehaviouralFeature extends ModelElement
           res.addStatement(ws); 
           res.addStatements(remainder); 
 
-          System.out.println(">>> Restructured code: " + res); 
+          System.out.println(">0> Restructured code: " + res); 
           System.out.println(); 
 
           return res;
@@ -11122,7 +11210,7 @@ public class BehaviouralFeature extends ModelElement
           res.addStatement(ws); 
           res.addStatements(remainder); 
 
-          System.out.println(">>> Restructured code: " + res); 
+          System.out.println(">1> Restructured code: " + res); 
           System.out.println(); 
 
           return res;
@@ -11181,7 +11269,7 @@ public class BehaviouralFeature extends ModelElement
           res.addStatement(ws); 
           res.addStatements(remainder); 
 
-          System.out.println(">>> Restructured code: " + res); 
+          System.out.println(">2> Restructured code: " + res); 
           System.out.println(); 
 
           return res;
@@ -11198,7 +11286,7 @@ public class BehaviouralFeature extends ModelElement
                                  new BasicExpression(true),
                                  loopBdy); 
 
-        System.out.println(">>> Restructured code: " + ws); 
+        System.out.println(">3> Restructured code: " + ws); 
         System.out.println(); 
 
         return ws;

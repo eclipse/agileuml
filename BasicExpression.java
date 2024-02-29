@@ -16275,7 +16275,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
   /* allVariablesUsedIn */ 
   public Vector getVariableUses()
-  { Vector res = new Vector();
+  { Vector res = new Vector(); // of Expression
 
     if (("Sum".equals(data) || "Prd".equals(data)) && 
         "Integer".equals(objectRef + "") && parameters != null && parameters.size() > 3)
@@ -16432,13 +16432,33 @@ public Statement generateDesignSubtract(Expression rhs)
   } 
 
   public boolean isSelfCall(BehaviouralFeature bf)
-  { String nme = bf.getName(); 
-    return isSelfCall(nme); 
+  { String nme = bf.getName();
+ 
+    if (isSelfCall(nme))
+    { return true; } 
+
+    Entity owner = bf.getEntity(); 
+    if (bf.isStatic() && owner != null) 
+    { String ename = owner.getName(); 
+      if (isSelfCall(ename,nme))
+      { return true; } 
+    } 
+
+    return false;  
   } 
 
   public boolean isSelfCall(String nme)
   { if (data.equals(nme) && 
         "self".equals(objectRef + "") && 
+        (umlkind == UPDATEOP || umlkind == QUERY ||
+         isEvent)) 
+    { return true; } 
+    return false;  
+  }
+
+  public boolean isSelfCall(String ename, String nme)
+  { if (data.equals(nme) && 
+        ename.equals(objectRef + "") && 
         (umlkind == UPDATEOP || umlkind == QUERY ||
          isEvent)) 
     { return true; } 
