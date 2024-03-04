@@ -1313,6 +1313,15 @@ public class SetExpression extends Expression
   public Expression featureSetting(String var, String k, Vector l)
   { return null; } 
 
+  public Map energyUse(Map res, Vector rUses, Vector aUses) 
+  { for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i);  
+      elem.energyUse(res, rUses, aUses);
+    } 
+
+    return res; 
+  }  
+
   public int syntacticComplexity() 
   { int res = 0;
     for (int i = 0; i < elements.size(); i++) 

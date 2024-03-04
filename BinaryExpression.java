@@ -19853,7 +19853,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       return left; 
     }
  
-   if (operator.equals("&"))
+    if (operator.equals("&"))
     { Vector remainder1 = new Vector(); 
       Vector remainder2 = new Vector(); 
       Expression lfs = left.featureAdding2(var,remainder1);
@@ -19885,6 +19885,66 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     return null; 
   } 
 
+  public Map energyUse(Map res, Vector rUses, Vector aUses) 
+  { // Double iterations ->select(...)->select(...)
+    // are amber flags.
+    // ->select(...)->any() is a red flag.  
+
+    left.energyUse(res, rUses, aUses); 
+    right.energyUse(res, rUses, aUses); 
+
+    if (operator.equals("|") ||
+        operator.equals("|R"))
+    { BinaryExpression arg = (BinaryExpression) left; 
+      Expression domain = arg.getRight(); 
+      if (domain instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) domain; 
+
+        if (lbe.operator.equals("|") ||
+            lbe.operator.equals("|R") ||
+            lbe.operator.equals("->select") ||
+            lbe.operator.equals("->reject"))
+        { aUses.add("! Nested select/reject iterators (loops) in " + this + " : more efficient to combine conditions");
+          int ascore = (int) res.get("amber"); 
+          res.set("amber", ascore+1); 
+        }
+      }
+    }
+    else if (operator.equals("->select") ||
+             operator.equals("->reject"))
+    {
+      if (left instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) left; 
+
+        if (lbe.operator.equals("|") ||
+            lbe.operator.equals("|R") ||
+            lbe.operator.equals("->select") ||
+            lbe.operator.equals("->reject"))
+        { aUses.add("! Nested select/reject iterators (loops) in " + this + " : more efficient to combine conditions");
+          int ascore = (int) res.get("amber"); 
+          res.set("amber", ascore+1); 
+        }
+      } 
+    }
+    else if ("->sortedBy".equals(operator) || 
+             "|sortedBy".equals(operator))
+    { aUses.add("! n*log(n) sorting algorithm used for " + operator);
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1); 
+    }     
+    else if ("->unionAll".equals(operator) || 
+             "|unionAll".equals(operator) || 
+             "->concatenateAll".equals(operator) || 
+             "|concatenateAll".equals(operator) ||
+             "->intersectAll".equals(operator) || 
+             "|intersectAll".equals(operator))
+    { aUses.add("! Expensive operator: " + operator);
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1); 
+    } 
+
+    return res; 
+  } 
 
   public int syntacticComplexity() 
   { int res = left.syntacticComplexity();

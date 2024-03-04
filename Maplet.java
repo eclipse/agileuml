@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -792,6 +792,55 @@ class Map
       } 
     } 
     return res; 
+  } 
+
+
+  public int maxPathLength(java.util.Set lastfound)
+  { // maximum chain source |-> dest |-> dest2 ... 
+    // not including loops. 
+    // paths : String -> Sequence(String)
+
+    int res = 0; 
+
+    for (int i = 0; i < elements.size(); i++) 
+    { Maplet m1 = (Maplet) elements.get(i);
+      java.util.Set found = new java.util.HashSet(); 
+      found.add(m1.source); 
+
+      int mx = maxCallChain(found); 
+      if (mx > res) 
+      { res = mx; 
+        lastfound.clear(); 
+        lastfound.addAll(found); 
+      } 
+    } 
+
+    return res; 
+  } 
+
+     
+
+  public int maxCallChain(java.util.Set found)
+  { 
+    java.util.Set newfound = new java.util.HashSet(); 
+    newfound.addAll(found); 
+
+    int maxpath = 0; 
+
+    while (newfound.size() > 0)
+    { 
+      maxpath++; 
+
+      for (Object x : found)
+      { Vector img = getAll(x); 
+        newfound.addAll(img); 
+      } 
+
+      newfound.removeAll(found); 
+      found.addAll(newfound); 
+    } 
+ 
+    return maxpath; 
   } 
 
 }

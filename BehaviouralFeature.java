@@ -4107,6 +4107,48 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public Map energyAnalysis(Vector redUses, Vector amberUses)
+  { // Scan the postcondition/activity for energy expensive
+    // expressions/code
+
+    Map res = new Map(); 
+    res.set("red", 0); 
+    res.set("amber", 0); 
+
+    java.util.Map clones = new java.util.HashMap(); 
+    java.util.Map defs = new java.util.HashMap(); 
+
+    if (post != null) 
+    { res = post.energyUse(res, redUses, amberUses);
+
+      // System.out.println(res); 
+      // System.out.println(redUses); 
+      // System.out.println(amberUses); 
+ 
+      post.findClones(clones, defs, null, name); 
+      if (clones.size() > 0)
+      { java.util.Set actualClones = new java.util.HashSet(); 
+
+        for (Object key : clones.keySet())
+        { java.util.List occs = 
+            (java.util.List) clones.get(key); 
+          if (occs.size() > 1)
+          { actualClones.add(key); } 
+        } 
+
+        if (actualClones.size() > 0)
+        { redUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones); 
+          int rscore = (int) res.get("red");
+          rscore = rscore + actualClones.size();
+          res.set("red", rscore);
+        } 
+      } // In a postcondition they usually are repeats.
+    } 
+
+    return res; 
+  } 
+
+
   public int displayMeasures(PrintWriter out)   
   { String res = ""; 
     String nme = getName(); 

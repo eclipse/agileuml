@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -142,6 +142,37 @@ public class ConditionalExpression extends Expression
   { Statement ifstat = ifExp.generateDesign(env,local); 
     Statement elsestat = elseExp.generateDesign(env,local); 
     return new ConditionalStatement(test, ifstat, elsestat); 
+  } 
+
+  public Map energyUse(Map res, Vector rUses, Vector oUses) 
+  { test.energyUse(res,rUses,oUses); 
+    ifExp.energyUse(res,rUses,oUses); 
+    elseExp.energyUse(res,rUses,oUses);
+
+    // if s->includes(x) then s else s->including(x) endif
+    // for s : Sequence is a potential issue. s : OrderedSet
+    // or s : Set could be more efficient if uniqueness needed
+
+    if (test instanceof BinaryExpression && 
+        elseExp instanceof BinaryExpression)
+    { BinaryExpression testbe = (BinaryExpression) test; 
+      BinaryExpression elsebe = (BinaryExpression) elseExp; 
+
+      if ("->includes".equals(testbe.getOperator()) && 
+          (testbe.getLeft() + "").equals(ifExp + "") && 
+          ifExp.hasSequenceType() && 
+          (testbe.getLeft() + "").equals(elsebe.getLeft() + "") && 
+          (testbe.getRight() + "").equals(elsebe.getRight() + ""))
+      { if (elsebe.getOperator().equals("->including") || 
+            elsebe.getOperator().equals("->append"))
+        { oUses.add("! Using sequence " + ifExp + " as set"); 
+          int oscore = (int) res.get("amber"); 
+          res.set("amber", oscore + 1); 
+        } 
+      } 
+    } 
+
+    return res; 
   } 
 
   public int syntacticComplexity()

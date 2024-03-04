@@ -3646,6 +3646,9 @@ public static boolean conflictsReverseOp(String op1, String op2)
 
   public abstract int cyclomaticComplexity(); 
 
+  public abstract Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses); 
+
   public Expression isExistsForall(Vector foralls, Expression tracest)
   { return null; }
 

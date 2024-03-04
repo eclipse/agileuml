@@ -677,6 +677,41 @@ public void findClones(java.util.Map clones,
     return this; 
   } 
 
+  public Map energyUse(Map res, Vector rUses, Vector aUses) 
+  { // ->sort()
+    // is amber flag.
+    // ->select(...)->any() is a red flag.  
+
+    argument.energyUse(res, rUses, aUses); 
+
+    if (operator.equals("->any"))
+    {
+      if (argument instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) argument; 
+
+        if (lbe.operator.equals("|") ||
+            lbe.operator.equals("->select"))
+        { rUses.add("!!! Inefficient ->select(x | P)->any(), use ->any(x | P)");
+          int rscore = (int) res.get("red"); 
+          res.set("red", rscore+1); 
+        }
+        else if (lbe.operator.equals("|R") ||
+            lbe.operator.equals("->reject"))
+        { rUses.add("!!! Inefficient ->reject(x | P)->any(), use ->any(x | not(P))");
+          int rscore = (int) res.get("red"); 
+          res.set("red", rscore+1); 
+        }
+      } 
+    }
+    else if ("->sort".equals(operator))
+    { aUses.add("! n*log(n) sorting algorithm");
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1); 
+    } 
+    
+    return res; 
+  } 
+
   public int syntacticComplexity() 
   { int res = argument.syntacticComplexity(); 
     return res + 1; 

@@ -193,6 +193,8 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  public abstract Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses);
 
   public static boolean endsWithSelfCall(
             BehaviouralFeature bf, String nme, Statement st)
@@ -2161,6 +2163,14 @@ class ReturnStatement extends Statement
     value.findClones(clones,cloneDefs,rule,op); 
   }
 
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { if (value == null) 
+    { return uses; } 
+    value.energyUse(uses, rUses, oUses); 
+    return uses; 
+  }  
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { if (value == null) 
     { return; }
@@ -2680,6 +2690,9 @@ class BreakStatement extends Statement
                          String op, String rule)
   { return; } 
 
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { return uses; }  
 }
 
 class ContinueStatement extends Statement
@@ -2859,6 +2872,11 @@ class ContinueStatement extends Statement
                          java.util.Map cloneDefs,
                          String op, String rule)
   { return; } 
+
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { return uses; }  
+
 }
 
 
@@ -3124,10 +3142,16 @@ class InvocationStatement extends Statement
     clones.put(val,used); */ 
   }
 
-public void findClones(java.util.Map clones, 
+  public void findClones(java.util.Map clones, 
                        java.util.Map cloneDefs,
                        String rule, String op)
   { } 
+
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { callExp.energyUse(uses, rUses, oUses);  
+    return uses; 
+  }  
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { String val = callExp + ""; 
@@ -3863,6 +3887,12 @@ class ImplicitInvocationStatement extends Statement
     callExp.findClones(clones,cloneDefs,rule,op); 
   }
 
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { callExp.energyUse(uses, rUses, oUses); 
+    return uses; 
+  }  
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { callExp.findMagicNumbers(mgns, this + "", op); } 
 
@@ -4460,6 +4490,14 @@ class WhileStatement extends Statement
     } 
     body.findClones(clones,cdefs,rule,op); 
   }
+
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { if (loopRange != null) 
+    { loopRange.energyUse(uses,rUses,aUses); }  
+    body.energyUse(uses,rUses,aUses);
+
+    return uses; 
+  } // red if nested loops. Amber for a while loop.
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { if (loopRange != null) 
@@ -6005,6 +6043,12 @@ class CreationStatement extends Statement
     return res; 
   } 
 
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { if (initialExpression != null) 
+    { initialExpression.energyUse(uses, rUses, aUses); } 
+    return uses; 
+  } 
+
 
   /* public CreationStatement(Attribute vbl, Type typ)
   { createsInstanceOf = typ.getName();
@@ -7357,6 +7401,15 @@ class SequenceStatement extends Statement
 
   } 
 
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      stat.energyUse(uses, rUses, aUses); 
+    }
+
+    return uses; 
+  } 
+    
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { for (int i = 0; i < statements.size(); i++) 
     { Statement stat = (Statement) statements.get(i); 
@@ -8756,6 +8809,12 @@ class ErrorStatement extends Statement
     return new ErrorStatement(null); 
   } 
 
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { if (thrownObject != null) 
+    { thrownObject.energyUse(uses, rUses, aUses); } 
+    return uses; 
+  } 
+
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
   { if (thrownObject != null) 
     { Expression tobj = 
@@ -9066,6 +9125,14 @@ class AssertStatement extends Statement
 
   public Object clone() 
   { return new AssertStatement(condition,message); } 
+
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { if (condition != null) 
+    { condition.energyUse(uses, rUses, aUses); } 
+    if (message != null)
+    { message.energyUse(uses, rUses, aUses); } 
+    return uses; 
+  } 
 
   public Statement dereference(BasicExpression var) 
   { Expression newcond = condition; 
@@ -9496,6 +9563,12 @@ class CatchStatement extends Statement
     { action.findMagicNumbers(mgns, this + "", op); }
   } 
 
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { if (action != null) 
+    { action.energyUse(uses, rUses, aUses); } 
+    return uses; 
+  } 
+
   public Statement addContainerReference(BasicExpression ref,
                                          String var,
                                          Vector excls) 
@@ -9919,6 +9992,22 @@ class TryStatement extends Statement
     if (endStatement != null) 
     { endStatement.findClones(clones,cdefs,rule,op); } 
   } 
+
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { if (body != null) 
+    { body.energyUse(uses, rUses, aUses); } 
+    
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement stat = (Statement) catchClauses.get(i); 
+      stat.energyUse(uses, rUses, aUses); 
+    }
+
+    if (endStatement != null)
+    { endStatement.energyUse(uses, rUses, aUses); } 
+
+    return uses; 
+  } 
+
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { if (body != null) 
@@ -11709,6 +11798,14 @@ class AssignStatement extends Statement
     rhs.findClones(clones,cdefs,rule,op); 
   }
 
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { lhs.energyUse(uses, rUses, oUses); 
+    rhs.energyUse(uses, rUses, oUses);
+    return uses; 
+  }  
+
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { lhs.findMagicNumbers(mgns, "" + this, op);
     rhs.findMagicNumbers(mgns, "" + this, op); 
@@ -12807,6 +12904,17 @@ class ConditionalStatement extends Statement
     return new ConditionalStatement(testc, ifc, elsec); 
   }  
 
+  public Map energyUse(Map uses, 
+                                Vector rUses, Vector oUses)
+  { test.energyUse(uses, rUses, oUses); 
+    ifPart.energyUse(uses, rUses, oUses);
+
+    if (elsePart != null) 
+    { elsePart.energyUse(uses, rUses, oUses); } 
+ 
+    return uses; 
+  } // if s->includes(x) then skip else s := s->including(x)
+
   public void findClones(java.util.Map clones, String rule, String op)
   { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT)
     { /* String val = test + ""; 
@@ -13391,6 +13499,10 @@ class FinalStatement extends Statement
                          String rule, String op)
   { body.findClones(clones,cdefs,rule,op); } 
 
+  public Map energyUse(Map uses, Vector rUses, Vector aUses)
+  { body.energyUse(uses, rUses, aUses);  
+    return uses; 
+  } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { body.findMagicNumbers(mgns,this + "",op); } 

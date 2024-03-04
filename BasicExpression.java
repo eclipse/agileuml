@@ -17105,6 +17105,58 @@ public Statement generateDesignSubtract(Expression rhs)
 
   } 
 
+  public Map energyUse(Map res, Vector rUses, Vector oUses) 
+  { // Calls to OclType reflection operators and OclDatasource
+    // connect are red flags. 
+
+    if (objectRef != null) 
+    { objectRef.energyUse(res,rUses,oUses); }
+
+    if (arrayIndex != null) 
+    { arrayIndex.energyUse(res,rUses,oUses); } 
+
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        par.energyUse(res,rUses,oUses); 
+      } 
+    } 
+
+    if (umlkind == VALUE) {} 
+    else if (umlkind == UPDATEOP || 
+             umlkind == QUERY) 
+    { if ("OclProcess".equals(objectRef + "") &&
+          "newOclProcess".equals(data))
+      { rUses.add("!!! Call of process/task creation");
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      }
+      else if ("OclType".equals(objectRef + "") && 
+               "loadExecutableObject".equals(data))
+      { rUses.add("!!! Runtime library loading");
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      } 
+      else if ("OclDatasource".equals(objectRef + "") && 
+               "getConnection".equals(data))
+      { rUses.add("!!! Database/internet connection");
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      } 
+      else if ("OclType".equals(objectRef + "") && 
+               ("getAttributeValue".equals(data) || 
+                "setAttributeValue".equals(data) || 
+                "hasAttribute".equals(data) || 
+                "removeAttribute".equals(data)))
+      { rUses.add("!!! Reflection is expensive");
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      } 
+    }     
+
+    return res; 
+  } 
+
   public int syntacticComplexity() 
   { int res = 0; 
 

@@ -5372,9 +5372,57 @@ public class Entity extends ModelElement implements Comparable
     } 
     return sze; 
   } 
+  
+  public Map energyAnalysis()
+  { Map res = new Map(); 
+    res.set("red", 0); 
+    res.set("amber", 0); 
 
+    String ename = getName(); 
+    int n = operations.size(); 
 
-           
+    for (int i = 0; i < n; i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
+      String opname = op.getName(); 
+
+      Vector redDetails = new Vector(); 
+      Vector amberDetails = new Vector(); 
+
+      Map res1 = op.energyAnalysis(redDetails, amberDetails);
+ 
+      int redop = (int) res1.get("red"); 
+      int amberop = (int) res1.get("amber"); 
+      
+      if (redop > 0) 
+      { System.out.println("!!! Operation " + opname + 
+                           " has " + redop + " energy use " +
+                           " red flags!");
+
+        for (int j = 0; j < redDetails.size(); j++) 
+        { System.out.println(redDetails.get(j)); } 
+        System.out.println(); 
+ 
+        int redscore = (int) res.get("red"); 
+        res.set("red", redscore + redop); 
+      } 
+     
+      if (amberop > 0) 
+      { System.out.println("!! Operation " + opname + 
+                           " has " + amberop + 
+                           " energy use " +
+                           " amber flags!"); 
+
+        for (int j = 0; j < amberDetails.size(); j++) 
+        { System.out.println(amberDetails.get(j)); } 
+        System.out.println(); 
+
+        int amberscore = (int) res.get("amber"); 
+        res.set("amber", amberscore + amberop); 
+      } 
+    } 
+
+    return res; 
+  } 
   
   public Map getCallGraph()
   { Map res = new Map(); 
