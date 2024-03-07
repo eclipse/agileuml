@@ -259,8 +259,20 @@ public class Attribute extends ModelElement
     kind = INTERNAL; 
   } 
 
+  public static Attribute randomAttribute(Vector entities)
+  { String nme = ModelElement.randomString(10);
+    Type typ = Type.randomType(entities);
+    nme = ModelElement.decapitalise(nme); 
+ 
+    Attribute res = 
+      new Attribute(nme, typ, ModelElement.INTERNAL); 
+
+    return res; 
+  }  
+
   public static Attribute fromOperation(BehaviouralFeature qf) 
-  { Attribute res = new Attribute(qf.getName(),null,ModelElement.INTERNAL); 
+  { Attribute res = 
+      new Attribute(qf.getName(),null,ModelElement.INTERNAL); 
     Type restype = qf.getResultType();
 
     if (restype == null)
@@ -9095,6 +9107,17 @@ public String swiftUIFormInitialiser()
     } 
     else 
     { return ""; } 
+  } 
+
+  public static void main(String[] args)
+  { Attribute att = Attribute.randomAttribute(new Vector()); 
+    System.out.println(att.getName() + " : " + att.getType());
+    att = Attribute.randomAttribute(new Vector()); 
+    System.out.println(att.getName() + " : " + att.getType());
+    att = Attribute.randomAttribute(new Vector()); 
+    System.out.println(att.getName() + " : " + att.getType());
+    att = Attribute.randomAttribute(new Vector()); 
+    System.out.println(att.getName() + " : " + att.getType()); 
   } 
 
 

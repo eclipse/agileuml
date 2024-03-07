@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1789,12 +1789,14 @@ public class Type extends ModelElement
   public static boolean isEntityCollection(Type t) 
   { if (t == null) { return false; } 
     String nme = t.getName(); 
+
     if ("Set".equals(nme) || "Sequence".equals(nme))  
     { Type elemt = t.getElementType(); 
       if (elemt == null) 
       { return false; } 
       return elemt.isEntity();
     } 
+
     return false;  
   } 
 
@@ -5562,6 +5564,46 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public static Type randomType(Vector entities)
+  { double dd = Math.random(); 
+    int nn = (int) (dd*8); 
+
+    if (nn == 0)
+    { return new Type("int", null); } 
+
+    if (nn == 1)
+    { return new Type("String", null); } 
+
+    if (nn == 2)
+    { return new Type("double", null); } 
+
+    if (nn == 3)
+    { return new Type("long", null); } 
+
+    if (nn == 4)
+    { return new Type("boolean", null); } 
+
+    if (nn == 5)
+    { Type elemT = Type.randomType(entities); 
+      Type res = new Type("Sequence", null); 
+      res.elementType = elemT; 
+      return res; 
+    } 
+
+    if (nn == 6)
+    { Type elemT = Type.randomType(entities); 
+      Type res = new Type("Set", null); 
+      res.elementType = elemT; 
+      return res; 
+    }
+
+    if (nn == 7 && entities.size() > 0)
+    { Entity ent = (Entity) ModelElement.randomElement(entities); 
+      return new Type(ent); 
+    }
+
+    return new Type("OclAny", null); 
+  } 
 
   public static void main(String[] args) 
   { /* Boolean b = new Boolean(true); 
@@ -5595,6 +5637,16 @@ public class Type extends ModelElement
 	
 	System.out.println(tt); 
 	*/  
+
+
+     Type t1 = Type.randomType(new Vector()); 
+     System.out.println(t1); 
+     t1 = Type.randomType(new Vector()); 
+     System.out.println(t1); 
+     t1 = Type.randomType(new Vector()); 
+     System.out.println(t1); 
+     t1 = Type.randomType(new Vector()); 
+     System.out.println(t1); 
   } 
 }
 
