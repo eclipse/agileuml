@@ -4145,6 +4145,36 @@ public class BehaviouralFeature extends ModelElement
       } // In a postcondition they usually are repeats.
     } 
 
+    clones = new java.util.HashMap(); 
+    defs = new java.util.HashMap();
+
+    if (activity != null) 
+    { res = activity.energyUse(res, redUses, amberUses);
+
+      // System.out.println(res); 
+      // System.out.println(redUses); 
+      // System.out.println(amberUses); 
+ 
+      activity.findClones(clones, defs, null, name); 
+      if (clones.size() > 0)
+      { java.util.Set actualClones = new java.util.HashSet(); 
+
+        for (Object key : clones.keySet())
+        { java.util.List occs = 
+            (java.util.List) clones.get(key); 
+          if (occs.size() > 1)
+          { actualClones.add(key); } 
+        } 
+
+        if (actualClones.size() > 0)
+        { amberUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones); 
+          int ascore = (int) res.get("amber");
+          ascore = ascore + actualClones.size();
+          res.set("amber", ascore);
+        } 
+      } // In a postcondition they usually are repeats.
+    } 
+
     return res; 
   } 
 

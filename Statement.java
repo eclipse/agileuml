@@ -138,6 +138,24 @@ abstract class Statement implements Cloneable
     return new BasicExpression("null");
   } 
 
+  public static Statement getFirstStatement(Statement st)
+  { if (st == null) 
+    { return null; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+
+      if (sq.size() >= 1) 
+      { Statement stat = sq.getStatement(0); 
+        return Statement.getFirstStatement(stat); 
+      } 
+
+      return null;
+    } 
+
+    return st; 
+  } 
+
   public static Vector getReturnValues(Statement st)
   { Vector res = new Vector(); 
     if (st == null) 
@@ -188,6 +206,56 @@ abstract class Statement implements Cloneable
         }  
       } 
       res.addAll(getReturnValues(ts.getEndStatement())); 
+    } 
+
+    return res;
+  } // Other cases, for all other forms of statement. 
+
+  public static boolean hasLoopStatement(Statement st)
+  { boolean res = false; 
+    if (st == null) 
+    { return res; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          if (Statement.hasLoopStatement(stat))
+          { return true; }
+        }  
+      } 
+      return res;
+    } 
+    
+    if (st instanceof ReturnStatement)
+    { return res; } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      if (Statement.hasLoopStatement(cs.ifPart()))
+      { return true; }  
+      return Statement.hasLoopStatement(cs.elsePart());
+    } 
+
+    if (st instanceof WhileStatement) 
+    { return true; } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      if (Statement.hasLoopStatement(ts.getBody()))
+      { return true; } 
+ 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          if (Statement.hasLoopStatement(stat))
+          { return true; } 
+        }  
+      } 
+      return Statement.hasLoopStatement(ts.getEndStatement()); 
     } 
 
     return res;
@@ -4496,6 +4564,18 @@ class WhileStatement extends Statement
     { loopRange.energyUse(uses,rUses,aUses); }  
     body.energyUse(uses,rUses,aUses);
 
+    if (loopKind == WHILE)
+    { int acount = (int) uses.get("amber"); 
+      uses.set("amber", acount + 1); 
+      aUses.add("! Unbounded loops can be inefficient"); 
+    } 
+
+    if (Statement.hasLoopStatement(body))
+    { int rcount = (int) uses.get("red"); 
+      uses.set("red", rcount + 1); 
+      rUses.add("!!! Nested loops can be very inefficient"); 
+    }
+
     return uses; 
   } // red if nested loops. Amber for a while loop.
 
@@ -7338,7 +7418,7 @@ class SequenceStatement extends Statement
 
     Vector substats = VectorUtil.allSubsegments(fstats,2);
 
-    System.out.println(">>> All subsegments = " + substats); 
+    // System.out.println(">>> All subsegments = " + substats); 
  
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
@@ -7377,7 +7457,7 @@ class SequenceStatement extends Statement
 
     Vector substats = VectorUtil.allSubsegments(fstats,2); 
 
-    System.out.println(">>> All subsegments = " + substats); 
+    // System.out.println(">>> All subsegments = " + substats); 
 
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
@@ -8706,6 +8786,19 @@ class CaseStatement extends Statement
       res = res + cse.cyclomaticComplexity() + 1; 
     }
     return res; 
+  }
+
+  public Map energyUse(Map uses, Vector ruses, Vector ouses) 
+  { 
+    int n = cases.elements.size();
+
+    for (int i = 0; i < n; i++)
+    { Maplet mm = (Maplet) cases.elements.elementAt(i);
+      Statement cse = (Statement) mm.dest;
+      cse.energyUse(uses, ruses, ouses); 
+    }
+
+    return uses; 
   }
 
   public int epl() 
@@ -10794,6 +10887,15 @@ class IfStatement extends Statement
     } 
   }
 
+  public Map energyUse(Map uses, Vector ruses, Vector ouses)
+  { for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      cse.energyUse(uses, ruses, ouses); 
+    } 
+
+    return uses; 
+  }
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { for (int i = 0; i < cases.size(); i++) 
     { IfCase cse = (IfCase) cases.get(i); 
@@ -11633,6 +11735,12 @@ class AssignStatement extends Statement
   public Expression getRight()
   { return rhs; } 
 
+  public Expression getLhs()
+  { return lhs; } 
+
+  public Expression getRhs()
+  { return rhs; } 
+
 
   public void setType(Type t)
   { type = t; } 
@@ -12462,6 +12570,12 @@ class IfCase
     ifPart.findClones(clones,cdefs,rule,op);
   }
 
+  public Map energyUse(Map uses, Vector ruses, Vector ouses)
+  { test.energyUse(uses, ruses, ouses); 
+    ifPart.energyUse(uses, ruses, ouses);
+    return uses; 
+  }
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { test.findMagicNumbers(mgns,this + "",op); 
     ifPart.findMagicNumbers(mgns,rule,op);
@@ -12911,7 +13025,38 @@ class ConditionalStatement extends Statement
 
     if (elsePart != null) 
     { elsePart.energyUse(uses, rUses, oUses); } 
+    else 
+    { return uses; } 
+
+    Statement elseStat = Statement.getFirstStatement(elsePart); 
  
+    if (test instanceof BinaryExpression && 
+        elseStat instanceof AssignStatement)
+    { BinaryExpression testbe = (BinaryExpression) test;
+      AssignStatement elseassign = (AssignStatement) elseStat; 
+
+      if (elseassign.getRhs() instanceof BinaryExpression) 
+      { BinaryExpression elsebe = 
+                  (BinaryExpression) elseassign.getRhs(); 
+        Expression ifExp = elsebe.getLeft(); 
+
+        if ("->includes".equals(testbe.getOperator()) && 
+            (testbe.getLeft() + "").equals(
+                             elseassign.getLhs() + "") && 
+            ifExp.hasSequenceType() && 
+            (testbe.getLeft() + "").equals(ifExp + "") && 
+            (testbe.getLeft() + "").equals(elsebe.getLeft() + "") && 
+            (testbe.getRight() + "").equals(elsebe.getRight() + ""))
+        { if (elsebe.getOperator().equals("->including") || 
+              elsebe.getOperator().equals("->append"))
+          { oUses.add("! Possibly using sequence " + ifExp + " as set"); 
+            int oscore = (int) uses.get("amber"); 
+            uses.set("amber", oscore + 1); 
+          }
+        } 
+      } 
+    } 
+
     return uses; 
   } // if s->includes(x) then skip else s := s->including(x)
 
