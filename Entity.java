@@ -141,7 +141,41 @@ public class Entity extends ModelElement implements Comparable
  
     return this; 
   } 
+
+  public static Entity randomEntity(Vector entities)
+  { String nme = ModelElement.randomString(7); 
+    nme = ModelElement.capitalise(nme); 
+    Entity res = 
+      (Entity) ModelElement.lookupByName(nme, entities);
  
+    while (res != null)
+    { nme = ModelElement.randomString(7); 
+      nme = ModelElement.capitalise(nme); 
+      res = (Entity) ModelElement.lookupByName(nme, entities);
+    } 
+  
+    res = new Entity(nme); 
+    entities.add(res); 
+
+    int nattrs = (int) (10 * Math.random()); 
+
+    for (int i = 0; i < nattrs; i++) 
+    { Attribute attr = Attribute.randomAttribute(entities); 
+      Type typ = attr.getType(); 
+
+      if (typ.isEntity() || Type.isEntityCollection(typ))
+      { Association ast = 
+            new Association(res, attr); 
+        res.addAssociation(ast);
+      } 
+      else 
+      { res.addAttribute(attr); } 
+    } 
+
+    return res; 
+  } 
+
+
   public static boolean validEntityName(String ename)
   { if (ename.length() == 0) 
     { return false; } 
@@ -149,12 +183,14 @@ public class Entity extends ModelElement implements Comparable
     { } 
     else 
     { return false; } 
+
     for (int i = 1; i < ename.length(); i++) 
     { if (Character.isJavaIdentifierPart(ename.charAt(i)))
       { } 
       else 
       { return false; } 
     } 
+
     return true; 
   } 
 

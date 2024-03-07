@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.List; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -12,7 +12,9 @@ import java.util.List;
 * *****************************/
 /* package: Class Diagram  */ 
 
-/* Major change: May 2016 - addr(obj,val) for 0..1 association end now enforces val : obj.r */  
+/* Major change: May 2016 - addr(obj,val) for 0..1 association 
+   end now enforces val : obj.r even if it displaces an 
+   existing element of obj.r */  
 
 public class Association extends ModelElement
 { private Entity entity1;
@@ -78,9 +80,23 @@ public class Association extends ModelElement
   public Association(Entity e1, Attribute att) 
   { super(e1.getName() + "_" + att.getName()); 
     entity1 = e1; 
-    entity2 = att.getType().getEntity(); 
-    card1 = MANY; 
-    card2 = ONE; 
+
+    Type tt = att.getType();
+ 
+    if (tt != null && tt.isEntity())
+    { entity2 = tt.getEntity(); 
+      card1 = MANY; 
+      card2 = ONE;
+    } 
+    else if (tt != null && Type.isEntityCollection(tt))
+    { Type et = tt.getElementType(); 
+      entity2 = et.getEntity(); 
+      card1 = MANY; 
+      card2 = MANY;
+      if (tt.isSequenceType())
+      { setOrdered(true); } 
+    }  
+ 
     role1 = ""; 
     role2 = att.getName(); 
   } 
