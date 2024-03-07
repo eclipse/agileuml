@@ -283,6 +283,8 @@ public void findPlugins()
         // loadEcoreMI.setMnemonic(KeyEvent.VK_L);
     loadMTMenu.add(loadCSTLMI);
 
+    fileMenu.addSeparator(); 
+
     JMenuItem tl2umlrsds = 
       new JMenuItem("Map TL to bx"); 
     tl2umlrsds.addActionListener(this);
@@ -376,6 +378,22 @@ public void findPlugins()
     fromSQL.setToolTipText(
       "Creates UML/OCL from AST produced by Antlr SQLite parser, in output/ast.txt");
     fileMenu.add(fromSQL);
+
+    fileMenu.addSeparator(); 
+
+    JMenuItem randomModel = 
+      new JMenuItem("Random model");
+    randomModel.addActionListener(this);
+    randomModel.setToolTipText(
+      "Creates random UML model");
+    fileMenu.add(randomModel);
+
+    JMenuItem randomModels = 
+      new JMenuItem("Random models");
+    randomModels.addActionListener(this);
+    randomModels.setToolTipText(
+      "Creates random UML model and translates to Java");
+    fileMenu.add(randomModels);
 
     fileMenu.addSeparator(); 
 
@@ -1801,6 +1819,16 @@ public void findPlugins()
       else if (label.equals("From SQL AST")) 
       { ucdArea.loadFromSQL();
         saved = true; 
+      }
+      else if (label.equals("Random model")) 
+      { ucdArea.randomModel();
+        saved = true; 
+      }
+      else if (label.equals("Random models")) 
+      { for (int i = 0; i < 5; i++) 
+        { ucdArea = new UCDArea(this); 
+          ucdArea.randomModels2Java();
+        } 
       }
       else if (label.equals("Print"))
       { printData(); } 

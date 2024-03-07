@@ -298,6 +298,130 @@ public class UCDArea extends JPanel
     return res; 
   } 
 
+  public void randomModels2Java()
+  { File file = new File("./cg/uml2java.cstl");
+	  
+    if (file == null) { return; }
+
+    randomModel();
+
+    long index = (new Date()).getTime(); 
+
+    try
+    { File km3file = new File("./output/example" + index + ".km3"); 
+      PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(km3file)));
+      saveKM3(out); 
+      out.close(); 
+    }
+    catch (IOException e) 
+    { System.err.println("!! Error saving KM3"); }
+    
+    Vector vs = new Vector();
+    vs.add("cginterface.cstl"); 
+    vs.add("jwrap.cstl"); 
+     
+    CGSpec spec = loadCSTL(file,vs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + file.getName()); 
+      return; 
+    } 
+
+    
+    // CSTL.loadTemplates(types,entities,file.getName()); 
+
+    System.out.println(">>> Loaded " + file.getName()); 
+
+    String newtypes = ""; 
+    String newclasses = ""; 
+    String newusecases = ""; 
+
+    /* Argument _2 of the package rule */
+	
+    java.util.Date d1 = new java.util.Date(); 
+
+
+    for (int i = 0; i < types.size(); i++) 
+    { Type t = (Type) types.get(i); 
+      if (t.isEnumeration())
+      { String newt = t.cgEnum(spec);
+        newtypes = newtypes + newt + '\n'; 
+      } 
+      else if (t.isDatatype())
+      { String newt = t.cgDatatype(spec);
+        newtypes = newtypes + newt + '\n'; 
+      } 
+    } 
+
+    /* Argument _3 of the package rule */ 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity t = (Entity) entities.get(i);
+
+      // System.out.println(">>> Processing class: " + t); 
+
+      t.generateOperationDesigns(types,entities);
+
+      // System.out.println(">>> After computation of designs: " + t.getKM3()); 
+  
+      String newt = t.cg(spec);
+      newclasses = newclasses + newt + '\n'; 
+      
+      // System.out.println("Transformed entity is: " + newt); 
+    } 
+
+    /* Argument _4 of the package rule */ 
+
+    Vector ucs = new Vector(); 
+
+   /*
+    for (int i = 0; i < useCases.size(); i++) 
+    { Object uc = useCases.get(i); 
+      if (uc instanceof UseCase) 
+      { UseCase xx = (UseCase) uc; 
+        ucs.add(xx); 
+          // xx.implementBehaviour(types,entities); 
+        String newt = xx.cg(spec,types,entities);
+        String arg1 = CGRule.correctNewlines(newt); 
+        newusecases = newusecases + arg1 + '\n';
+      } 
+    } */  
+    // Ignores OperationDescriptions, which are only used for web/eis/mobile generation
+
+    // java.util.Date d2 = new java.util.Date(); 
+
+    File chtml = new File("output/example" + index + ".java"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      
+      spec.transformPackage(newtypes,newclasses,newusecases, 
+                            types,entities,ucs, chout);   
+
+
+      chout.println(); 
+
+      chout.close(); 
+      // System.out.println(">>> Time taken for code generation = " + (d2.getTime() - d1.getTime())); 
+      // System.out.println(">>> Code written to output/cgout.txt"); 
+    } catch (Exception e) { } 
+
+  } 
+
+  public void randomModel()
+  { // up to 7 classes 
+
+    int n = (int) (7 * Math.random()); 
+
+    for (int i = 0; i < 7; i++) 
+    { Entity ent = Entity.randomEntity(entities); 
+      addEntity(ent, 100+((i/4)*200), 100 + 150*i); 
+    } 
+  } 
+
   public void addImport(String imprt) 
   { // if (importList.contains(imprt)) { } 
     // else 
