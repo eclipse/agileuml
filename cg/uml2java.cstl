@@ -46,6 +46,8 @@ AccessingException |-->IllegalAccessException
 _1 |-->_1
 
 
+
+
 Enumeration::
 enumeration _1 { _2 } |-->enum _1 { _2 } \n
 
@@ -459,7 +461,7 @@ static attribute _1 : _2; |-->  static _2 _1 = _2`defaultValue;\n
 
 identity attribute _1 : _2 |-->  _2 _1 = _2`defaultValue; /* primary */\n  static Map<_2,_1`ownername> _1`ownername_index = new HashMap<_2,_1`ownername>();\n\n  static _1`ownername createByPK_1`ownername(_2 _1x)\n  { _1`ownername result = _1`ownername._1`ownername_index.get(_1x);\n    if (result != null) { return result; }\n    result = new _1`ownername();\n    _1`ownername._1`ownername_index.put(_1x,result);\n    result._1 = _1x;\n    return result; }\n\n  static void kill_1`ownername(_2 _1x)\n  { _1`ownername rem = _1`ownername_index.get(_1x);\n    if (rem == null) { return; }\n    ArrayList<_1`ownername> remd = new ArrayList<_1`ownername>();\n    remd.add(rem);\n    _1`ownername_index.remove(_1x);\n    _1`ownername_allInstances.removeAll(remd);\n  }\n\n
 
-attribute _1 : _2 := _3; |-->  _2 _1 = _3;\n
+attribute _1 : _2 := _3; |-->  _2 _1 = _2`defInitValue;\n
 
 attribute _1 : _2; |-->  _2 _1 = _2`defaultValue;\n
 

@@ -213,6 +213,7 @@ SecurityException |-->AccessingException
 BindException |-->AccessingException
 ReadOnlyBufferException |-->AccessingException
 ReadOnlySystemException |-->AccessingException
+ConcurrentModificationException |-->AccessingException
 
 Object |-->OclAny
 Iterable |-->Sequence
@@ -855,6 +856,7 @@ SecurityException |-->AccessingException
 BindException |-->AccessingException
 ReadOnlyBufferException |-->AccessingException
 ReadOnlySystemException |-->AccessingException
+ConcurrentModificationException |-->AccessingException
 
 _1 . _* |-->_*`recurse
 _1 |-->_1
@@ -2997,7 +2999,7 @@ SecurityException |-->AccessingException
 BindException |-->AccessingException
 ReadOnlyBufferException |-->AccessingException
 ReadOnlySystemException |-->AccessingException
-
+ConcurrentModificationException |-->AccessingException
 
 Object |-->OclAny
 Iterable |-->Sequence

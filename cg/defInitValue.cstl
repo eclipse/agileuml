@@ -1,0 +1,39 @@
+Type::
+
+Sequence(_1) |-->new ArrayList<_1`jwrap>()
+Set(_1) |-->new HashSet<_1`jwrap>()
+Map(_1,_2) |-->new HashMap<_1`jwrap,_2`jwrap>()
+Function(_1,_2) |-->new Function<_1`jwrap,_2`jwrap>()
+Ref(_1) |-->new _1[]
+
+Sequence |-->new ArrayList()
+Set |-->new HashSet()
+Map |-->new HashMap()
+Ref |-->new Object[]
+
+int |-->0
+long |-->0
+boolean |-->false
+String |-->""
+double |-->0.0
+
+OclAny |-->null
+OclType |-->null
+
+OclException |-->null
+ProgramException |-->null 
+SystemException |-->null
+IOException |-->null 
+CastingException |-->null 
+NullAccessException |-->null
+IndexingException |-->null
+ArithmeticException |-->null
+IncorrectElementException |-->null
+AssertionException |-->null
+AccessingException |-->null
+
+_1 |-->(_1.values()[0])<when> _1 Enumerated
+
+_1 |-->null
+
+
