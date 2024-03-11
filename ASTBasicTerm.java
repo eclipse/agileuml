@@ -1721,7 +1721,8 @@ public class ASTBasicTerm extends ASTTerm
         "NoClassDefFoundError".equals(value) ||
         "BindException".equals(value) ||
         "ReadOnlyBufferException".equals(value) || 
-        "ReadOnlySystemException".equals(value)
+        "ReadOnlySystemException".equals(value) ||
+        "ConcurrentModificationException".equals(value)
        )
     { modelElement = new Type("AccessingException", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -2492,7 +2493,9 @@ public class ASTBasicTerm extends ASTTerm
         "NoClassDefFoundError".equals(value) ||
         "BindException".equals(value) ||
         "ReadOnlyBufferException".equals(value) || 
-        "ReadOnlySystemException".equals(value))
+        "ReadOnlySystemException".equals(value) ||
+        "ConcurrentModificationException".equals(value)
+       )
     { modelElement = new Type("AccessingException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "AccessingException"; 

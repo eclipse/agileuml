@@ -2290,7 +2290,7 @@ public class Type extends ModelElement
         "OclRandom".equals(estr))
     { return true; } 
     return false; 
-  } 
+  } // SQLStatement? OclDatasource?
 
   public boolean isValueType()
   { if (isBasicType(this)) 
@@ -2397,6 +2397,7 @@ public class Type extends ModelElement
     return res; 
   } 
 
+  // sortedness
   public String getUMLName()
   { String nme = getName(); 
     if (nme.equals("int")) { return "Integer"; } 
@@ -2423,6 +2424,7 @@ public class Type extends ModelElement
     return nme; 
   } 
 
+  // Also record sortedness. 
   public String getUMLModelName(PrintWriter out)
   { String nme = getName(); 
     if (nme.equals("int")) 
@@ -4610,6 +4612,18 @@ public class Type extends ModelElement
       rr.setSorted(true); 
       return rr; 
     } 
+
+    if (typ.equals("SortedSet"))
+    { Type rr = new Type("Set",null); 
+      rr.setSorted(true); 
+      return rr; 
+    } 
+
+    if (typ.equals("SortedMap"))
+    { Type rr = new Type("Map",null); 
+      rr.setSorted(true); 
+      return rr; 
+    } 
   
     Entity ent = (Entity) ModelElement.lookupByName(typ,entities); 
     if (ent != null) 
@@ -4647,6 +4661,15 @@ public class Type extends ModelElement
     { String nt = typ.substring(15,typ.length()-1);
       Type innerT = getTypeFor(nt, types, entities); 
       Type resT = new Type("Sequence",null); 
+      resT.setSorted(true); 
+      resT.setElementType(innerT); 
+      return resT; 
+    }   
+
+    if (typ.startsWith("SortedSet(") && typ.endsWith(")"))
+    { String nt = typ.substring(10,typ.length()-1);
+      Type innerT = getTypeFor(nt, types, entities); 
+      Type resT = new Type("Set",null); 
       resT.setSorted(true); 
       resT.setElementType(innerT); 
       return resT; 
@@ -5156,7 +5179,10 @@ public class Type extends ModelElement
   { String nme = name; 
     if ("Set".equals(nme) || "Sequence".equals(nme) || 
         "Ref".equals(nme))
-    { if (elementType == null)
+    { if (isSorted())
+      { nme = "Sorted" + nme; } 
+
+      if (elementType == null)
       { return nme; }
       else if (elementType == this)
       { return nme; }
@@ -5647,6 +5673,11 @@ public class Type extends ModelElement
      System.out.println(t1); 
      t1 = Type.randomType(new Vector()); 
      System.out.println(t1); 
+
+     Type tset = new Type("Set", null); 
+     tset.setElementType(new Type("long", null)); 
+     Expression expr = tset.getDefaultValueExpression();
+     System.out.println(expr.getElementType());  
   } 
 }
 

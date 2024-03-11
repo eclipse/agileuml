@@ -235,6 +235,9 @@ abstract class Expression
   public void setUmlKind(int k)
   { umlkind = k; } 
 
+  public void setUmlkind(int k)
+  { umlkind = k; } 
+
   public void setEntity(Entity e)
   { entity = e; } 
 
@@ -1512,6 +1515,20 @@ abstract class Expression
     // { obj = qf; } 
     Type seqtype = new Type("Set",null); 
     seqtype.setElementType(type); 
+    String jtype = seqtype.getJava7(type); 
+
+    return "Ocl.addSet(new " + jtype + "(), " + obj + ")";
+  }
+
+  public String makeSortedSetJava7(String qf)
+  { String obj = qf; 
+    // if (isPrimitive())
+    // { obj = wrap(qf); } 
+    // else 
+    // { obj = qf; } 
+    Type seqtype = new Type("Set",null); 
+    seqtype.setElementType(type);
+    seqtype.setSorted(true);  
     String jtype = seqtype.getJava7(type); 
 
     return "Ocl.addSet(new " + jtype + "(), " + obj + ")";

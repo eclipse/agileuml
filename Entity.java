@@ -143,7 +143,7 @@ public class Entity extends ModelElement implements Comparable
   } 
 
   public static Entity randomEntity(Vector entities)
-  { String nme = ModelElement.randomString(7); 
+  { String nme = ModelElement.randomNormalString(7); 
     nme = ModelElement.capitalise(nme); 
     Entity res = 
       (Entity) ModelElement.lookupByName(nme, entities);
@@ -155,6 +155,16 @@ public class Entity extends ModelElement implements Comparable
     } 
   
     res = new Entity(nme); 
+
+    double hasAncestor = 10*Math.random();
+
+    if (hasAncestor <= 2 && entities.size() > 0) 
+    { int ancestor = (int) (entities.size()*Math.random()); 
+      Entity supr = (Entity) entities.get(ancestor); 
+      res.setSuperclass(supr); 
+      supr.addSubclass(res); 
+    } 
+
     entities.add(res); 
 
     int nattrs = (int) (10 * Math.random()); 
@@ -10567,23 +10577,30 @@ public class Entity extends ModelElement implements Comparable
       if (att.isFrozen()) { } 
       else 
       { String par = 
-          att.setOperationJava7(this,invariants,entities,types);   
+          att.setOperationJava7(this,invariants,
+                                entities,types);   
         if (par != null)
         { out.println("  " + par + "\n"); }
 
         if (att.isSequence())
         { String par1 = 
             att.setIndexOperationJava7(this, 
-                                    invariants, entities, types);
+                               invariants, entities, types);
           if (par1 != null) 
           { out.println("  " + par1 + "\n"); }
           par = att.addremOperationJava7(this); 
           if (par != null) 
           { out.println("  " + par + "\n"); }
         } 
+        else if (att.isSet())
+        { par = att.addremOperationJava7(this); 
+          if (par != null) 
+          { out.println("  " + par + "\n"); }
+        } 
         else if (att.isMap())
         { String par1 = 
-            att.setMapIndexOperationJava7(this, invariants, entities, types);
+            att.setMapIndexOperationJava7(this, 
+                               invariants, entities, types);
           if (par1 != null) 
           { out.println("  " + par1 + "\n"); }
         } 

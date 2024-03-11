@@ -1897,23 +1897,29 @@ class BasicExpression extends Expression
     //   return false;
     // } 
 
+    if (type != null && type.isSorted())
+    { return true; } 
+
     if (umlkind == FUNCTION)
     { if (data.equals("asSet") || data.equals("closure") || 
           data.equals("subcollections"))
       { return false; } 
 
-      if (data.equals("sort") || data.equals("sortedBy"))
+      if (data.equals("sort")) // || data.equals("sortedBy"))
       { return true; } 
 
-      if (objectRef == null) { return false; } // invalid anyway
+      if (objectRef == null) 
+      { return false; } // invalid anyway
 
       if (objectRef.isSorted())
-      { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
+      { if (data.equals("front") || 
+            data.equals("tail") ||
             // data.equals("removeAt") || 
             data.equals("subrange"))
         { return true; } 
       } 
-      else if ("Integer".equals("" + objectRef) && "subrange".equals(data))
+      else if ("Integer".equals("" + objectRef) && 
+               "subrange".equals(data))
       { return true; } 
 
       return false; 
@@ -1924,20 +1930,35 @@ class BasicExpression extends Expression
       { Association ast = entity.getDefinedRole(data); 
         if (ast != null) 
         { return ast.isSorted(); }  
-      } 
+      }
+ 
+      if (umlkind == ATTRIBUTE && entity != null) 
+      { Attribute ast = entity.getDefinedAttribute(data); 
+        if (ast != null) 
+        { return ast.isSorted(); }  
+      }
+
       return false;
     }
 
-    if (objectRef.isSorted())
-    { if (umlkind == ATTRIBUTE && multiplicity == ModelElement.ONE)
-      { return true; }  // if single-valued
-    }
+    if (objectRef == null && umlkind == VARIABLE && 
+        type != null)
+    { return type.isSorted(); } 
 
-    if (objectRef == null && (umlkind == QUERY || umlkind == UPDATEOP)) 
+    // if (objectRef.isSorted())
+    // { if (umlkind == ATTRIBUTE && 
+    //       multiplicity == ModelElement.ONE)
+    //   { return true; }  // if single-valued
+    // }
+
+    if (objectRef == null && 
+        (umlkind == QUERY || umlkind == UPDATEOP)) 
     { if (type == null) { return false; } 
-      BehaviouralFeature op = entity.getDefinedOperation(data); 
+      BehaviouralFeature op = 
+          entity.getDefinedOperation(data); 
       return op.isSorted(); 
-    } // the result type of the op is needed in type. 
+    } // the result type of the op is needed in type.
+ 
     return false;  // but it could be a singleton
   }
 

@@ -8088,7 +8088,13 @@ public class BSystemTypes extends BComponent
   } 
 
   public static String generateSortOpJava7()
-  { String res = "  public static ArrayList sort(Collection a)\n" + 
+  { String res = 
+      "  public static <T> TreeSet<T> sortSet(HashSet<T> col)\n" +
+      "  { TreeSet<T> res = new TreeSet<T>();\n" + 
+      "    res.addAll(col); \n" +
+      "    return res; \n" +
+      "  }\n\n" +  
+      "  public static ArrayList sort(Collection a)\n" + 
       "  { ArrayList res = new ArrayList();\n" + 
       "    res.addAll(a);\n" +
       "    Collections.sort(res);\n" + 
@@ -8262,19 +8268,19 @@ public class BSystemTypes extends BComponent
   public static String generateSortByOpJava7()
   { String res = "  public static <T> ArrayList<T> sortedBy(final ArrayList<T> a, ArrayList<?> f)\n" + 
       "  { int i = a.size()-1;\n" + 
-      "    if (i < 0) { return a; } \n" +
+      "    if (i < 0) { return a; } \n\n" +
       "    if (f.get(i) instanceof Comparable)\n" +
       "    { java.util.Map<T,Comparable> f_map = new java.util.HashMap<T,Comparable>();\n" +
       "      for (int j = 0; j < a.size(); j++)\n" +
       "      { f_map.put(a.get(j), (Comparable) f.get(j)); }\n" +
       "      return mergeSort(a,f_map,0,i);\n" +
-      "    } \n" +
+      "    } \n\n" +
       "    if (f.get(i) instanceof List)\n" + 
       "    { java.util.Map<T,List> list_map = new java.util.HashMap<T,List>();\n" +
       "      for (int j = 0; j < a.size(); j++)\n" +
       "      { list_map.put(a.get(j), (List) f.get(j)); }\n" +
       "      return mergeSortSequence(a, list_map, 0, i);\n" +
-      "    } \n" +
+      "    } \n\n" +
       "    return a;\n" + 
       "  }\n\n" +  
       "  static <T> ArrayList<T> mergeSort(final ArrayList<T> a, java.util.Map<T,Comparable> f, int ind1, int ind2)\n" + 
@@ -8328,7 +8334,7 @@ public class BSystemTypes extends BComponent
       "      { res.add(a1.get(k)); } \n" + 
       "    } \n" + 
       "    return res;\n" +  
-      "  }\n"; 
+      "  }\n\n"; 
 
     res = res + 
       "  static <T> ArrayList<T> mergeSortSequence(final ArrayList<T> a, java.util.Map<T,List> f, int ind1, int ind2)\n" + 

@@ -5798,21 +5798,24 @@ public class BehaviouralFeature extends ModelElement
         { BasicExpression preterm = (BasicExpression) preterms.get(i);
           if (processed.contains(preterm)) { continue; }  
           // check if the preterm is valid and skip if not. 
-          Type typ = preterm.getType();  // but actual type may be list if multiple
+          Type typ = preterm.getType();  
+            // but actual type may be list if multiple
           Type actualtyp; 
           String newdec = ""; 
           String pre_var = Identifier.nextIdentifier("pre_" + preterm.data);
           String pretermqf = preterm.queryForm(env0,true); 
-                             // classqueryForm; you want to remove the @pre
+             // classqueryForm; you want to remove the @pre
 
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered() || preterm.isSequenceValued())
+          { if (preterm.isOrdered() || 
+                preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); } 
             else 
             { actualtyp = new Type("Set",null); } 
             actualtyp.setElementType(preterm.getElementType()); 
+            actualtyp.setSorted(preterm.isSorted()); 
 
             if (preterm.umlkind == Expression.CLASSID && preterm.arrayIndex == null) 
             { pretermqf = "Controller.inst()." + pretermqf.toLowerCase() + "s"; } 
@@ -5980,7 +5983,8 @@ public class BehaviouralFeature extends ModelElement
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered() || preterm.isSequenceValued())
+          { if (preterm.isOrdered() || 
+                preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); 
               newdec =  "ArrayList " + pre_var + " = new ArrayList();\n" + 
                      "    " + pre_var + ".addAll(" + pretermqf + ");\n";
@@ -5990,7 +5994,8 @@ public class BehaviouralFeature extends ModelElement
               newdec =  "HashSet " + pre_var + " = new HashSet();\n" + 
                      "    " + pre_var + ".addAll(" + pretermqf + ");\n";
             }  
-            actualtyp.setElementType(preterm.getElementType()); 
+            actualtyp.setElementType(preterm.getElementType());
+            actualtyp.setSorted(preterm.isSorted()); 
           } 
           else 
           { actualtyp = typ;
@@ -6178,7 +6183,8 @@ public class BehaviouralFeature extends ModelElement
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered() || preterm.isSequenceValued())
+          { if (preterm.isOrdered() || 
+                preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); 
               actualtyp.setElementType(preterm.getElementType());
               String jType = actualtyp.getJava7(preterm.getElementType()); 
@@ -6192,7 +6198,9 @@ public class BehaviouralFeature extends ModelElement
               newdec = "    " + jType + " " + pre_var + " = new " + jType + "();\n" + 
                        "    " + pre_var + ".addAll(" + pretermqf + ");\n";
             }  
-             
+            actualtyp.setSorted(preterm.isSorted()); 
+            prebe.setSorted(preterm.isSorted()); 
+            System.out.println(">> Type of " + preterm + " = " + preterm.type + " { " + preterm.isSorted() + " }");
           } 
           else 
           { actualtyp = typ;
@@ -6218,7 +6226,9 @@ public class BehaviouralFeature extends ModelElement
         { res = res + "    " + completeename + " " + ex + " = this;\n  "; }   
         return res + newdecs + newpost.updateFormJava7(env0,false) + "\n  }\n";   
       }     // updateForm(, true)? 
+
       activity.typeCheck(types,entities,context,localatts);
+
       if (ent == null || isClassScope() || isStatic()) { } 
       else 
       { res = res + "    " + completeename + " " + ex + " = this;\n  "; }   
@@ -8638,7 +8648,8 @@ public class BehaviouralFeature extends ModelElement
       String newdec = ""; 
       String pre_var = Identifier.nextIdentifier("pre_" + preterm.data);
       String pretermqf = preterm.queryFormJava7(env0,true); 
-      BasicExpression prebe = new BasicExpression(pre_var); 
+      BasicExpression prebe = new BasicExpression(pre_var);
+      prebe.setUmlKind(Expression.VARIABLE);  
       
       if (preterm.isMultiple())
       { if (preterm.isOrdered() || preterm.isSequenceValued())
@@ -8649,7 +8660,13 @@ public class BehaviouralFeature extends ModelElement
 
         if (preterm.umlkind == Expression.CLASSID && preterm.arrayIndex == null) 
         { pretermqf = "Controller.inst()." + pretermqf.toLowerCase() + "s"; } 
-        String j7type = actualtyp.getJava7(preterm.elementType); 
+
+        actualtyp.setSorted(preterm.isSorted()); 
+        prebe.setSorted(preterm.isSorted()); 
+        // System.out.println(">> Type of " + preterm + " = " + preterm.type + " { " + preterm.isSorted() + " }");
+
+        String j7type = 
+              actualtyp.getJava7(preterm.elementType); 
         newdec = j7type + " " + pre_var + " = new " + j7type + "();\n" + 
                  "    " + pre_var + ".addAll(" + pretermqf + ");\n"; 
       } 
@@ -8657,6 +8674,7 @@ public class BehaviouralFeature extends ModelElement
       { actualtyp = typ;
         newdec = actualtyp.getJava7(preterm.elementType) + " " + pre_var + " = " + pretermqf + ";\n";
       } 
+
       newdecs = newdecs + "    " + newdec; 
       prebe.type = actualtyp; 
       prebe.elementType = preterm.elementType; 

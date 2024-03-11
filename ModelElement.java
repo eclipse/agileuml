@@ -1046,6 +1046,17 @@ public static Vector splitIntoWords(String str)
     return res; 
   }  
 
+  public static String randomNormalString(int n) 
+  { String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    String res = ""; 
+    // int len = (int) Math.floor(Math.random()*n);
+    for (int i = 0; i < n; i++) 
+    { int code = (int) Math.floor(Math.random()*52); 
+      res = res + characters.charAt(code); 
+    } 
+    return res; 
+  }  
+
   public static Object randomElement(Vector col)
   { if (col.size() == 0) 
     { return null; } 

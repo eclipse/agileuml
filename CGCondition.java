@@ -1146,13 +1146,14 @@ public class CGCondition
              !("Sequence".equals(tname))); 
       }
     }
-    else if ("enumerated".equals(stereotype))
+    else if ("enumerated".equals(stereotype.toLowerCase()))
     { if (positive)
       { return t != null && t.isEnumeratedType(); }
       else
       { return t == null || !(t.isEnumeratedType()); }
     }
-    else if ("enumerationLiteral".equals(stereotype))
+    else if ("enumerationLiteral".equalsIgnoreCase(
+                                            stereotype))
     { if (positive)
       { return t != null && 
                t.isEnumeratedType() && t.hasValue(e); 

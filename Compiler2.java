@@ -1371,9 +1371,80 @@ public class Compiler2
       else 
       { return tt; } 
     }    
+    else if ("SortedMap".equals(typ)) 
+    { Type tt = null; 
+      if (st == en) 
+      { System.err.println("!! Warning, map types must have type parameters"); 
+        tt = new Type(typ.substring(6), null);
+        tt.setSorted(true); 
+        tt.setKeyType(new Type("OclAny", null)); 
+        tt.setElementType(new Type("OclAny", null)); 
+        return tt;  
+      } 
+
+      if (st+1 <= en-1) 
+      { String ob = lexicals.get(st+1) + ""; 
+        String cb = lexicals.get(en) + ""; 
+        if ("(".equals(ob) && ")".equals(cb))
+        { for (int i = st + 2; i < en; i++) 
+          { String ss = lexicals.get(i) + ""; 
+            if (ss.equals(","))
+            { Type t1 = parseType(st+2,i-1,entities,types); 
+              Type t2 = parseType(i+1,en-1,entities,types);
+              if (t1 != null && t2 != null) 
+              { tt = new Type(typ.substring(6), t1, t2);
+                tt.setSorted(true); 
+                tt.setKeyType(t1);  
+                tt.setElementType(t2);
+                System.out.println("******* Parsed " + typ + " type: " + tt);  
+                return tt;
+              } 
+              else if (t1 == null) 
+              { System.err.println("!! Invalid type at: " + showLexicals(st+2,i-1)); } 
+              else if (t2 == null) 
+              { System.err.println("!! Invalid type at: " + showLexicals(i+1,en-1)); } 
+            }
+          } 
+        }
+      } 
+
+      if (tt == null) 
+      { System.err.println("!!ERROR!!: Invalid map/function type, it must have 2 type arguments: " + showLexicals(st,en)); 
+        tt = new Type(typ.substring(6), null);
+        tt.setSorted(true); 
+        tt.setKeyType(new Type("OclAny", null)); 
+        tt.setElementType(new Type("OclAny", null)); 
+        return tt;  
+      }
+      else 
+      { return tt; } 
+    }    
     else if (typ.equals("Set") || typ.equals("Sequence") ||
              "Ref".equals(typ))
     { Type tt = new Type(typ,null);
+      if (st == en) 
+      { return tt; } 
+ 
+      if (st + 2 <= en - 1) 
+      { String ob = lexicals.get(st+1) + ""; 
+        String cb = lexicals.get(en) + ""; 
+        if ("(".equals(ob) && ")".equals(cb))
+        { Type et = parseType(st + 2, en - 1, entities, types); 
+          if (et != null && tt != null) 
+          { tt.setElementType(et); 
+            return tt; 
+          }
+          else 
+          { System.err.println("!! Error: Unknown type in Set/Sequence argument: " + showLexicals(st+2,en-1)); } 
+        } 
+      }  
+      // return tt; 
+    } 
+    else if (typ.equals("SortedSet") || 
+             typ.equals("SortedSequence"))
+    { Type tt = new Type(typ.substring(6), null);
+      tt.setSorted(true); 
+
       if (st == en) 
       { return tt; } 
  

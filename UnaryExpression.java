@@ -704,7 +704,17 @@ public void findClones(java.util.Map clones,
       } 
     }
     else if ("->sort".equals(operator))
-    { aUses.add("! n*log(n) sorting algorithm");
+    { if (argument.isSorted())
+      { aUses.add("! Redundant operation " + operator + 
+            "\n! Argument is already sorted.");
+      }
+      else if (argument.isSet()) 
+      { aUses.add("! n*log(n) sorting algorithm used for " + operator + 
+            "\n! It may be more efficient to use SortedSet type.");
+      }
+      else 
+      { aUses.add("! n*log(n) sorting algorithm used for " + operator); } 
+
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 
@@ -1940,7 +1950,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if ("->front".equals(operator) || 
         "->tail".equals(operator) || 
         operator.equals("->copy") || 
-        "->asSequence".equals(operator)) // || "->reverse".equals(operator))
+        "->asSequence".equals(operator)) 
+        // || "->reverse".equals(operator))
     { return argument.isSorted(); } 
 
     if ("->asOrderedSet".equals(operator))
@@ -2253,7 +2264,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->copy"))
     { type = argument.type; 
       elementType = argument.elementType; 
-      multiplicity = argument.multiplicity; 
+      multiplicity = argument.multiplicity;
+      isSorted = argument.isSorted;  
       return res; 
     }  
 
@@ -2267,7 +2279,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     // be navigated & modified. iterators of a map
     // are iterators of its *values* (not keys)
     
-    if (operator.equals("->last") || operator.equals("->first"))
+    if (operator.equals("->last") || 
+        operator.equals("->first"))
     { type = argument.elementType; 
       if (type != null && type.isCollectionType())
       { multiplicity = ModelElement.MANY; 
@@ -2424,8 +2437,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { elementType = argument.type.keyType; } 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
+      isSorted = argument.isSorted;  
+  
       return res; 
-    } 
+    } // argument is sorted map => result is a sorted set
 
     if (operator.equals("->closure"))
     { BasicExpression closured = (BasicExpression) argument; 
@@ -2481,6 +2496,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       elementType = argument.elementType;
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
+
+      if (operator.equals("->sort"))
+      { isSorted = true; }  
+      
       return res; 
     }         
  
@@ -2547,6 +2566,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { type = argument.getType(); 
       modality = argument.modality; 
       elementType = argument.elementType;
+
+      if (operator.equals("->front") || 
+          operator.equals("->tail"))
+      { isSorted = argument.isSorted; } 
 
       if ("String".equals(argument.getType() + ""))
       { type = new Type("String",null); 

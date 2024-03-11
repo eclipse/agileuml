@@ -4969,6 +4969,10 @@ public void findClones(java.util.Map clones,
       Type stright = right.getType();
       Entity seleft = lexp.right.getEntity();
       tcSelect(stleft,stright,seleft); 
+
+      if (operator.equals("|") || operator.equals("|R"))
+      { isSorted = lexp.right.isSorted; } 
+
       return true; 
     }        
     else if (operator.equals("->select") || 
@@ -4996,7 +5000,12 @@ public void findClones(java.util.Map clones,
       right.typeCheck(types,entities,scontext,env); 
       Type stright = right.getType();
       Entity seleft = left.getEntity();
-      tcSelect(stleft,stright,seleft); 
+      tcSelect(stleft,stright,seleft);
+
+      if (operator.equals("->select") || 
+          operator.equals("->reject"))
+      { isSorted = left.isSorted; }
+
       return true; 
     }  
     else if (operator.equals("->collect") || 
@@ -5229,7 +5238,9 @@ public void findClones(java.util.Map clones,
           new Attribute(left + "",right.elementType,ModelElement.INTERNAL); 
         env.add(att); 
         if (right.elementType != null) 
-        { att.setElementType(right.elementType.getElementType()); }  
+        { att.setElementType(
+                right.elementType.getElementType()); 
+        }  
       } // set the entity to eleft or eright? 
 
       if (left.type == null) 
@@ -5361,6 +5372,7 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("->excludingAt") && left.isCollection()) 
     { type = left.type;
       elementType = left.elementType; 
+      isSorted = left.isSorted; 
     }  
     else if ("->split".equals(operator) || 
              "->allMatches".equals(operator))
@@ -5375,7 +5387,8 @@ public void findClones(java.util.Map clones,
         elementType = left.elementType; 
       } 
       else 
-      { type = new Type("Map", null); } 
+      { type = new Type("Map", null); }
+      isSorted = left.isSorted; 
     } 
     else if (operator.equals("->resizeTo"))
     { type = new Type("Ref", null); 
@@ -5398,7 +5411,9 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("+"))
     { tcPlus(tleft,tright,eleft,eright); }
     else if (operator.equals("-"))
-    { tcMinus(tleft,tright,eleft,eright); }
+    { tcMinus(tleft,tright,eleft,eright); 
+      isSorted = left.isSorted;
+    }
     else if (operator.equals("\\/") || operator.equals("^")  || 
              "->concatenate".equals(operator)
             || operator.equals("->append") ||
@@ -5459,7 +5474,8 @@ public void findClones(java.util.Map clones,
         { right.setType(tleft); } 
       } // and set one element type to the other when not null
     }
-    else if (operator.equals("->includes") || operator.equals("->excludes"))
+    else if (operator.equals("->includes") || 
+             operator.equals("->excludes"))
     { boolean lmult = left.isMultiple();
       type = new Type("boolean",null); 
       if (lmult) 
@@ -5750,8 +5766,10 @@ public void findClones(java.util.Map clones,
         type = new Type("Set",null); 
         elementType = new Type("OclAny", null); 
       } 
+      isSorted = left.isSorted;
     } 
-    else if (operator.equals("->union") || operator.equals("\\/")) 
+    else if (operator.equals("->union") || 
+             operator.equals("\\/")) 
     { if (tlname.equals("Sequence") && trname.equals("Sequence"))
       { type = tleft; } 
       else if (tlname.equals("Map") && trname.equals("Map"))
@@ -5769,8 +5787,9 @@ public void findClones(java.util.Map clones,
     } 
   
 
-    if (operator.equals("^")  || "->concatenate".equals(operator)
-       || operator.equals("->union") ||
+    if (operator.equals("^")  || 
+        "->concatenate".equals(operator)
+        || operator.equals("->union") ||
         operator.equals("->intersection") ||  
         // || operator.equals("->restrict") || 
         operator.equals("->symmetricDifference") ||
@@ -5801,7 +5820,8 @@ public void findClones(java.util.Map clones,
     if (operator.equals("->restrict") ||
         operator.equals("->antirestrict"))
     { if (type == null) 
-      { type = new Type("Map", null); } 
+      { type = new Type("Map", null); }
+      isSorted = left.isSorted; 
     } 
 
     if (operator.equals("->append") ||
@@ -5827,6 +5847,7 @@ public void findClones(java.util.Map clones,
        )
     { elementType = etleft;
       type.setElementType(elementType); 
+      isSorted = left.isSorted;
     } 
     else if (operator.equals("->including") || 
              operator.equals("->prepend") || 
@@ -7660,6 +7681,8 @@ public boolean conflictsWithIn(String op, Expression el,
     { String rss = right.makeSetJava7(rw);
       if (left.isOrdered())
       { rss = right.makeSequenceJava7(rw); } 
+      else if (left.isSorted())
+      { rss = right.makeSortedSetJava7(rw); } 
          
       if (operator.equals("->includes"))
       { res = lqf + ".contains(" + rw + ")"; }
@@ -7681,6 +7704,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { String rs = right.makeSetJava7(rqf);
         if (left.isOrdered())
         { rs = right.makeSequenceJava7(rqf); } 
+        else if (left.isSorted())
+        { rss = right.makeSortedSetJava7(rw); } 
  
         if (operator.equals("="))
         { res = lqf + ".equals(" + rs + ")"; }
@@ -7728,10 +7753,13 @@ public boolean conflictsWithIn(String op, Expression el,
       String ls = left.makeSetJava7(lw);
       if (right.isOrdered())
       { ls = left.makeSequenceJava7(lw); } 
+      else if (right.isSorted())
+      { ls = left.makeSortedSetJava7(lw); } 
 
       if (operator.equals("="))
       { res = ls + ".equals(" + rqf + ")"; } 
-      else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
+      else if (operator.equals("/=") || 
+               operator.equals("!=") || operator.equals("<>"))
       { res = "!(" + ls + ".equals(" + rqf + "))"; } 
       else if (operator.equals(":") || operator.equals("<:"))
       { res = rqf + ".contains(" + lw + ")"; }
@@ -16610,7 +16638,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   public boolean isSorted()
   { 
-    if (operator.equals("->sortedBy")) { return true; } 
+    // if (operator.equals("->sortedBy")) { return true; } 
 
     if (operator.equals("\\/") || operator.equals("->union")) 
     { return left.isSorted() && right.isSorted(); }
@@ -16618,7 +16646,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     // merging.  
 
     if (operator.equals("->intersection") ||
-        operator.equals("->including") || operator.equals("->excluding") ||
+        operator.equals("->including") || 
+        operator.equals("->excluding") ||
         operator.equals("->excludingAt") ||
         operator.equals("->excludingFirst") || 
         operator.equals("/\\") || 
@@ -16645,8 +16674,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   }
 
   public boolean isOrdered()
-  { if (operator.equals("->sortedBy") || operator.equals("->collect") ||
-        operator.equals("|C") || "|concatenateAll".equals(operator)) 
+  { if (operator.equals("->sortedBy") || 
+        operator.equals("->collect") ||
+        operator.equals("|C") || 
+        "|concatenateAll".equals(operator)) 
     { return true; } 
 
     if (operator.equals("\\/") || operator.equals("->union")) 
@@ -19928,7 +19959,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else if ("->sortedBy".equals(operator) || 
              "|sortedBy".equals(operator))
-    { aUses.add("! n*log(n) sorting algorithm used for " + operator);
+    { aUses.add("! n*log(n) sorting algorithm used for " + operator); 
+
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     }     
