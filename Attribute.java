@@ -169,6 +169,7 @@ public class Attribute extends ModelElement
       upper = 0; 
       lower = 0; 
     } 
+    
     kind = INTERNAL; 
     entity = ast.getEntity1(); 
     if (c2 == ModelElement.ZEROONE)
@@ -176,9 +177,9 @@ public class Attribute extends ModelElement
 
     if (ast.isQualified())
     { Type etype = (Type) type.clone(); 
-	  type = new Type("Map", null); 
-	  type.setKeyType(new Type("String", null));
-	  type.setElementType(etype); 
+      type = new Type("Map", null); 
+      type.setKeyType(new Type("String", null));
+      type.setElementType(etype); 
     } 
 
     setStereotypes(ast.getStereotypes());  // eg., target, source, aggregation, addOnly
@@ -260,12 +261,14 @@ public class Attribute extends ModelElement
   } 
 
   public static Attribute randomAttribute(Vector entities)
-  { String nme = ModelElement.randomString(10);
+  { String nme = ModelElement.randomNormalString(10);
     Type typ = Type.randomType(entities);
     nme = ModelElement.decapitalise(nme); 
  
     Attribute res = 
       new Attribute(nme, typ, ModelElement.INTERNAL); 
+    Expression expr = typ.getDefaultValueExpression(); 
+    res.setInitialisation(expr); 
 
     return res; 
   }  
@@ -378,22 +381,35 @@ public class Attribute extends ModelElement
   // { return initialExpression; }  
 
   public boolean typeCheck(Vector types, Vector entities)
-  { if (initialExpression != null) 
+  { if (type != null && type.isSorted())
+    { setSorted(true); } 
+
+    if (initialExpression != null) 
     { Vector cntx = new Vector(); 
       if (entity != null) 
       { cntx.add(entity); } 
       Vector env = new Vector(); 
       initialExpression.typeCheck(types,entities,cntx,env);
  
-      System.out.println(">> Type of attribute: " + name + " is " + type + "(" + elementType + ")");
+      if (type != null)
+      { System.out.println(">> Type of attribute: " + name + 
+          " is " + type + "(" + elementType + ") {" + 
+                                type.isSorted() + ")");
+      } 
+      else 
+      { System.err.println("!! No type for " + name); } 
 
       if (Type.isVacuousType(type) && 
           !Type.isVacuousType(initialExpression.type)) 
       { type = initialExpression.type; 
         elementType = initialExpression.elementType;
         type.elementType = elementType;   
-      } 
+      }
 
+      if (type != null && type.isSorted() && 
+          initialExpression.type != null)
+      { initialExpression.type.setSorted(true); } 
+      
       System.out.println(">> Type of initialiser: " + initialExpression + " is " + initialExpression.type + "(" + initialExpression.elementType + ")");
 
       return true; 
@@ -476,13 +492,19 @@ public class Attribute extends ModelElement
         type.elementType = elementType;   
       } 
 
-      System.out.println(">> Type of initialiser: " + initialExpression + " is " + initialExpression.type + "(" + initialExpression.elementType + ")");
-
       if (initialExpression.type == null) 
-      { System.err.println("!! Invalid initial expression !!"); 
+      { System.err.println("!! Invalid initial expression -- no type for " + initialExpression + "!!"); 
         initialExpression = 
            Type.defaultInitialValueExpression(type); 
       } 
+
+      if (!Type.isVacuousType(elementType) && 
+          Type.isVacuousType(initialExpression.elementType)) 
+      { initialExpression.elementType = elementType;
+        initialExpression.type.elementType = elementType;   
+      } 
+
+      System.out.println(">> Type of initialiser: " + initialExpression + " is " + initialExpression.type + "(" + initialExpression.elementType + ")");
 
       return true; 
     } 
@@ -740,6 +762,7 @@ public class Attribute extends ModelElement
     { System.out.println(">>> Matched reference rule for " + this + ": " + r); 
       return r.applyRule(args,eargs,cgs); 
     }
+
     return atext;
   }
 

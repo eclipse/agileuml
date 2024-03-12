@@ -19,7 +19,7 @@ import javax.swing.event.*;
 import java.beans.XMLEncoder;
 import java.beans.XMLDecoder;
 
-/* K. Lano 2010-2023
+/* K. Lano 2010-2024
    
   Adapted from Oracle example of JTextPane
 
@@ -507,6 +507,11 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       javax.swing.Action toCPPAction = new Translate2CPPAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
       menu.add(toCPPAction); 
+
+      javax.swing.Action toPythonAction = 
+                     new Translate2PythonAction(); 
+        // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(toPythonAction); 
 
       return menu; 
    } 
@@ -1242,6 +1247,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           else 
           { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
 
+          File randomlib = new File("libraries/oclrandom.km3"); 
+          if (randomlib.exists())
+          { loadKM3FromFile(randomlib); }
+          else 
+          { System.err.println("! Warning: no file libraries/oclrandom.km3"); } 
+
           Compiler2 comp = new Compiler2(); 
           comp.nospacelexicalanalysis("package app {\n " + arg1 + "\n}\n\n"); 
           Vector yentities = comp.parseKM3();
@@ -1394,6 +1405,44 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       thisLabel.setText("Translated to C++");
     } 
   }
+
+  class Translate2PythonAction extends javax.swing.AbstractAction
+  { public Translate2PythonAction()
+    { super("Translate to Python"); }
+
+    public void actionPerformed(ActionEvent e)
+    { if (entities.size() == 0) 
+      { System.err.println("!! No classes exist: translate to UML/OCL before using this option!"); 
+        return; 
+      }
+
+      saveModelToFile(types, entities, "output/model.txt"); 
+
+      RunApp rapp1 = new RunApp("uml2py"); 
+
+      try
+      { rapp1.setFile("app.py"); 
+        Thread appthread = new Thread(rapp1); 
+        appthread.start(); 
+      } 
+      catch (Exception ee2) 
+      { System.err.println("!! Unable to run uml2py.jar"); } 
+
+      StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateJava7(entities,types,out);     
+      } 
+      String res = sw.toString(); 
+      // messageArea.setText(res);
+      System.out.println(res); 
+      thisLabel.setText("Translated to Python");
+    } 
+  } 
+
 
   class HelpNotationAction extends javax.swing.AbstractAction
   { public HelpNotationAction()
@@ -1568,6 +1617,34 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
   } 
 
   /* Solve 2*(f?) - f = 0 for f */ 
+
+
+  public void saveModelToFile(Vector typs, Vector ents, String f)
+  { File file = new File(f);
+    try
+    { PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(file)));
+
+      UCDArea.saveBasicTypes(out); 
+
+      for (int i = 0; i < typs.size(); i++) 
+      { ModelElement tt = (ModelElement) typs.get(i); 
+        tt.asTextModel(out); 
+      } 
+
+      for (int i = 0; i < ents.size(); i++) 
+      { Entity ent = (Entity) ents.get(i); 
+        ent.asTextModel(out); 
+      } 
+
+      // generalisations also 
+
+      out.close(); 
+    } catch (Exception _ex) 
+      { System.err.println("!! Cannot save model to " + f); } 
+  }
+
 
   public static void main(String[] args) {
      MathApp window = new MathApp();

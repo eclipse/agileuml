@@ -13542,7 +13542,7 @@ public void produceCUI(PrintWriter out)
     return res; 
   } 
 
-  private void saveBasicTypes(PrintWriter out) 
+  public static void saveBasicTypes(PrintWriter out) 
   { out.println("Integer : PrimitiveType"); 
     out.println("Integer.name = \"int\""); 
     out.println("Integer.typeId = \"-5\""); 
@@ -13595,7 +13595,7 @@ public void produceCUI(PrintWriter out)
   { Vector locals = new Vector(); 
     Vector realentities = new Vector(); 
 
-    saveBasicTypes(out); 
+    UCDArea.saveBasicTypes(out); 
 
     for (int i = 0; i < visuals.size(); i++)
     { VisualData vd = (VisualData) visuals.get(i); 

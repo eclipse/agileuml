@@ -324,7 +324,7 @@ public void findPlugins()
       new JMenuItem("From Java AST",openIcon);
     loadGenericMI.addActionListener(this);
     loadGenericMI.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr Java parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR Java parser, in output/ast.txt");
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(loadGenericMI);
 
@@ -332,7 +332,7 @@ public void findPlugins()
       new JMenuItem("From C AST",openIcon);
     fromCMI.addActionListener(this);
     fromCMI.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr C parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR C parser, in output/ast.txt");
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(fromCMI);
 
@@ -340,7 +340,7 @@ public void findPlugins()
       new JMenuItem("From JavaScript AST",openIcon);
     fromJSMI.addActionListener(this);
     fromJSMI.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr JavaScript parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR JavaScript parser, in output/ast.txt");
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(fromJSMI);
 
@@ -348,35 +348,35 @@ public void findPlugins()
       new JMenuItem("From VB AST",openIcon);
     fromVBMI.addActionListener(this);
     fromVBMI.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr VisualBasic6 parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR VisualBasic6 parser, in output/ast.txt");
     fileMenu.add(fromVBMI);
 
     JMenuItem fromCobol = 
       new JMenuItem("From COBOL AST",openIcon);
     fromCobol.addActionListener(this);
     fromCobol.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr Cobol85 parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR Cobol85 parser, in output/ast.txt");
     fileMenu.add(fromCobol);
 
     JMenuItem fromPython = 
       new JMenuItem("From Python AST",openIcon);
     fromPython.addActionListener(this);
     fromPython.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr Python parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR Python parser, in output/ast.txt");
     fileMenu.add(fromPython);
 
     JMenuItem fromPascal = 
       new JMenuItem("From Pascal AST",openIcon);
     fromPascal.addActionListener(this);
     fromPascal.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr pascal parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR pascal parser, in output/ast.txt");
     fileMenu.add(fromPascal);
 
     JMenuItem fromSQL = 
       new JMenuItem("From SQL AST",openIcon);
     fromSQL.addActionListener(this);
     fromSQL.setToolTipText(
-      "Creates UML/OCL from AST produced by Antlr SQLite parser, in output/ast.txt");
+      "Creates UML/OCL from AST produced by ANTLR SQLite parser, in output/ast.txt");
     fileMenu.add(fromSQL);
 
     fileMenu.addSeparator(); 
@@ -2080,7 +2080,7 @@ public void findPlugins()
           appthread.start(); 
         } 
         catch (Exception ee2) 
-        { System.err.println("!! Unable to run application"); } 
+        { System.err.println("!! Unable to run uml2py.jar"); } 
 
         File pythonTests = new File("tester.py"); 
         try
