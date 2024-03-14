@@ -3,7 +3,7 @@
 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.HashSet;
@@ -326,6 +327,13 @@ class OclMaplet<K,T>
       return result; 
     } 
 
+    public static <T> TreeSet<T> initialiseSortedSet(T ... args)
+    { TreeSet<T> result = new TreeSet<T>(); 
+      for (int i = 0; i < args.length; i++) 
+      { result.add(args[i]); } 
+      return result; 
+    } 
+
     public static <T> ArrayList<T> initialiseSequence(T ... args)
     { ArrayList<T> result = new ArrayList<T>(); 
       for (int i = 0; i < args.length; i++) 
@@ -362,6 +370,12 @@ class OclMaplet<K,T>
 
 	public static <K,T> HashMap<K,T> copyMap(Map<K,T> s)
 	{ HashMap<K,T> result = new HashMap<K,T>(); 
+      result.putAll(s); 
+	  return result; 
+	} 
+
+	public static <K,T> TreeMap<K,T> copySortedMap(Map<K,T> s)
+	{ TreeMap<K,T> result = new TreeMap<K,T>(); 
       result.putAll(s); 
 	  return result; 
 	} 
@@ -473,10 +487,19 @@ class OclMaplet<K,T>
       return s; 
     }
 
-    public static <T> HashSet<T> excludingSet(Set<T> _s, T _x) 
+    public static <T> HashSet<T> excludingSet(HashSet<T> _s, T _x) 
     { HashSet<T> result = new HashSet<T>(); 
       result.addAll(_s); 
       HashSet<T> rem = new HashSet<T>(); 
+      rem.add(_x); 
+      result.removeAll(rem); 
+      return result; 
+    } 
+
+    public static <T> TreeSet<T> excludingSet(TreeSet<T> _s, T _x) 
+    { TreeSet<T> result = (TreeSet<T>) _s.clone(); 
+      
+      TreeSet<T> rem = new TreeSet<T>(); 
       rem.add(_x); 
       result.removeAll(rem); 
       return result; 
@@ -520,6 +543,12 @@ class OclMaplet<K,T>
 
     public static <T> HashSet<T> asSet(Collection<T> c)
     { HashSet<T> res = new HashSet<T>(); 
+      res.addAll(c); 
+      return res; 
+    }
+
+    public static <T> TreeSet<T> asSortedSet(Collection<T> c)
+    { TreeSet<T> res = new TreeSet<T>(); 
       res.addAll(c); 
       return res; 
     }
@@ -916,9 +945,15 @@ class OclMaplet<K,T>
     return res;
   }
 
-  public static <T> HashSet<T> includingSet(Set<T> l, T ob)
+  public static <T> HashSet<T> includingSet(HashSet<T> l, T ob)
   { HashSet<T> res = new HashSet<T>();
     res.addAll(l);
+    res.add(ob);
+    return res;
+  }
+
+  public static <T> TreeSet<T> includingSet(TreeSet<T> l, T ob)
+  { TreeSet<T> res = (TreeSet<T>) l.clone();
     res.add(ob);
     return res;
   }
@@ -1368,9 +1403,15 @@ class OclMaplet<K,T>
     return res; 
   } 
 
-  public static <D,R> HashMap<D,R> includingMap(Map<D,R> m, D src, R trg)
+  public static <D,R> HashMap<D,R> includingMap(HashMap<D,R> m, D src, R trg)
   { HashMap<D,R> copy = new HashMap<D,R>();
     copy.putAll(m); 
+    copy.put(src,trg);
+    return copy;
+  } 
+
+  public static <D,R> TreeMap<D,R> includingMap(TreeMap<D,R> m, D src, R trg)
+  { TreeMap<D,R> copy = (TreeMap<D,R>) m.clone();
     copy.put(src,trg);
     return copy;
   } 

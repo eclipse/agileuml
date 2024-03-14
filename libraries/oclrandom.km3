@@ -1,5 +1,7 @@
 package oclrandom { 
 
+/* Twister or Sobol sequences */
+
 
   class OclRandom {
 
@@ -9,6 +11,8 @@ package oclrandom {
     attribute ix : int;
     attribute iy : int;
     attribute iz : int;
+
+    attribute algorithm : String := "congruence"; 
 
     attribute distribution : String; 
 
@@ -83,7 +87,7 @@ package oclrandom {
 
     operation nextFloat() : double
     pre: true
-    post: r = self.nrandom() & result = ( r - r->floor() );
+    post: r = self.nextDouble();
 
     operation nextGaussian() : double
     pre: true 
