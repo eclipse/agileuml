@@ -633,17 +633,27 @@ public class CGSpec
       } // exact match -- assume no variables
       // else if (t.isMapType() && trimmedlhs.startsWith("Map"))
       // { return r; }
-      else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
+      else if (t.isMapType() && 
+               trimmedlhs.equals("Map(_1,_2)"))
       { args.add(t.getKeyType());
         args.add(t.getElementType());  
         selected = r; 
       }
-      else if (t.isFunctionType() && trimmedlhs.equals("Function(_1,_2)"))
+      else if (t.isSortedMapType() && 
+               trimmedlhs.equals("SortedMap(_1,_2)"))
       { args.add(t.getKeyType());
         args.add(t.getElementType());  
         selected = r; 
       }
-      else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
+      else if (t.isFunctionType() && 
+               trimmedlhs.equals("Function(_1,_2)"))
+      { args.add(t.getKeyType());
+        args.add(t.getElementType());  
+        selected = r; 
+      }
+      else if (t.isEnumeratedType() && 
+               (r.hasCondition("enumerated") || 
+                r.hasCondition("Enumerated")) )
       { args.add(t);
         selected = r; 
       }
@@ -652,7 +662,8 @@ public class CGSpec
       //   selected = r; 
       // }
       else if (t.isSetType() && trimmedlhs.startsWith("Set") )
-      { if (elemT != null && trimmedlhs.equals("Set(" + elemT + ")"))
+      { if (elemT != null && 
+            trimmedlhs.equals("Set(" + elemT + ")"))
         { args.add(elemT);
           selected = r; 
         }
@@ -665,8 +676,27 @@ public class CGSpec
           selected = r; 
         } 
       } 
-      else if (t.isSequenceType() && trimmedlhs.startsWith("Sequence"))
-      { if (elemT != null && trimmedlhs.equals("Sequence(" + elemT + ")"))
+      else if (t.isSortedSetType() && 
+               trimmedlhs.startsWith("SortedSet") )
+      { if (elemT != null && 
+            trimmedlhs.equals("SortedSet(" + elemT + ")"))
+        { args.add(elemT);
+          selected = r; 
+        }
+        else if (elemT == null && 
+                 (trimmedlhs.equals("SortedSet()") ||
+                  trimmedlhs.equals("SortedSet")))
+        { selected = r; }
+        else if (elemT != null && 
+                 trimmedlhs.equals("SortedSet(_1)"))
+        { args.add(elemT);
+          selected = r; 
+        } 
+      } 
+      else if (t.isSequenceType() && 
+               trimmedlhs.startsWith("Sequence"))
+      { if (elemT != null && 
+            trimmedlhs.equals("Sequence(" + elemT + ")"))
         { args.add(elemT);
           selected = r; 
         }
@@ -711,6 +741,7 @@ public class CGSpec
                                        entities,this))
       { return selected; } 
     } 
+
     return null;
   } // _1 binds to type or elementType
 
@@ -1256,6 +1287,15 @@ public class CGSpec
       { selected = r; } // exact match
       else if (etext.startsWith("Set{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Set{") && trimmedlhs.endsWith("}"))
+      { if (elems.size() == 0 && r.variables.size() == 0)
+        { selected = r; } // r is empty set -- just white space in lhs between {}
+        else if (elems.size() > 0 && r.variables.size() > 0) 
+        { args.add(elems); 
+          selected = r; 
+        } 
+      } 
+      else if (etext.startsWith("SortedSet{") && etext.endsWith("}") && 
+               trimmedlhs.startsWith("SortedSet{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
         { selected = r; } // r is empty set -- just white space in lhs between {}
         else if (elems.size() > 0 && r.variables.size() > 0) 

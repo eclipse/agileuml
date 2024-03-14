@@ -816,28 +816,45 @@ public class CGCondition
       return positive; 
     }
 
-    if ("void".equals(stereotype.toLowerCase()) && (t == null || "void".equals(t.getName()) || t.isVoidType()))
+    if ("void".equals(stereotype.toLowerCase()) && 
+        (t == null || "void".equals(t.getName()) || 
+        t.isVoidType()))
     { return positive; }
 
-    if ("enumerated".equals(stereotype.toLowerCase()) && t.isEnumeratedType())
+    if ("enumerated".equals(stereotype.toLowerCase()) && 
+        t.isEnumeratedType())
     { return positive; }
 
-    if ("datatype".equals(stereotype.toLowerCase()) && t.isDatatype())
+    if ("datatype".equals(stereotype.toLowerCase()) && 
+        t.isDatatype())
     { return positive; }
 
-    if ("map".equals(stereotype.toLowerCase()) && t.isMapType())
+    if ("map".equals(stereotype.toLowerCase()) && 
+        t.isMapType())
     { return positive; }
 
-    if ("function".equals(stereotype.toLowerCase()) && t.isFunctionType())
+    if ("sortedmap".equals(stereotype.toLowerCase()) && 
+        t.isSortedMapType())
     { return positive; }
 
-    if ("collection".equals(stereotype.toLowerCase()) && t.isCollectionType())
+    if ("function".equals(stereotype.toLowerCase()) && 
+        t.isFunctionType())
     { return positive; }
 
-    if ("sequence".equals(stereotype.toLowerCase()) && t.isSequenceType())
+    if ("collection".equals(stereotype.toLowerCase()) && 
+        t.isCollectionType())
     { return positive; }
 
-    if ("set".equals(stereotype.toLowerCase()) && t.isSetType())
+    if ("sequence".equals(stereotype.toLowerCase()) && 
+        t.isSequenceType())
+    { return positive; }
+
+    if ("set".equals(stereotype.toLowerCase()) && 
+        t.isSetType())
+    { return positive; }
+
+    if ("sortedset".equals(stereotype.toLowerCase()) && 
+        t.isSortedSetType())
     { return positive; }
 
     if ("ref".equals(stereotype.toLowerCase()) && t.isRef())
@@ -876,7 +893,12 @@ public class CGCondition
     if ("map".equals(stereotype.toLowerCase()) && !t.isMapType())
     { return !positive; }
 
-    if ("function".equals(stereotype.toLowerCase()) && !t.isFunctionType())
+    if ("sortedmap".equals(stereotype.toLowerCase()) && 
+        !t.isSortedMapType())
+    { return !positive; }
+
+    if ("function".equals(stereotype.toLowerCase()) && 
+        !t.isFunctionType())
     { return !positive; }
 
     if ("collection".equals(stereotype.toLowerCase()) && !(t.isCollectionType()))
@@ -886,6 +908,9 @@ public class CGCondition
     { return !positive; }
 
     if ("set".equals(stereotype.toLowerCase()) && !(t.isSetType()))
+    { return !positive; }
+
+    if ("sortedset".equals(stereotype.toLowerCase()) && !(t.isSortedSetType()))
     { return !positive; }
 
     if ("ref".equals(stereotype.toLowerCase()) && !(t.isRef()))
@@ -1058,6 +1083,14 @@ public class CGCondition
       else
       { return !("Set".equals(tname)); }
     }
+    else if ("SortedSet".equals(stereotype))
+    { if (positive)
+      { return "Set".equals(tname) && t != null && t.isSorted(); }
+      else
+      { return !("Set".equals(tname)) || t == null ||
+               !t.isSorted(); 
+      }
+    }
     else if ("Sequence".equals(stereotype))
     { if (positive)
       { return "Sequence".equals(tname); }
@@ -1069,6 +1102,16 @@ public class CGCondition
       { return "Map".equals(tname); }
       else
       { return !("Map".equals(tname)); }
+    }
+    else if ("SortedMap".equals(stereotype))
+    { if (positive)
+      { return "Map".equals(tname) && t != null && 
+               t.isSorted(); 
+      }
+      else
+      { return !("Map".equals(tname)) || t == null ||
+               !t.isSorted(); 
+      }
     }
     else if ("Function".equals(stereotype))
     { if (positive)

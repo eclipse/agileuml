@@ -425,6 +425,8 @@ public class Compiler2
         "{".equals(tok) || "}".equals(tok) || 
         "Set{".equals(tok) || "Sequence{".equals(tok) ||
         "Set".equals(tok) || "Sequence".equals(tok) || 
+        "SortedSet{".equals(tok) ||
+        "SortedSet".equals(tok) ||
         "Map{".equals(tok) || "Map".equals(tok) ||
         "Integer".equals(tok) ||
         "|".equals(tok) || ",".equals(tok))
@@ -3312,6 +3314,11 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return parse_set_expression(bc,pstart+1,pend,entities,types); } 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
+        "SortedSet".equals(lexicals.get(pstart) + "") &&
+        "{".equals(lexicals.get(pstart + 1) + ""))
+    { return parse_sortedset_expression(bc,pstart+1,pend,entities,types); } 
+
+    if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Ref".equals(lexicals.get(pstart) + "") &&
         "{".equals(lexicals.get(pstart + 1) + ""))
     { return parse_ref_expression(bc,pstart+1,pend,entities,types); } 
@@ -3610,6 +3617,17 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     if (ve == null) 
     { return null; } 
     Expression res = new SetExpression(ve,false); 
+    System.out.println(">>> Parsed set expression: " + res); 
+    return res; 
+  } 
+
+  public Expression parse_sortedset_expression(int bc,int pstart,int pend, Vector entities, Vector types)
+  { Vector ve = 
+      parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
+    if (ve == null) 
+    { return null; } 
+    Expression res = new SetExpression(ve,false);
+    res.setSorted(true);  
     System.out.println(">>> Parsed set expression: " + res); 
     return res; 
   } 
@@ -6066,6 +6084,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "Literal sets are written as Set{ x, y, z }\n"; 
 
         return "Set(Type)"; 
+      }
+
+      if ("SortedSet".startsWith(st)) 
+      { mess[0] = "SortedSet type, eg., SortedSet(String), SortedSet(int), \n" + 
+          "SortedSet(double).\n" + 
+          "But SortedSet by itself is bad practice & non-portable.\n" + 
+          "Operators include:  st->size()  st->includes(elem)  st1->union(st2) (merge)\n" + 
+           "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n" + 
+          "Literal sorted sets are written as SortedSet{ x, y, z }\n"; 
+
+        return "SortedSet(Type)"; 
       }
  
       if ("Map".startsWith(st)) 
@@ -10805,7 +10834,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
-    c.nospacelexicalanalysis("Set{x,a..b,y}"); 
+    c.nospacelexicalanalysis("SortedSet{x,a,y}"); 
     Expression zz = c.parseExpression(); 
 
     System.out.println(zz); 

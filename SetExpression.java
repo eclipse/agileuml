@@ -235,7 +235,9 @@ public class SetExpression extends Expression
     { res = "Map{"; }
     else if (ordered) 
     { res = "Sequence{"; } 
-    else 
+    else if (isSorted)
+    { res = "SortedSet{"; }
+    else
     { res = "Set{"; }
 
     for (int i = 0; i < elements.size(); i++)
@@ -326,9 +328,11 @@ public class SetExpression extends Expression
   public String toOcl(java.util.Map env, boolean local)
   { String res;
     if (isMap())
-	{ res = "Map{"; }
+    { res = "Map{"; }
     else if (ordered) 
     { res = "Sequence{"; } 
+    else if (isSorted) 
+    { res = "SortedSet{"; } 
     else 
     { res = "Set{"; }
 
@@ -337,7 +341,9 @@ public class SetExpression extends Expression
       if (i < elements.size() - 1)
       { res = res + ","; }
     }
+
     res = res + "}";
+
     return res;
   }
 
@@ -512,9 +518,14 @@ public class SetExpression extends Expression
     if (type == null)
     { if (ordered)
       { type = new Type("Sequence",null); }
+      else if (isSorted) 
+      { type = new Type("Set",null); 
+        type.setSorted(true); 
+      } 
       else
       { type = new Type("Set",null); } 
     } 
+
     String jType = type.getJava7(elementType); 
 
     String res = "(new " + jType + "())"; 
@@ -568,6 +579,7 @@ public class SetExpression extends Expression
       res = "SystemTypes.addSet(" + res + "," + 
                 Expression.wrapCSharp(elementType, e.queryFormCSharp(env,local)) + ")";
     }
+
     return res; 
   }   
 
@@ -805,7 +817,7 @@ public class SetExpression extends Expression
         ss.addStatement(seti); 
       } 
         
-      JOptionPane.showMessageDialog(null, "Assignment " + this + " := " + var + " code is " + ss); 
+      // JOptionPane.showMessageDialog(null, "Sequence assignment " + this + " := " + var + " code is " + ss); 
 
       res = ss.updateForm(language,env,local); 
     }  
@@ -903,6 +915,10 @@ public class SetExpression extends Expression
     { type = new Type("Map", null); } 
     else if (ordered)
     { type = new Type("Sequence",null); }
+    else if (isSorted)
+    { type = new Type("Set",null); 
+      type.setSorted(true); 
+    }
     else
     { type = new Type("Set",null); } 
 
@@ -1027,9 +1043,13 @@ public class SetExpression extends Expression
       Expression be = e.substitute(old,n);
       elems.add(be);
     }
+
     SetExpression result = new SetExpression(elems,ordered);
-    if (isMap())
+    result.setSorted(isSorted); 
+
+    if (isMap() || isSorted)
     { result.setType(type); }
+
     return result; 
   } // And for Ref. 
 
@@ -1044,9 +1064,13 @@ public class SetExpression extends Expression
       Expression be = e.substituteEq(old,n);
       elems.add(be);
     }
+
     SetExpression result = new SetExpression(elems,ordered);
-    if (isMap())
+    result.setSorted(isSorted); 
+
+    if (isMap() || isSorted)
     { result.setType(type); }
+
     return result; 
   } // And for Ref. 
 
@@ -1154,10 +1178,13 @@ public class SetExpression extends Expression
       Expression newval = val.simplify(vars);
       newvals.add(newval);
     }
-	SetExpression result = new SetExpression(newvals,ordered);
-	if (isMap())
-	{ result.setType(type); }
-	return result; 
+
+    SetExpression result = new SetExpression(newvals,ordered);
+    result.setSorted(isSorted); 
+
+    if (isMap() || isSorted)
+    { result.setType(type); }
+    return result; 
   } // could eliminate duplicates
 
   public Expression simplify()
@@ -1167,10 +1194,14 @@ public class SetExpression extends Expression
       Expression newval = val.simplify();
       newvals.add(newval);
     }
-	SetExpression result = new SetExpression(newvals,ordered);
-	if (isMap())
-	{ result.setType(type); }
-	return result; 
+
+    SetExpression result = new SetExpression(newvals,ordered);
+    result.setSorted(isSorted); 
+
+    if (isMap() || isSorted)
+    { result.setType(type); }
+
+    return result; 
   } // could eliminate duplicates for ordered == false
 
   public Expression filter(final Vector vars)
@@ -1183,11 +1214,14 @@ public class SetExpression extends Expression
       Expression newval = (Expression) val.clone();
       newvals.add(newval);
     }
+
     SetExpression res = new SetExpression(newvals,ordered);
+    res.setSorted(isSorted); 
+
     res.type = type; 
     res.elementType = elementType; 
     res.ordered = ordered; 
-	res.formalParameter = formalParameter; 
+    res.formalParameter = formalParameter; 
 	// if (isMap())
 	// { res.setType(type); }
     return res; 
@@ -1253,9 +1287,11 @@ public class SetExpression extends Expression
       Expression newelem = elem.dereference(ref); 
       newelems.add(newelem); 
     } 
+
     SetExpression res = new SetExpression(newelems);
-    res.ordered = ordered; 
-	res.type = type; 
+    res.ordered = ordered;
+    res.isSorted = isSorted;  
+    res.type = type; 
     return res;  
   } 
 
@@ -1268,6 +1304,7 @@ public class SetExpression extends Expression
     } 
     SetExpression res = new SetExpression(newelems);
     res.ordered = ordered;
+    res.isSorted = isSorted;  
     res.type = type;  
     return res;  
   } 
@@ -1284,6 +1321,7 @@ public class SetExpression extends Expression
 
     SetExpression res = new SetExpression(newelems);
     res.ordered = ordered;
+    res.isSorted = isSorted;  
     res.type = type;  
     return res;  
   } 
@@ -1297,7 +1335,8 @@ public class SetExpression extends Expression
     } 
     SetExpression res = new SetExpression(newelems);
     res.ordered = ordered;
-	res.type = type;  
+    res.isSorted = isSorted;  
+    res.type = type;  
     return res;  
   } 
 
@@ -1357,7 +1396,8 @@ public class SetExpression extends Expression
     if (type != null && type.isRef() && elementType != null)
     { args.add(elementType.cg(cgs));
       eargs.add(elementType); 
-    } 
+    }
+ 
     args.add(arg);
     eargs.add(earg); 
 

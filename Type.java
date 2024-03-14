@@ -270,6 +270,9 @@ public class Type extends ModelElement
   public boolean isSetType() 
   { return "Set".equals(name); } 
 
+  public boolean isSortedSetType() 
+  { return "Set".equals(name) && sorted; } 
+
   public boolean isSequenceType() 
   { return "Sequence".equals(name) ||
            "SortedSequence".equals(name); 
@@ -277,6 +280,9 @@ public class Type extends ModelElement
 
   public boolean isMapType() 
   { return "Map".equals(name); } 
+
+  public boolean isSortedMapType() 
+  { return "Map".equals(name) && sorted; } 
 
   public boolean isFunctionType() 
   { return "Function".equals(name); } 
@@ -1623,6 +1629,20 @@ public class Type extends ModelElement
     String res = "package " + packageName + ";\n\r" + 
                  "\n\r" + 
                  "public enum " + name + " { ";
+    for (int i = 0; i < values.size(); i++) 
+    { String val = (String) values.get(i); 
+      res = res + val; 
+      if (i < values.size() - 1)
+      { res = res + ", "; } 
+    } 
+    return res + " }\n\r\n\r"; 
+  }  
+
+  public String getJava8Definition() 
+  { if (values == null) 
+    { return ""; } 
+
+    String res = "public enum " + name + " { ";
     for (int i = 0; i < values.size(); i++) 
     { String val = (String) values.get(i); 
       res = res + val; 

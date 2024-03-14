@@ -4970,6 +4970,61 @@ public class UCDArea extends JPanel
 
   } // validation beans for entities? 
   
+  public void generateJava8(PrintWriter out)
+  { Vector auxcstls = new Vector(); 
+    auxcstls.add("cgmain.cstl"); 
+    auxcstls.add("cginterface.cstl"); 
+    auxcstls.add("jwrap.cstl"); 
+    auxcstls.add("catchTest.cstl");
+    auxcstls.add("java8deref.cstl");
+
+    CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
+
+    if (cgs == null) 
+    { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
+      return; 
+    } 
+
+    out.println("import java.util.*;"); 
+    out.println("import java.util.HashMap;"); 
+    out.println("import java.util.Collection;");
+    out.println("import java.util.List;");
+    out.println("import java.util.ArrayList;");
+    out.println("import java.util.Set;");
+    out.println("import java.util.HashSet;");
+    out.println("import java.util.TreeSet;");
+    out.println("import java.util.Collections;");
+    out.println("import java.util.function.Function;"); 
+    out.println("import java.io.Serializable;"); 
+    out.println(); 
+		 
+    
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { // String typef = typ.getName() + ".java"; 
+        String tdef = 
+          typ.getJava8Definition(); 
+        out.println(tdef); 
+      } 
+    } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ee = (Entity) entities.get(i); 
+      String eename = ee.getName(); 
+
+      if (ee.isDerived() || ee.isComponent()) 
+      { continue; }
+
+      ee.generateOperationDesigns(types,entities);  
+
+      String entcode = ee.cg(cgs);
+      cgs.displayText(entcode,out); 
+    }
+
+    out.close();
+  } 
+
   public void generateAndroidLayouts(PrintWriter out)
   { AndroidAppGenerator agen = new AndroidAppGenerator(); 
     Vector auxcstls = new Vector(); 
@@ -5295,9 +5350,10 @@ public class UCDArea extends JPanel
           typ.getJava8Definition(nestedPackageName); 
         File typefile = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + typef); 
         try
-        { PrintWriter typeout = new PrintWriter(
-                                  new BufferedWriter(
-                                    new FileWriter(typefile)));
+        { PrintWriter typeout = 
+              new PrintWriter(
+                 new BufferedWriter(
+                     new FileWriter(typefile)));
           typeout.println(tdef);
           typeout.close(); 
 

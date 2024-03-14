@@ -1308,10 +1308,12 @@ public void findPlugins()
     java7Menu.setMnemonic(KeyEvent.VK_7);
     buildMenu.add(java7Menu); 
 
-    JMenuItem runMI = new JMenuItem("Run"); 
-    runMI.addActionListener(this);
-    // javaMenu.setEnabled(false); 
-    buildMenu.add(runMI); 
+    JMenuItem java8Menu = new JMenuItem("Generate Java8"); 
+    java8Menu.addActionListener(this);
+    java8Menu.setMnemonic(KeyEvent.VK_8);
+    buildMenu.add(java8Menu); 
+
+    buildMenu.addSeparator(); 
 
     JMenuItem csharpMenu = new JMenuItem("Generate C#"); 
     csharpMenu.addActionListener(this);
@@ -1344,6 +1346,11 @@ public void findPlugins()
     JMenuItem goMenu = new JMenuItem("Generate Go"); 
     goMenu.addActionListener(this);
     buildMenu.add(goMenu); 
+
+    /* JMenuItem runMI = new JMenuItem("Run"); 
+    runMI.addActionListener(this);
+    // javaMenu.setEnabled(false); 
+    buildMenu.add(runMI); */ 
 
     buildMenu.addSeparator(); 
 
@@ -1981,7 +1988,34 @@ public void findPlugins()
         catch (IOException ex)
         { System.out.println("!! Error generating Java"); }
 
-        new TextDisplay("Java code", dirName + "/Controller.java");
+        new TextDisplay("Java 7 code", dirName + "/Controller.java");
+      } 
+      else if (label.equals("Generate Java8"))
+      { String sysName = ucdArea.getSystemName(); 
+        String dirName = "output";         
+
+        if (sysName != null && sysName.length() > 0) 
+        { dirName = sysName; 
+          File dir = new File(sysName); 
+          if (dir.exists()) { } 
+          else 
+          { dir.mkdir(); }  
+        } 
+
+        File file = new File(dirName + "/Application.java");
+
+        try
+        { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file)));
+          ucdArea.generateJava8(out);
+          out.close();
+          thisLabel.setText("Java code saved to " + dirName + "/GUI.java"); 
+        }
+        catch (IOException ex)
+        { System.out.println("!! Error generating Java"); }
+
+        new TextDisplay("Java 8 code", dirName + "/Application.java");
       } 
       else if (label.equals("Generate C#"))
       { File file = new File("output/Program.cs");  // Controller.cs
