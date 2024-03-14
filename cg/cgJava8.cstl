@@ -16,13 +16,17 @@ package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java
 Type::
 
 Sequence(_1) |-->ArrayList<_1`jwrap>
+SortedSet(_1) |-->TreeSet<_1`jwrap>
 Set(_1) |-->HashSet<_1`jwrap>
+SortedMap(_1,_2) |-->TreeMap<_1`jwrap,_2`jwrap>
 Map(_1,_2) |-->HashMap<_1`jwrap,_2`jwrap>
 Function(_1,_2) |-->Function<_1`jwrap,_2`jwrap>
 Ref(_1) |-->_1[]
 
 Sequence |-->ArrayList
+SortedSet |-->TreeSet
 Set |-->HashSet
+SortedMap |-->TreeMap
 Map |-->HashMap
 Ref |-->Object[]
 
@@ -60,7 +64,9 @@ self |-->this
 OclAny |-->Object
 Sequence |-->ArrayList
 Set |-->HashSet
+SortedSet |-->TreeSet
 Map |-->HashMap
+SortedMap |-->TreeMap
 Ref |-->Object[]
 
 Math_NaN |-->Double.NaN
@@ -187,7 +193,9 @@ _1->oclType() |-->new OclType(_1.getClass())
 _1->allInstances() |-->_1._1_allInstances
 
 _1->copy() |-->Ocl.copySequence(_1)<when> _1 Sequence
+_1->copy() |-->Ocl.copySortedSet(_1)<when> _1 SortedSet
 _1->copy() |-->Ocl.copySet(_1)<when> _1 Set
+_1->copy() |-->Ocl.copySortedMap(_1)<when> _1 SortedMap
 _1->copy() |-->Ocl.copyMap(_1)<when> _1 Map
 _1->copy() |-->_1.clone()<when> _1 object
 _1->copy() |-->_1
@@ -407,6 +415,8 @@ let _1 : _2 = _3 in _4 |-->(new Object() { public _4`type call(_2 _1) { return _
 SetExpression::
 Set{} |-->(new HashSet())
 Set{_1} |-->Ocl.initialiseSet(_1) 
+SortedSet{} |-->(new TreeSet())
+SortedSet{_1} |-->Ocl.initialiseSortedSet(_1) 
 Sequence{} |-->(new ArrayList())
 Sequence{_1} |-->Ocl.initialiseSequence(_1)
 Map{} |-->(new HashMap())
