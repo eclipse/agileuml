@@ -292,6 +292,7 @@ _1 << _2 |-->_1 * (2->pow(_2))
 _1 >> _2 |-->_1 /(2->pow(_2))
 _1 & _2 |-->MathLib.bitwiseAnd(_1, _2)
 _1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
+_1 | _2 |-->_1->union(_2)<when> _1 Map
 _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 
 _1 _2 _3 |-->_1_2<when> _2`isBasicTypeTrailer true, _3 matches .value
@@ -1862,6 +1863,7 @@ _1 << _2 |-->int
 _1 >> _2 |-->int
 _1 & _2 |-->int
 _1 ^ _2 |-->int
+_1 | _2 |-->Map<when> _1 Map
 _1 | _2 |-->int
 
 not _1 |-->boolean
