@@ -11,6 +11,18 @@ This can be executed as java -jar umlrsds.jar on the command line
 The toolset expects a directory called 'output' to exist in its execution directory, 
 'output' is used to hold all input and output files, such as metamodels and models.
 
+To build the executable, run the following from the command line:
+
+```bash
+jar cvfm umlrsds.jar UMLRSDSManifest.txt *.class
+```
+then run umlrsds.jar from the command line like so:
+
+```bash
+chmod +x umlrsds.jar # needed on Unix/Unix-like systems to make the JAR file executable
+java -jar umlrsds.jar
+```
+
 Further information, and a manual for the toolset, can be found in the file umlrsds20.pdf and at https://nms.kcl.ac.uk/kevin.lano/uml2web/
 
 Videos on the use of the toolset can be viewed at: https://www.youtube.com/channel/UCmhEP7QYIHH9MhyEjho_tdQ/
