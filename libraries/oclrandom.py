@@ -2,7 +2,7 @@ import ocl
 import math
 import time
 import random
-
+import numpy as np
 
 from enum import Enum
 
@@ -277,14 +277,14 @@ class OclRandom :
     chs = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$"
     res = ""
     for x in range(0,n) : 
-      res = res + chs[int(random.random()*54)]
+      res = res + chs[int(np.random.default_rng().random() * 54)]
     return res
 
   def randomElement(col) : 
     ln = len(col)
     if ln == 0 : 
       return None
-    x = int(random.random()*ln)
+    x = int(np.random.default_rng().random() * ln)
     return col[x]
 
   def randomUniqueElements(col,n) : 
