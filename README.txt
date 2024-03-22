@@ -11,6 +11,11 @@ java -jar umlrsds.jar
 
 The main tool window is a class diagram editor. 
 
+Build the executable with:
+
+jar cvfm umlrsds.jar UMLRSDSManifest.txt *.class
+
+then run umlrsds.jar as previously described.
 
 Options on the File menu include: 
 
