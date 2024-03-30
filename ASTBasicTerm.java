@@ -1282,14 +1282,18 @@ public class ASTBasicTerm extends ASTTerm
         "BlockingDeque".equals(value) ||
         "LinkedBlockingDeque".equals(value) ||
         "ArrayBlockingQueue".equals(value) ||
-        "BlockingQueue".equals(value))
+        "BlockingQueue".equals(value) || 
+        "ListOrderedSet".equals(value) ||
+        "SetUniqueList".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
  
     if ("PriorityQueue".equals(value)  ||
-        "PriorityBlockingQueue".equals(value))
+        "PriorityBlockingQueue".equals(value) ||
+        "TreeBag".equals(value) || 
+        "SortedBag".equals(value))
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
@@ -1302,6 +1306,13 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     } 
+
+    if ("Bag".equals(value) || "HashBag".equals(value) ||
+        "TreeList".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence";
+    }
 
     if ("Multiset".equals(value) || 
         "MultiSet".equals(value))
@@ -2070,14 +2081,18 @@ public class ASTBasicTerm extends ASTTerm
         "ArrayDeque".equals(value) ||
         "BlockingDeque".equals(value) ||
         "LinkedBlockingDeque".equals(value) ||
-        "ArrayBlockingQueue".equals(value))
+        "ArrayBlockingQueue".equals(value) ||
+        "ListOrderedSet".equals(value) ||
+        "SetUniqueList".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
  
     if ("PriorityQueue".equals(value) ||
-        "PriorityBlockingQueue".equals(value))
+        "PriorityBlockingQueue".equals(value) ||
+        "TreeBag".equals(value) || 
+        "SortedBag".equals(value))
     { modelElement = new Type("Sequence", null); 
       ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
@@ -2090,6 +2105,13 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     } 
+
+    if ("Bag".equals(value) || "HashBag".equals(value) ||
+        "TreeList".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence";
+    }
 
     if ("Multiset".equals(value) || 
         "MultiSet".equals(value))

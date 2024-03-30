@@ -572,14 +572,18 @@ public class ASTSymbolTerm extends ASTTerm
         "BlockingDeque".equals(symbol) ||
         "LinkedBlockingDeque".equals(symbol) ||
         "BlockingQueue".equals(symbol) ||
-        "ArrayBlockingQueue".equals(symbol)) 
+        "ArrayBlockingQueue".equals(symbol) ||
+        "ListOrderedSet".equals(symbol) ||
+        "SetUniqueList".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
 
     if ("PriorityQueue".equals(symbol) ||
-        "PriorityBlockingQueue".equals(symbol)) 
+        "PriorityBlockingQueue".equals(symbol) || 
+        "TreeBag".equals(symbol) || 
+        "SortedBag".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
       ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
@@ -590,6 +594,13 @@ public class ASTSymbolTerm extends ASTTerm
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
+    }
+
+    if ("Bag".equals(symbol) || "HashBag".equals(symbol) ||
+        "TreeList".equals(symbol))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence";
     }
 
     if ("JsonArray".equals(symbol) || 
