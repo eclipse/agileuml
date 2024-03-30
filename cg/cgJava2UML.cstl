@@ -52,6 +52,11 @@ BlockingQueue |-->Sequence
 ArrayBlockingQueue |-->Sequence
 PriorityBlockingQueue |-->Sequence
 PriorityQueue |-->Sequence
+Bag |-->Sequence
+TreeBag |-->Sequence
+
+SetUniqueList |-->Sequence
+ListOrderedSet |-->Sequence
 BitSet |-->Sequence(boolean)
 ByteBuffer |-->Sequence(int)
 CharBuffer |-->Sequence(int)
@@ -66,6 +71,10 @@ JsonArray |-->Sequence
 JSONArray |-->Sequence
 Multiset |-->Sequence
 MultiSet |-->Sequence
+
+Bag |-->Sequence
+HashBag |-->Sequence
+TreeList |-->Sequence
 
 Set |-->Set
 TreeSet |-->Set
@@ -270,6 +279,14 @@ BlockingDeque _1 |-->Sequence_1`collectionParameters
 LinkedBlockingDeque _1 |-->Sequence_1`collectionParameters
 PriorityBlockingQueue _1 |-->Sequence_1`collectionParameters
 PriorityQueue _1 |-->Sequence_1`collectionParameters
+Bag _1 |-->Sequence_1`collectionParameters
+TreeBag _1 |-->Sequence_1`collectionParameters
+
+SetUniqueList _1 |-->Sequence_1`collectionParameters
+ListOrderedSet _1 |-->Sequence_1`collectionParameters
+Bag _1 |-->Sequence_1`collectionParameters
+HashBag _1 |-->Sequence_1`collectionParameters
+TreeList _1 |-->Sequence_1`collectionParameters
 
 Set _1 |-->Set_1`collectionParameters
 TreeSet _1 |-->Set_1`collectionParameters
@@ -943,13 +960,14 @@ replaceAll ( _1 ) |-->_1`first->includes( _1`third )
 put ( _1 ) |-->->at(_1)
 removeAll ( _1 ) |-->->intersection(_1)->notEmpty()
 retainAll ( _1 ) |--> /<: _1
-add ( _1 ) |-->->excludes(_1)
+add ( _1 ) |-->->excludes(_1`last)
 addAll ( _1 ) |-->->intersection(_1`last) /= _1`last
 push ( _1 ) |-->true
 
 removeElementAt ( _1 ) |-->->excludingAt(_1+1)
 removeElement ( _1 ) |-->->excludingFirst(_1)
 remove ( ) |-->.remove()
+remove ( _1 ) |--> - Integer.subrange(1,_1`last)->collect(_1`first)<when> _1 multiple
 remove ( _1 ) |-->->at(_1+1)<when> _1 integer
 remove ( _1 ) |-->->includes(_1)
 removeFirst ( ) |-->->first()
@@ -1444,6 +1462,8 @@ retainAll ( _1 ) |--> /<: _1
 isEmpty ( ) |-->->isEmpty()
 empty ( ) |-->->isEmpty()
 entrySet ( ) |-->->asSet()
+uniqueSet ( ) |-->->asSet()
+
 
 replaceAll ( _1 ) |-->.replaceAllMatches(_1`first, _1`third )
 
@@ -2662,6 +2682,15 @@ BlockingQueue _1 |-->Sequence{}_1`collectionCreationRest
 ArrayBlockingQueue _1 |-->Sequence{}_1`collectionCreationRest
 PriorityQueue _1 |-->Sequence{}_1`collectionCreationRest
 PriorityBlockingQueue _1 |-->Sequence{}_1`collectionCreationRest
+Bag _1 |-->Sequence{}_1`collectionCreationRest
+TreeBag _1 |-->Sequence{}_1`collectionCreationRest
+
+SetUniqueList _1 |-->Sequence{}_1`collectionCreationRest
+ListOrderedSet _1 |-->Sequence{}_1`collectionCreationRest
+Bag _1 |-->Sequence{}_1`collectionCreationRest
+HashBag _1 |-->Sequence{}_1`collectionCreationRest
+TreeList _1 |-->Sequence{}_1`collectionCreationRest
+
 Stream _1 |-->Sequence{}_1`collectionCreationRest
 JsonArray _1 |-->Sequence{}_1`collectionCreationRest
 JSONArray _1 |-->Sequence{}_1`collectionCreationRest
@@ -2737,6 +2766,15 @@ Queue _1 |-->true
 BlockingQueue _1 |-->true
 ArrayBlockingQueue _1 |-->true
 PriorityQueue _1 |-->true
+Bag _1 |-->true
+TreeBag _1 |-->true
+
+SetUniqueList _1 |-->true
+ListOrderedSet _1 |-->true
+Bag _1 |-->true
+HashBag _1 |-->true
+TreeList _1 |-->true
+
 Stream _1 |-->true
 
 Hashtable _1 |-->true
@@ -2853,6 +2891,15 @@ Queue |-->Sequence
 BlockingQueue |-->Sequence
 ArrayBlockingQueue |-->Sequence
 PriorityQueue |-->Sequence
+Bag |-->Sequence
+TreeBag |-->Sequence
+
+SetUniqueList |-->Sequence
+ListOrderedSet |-->Sequence
+Bag |-->Sequence
+HashBag |-->Sequence
+TreeList |-->Sequence
+
 BitSet |-->Sequence(boolean)
 Stream |-->Sequence
 JsonArray |-->Sequence
@@ -3040,6 +3087,15 @@ Queue _1 |-->Sequence{}
 BlockingQueue _1 |-->Sequence{}
 ArrayBlockingQueue _1 |-->Sequence{}
 PriorityQueue _1 |-->Sequence{}
+Bag _1 |-->Sequence{}
+TreeBag _1 |-->Sequence{}
+
+ListOrderedSet _1 |-->Sequence{}
+SetUniqueList _1 |-->Sequence{}
+Bag _1 |-->Sequence{}
+HashBag _1 |-->Sequence{}
+TreeList _1 |-->Sequence{}
+
 Stream _1 |-->Sequence{}
 
 Comparator _1 |-->OclComparator_1.newOclComparator
