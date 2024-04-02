@@ -2466,16 +2466,23 @@ class BinaryExpression extends Expression
   public boolean isPrimitive()  
   { // Strings are not counted as primitive
 
-    if (operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
-        operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf") || 
+    if (operator.equals("->count") || 
+        operator.equals("->indexOf") || 
+        operator.equals("->lastIndexOf") || 
+        operator.equals("->oclIsKindOf") || 
+        operator.equals("->oclIsTypeOf") || 
         operator.equals("->pow") || 
         operator.equals("->roundTo") || 
         operator.equals("->truncateTo") || 
         operator.equals("->hasPrefix") || 
         operator.equals("->hasSuffix") ||
-        operator.equals("->exists") || "->existsLC".equals(operator) ||
-        operator.equals("->exists1") || operator.equals("->isUnique") || operator.equals("|isUnique") || 
-        operator.equals("->forAll") || operator.equals("<:") || operator.equals("=") ||
+        operator.equals("->exists") || 
+        "->existsLC".equals(operator) ||
+        operator.equals("->exists1") || 
+        operator.equals("->isUnique") || 
+        operator.equals("|isUnique") || 
+        operator.equals("->forAll") || operator.equals("<:") || 
+        operator.equals("=") ||
         operator.equals("/=") || operator.equals("->includes") || 
         operator.equals("->excludes") ||
         operator.equals("!=") || operator.equals("<>") || 
@@ -2489,7 +2496,8 @@ class BinaryExpression extends Expression
     { return true; } 
 
     if (operator.equals("\\/") || operator.equals("/\\") || 
-        operator.equals("^")  || "->concatenate".equals(operator) || 
+        operator.equals("^")  || 
+        "->concatenate".equals(operator) || 
         operator.equals("->sequenceRange") ||
         operator.equals("->resizeTo") ||
         operator.equals("->collect") || 

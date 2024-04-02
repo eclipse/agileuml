@@ -21057,7 +21057,8 @@ public class ASTCompositeTerm extends ASTTerm
             return args + ".insertAt(" + callp1 + "+1, " + callp2 + ".subrange(" + callp3 + "+1, " + callp3 + "+" + callp4 + ")->sum())"; 
           }     
         }
-        else if ("replace".equals(called) && arg.isString() && cargs.size() == 3)
+        else if ("replace".equals(called) && arg.isString() && 
+                 cargs.size() == 3)
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
           ASTTerm callarg2 = (ASTTerm) cargs.get(1);
@@ -21092,6 +21093,38 @@ public class ASTCompositeTerm extends ASTTerm
             return "true"; 
           } // sequences always change
         }
+        else if (arg.isSortedSequence() && 
+                 "remove".equals(called) && 
+                 cargs.size() > 1
+                )
+        { // arg.remove(x,n) is 
+          // n > 0 & arg->includes(x)
+
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
+          String callp2 = callarg2.toKM3(); 
+
+          ASTTerm.setType(this, "boolean");
+
+          if (arg.expression != null && 
+              callarg1.expression != null && 
+              callarg2.expression != null) 
+          { Expression isinExpr = 
+              new BinaryExpression("->includes", arg.expression,
+                                   callarg1.expression);
+            Expression nonzero = 
+              new BinaryExpression(">", callarg2.expression,
+                                   zeroExpression);   
+            nonzero.setBrackets(true); 
+            expression = 
+              new BinaryExpression("&", 
+                                   isinExpr, nonzero); 
+          }
+
+          return args + "->includes(" + callp1 + ") & (" + callp2 + " > 0)"; 
+        }   
         else if (( arg.isCollection() || arg.isMap() ) && 
                  ( "remove".equals(called) || 
                    "removeElement".equals(called) ) && 
@@ -21112,7 +21145,8 @@ public class ASTCompositeTerm extends ASTTerm
               expression = 
                 new BinaryExpression("->at", 
                                      arg.expression, incr); 
-            }  
+            }
+  
             return args + "->at(" + callp1 + "+1)"; 
           } 
 
@@ -26019,6 +26053,21 @@ public class ASTCompositeTerm extends ASTTerm
           } 
 
           return args + "[" + callp1 + "]"; 
+        }  
+        else if ("getCount".equals(called) && 
+                 cargs.size() >= 1 &&
+                 arg.isSortedSequence())
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { expression = 
+              new BinaryExpression("->count", 
+                    arg.expression, callarg1.expression);
+          } 
+
+          return args + "->count(" + callp1 + ")"; 
         }  
         else if ("store".equals(called) && 
                  cargs.size() >= 1 && 
