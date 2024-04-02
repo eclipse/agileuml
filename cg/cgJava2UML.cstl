@@ -967,7 +967,7 @@ push ( _1 ) |-->true
 removeElementAt ( _1 ) |-->->excludingAt(_1+1)
 removeElement ( _1 ) |-->->excludingFirst(_1)
 remove ( ) |-->.remove()
-remove ( _1 ) |--> - Integer.subrange(1,_1`last)->collect(_1`first)<when> _1 multiple
+remove ( _1 ) |-->->includes(_1`first) & (_1`last > 0)<when> _1 multiple
 remove ( _1 ) |-->->at(_1+1)<when> _1 integer
 remove ( _1 ) |-->->includes(_1)
 removeFirst ( ) |-->->first()
@@ -1002,6 +1002,7 @@ retainAll ( _1 ) |-->->intersection(_1)
 removeIf ( _1 ) |-->->reject( _var | (_1)->apply(_var) )
 removeElementAt ( _1 ) |-->->excludingAt(_1+1)
 removeElement ( _1 ) |-->->excludingFirst(_1)
+remove ( _1 ) |--> - Integer.subrange(1,_1`last)->collect(_1`first)<when> _1 multiple
 remove ( _1 ) |-->->excludingAt(_1+1)<when> _1 integer
 remove ( _1 ) |-->->excludingFirst(_1)
 removeRange ( _1 ) |-->->antirestrict( Integer.subrange(_1`first+1,_1`last) )
@@ -1056,8 +1057,11 @@ retainAll ( _1 ) |-->->intersection(_1)
 removeIf ( _1 ) |-->->reject( _var | (_1)->apply(_var) )
 removeElementAt ( _1 ) |-->->excludingAt(_1+1)
 removeElement ( _1 ) |-->->excludingFirst(_1)
+
+remove ( _1 ) |--> - Integer.subrange(1,_1`last)->collect(_1`first)<when> _1 multiple
 remove ( _1 ) |-->->excludingAt(_1+1)<when> _1 integer
 remove ( _1 ) |-->->excludingFirst(_1)
+
 removeRange ( _1 ) |-->->antirestrict( Integer.subrange(_1`first+1,_1`last) )
 remove ( ) |-->.remove()
 removeLast ( ) |-->->front()
@@ -1495,6 +1499,7 @@ containsAll ( _1 ) |-->->includesAll(_1)
 removeElementAt ( _1 ) |-->->excludingAt(_1+1)
 removeElement ( _1 ) |-->->excludingFirst(_1)
 remove ( ) |-->.remove()
+remove ( _1 ) |-->->includes(_1`first) & (_1`last > 0)<when> _1 multiple
 remove ( _1 ) |-->->at(_1+1)<when> _1 integer
 remove ( _1 ) |-->->includes(_1)
 removeFirst ( ) |-->->first()
@@ -1560,6 +1565,7 @@ last ( ) |-->->last()
 lastElement ( ) |-->->last()
 peek ( ) |-->->min()
 search ( _1 ) |-->->reverse()->indexOf(_1)-1
+getCount ( _1 ) |-->->count(_1)
 
 indexOf ( _1 ) |-->.subrange(_1`last+1)->indexOf(_1`first+"") + _1`last - 1 <when> _1 multiple
 indexOf ( _1 ) |-->->indexOf(_1)-1
