@@ -53,16 +53,16 @@ class SortedSequence implements List
   public int lastIndexOf(Object x)
   { int insertPoint = Collections.binarySearch(elements, x); 
     
-	if (insertPoint < 0)
-	{ return insertPoint; }
+    if (insertPoint < 0)
+    { return insertPoint; }
 	
-	for (int i = insertPoint+1; i < elements.size(); i++) 
-	{ if (x.equals(elements.get(i)))
-	  { insertPoint++; }
-	  else 
-	  { return insertPoint; }
-	} 
-	return insertPoint; 
+    for (int i = insertPoint+1; i < elements.size(); i++) 
+    { if (x.equals(elements.get(i)))
+      { insertPoint++; }
+      else 
+      { return insertPoint; }
+    } 
+    return insertPoint; 
   }  
 
   public int indexOf(Object x)
@@ -152,6 +152,38 @@ class SortedSequence implements List
     return res;  
   } // ignores the index.  
 
+  public SortedSequence merge(SortedSequence sq)
+  { ArrayList res = new ArrayList();
+
+    int reached = 0; 
+ 
+    for (int i = 0; i < elements.size(); i++) 
+    { Comparable obj = (Comparable) elements.get(i);
+      Comparable sqelem = 
+           (Comparable) sq.elements.get(reached);  
+      if (obj.compareTo(sqelem) < 0)
+      { res.add(obj); } 
+      else 
+      { res.add(sqelem); 
+        reached++; 
+        while (reached < sq.elements.size() && 
+               obj.compareTo(sq.elements.get(reached)) >= 0)
+        { res.add(sq.elements.get(reached)); 
+          reached++; 
+        } 
+        res.add(obj); 
+      }
+    } 
+
+    for (int i = reached; i < sq.elements.size(); i++) 
+    { res.add(sq.elements.get(i)); } 
+ 
+    SortedSequence newsq = new SortedSequence(); 
+    newsq.elements = res;   
+    return newsq; 
+  } 
+            
+
   public boolean contains(Object x)
   { int insertionPoint = 
            Collections.binarySearch(elements, x); 
@@ -224,9 +256,9 @@ class SortedSequence implements List
   public boolean equals(Object col)
   { if (col instanceof SortedSequence)
     { SortedSequence ss = (SortedSequence) col; 
-	  return elements.equals(ss.elements); 
-	}
-	return false; 
+      return elements.equals(ss.elements); 
+    }
+    return false; 
   }    
 
   public Spliterator spliterator()
@@ -244,6 +276,13 @@ class SortedSequence implements List
 	System.out.println(ss.lastIndexOf("bb"));
 	System.out.println(ss.getCount("dd")); 
 	System.out.println(ss.getCount("bb"));
+
+    SortedSequence tt = new SortedSequence(); 
+    tt.add("aa"); tt.add("ee"); 
+
+    SortedSequence pp = ss.merge(tt); 
+    System.out.println(pp); 
+
   }  
 }
 
