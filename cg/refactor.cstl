@@ -1,0 +1,43 @@
+expression::
+_1 |-->_1
+
+additiveExpression::
+_1 |-->_1
+
+factorExpression::
+_1 |-->_1
+
+statementList::
+_* |-->_*
+
+equalityExpression::
+_1 |-->_1
+
+basicExpression::
+_1 |-->_1
+
+setExpression::
+_* |-->_*
+
+factor2Expression::
+_1 |-->_1
+
+type::
+_1 |-->_1
+
+logicalExpression::
+_1 |-->_1
+
+subruleset0::
+skip ; _3  |-->_3 
+
+statement::
+while false do _4  |-->skip 
+( _2 )  |-->_2`subruleset0 
+_1 _2 _3 _4  |-->_1 _2 _3 _4 
+_1 _2 _3  |-->_1 _2 _3 
+if true        then _4 else _6  |-->_4 
+for _2 : Set{} do _6  |-->skip 
+_1 _2  |-->_1 _2 
+_1  |-->_1 
+

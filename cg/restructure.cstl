@@ -2,6 +2,17 @@ operationDefinition::
 operation _1 ( ) : _2 pre: true post: true activity: _3 ; |-->operation _1() : _2 pre: true post: true activity: while true do (_3`replaceCall) ;<when> _3`recursiveCall matches (_1)+<action> _91 _1
 operation _1 ( ) : _2 pre: true post: true activity: _3 ; |-->operation _1() : _2 pre: true post: true activity: _3;
 
+
+statementList::
+_1 |-->_1
+skip ; _* |-->_*
+break ; _* |-->break
+continue ; _* |-->continue
+return ; _* |-->return
+return _1 ; _* |-->return _1
+_* |-->_*
+
+
 statement::
 skip |-->skip 
 return |-->return
@@ -20,8 +31,13 @@ if _1 then _2 else _3 |-->if _1 then _2 else _3
   
 while false do _1 |-->skip
 while _1 do _2 |-->while _1 do _2 
-for _1 : _2 do _3 |-->for _1 : _2 do _3 
+
+for _1 : Set{} do _2 |-->skip 
+for _1 : Sequence{} do _2 |-->skip 
+for _1 : _2 do _3 |-->for _1 : _2 do _3
+ 
 return _1 |-->return _1 
+_1 := _1 |-->skip
 _1 := _2 |-->_1 := _2 
 
 skip ; _1 |-->_1
