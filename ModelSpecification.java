@@ -7578,65 +7578,67 @@ public class ModelSpecification
             { java.util.Set dval = 
                      (java.util.Set) dvals.get(j);
               Vector tagsAtj = new Vector(); 
-              tagsAtj.addAll(dval); 
-              String tag1 = (String) tagsAtj.get(0);  
-              Expression condv = 
-                new BinaryExpression("isNested", _i, 
+              tagsAtj.addAll(dval);
+			  if (tagsAtj.size() > 0) 
+              { String tag1 = (String) tagsAtj.get(0);  
+                Expression condv = 
+                  new BinaryExpression("isNested", _i, 
                     new BasicExpression(tag1));
-              for (int k = 1; k < tagsAtj.size(); k++) 
-              { String tagk = (String) tagsAtj.get(k); 
-                condv =
-                  new BinaryExpression("&", condv, 
-                    new BinaryExpression("isNested", _i, 
-                      new BasicExpression(tagk)));
-              }
-              EntityMatching emx = 
-                new EntityMatching(sent,tent); 
-              emx.setCondition(condv); 
+                for (int k = 1; k < tagsAtj.size(); k++) 
+                { String tagk = (String) tagsAtj.get(k); 
+                  condv =
+                    new BinaryExpression("&", condv, 
+                      new BinaryExpression("isNested", _i, 
+                        new BasicExpression(tagk)));
+                }
+                EntityMatching emx = 
+                  new EntityMatching(sent,tent); 
+                emx.setCondition(condv); 
 
-              System.out.println(">>> New candidate Entity matching: " + emx + " for condition " + condv); 
+                System.out.println(">>> New candidate Entity matching: " + emx + " for condition " + condv); 
            /*   JOptionPane.showMessageDialog(null, 
                 "*** New candidate Entity matching: " + emx + " for condition " + condv,  
                 "",
                 JOptionPane.INFORMATION_MESSAGE); */ 
 
-              Vector svalues = new Vector(); 
-              Vector tvalues = new Vector(); 
+                Vector svalues = new Vector(); 
+                Vector tvalues = new Vector(); 
 
-              for (int k = 0; k < nobjs; k++) 
-              { if (ASTTerm.hasExactNestedTags(
+                for (int k = 0; k < nobjs; k++) 
+                { if (ASTTerm.hasExactNestedTags(
                                  srcasts[k],i,tagsAtj))
-                { svalues.add(srcasts[k]); 
-                  tvalues.add(trgasts[k]); 
+                  { svalues.add(srcasts[k]); 
+                    tvalues.add(trgasts[k]); 
+                  } 
                 } 
-              } 
               
-              int en = svalues.size();
-              if (en < 2) 
-              { continue; } // next value 
+                int en = svalues.size();
+                if (en < 2) 
+                { continue; } // next value 
  
-              ASTTerm[] sattvalues = new ASTTerm[en]; 
-              ASTTerm[] tattvalues = new ASTTerm[en]; 
+                ASTTerm[] sattvalues = new ASTTerm[en]; 
+                ASTTerm[] tattvalues = new ASTTerm[en]; 
             
-              for (int k = 0; k < en; k++) 
-              { sattvalues[k] = (ASTTerm) svalues.get(k);
-                tattvalues[k] = (ASTTerm) tvalues.get(k); 
-              }
+                for (int k = 0; k < en; k++) 
+                { sattvalues[k] = (ASTTerm) svalues.get(k);
+                  tattvalues[k] = (ASTTerm) tvalues.get(k); 
+                }
 
-              sattvalueMap.put(sast,sattvalues); 
+                sattvalueMap.put(sast,sattvalues); 
 
-              AttributeMatching cexpr = 
-                composedTreeFunction(sent,tast,
+                AttributeMatching cexpr = 
+                  composedTreeFunction(sent,tast,
                                      sourceattributes,
                       sattvalueMap,tattvalues,tvalues,
                       tms,ams);
            
-              if (cexpr != null) 
-              { emx.addAttributeMapping(cexpr); 
-                res.add(emx); 
-              } 
-              else 
-              { completeMapping = false; }
+                if (cexpr != null) 
+                { emx.addAttributeMapping(cexpr); 
+                  res.add(emx); 
+                } 
+                else 
+                { completeMapping = false; }
+              }
             }
 
             if (completeMapping) 

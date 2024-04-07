@@ -2456,7 +2456,7 @@ public void findPlugins()
       else if (label.equals("LTBE from text"))
       { ucdArea.ltbeFromText(); }
       else if (label.equals("LTBE from ASTs"))
-      { ucdArea.cgbe(); } 
+      { ucdArea.cgbe(null); } 
       else if (label.equals("Validate CGBE"))
       { ucdArea.validateCGBE(); } 
       else if (label.equals("Formalise data requirements"))

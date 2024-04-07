@@ -13,7 +13,7 @@
  * 
  * Version information : 2.3
  *
- * Date :  December 2023
+ * Date :  April 2024
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -22845,11 +22845,11 @@ public void produceCUI(PrintWriter out)
   } 
 
   public void ltbeFromText()
-  { cgbePreProcess(); 
-    cgbe(); 
+  { Vector originalSourceASTS = cgbePreProcess(); 
+    cgbe(originalSourceASTS); 
   } 
 
-  public void cgbePreProcess()
+  public Vector cgbePreProcess()
   { // Builds output/sourceasts.txt and output/targetasts.txt
     // by reading files such as 
     // output/typeExamples.txt, 
@@ -22866,14 +22866,14 @@ public void produceCUI(PrintWriter out)
     String slang = 
       JOptionPane.showInputDialog("Enter source language name (of ANTLR parser): ");
     if (slang == null) 
-    { return; } 
+    { return null; } 
     sourceLanguage = slang; 
 
     System.out.println();
     String tlang = 
       JOptionPane.showInputDialog("Enter target language name (of ANTLR parser): ");
     if (tlang == null) 
-    { return; } 
+    { return null; } 
     targetLanguage = tlang; 
 
     Vector srcasts = new Vector(); 
@@ -22881,9 +22881,10 @@ public void produceCUI(PrintWriter out)
 
     boolean hasNextFile = true; 
     while (hasNextFile) 
-    { System.out.println("Enter examples file name, eg: expressionExamples.txt");
+    { System.out.println("*** Enter examples file name, eg: expressionExamples.txt");
       String examplesFile = 
         JOptionPane.showInputDialog("Enter examples file name (in output directory): ");
+
       if (examplesFile == null) 
       { hasNextFile = false; 
         break; 
@@ -22905,19 +22906,19 @@ public void produceCUI(PrintWriter out)
 
         if (srcexprs.size() != trgexprs.size())
         { System.err.println("!! ERROR: some lines are missing 2 examples. Format must be source tabs target"); 
-          return; 
+          return null; 
         } 
 
         String srule = 
           JOptionPane.showInputDialog("Enter source language parser rule (for " + sourceLanguage + " examples): ");
         if (srule == null) 
-        { return; } 
+        { return null; } 
         sourceRule = srule; 
 
         String trule = 
           JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " examples): ");
         if (trule == null) 
-        { return; } 
+        { return null; } 
         targetRule = trule; 
 
         for (int i = 0; i < srcexprs.size(); i++) 
@@ -22935,14 +22936,14 @@ public void produceCUI(PrintWriter out)
           BufferedReader ibr2 = new BufferedReader(inr2); 
           String stext = ""; 
           String oline2 = ibr2.readLine(); 
-          System.out.println("parsing .... " + srctext);
+          System.out.println(".... parsing .... " + srctext);
           while (oline2 != null) 
           { stext = oline2; 
             oline2 = ibr2.readLine();
           }
           srcasts.add(stext.trim());  
           int exitjar2 = p2.waitFor(); 
-          System.out.println("Exit code: " + exitjar2);
+          System.out.println("*** Exit code: " + exitjar2);
         } 
       
         System.out.println(">>> Source asts are: " + srcasts); 
@@ -22986,8 +22987,10 @@ public void produceCUI(PrintWriter out)
 
     if (srcasts.size() != trgasts.size())
     { System.err.println("!! ERROR: different numbers of source and target examples: " + srcasts.size() + " /= " + trgasts.size()); 
-      return; 
+      return null; 
     } 
+
+    Vector srctrees = new Vector(); 
 
     File sfile = new File("output/sourceasts.txt");
     File tfile = new File("output/targetasts.txt");
@@ -23002,18 +23005,28 @@ public void produceCUI(PrintWriter out)
       
       for (int i = 0; i < srcasts.size(); i++) 
       { String srcast = (String) srcasts.get(i);
-        sout.println(srcast);
+        // sout.println(srcast);
         String trgast = (String) trgasts.get(i);
-        tout.println(trgast); 
+        // tout.println(trgast); 
 
         Compiler2 comp = new Compiler2();
         ASTTerm sast = comp.parseGeneralAST(srcast);
         if (sast != null) 
-        { Vector subterms = sast.allNestedSubterms(); 
+        { srctrees.add(sast); 
+
+          
+          Vector subterms = new Vector(); 
+          subterms.add(sast); 
+          subterms.addAll(sast.allNestedSubterms());
+ 
           for (int j = 0; j < subterms.size(); j++) 
           { ASTTerm subsrc = (ASTTerm) subterms.get(j); 
-            sout.println("" + subsrc); 
-            tout.println(trgast); 
+            if (subsrc instanceof ASTBasicTerm || 
+                subsrc.arity() > 1)
+            { sout.println("" + subsrc); 
+              tout.println(trgast);
+              break; 
+            } // first that is basic or not (tag _1) 
           } 
         } 
       }  
@@ -23023,9 +23036,10 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception _ex) { } 
       
+    return srctrees; 
   } // + same for types, statements, declarations. 
 
-  public void cgbe()
+  public void cgbe(Vector originalSourceASTS)
   { // Takes corresponding asts from output/sourceasts.txt 
     // and output/targetasts.txt 
     // Builds entities for source & target tags -> mm.txt 
@@ -23173,8 +23187,12 @@ public void produceCUI(PrintWriter out)
 
     System.out.println("***>> examples model specification: " + mod); 
 
-    Vector allsubterms = 
-       ASTTerm.allTagsArities(sourceasts); 
+    Vector allsubterms = new Vector(); 
+    if (originalSourceASTS != null) 
+    { allsubterms = 
+         ASTTerm.allTagsArities(originalSourceASTS); } 
+    else 
+    { allsubterms = ASTTerm.allTagsArities(sourceasts); }
 
 
     File mfile = new File("output/out.txt");
@@ -23193,8 +23211,9 @@ public void produceCUI(PrintWriter out)
     tlspecification.checkModel(mod,entities,types);
 	  
     Date d2 = new Date(); 
-    long endTime = d2.getTime(); 
-    System.out.println(">>> MTBE took " + (endTime - startTime) + "ms");
+    long endTime = d2.getTime();
+ 
+    JOptionPane.showInputDialog(">>> MTBE took " + (endTime - startTime) + "ms");
   
     /* For source tags which do not appear in the mapping, 
        define a default rule  tag:: _1 |-->_1 */ 
@@ -23203,9 +23222,10 @@ public void produceCUI(PrintWriter out)
     System.out.println(tlspecification + "");
       
     try
-    { PrintWriter fout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/final.tl")));
+    { PrintWriter fout = 
+        new PrintWriter(
+               new BufferedWriter(
+                      new FileWriter("output/final.tl")));
       fout.println(tlspecification + ""); 
       fout.close(); 
     } catch (Exception _except) { } 
@@ -23226,7 +23246,8 @@ public void produceCUI(PrintWriter out)
 
     System.out.println("***>> All unused tags: " + allsubterms); 
 
-    Vector extraRules = ASTTerm.rulesFromTagsArities(allsubterms); 
+    Vector extraRules = 
+       ASTTerm.rulesFromTagsArities(allsubterms); 
 
     mapTL2CSTL(extraRules); 
   } 
