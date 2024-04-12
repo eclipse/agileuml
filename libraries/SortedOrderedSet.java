@@ -93,6 +93,9 @@ class SortedOrderedSet implements Set, List
   public Object[] toArray(Object[] arr)
   { return elementSeq.toArray(arr); }
 
+  public Set asSet()
+  { return elementSet; } 
+
   public Iterator iterator()
   { return elementSeq.iterator(); }     
 
@@ -130,7 +133,7 @@ class SortedOrderedSet implements Set, List
   { boolean added = elementSet.add(x); 
     if (added) 
     { return elementSeq.add(x); }
-	return null; 
+    return null; 
   } // ignores i 
 
   public String toString()
@@ -151,7 +154,7 @@ class SortedOrderedSet implements Set, List
   public boolean equals(Object col)
   { if (col instanceof SortedOrderedSet)
     { SortedOrderedSet ss = (SortedOrderedSet) col; 
-	 return elementSeq.equals(ss.elementSeq); 
+      return elementSeq.equals(ss.elementSeq); 
     }
     return false; 
   }    

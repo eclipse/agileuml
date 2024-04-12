@@ -1,4 +1,3 @@
-
 import ocl
 import math
 import struct
@@ -43,6 +42,31 @@ class MathLib:
   def eValue() :
     result = math.exp(1)
     return result
+
+  def intPower(x, p) :
+  # more energy-efficient version than math.pow(x,p)
+    if p == 0 or x == 1 : 
+      return 1.0 
+
+    p0 = p 
+    if p < 0 :
+      p0 = -p 
+
+    y = 1
+    res = x  # invariant: res = x->pow(y) 
+
+    while y < p0 :
+      if 2*y < p0 : 
+        y = 2*y 
+        res = res*res 
+      else : 
+        y = y+1 
+        res = x*res
+
+    if p < 0 :
+      return 1.0/res 
+    return 1.0*res
+
 
   def setSeeds(x,y,z) :
     MathLib.ix = x
@@ -251,39 +275,90 @@ class MathLib:
   
     v = f(r)
 
-    if v < tol and v > -tol:
+    lowerBound = rl 
+    upperBound = ru 
+    midPoint = (rl + ru)/2.0 
+	
+    while v >= tol or v <= -tol :
+      oldr = r 
+      midPoint = (upperBound + lowerBound)/2.0
+
+      if v > 0 :
+        upperBound = oldr
+        r = midPoint
+        # return MathLib.bisectionAsc((rl + r) / 2, rl, r, f, tol)
+      else :
+        lowerBound = oldr
+        r = midPoint
+        # return MathLib.bisectionAsc((r + ru) / 2, r, ru, f, tol)
+      v = f(r)
+
+    return r 
+
+  def bisectionDsc(r, rl, ru, f, tol) :
+    # find a zero of f(x) in range [rl,ru]
+    # f non-increasing. Start with r
+    result = r
+
+    if ru <= rl : 
       return r
 
-    if v > 0 :
-      return MathLib.bisectionAsc((rl + r) / 2, rl, r, f, tol)
-    else :
-      if v < 0 :
-        return MathLib.bisectionAsc((r + ru) / 2, r, ru, f, tol)
-    return r; 
+    if r < rl :
+      r = rl
 
+    if r > ru : 
+      r = ru
+  
+    v = f(r)
+
+    lowerBound = rl 
+    upperBound = ru 
+    midPoint = (rl + ru)/2.0 
+	
+    while v >= tol or v <= -tol :
+      oldr = r 
+      midPoint = (upperBound + lowerBound)/2.0
+
+      if v < 0 :
+        upperBound = oldr
+        r = midPoint
+        # return MathLib.bisectionDsc((rl + r) / 2, rl, r, f, tol)
+      else :
+        lowerBound = oldr
+        r = midPoint
+        # return MathLib.bisectionDsc((r + ru) / 2, r, ru, f, tol)
+      v = f(r)
+
+    return r 
 
 
   def roundN(x,n) :
     if n == 0 : 
       return round(x)
-    y = x*math.pow(10,n) 
-    return round(y)/math.pow(10,n) 
+    decimalplaces = MathLib.intPower(10,n)
+    y = x*decimalplaces 
+    return round(y)/decimalplaces 
 
   def truncateN(x,n) :
     if n <= 0 : 
       return int(x)
-    y = x*math.pow(10,n) 
-    return int(y)/math.pow(10,n) 
+    decimalplaces = MathLib.intPower(10,n)
+    y = x*decimalplaces 
+    return int(y)/decimalplaces 
   
   def toFixedPoint(x,m,n) :  
-    y = int(x*math.pow(10,n)) 
+    decimalplaces = MathLib.intPower(10,n)
+  
+    y = int(x*decimalplaces) 
     z = y % math.pow(10,m+n) 
-    return z/math.pow(10,n) 
+    return z/decimalplaces 
 
-  def toFixedPointRound(x,m,n) :  
-    y = int(round(x*math.pow(10,n))) 
+  def toFixedPointRound(x,m,n) :
+    decimalplaces = MathLib.intPower(10,n)
+    
+    y = int(round(x*decimalplaces)) 
     z = y % math.pow(10,m+n) 
-    return z/math.pow(10,n) 
+    return z/decimalplaces 
 
   def isIntegerOverflow(x, m) : 
     y = int(x)
@@ -346,6 +421,21 @@ class MathLib:
     result = []
     for row in m1 : 
       result.append( MathLib.rowMult(row, m2) )
+    return result
+
+  def intRowMult(s, m) :   
+    result = []
+    for i in range(1, len(s)+1) : 
+      rowsum = 0 
+      for k in range(1, len(m)+1) : 
+        rowsum = rowsum + s[k-1]*(m[k-1][i-1])
+      result.append(rowsum)
+    return result  
+
+  def intMatrixMultiplication(m1, m2) : 
+    result = []
+    for row in m1 : 
+      result.append( MathLib.intRowMult(row, m2) )
     return result
 
   def differential(f) :
@@ -654,7 +744,7 @@ class FinanceLib :
 # print(FinanceLib.netPresentValueDiscrete(0.01, [-100,2,102]))
 # print(FinanceLib.irrDiscrete([-100,2,102]))
 
-# print(MathLib.roundN(22.553,2))
+# print(MathLib.roundN(22.555,2))
 # print(MathLib.roundN(33.5,0))
 
 # print(MathLib.toFixedPoint(1033.55,3,1))
@@ -668,13 +758,13 @@ class FinanceLib :
 
 # print(MathLib.lcm(15,10))
 
-# x = MathLib.bisectionAsc(0.5,-1,1, lambda x : x*x - 0.5, 0.00001)
+# x = MathLib.bisectionDsc(0.5,-1,1, lambda x : 0.5 - x*x, 0.00001)
 # print(x)
 
 # print(MathLib.isIntegerOverflow(0, 1))
 
 # print(MathLib.truncateN(-2.126, 2))
-# print(MathLib.roundN(2126.5, 0))
+# print(MathLib.roundN(-2.126, 2))
 
 # tt = ocldate.OclDate.getSystemTime()
 # print(tt)
@@ -683,10 +773,10 @@ class FinanceLib :
 # print(MathLib.random())
 # print(MathLib.random())
 
-# m1 = [[1,3], [7,5]]
-# m2 = [[6,8], [4,2]]
+# m1 = [[1,2], [2,3]]
+# m2 = [[3,4], [4,5]]
 
-# print(MathLib.matrixMultiplication(m1,m2))
+# print(MathLib.intMatrixMultiplication(m1,m2))
 
 # lin = lambda x : x
 # sq = lambda x : x*x
@@ -731,5 +821,4 @@ class FinanceLib :
 # print(p(2))
 # print(p(3))
 
-
-print(MathLib.leftTruncateTo(1024.55,3))
+print(MathLib.intPower(5,-3))

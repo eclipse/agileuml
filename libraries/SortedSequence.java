@@ -28,7 +28,7 @@ class SortedSequence implements List
   { ArrayList elems = (ArrayList) elements.clone(); 
     SortedSequence ss = new SortedSequence();
     ss.elements = elems; 
-	return ss;
+    return ss;
   }
   
   public Object get(int i) 
@@ -116,12 +116,12 @@ class SortedSequence implements List
     if (insertionPoint < 0)
     { int ip = -(insertionPoint + 1); 
       for (int i = 0; i < nCopies; i++) 
-	  { elements.add(ip,x); }  
+      { elements.add(ip,x); }  
     } 
     else 
     { for (int i = 0; i < nCopies; i++) 
-	  { elements.add(insertionPoint,x); }
-	}
+      { elements.add(insertionPoint,x); }
+    }
 	 
     return true; 
   } 
@@ -141,7 +141,8 @@ class SortedSequence implements List
     { // in list already 
       return x;  
     } 
-  } 
+  } // another interpretation is to remove the element at 
+    // position i, and insert x. 
 
   public void clear()
   { elements.clear(); }
@@ -182,7 +183,31 @@ class SortedSequence implements List
     newsq.elements = res;   
     return newsq; 
   } 
-            
+    
+  public java.util.Set uniqueSet()
+  { return asSet(); }
+
+  public java.util.Set asSet()
+  { java.util.TreeSet res = new java.util.TreeSet(); 
+    if (elements.size() == 0) 
+    { return res; } 
+
+    Object elem0 = elements.get(0); 
+    res.add(elem0); 
+
+    Object lastAdded = elem0;         
+
+    for (int i = 1; i < elements.size(); i++) 
+    { Object elem = elements.get(i); 
+      if (elem.equals(lastAdded)) { } 
+      else 
+      { res.add(elem); 
+        lastAdded = elem; 
+      } 
+    } 
+
+    return res; 
+  }
 
   public boolean contains(Object x)
   { int insertionPoint = 
@@ -283,6 +308,7 @@ class SortedSequence implements List
     SortedSequence pp = ss.merge(tt); 
     System.out.println(pp); 
 
+    System.out.println(pp.asSet()); 
   }  
 }
 

@@ -43,6 +43,9 @@ package mathlib {
     pre: true
     post: result = 0.5772156649015328606065120900824024310421;
 
+    static query intPower(x : int, p : int) : double
+    pre: true post: true; 
+
     static operation setSeeds(x : int , y : int , z : int ) : void
     pre: true
     post: MathLib.ix = x & MathLib.iy = y & MathLib.iz = z;
@@ -299,6 +302,13 @@ package mathlib {
      (v > 0 => result = MathLib.bisectionAsc((rl + r) / 2.0, rl, r, f, tol)) & 
      (v < 0 => result = MathLib.bisectionAsc((r + ru) / 2.0, r, ru, f, tol))); 
 
+  static query bisectionDsc(r : double, rl : double, ru : double, f : Function(double,double), tol : double) : double
+  pre: true 
+  post: v = f->apply(r) & 
+    ((v < tol & v > -tol => result = r) &
+     (v < 0 => result = MathLib.bisectionDsc((rl + r) / 2.0, rl, r, f, tol)) & 
+     (v > 0 => result = MathLib.bisectionDsc((r + ru) / 2.0, r, ru, f, tol))); 
+
   static query rowMult(s : Sequence(double), m : Sequence(Sequence(double))) : Sequence(double)  
   pre: true 
   post: result = Integer.subrange(1, s.size)->collect( i | Integer.Sum(1, m.size, k, s[k]*(m[k]->at(i))));
@@ -306,6 +316,14 @@ package mathlib {
    static query matrixMultiplication(m1: Sequence(Sequence(double)), m2 : Sequence(Sequence(double))) : Sequence(Sequence(double))
    pre: true
    post: result = m1->collect( row | MathLib.rowMult(row, m2) );
+
+  static query intRowMult(s : Sequence(int), m : Sequence(Sequence(int))) : Sequence(double)  
+  pre: true 
+  post: result = Integer.subrange(1, s.size)->collect( i | Integer.Sum(1, m.size, k, s[k]*(m[k]->at(i))));
+
+   static query intMatrixMultiplication(m1: Sequence(Sequence(int)), m2 : Sequence(Sequence(int))) : Sequence(Sequence(double))
+   pre: true
+   post: result = m1->collect( row | MathLib.intRowMult(row, m2) );
 
    static query differential(f : Function(double,double)) : Function(double,double)
    pre: true 

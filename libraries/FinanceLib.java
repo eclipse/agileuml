@@ -157,7 +157,7 @@ class FinanceLib {
       return 360 * (yy2 - yy1) + 30 * (mm2 - mm1) + (dd2 - dd1);
     }
     
-	if (num.equals("30/360B"))
+    if (num.equals("30/360B"))
     {
       dd1 = Ocl.min(Ocl.initialiseSet(dd1,30));
       if (dd1 > 29)

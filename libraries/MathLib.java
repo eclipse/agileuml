@@ -82,6 +82,33 @@ class MathLib
   public static double eValue()
   { return Math.E; }
 
+  public static double intPower(int x, int p)
+  { // more energy-efficient version than Math.pow(x,p)
+
+    if (p == 0 || x == 1) { return 1.0; } 
+
+    int p0 = p; 
+    if (p < 0) { p0 = -p; } 
+
+    int y = 1;
+    int res = x; // invariant: res = x->pow(y) 
+
+    while (y < p0)
+    { if (2*y < p0) 
+      { y = 2*y; 
+        res = res*res; 
+      } 
+      else 
+      { y = y+1; 
+        res = x*res; 
+      } 
+    }
+
+    if (p < 0) 
+    { return 1.0/res; } 
+    return 1.0*res; 
+  }   
+
   public static void setSeeds(int x,int y,int z)
   { MathLib.setix(x);
     MathLib.setiy(y);
@@ -333,30 +360,34 @@ class MathLib
  public static double roundN(double x, int n)
  { if (n == 0) 
    { return Math.round(x); } 
-   double y = x*Math.pow(10,n); 
-   return Math.round(y)/Math.pow(10,n);
+
+   double divisor = MathLib.intPower(10,n);
+   double y = x*divisor; 
+   return Math.round(y)/divisor;
  }  
 
  public static double truncateN(double x, int n)
  { if (n <= 0) 
    { return (int) x; } 
-   double y = x*Math.pow(10,n); 
-   return ((int) y)/Math.pow(10,n);
+
+   double divisor = MathLib.intPower(10,n);
+   double y = x*divisor; 
+   return ((int) y)/divisor;
  }  
 
  public static double toFixedPoint(double x, int m, int n)
  { if (m < 0 || n < 0) 
    { return x; } 
-   int y = (int) (x*Math.pow(10,n)) ; 
-   int z = y % ((int) Math.pow(10, m+n)) ; 
+   int y = (int) (x*MathLib.intPower(10,n)) ; 
+   int z = y % ((int) MathLib.intPower(10, m+n)) ; 
    return z/Math.pow(10.0,n);
  }  
 
  public static double toFixedPointRound(double x, int m,  int n)
  { if (m < 0 || n < 0) 
    { return x; } 
-   int y = (int) Math.round(x*Math.pow(10,n)) ; 
-   int z = y % ((int) Math.pow(10, m+n)) ; 
+   int y = (int) Math.round(x*MathLib.intPower(10,n)) ; 
+   int z = y % ((int) MathLib.intPower(10, m+n)) ; 
    return z/Math.pow(10.0,n);
  }   
   
@@ -377,7 +408,9 @@ class MathLib
 
   public static double median(ArrayList sq)
   { int sze = sq.size();  
-    if (sze == 0) { return Double.NaN; } 
+    if (sze == 0) 
+    { return Double.NaN; } 
+
     ArrayList s1 = Ocl.sort(sq);
  
     if (sze % 2 == 1)
@@ -445,21 +478,59 @@ class MathLib
   } 
 
   public static double bisectionAsc(double r,double rl,double ru, Function<Double, Double> f,double tol)
-  { double result = 0.0;
+  { // find a root (to approx. tol) of monotonically increasing f in interval [rl,ru]
   
-    final double v = (f).apply(r);
+    double v = (f).apply(r);
  
-    if (v < tol && v > -tol) {
-      result = r;
-    } else {
+    double lowerBound = rl; 
+    double upperBound = ru; 
+    double midPoint = (rl + ru)/2; 
+	
+    while (v >= tol || v <= -tol)
+    { double oldr = r; 
+      midPoint = (upperBound + lowerBound)/2;
+		
       if (v > 0) {
-        result = MathLib.bisectionAsc(( rl + r ) / 2,rl,r,f,tol);
-      } else if (v < 0) {
-          result = MathLib.bisectionAsc(( r + ru ) / 2,r,ru,f,tol);
+        upperBound = oldr; 
+        r = midPoint; 
+        // result = MathLib.bisectionAsc(( rl + r ) / 2,rl,r,f,tol);
+      } else {
+        lowerBound = oldr;
+        r = midPoint; 
+        //  result = MathLib.bisectionAsc(( r + ru ) / 2,r,ru,f,tol);
       }   
+	  v = (f).apply(r);
     }      
 
-    return result;
+    return r;
+  }
+
+  public static double bisectionDsc(double r,double rl,double ru, Function<Double, Double> f,double tol)
+  { // find a root (to approx. tol) of monotonically decreasing f in interval [rl,ru]
+  
+    double v = (f).apply(r);
+ 
+    double lowerBound = rl; 
+	double upperBound = ru; 
+	double midPoint = (rl + ru)/2; 
+	
+	while (v >= tol || v <= -tol)
+	{ double oldr = r; 
+      midPoint = (upperBound + lowerBound)/2;
+		
+      if (v < 0) {
+        upperBound = oldr; 
+        r = midPoint; 
+        // result = MathLib.bisectionDsc(( rl + r ) / 2,rl,r,f,tol);
+      } else {
+        lowerBound = oldr;
+        r = midPoint; 
+        //  result = MathLib.bisectionDsc(( r + ru ) / 2,r,ru,f,tol);
+      }   
+	  v = (f).apply(r);
+    }      
+
+    return r;
   }
 
   public static boolean isIntegerOverflow(double x, int m)
@@ -472,12 +543,12 @@ class MathLib
   }  
 
   public static int leftTruncateTo(int x, int m)
-  { return x % ((int) Math.pow(10,m)); }  
+  { return x % ((int) MathLib.intPower(10,m)); }  
 
   public static double leftTruncateTo(double x, int m)
   { int integerPart = (int) x;
     double fractionPart = x - integerPart;  
-    return (integerPart % ((int) Math.pow(10,m))) + fractionPart; 
+    return (integerPart % ((int) MathLib.intPower(10,m))) + fractionPart; 
   }  
 
   public static ArrayList<Double> rowMult(ArrayList<Double> s, ArrayList<ArrayList<Double>> m)
@@ -492,6 +563,21 @@ class MathLib
   {
     ArrayList<ArrayList<Double>> result = new ArrayList<ArrayList<Double>>();
     result = Ocl.collectSequence(m1,(row)->{return MathLib.rowMult(row, m2);});
+    return result;
+  }
+
+  public static ArrayList<Double> intRowMult(ArrayList<Integer> s, ArrayList<ArrayList<Integer>> m)
+  {
+    ArrayList<Double> result = new ArrayList<Double>();
+    result = Ocl.collectSequence(Ocl.integerSubrange(1,s.size()),(i)->{return (double) Ocl.sum(Ocl.collectSequence(Ocl.integerSubrange(1,m.size()),(k)->{ return ((double) (s).get(k - 1)) * (((double) ((ArrayList<Integer>) (m).get(k - 1)).get(i - 1))); }));});
+    return result;
+  }
+
+
+  public static ArrayList<ArrayList<Double>> intMatrixMultiplication(ArrayList<ArrayList<Integer>> m1, ArrayList<ArrayList<Integer>> m2)
+  {
+    ArrayList<ArrayList<Double>> result = new ArrayList<ArrayList<Double>>();
+    result = Ocl.collectSequence(m1,(row)->{return MathLib.intRowMult(row, m2);});
     return result;
   }
 
@@ -529,8 +615,34 @@ class MathLib
   }
 
   public static void main(String[] args)
-  { System.out.println(MathLib.leftTruncateTo(1024,3)); 
-    System.out.println(MathLib.leftTruncateTo(1024.55,3)); 
+  { /* Function<Double,Double> f = (x) -> { return x*x*x - 0.5; };
+     
+	double v = MathLib.bisectionAsc(0.5,0,1,f,0.001); 
+	System.out.println(v);
+	
+	Function<Double,Double> g = (x) -> { return 0.5 - x*x; };
+	v = MathLib.bisectionDsc(0.5,0,1,g,0.001); 
+	System.out.println(v); */ 
+
+    /* ArrayList<Integer> row1 = new ArrayList<Integer>(); 
+    row1.add(1); row1.add(2); 
+
+    ArrayList<Integer> row2 = new ArrayList<Integer>(); 
+    row2.add(2); row2.add(3); 
+
+    ArrayList<ArrayList<Integer>> mat1 = new ArrayList<ArrayList<Integer>>(); 
+    mat1.add(row1); mat1.add(row2); 
+
+    ArrayList<Integer> row3 = new ArrayList<Integer>(); 
+    row3.add(3); row3.add(4); 
+
+    ArrayList<Integer> row4 = new ArrayList<Integer>(); 
+    row4.add(4); row4.add(5); 
+
+    ArrayList<ArrayList<Integer>> mat2 = new ArrayList<ArrayList<Integer>>(); 
+    mat2.add(row3); mat2.add(row4); 
+
+    System.out.println(MathLib.intMatrixMultiplication(mat1, mat2)); */   
   }  
 
 }
