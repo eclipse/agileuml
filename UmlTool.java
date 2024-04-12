@@ -961,6 +961,11 @@ public void findPlugins()
     moveop.addActionListener(this);
     qualityMenu.add(moveop);
 
+    JMenuItem moveopto = 
+      new JMenuItem("Move operation to parameter class"); 
+    moveopto.addActionListener(this);
+    qualityMenu.add(moveopto);
+
     JMenuItem removeCallDefinition = 
       new JMenuItem("Replace call by definition"); 
     removeCallDefinition.addActionListener(this);
@@ -2710,6 +2715,10 @@ public void findPlugins()
       { pushdownFeatures(); } 
       else if (label.equals("Move operation"))
       { ucdArea.moveOperation(); 
+        repaint(); 
+      } 
+      else if (label.equals("Move operation to parameter class"))
+      { ucdArea.moveOperationToParameterClass(); 
         repaint(); 
       } 
       else if (label.equals("Move attribute"))

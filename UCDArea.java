@@ -2466,6 +2466,43 @@ public class UCDArea extends JPanel
     repaint(); 
   } 
 
+  public void moveOperationToParameterClass()
+  { JOptionPane.showMessageDialog(null, 
+       "Select source entity, then operation",
+       "Move operation to parameter class", 
+       JOptionPane.INFORMATION_MESSAGE); 
+    Vector ents = selectEntity(); 
+    if (ents.size() == 0) { return; } 
+    Entity src = (Entity) ents.get(0);
+    Vector ops = selectOperation(src); 
+    if (ops.size() == 0) { return; } 
+    BehaviouralFeature op = (BehaviouralFeature) ops.get(0); 
+    Vector trgz = op.parameterEntities(); 
+    if (trgz.size() == 0) { return; }
+
+    Vector attrs = op.allAttributesUsedIn(); 
+
+    System.out.println(">>> Attributes " + attrs + " are used in " + op + " activity."); 
+
+    System.out.println(); 
+
+    if (op.usesOnlyParameterAttributes(attrs))
+    { 
+      Entity trg = (Entity) trgz.get(0); 
+      src.removeOperation(op); 
+    // op remove trg parameter z, replace z by self in op body:
+
+      op.removeEntityParameter(trg); 
+
+      trg.addOperation(op); 
+      System.out.println(">> Moved operation " + op + " from " + src + " to " + trg); 
+    } 
+    else 
+    { System.out.println("!! Cannot move operation " + op + " from " + src + " -- it depends on attributes of " + src); }
+
+    repaint(); 
+  } 
+
   public void moveAttribute()
   { JOptionPane.showMessageDialog(null, "Select source entity, then attribute, then target entity",
                                   "Move attribute", JOptionPane.INFORMATION_MESSAGE); 

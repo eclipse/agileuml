@@ -37,7 +37,7 @@ public class CGSpec
   Vector entities; 
   Vector types; 
 
-  java.util.Map categoryRules = new java.util.HashMap(); 
+  java.util.Map categoryRules = new java.util.TreeMap(); 
                 // String -> Vector of CGRule
   java.util.Map umlRules = new java.util.HashMap(); 
                 // String -> Vector of CGRule

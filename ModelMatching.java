@@ -170,6 +170,8 @@ public class ModelMatching implements SystemTypes
       res = res + bf.display() + "\n\n"; 
     } */ 
 
+    // JOptionPane.showInputDialog(">> Type matches: " + typematches); 
+
     Vector usedFunctions = new Vector(); 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = 
@@ -184,7 +186,30 @@ public class ModelMatching implements SystemTypes
       { usedFunctions.addAll(tm.usesCSTLfunctions()); } 
     } 
 
+    Vector newuses = new Vector(); 
+    
     for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i);
+      if (usedFunctions.contains(tm.getName())) 
+      { Vector tmuses = tm.usesCSTLfunctions(); 
+        newuses.addAll(tmuses); 
+      } 
+    }
+
+    while (!usedFunctions.containsAll(newuses))
+    { usedFunctions.addAll(newuses); 
+      newuses = new Vector(); 
+    
+      for (int i = 0; i < typematches.size(); i++) 
+      { TypeMatching tm = (TypeMatching) typematches.get(i);
+        if (usedFunctions.contains(tm.getName())) 
+        { Vector tmuses = tm.usesCSTLfunctions(); 
+          newuses.addAll(tmuses); 
+        } 
+      }
+    } 
+
+    /* for (int i = 0; i < typematches.size(); i++) 
     { TypeMatching tm = (TypeMatching) typematches.get(i);
       if (usedFunctions.contains(tm.getName())) 
       { Vector newuses = tm.usesCSTLfunctions(); 
@@ -214,7 +239,7 @@ public class ModelMatching implements SystemTypes
       { Vector newuses = tm.usesCSTLfunctions(); 
         usedFunctions.addAll(newuses); 
       } 
-    } 
+    } */ 
 
     // *only* include them if used (recursively)
     // in some rule. 
@@ -235,6 +260,8 @@ public class ModelMatching implements SystemTypes
       // res = res + "  " + s + " |--> " + t + "\n"; 
       res = res + em.toCSTL(cg,typematches) + "\n\n";  
     }
+
+    JOptionPane.showInputDialog(">> CSTL specification: " + res); 
 
     return res; 
   }  

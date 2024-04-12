@@ -10831,7 +10831,7 @@ public Statement generateDesignSubtract(Expression rhs)
     { String pre = objectRef.queryFormCPP(env,local);
       Type otype = objectRef.type; 
       if (otype == null) 
-      { System.err.println("ERROR: no type for " + objectRef); 
+      { System.err.println("!! ERROR: no type for " + objectRef); 
         return ""; 
       } 
       String eename = otype.getName(); 

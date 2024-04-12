@@ -6609,9 +6609,10 @@ public class BSystemTypes extends BComponent
       "    return res;\n" + 
       "  }\n\n" + 
       "  public static <T> TreeSet<T> union(TreeSet<T> a, Collection<T> b)\n" +
-      "  { TreeSet<T> res = new TreeSet<T>(); \n" +
-      "    res.addAll(a); res.addAll(b);\n" +
-      "    return res; }\n\n" + 
+      "  { TreeSet<T> res = (TreeSet<T>) a.clone(); \n" +
+      "    res.addAll(b);\n" +
+      "    return res;\n" + 
+      "  }\n\n" + 
       "  public static <T> ArrayList<T> union(ArrayList<T> a, Collection<T> b)\n" +
       "  { ArrayList<T> res = new ArrayList<T>(); \n" +
       "    res.addAll(a); res.addAll(b);\n" +
@@ -7692,7 +7693,7 @@ public class BSystemTypes extends BComponent
 
   public static String generateAsSetOp()
   { String res = "  public static List asSet(List a)\n" +
-      "  { List res = new Vector(); \n" +
+      "  { Vector res = new Vector(); \n" +
       "    for (int i = 0; i < a.size(); i++)\n" +
       "    { Object obj = a.get(i);\n" +
       "      if (res.contains(obj)) { } \n" + 
@@ -7703,7 +7704,7 @@ public class BSystemTypes extends BComponent
     res = res + "  public static List asOrderedSet(List a)\n" + 
       "  { return asSet(a); }\n\n";  
     res = res + "  public static List asSet(Map m)\n" + 
-      "  { List range = new Vector();\n" +  
+      "  { Vector range = new Vector();\n" +  
       "    range.addAll(m.values());\n" +  
       "    return asSet(range);\n" + 
       "  }\n\n"; 
@@ -7724,7 +7725,7 @@ public class BSystemTypes extends BComponent
     res = res + 
       "  public static Vector mapAsSet(Map m)\n" +
       "  { Vector range = mapAsSequence(m); \n" +
-      "    return asSet(range); \n" +
+      "    return (Vector) asSet(range); \n" +
       "  }\n\n"; 
  
     return res;

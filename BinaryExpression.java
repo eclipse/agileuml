@@ -13442,7 +13442,8 @@ public boolean conflictsWithIn(String op, Expression el,
     { return ((BinaryExpression) left).updateFormNotIn("Java4", env,right,local); }
     else if ((operator.equals(":") || 
               operator.equals("<:") || operator.equals("/<:") ||
-              operator.equals("/:")) && (right instanceof BasicExpression))
+              operator.equals("/:")) && 
+             (right instanceof BasicExpression))
     { String val1 = left.queryForm(env,local);
       BasicExpression ber = (BasicExpression) right;   // Why cast? 
       /* boolean lmult = left.isMultiple();

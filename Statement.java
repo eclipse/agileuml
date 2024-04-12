@@ -11942,8 +11942,8 @@ class AssignStatement extends Statement
   } 
 
   public Statement substituteEq(String oldE, Expression newE)
-  { Expression lhs2 = (Expression) lhs.clone(); 
-        /* lhs.substituteEq(oldE,newE); */ 
+  { Expression lhs2 = // (Expression) lhs.clone(); 
+         lhs.substituteEq(oldE,newE); 
     Expression rhs2 = rhs.substituteEq(oldE,newE); 
     AssignStatement res = new AssignStatement(lhs2,rhs2); 
     res.setType(type); 

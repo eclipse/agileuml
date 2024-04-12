@@ -2945,6 +2945,48 @@ public class BehaviouralFeature extends ModelElement
     } 
   } 
 
+  public Vector parameterEntities()
+  { Vector res = new Vector(); 
+    if (parameters == null) 
+    { return res; } 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute par = (Attribute) parameters.get(i); 
+      Type typ = par.getType(); 
+      if (typ != null && typ.isEntity())
+      { res.add(typ.getEntity()); } 
+    } 
+
+    return res; 
+  } 
+
+  public boolean usesOnlyParameterAttributes(Vector attrs)
+  { // Each attr : attrs has name starting with a parameter name
+    // and not with self. 
+    
+    for (int i = 0; i < attrs.size(); i++) 
+    { Attribute attr = (Attribute) attrs.get(i); 
+      String nme = attr.getName();
+
+      if (nme.startsWith("self."))
+      { return false; } 
+ 
+      boolean found = false; 
+      for (int j = 0; j < parameters.size(); j++) 
+      { Attribute par = (Attribute) parameters.get(j); 
+        if (nme.startsWith(par.getName() + ".")) 
+        { found = true; 
+          break; 
+        }
+      }
+
+      if (!found) 
+      { return false; } 
+    }
+
+    return true;   
+  }
+
   public void setElementType(Type et)
   { elementType = et; } 
   // and set the elementType of the resultType. 
@@ -2963,10 +3005,12 @@ public class BehaviouralFeature extends ModelElement
   public Attribute getResultParameter()
   { if (resultType == null) 
     { return null; }
+
     if (resultType.getName().equals("void")) 
     { return null; }
  
-    Attribute resultVar = new Attribute("result", resultType, ModelElement.INTERNAL); 
+    Attribute resultVar = 
+      new Attribute("result", resultType, ModelElement.INTERNAL); 
     resultVar.setElementType(elementType); 
     return resultVar; 
   }
@@ -3172,6 +3216,32 @@ public class BehaviouralFeature extends ModelElement
     }
   } 
 
+  public void removeEntityParameter(Entity ent)
+  { if (parameters == null) 
+    { return; } 
+
+    Vector removed = new Vector(); 
+    
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute par = (Attribute) parameters.get(i); 
+
+      Type typ = par.getType(); 
+      if (typ != null && typ.isEntity() && 
+          ent == typ.getEntity())
+      { removed.add(par);
+        BasicExpression selfexpr = 
+          new BasicExpression("self"); 
+        if (entity != null) 
+        { selfexpr.setType(new Type(entity)); }
+        selfexpr.setUmlKind(Expression.VARIABLE); 
+
+        this.substituteEq(par.getName(), selfexpr); 
+      }
+ 
+      parameters.removeAll(removed); 
+      return; 
+    } 
+  } 
 
   public void checkParameterNames()
   { if (parameters == null) 
@@ -3385,6 +3455,7 @@ public class BehaviouralFeature extends ModelElement
         System.out.println("!!! UVA (local variables) = " + unused.size() + " for operation " + name); 
         return true; 
       } 
+
       System.out.println(); 
     } 
 
