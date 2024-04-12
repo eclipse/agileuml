@@ -5,6 +5,7 @@ operation _1 ( ) : _2 pre: true post: true activity: _3 ; |-->operation _1() : _
 
 statementList::
 _1 |-->_1
+_1 ; skip |-->_1
 skip ; _* |-->_*
 break ; _* |-->break
 continue ; _* |-->continue

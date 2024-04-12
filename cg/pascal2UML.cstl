@@ -824,9 +824,10 @@ _1 |-->_1
 
 
 functionDeclaration::
+function _1 : _2 ; _3 |-->\n  operation _1_operation() : _2\n  pre: true post: true\n  activity:  var _1 : _2;  _3`functionBlock;\n    return _1;\n\n  attribute _1 : Function(OclAny,_2) := lambda x : OclAny in (_1_operation());\n<action> _1`typName _2
+
 function _1 _2 : _3 ; _4 |-->_4`nestedFunctions\n  operation _1_operation_2`parDecList : _3\n  pre: true post: true\n  activity: var _1 : _3;_2`copyValParameters  _4`functionBlock;\n    return _1;\n\n  attribute _1 : _2`parsToFunctionDomain_3_2`parsFDomainsCloseBrackets := _2`parsToLambdaDefinition (_1_operation(_2`parsToFunctionParlist));\n<action> _1`typName _3
 
-function _1 : _2 ; _3 |-->_4`nestedFunctions\n  operation _1_operation() : _2\n  pre: true post: true\n  activity:  var _1 : _2;  _3`functionBlock;\n    return _1;\n\n  attribute _1 : Function(OclAny,_2) := lambda x : OclAny in (_1_operation());\n<action> _1`typName _2
 
 
 procedureDeclaration::

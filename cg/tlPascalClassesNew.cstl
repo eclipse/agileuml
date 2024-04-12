@@ -1,0 +1,82 @@
+simpleType::
+_1 |-->_1
+
+identifier::
+_1 |-->_1
+
+identifierList::
+_1 |-->_1
+
+structuredType::
+_1 |-->_1
+
+typeIdentifier::
+_1 |-->_1
+
+unpackedStructuredType::
+_1 |-->_1
+
+
+fieldList::
+_1 |-->_1
+
+type_::
+_1 |-->_1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+seq3ruleset20::
+; |-->
+_1 : _3  |--> attribute _1 : _3 ;
+_0 |--> _0
+
+
+fixedPart::
+_1 |-->_1
+_* |-->_*`seq3ruleset20
+
+subruleset12::
+_1  |-->_1 
+
+typeDefinition::
+_1 = _3  |-->class _1 { _3 } 
+
+subSourceF14::
+_1 |-->_1
+
+singleElementF23::
+_1 |-->_1`singleElement22
+
+singleElement22::
+_1 |-->_1`seq3subruleset21
+
+subruleset15::
+_1  |-->_1`subSourceF14
+
+recordType::
+record _2 end  |-->_2
+
+subruleset26::
+_1  |-->_1`singleElementF25
+
+recordSection::
+_1 : _3  |-->attribute _1`subruleset12 : _3`subruleset15 ; 
+
+singleElementF25::
+_1 |-->_1`singleElement24
+
+
+

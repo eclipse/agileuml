@@ -1,9 +1,9 @@
-/* Main code-generation specification file for Java */
-/* Version 8+. Also uses cginterface.cstl           */
-/* Depends on Ocl.java                              */
-/* Prototype support for map and function types     */
-/*                                                  */
-/* Note that newlines should be written as \n       */
+/* Main code-generation specification file for Java    */
+/* Version 8+. Also uses cginterface.cstl, jwrap.cstl  */
+/* Depends on Ocl.java                                 */
+/* Prototype support for map and function types        */
+/*                                                     */
+/* Note that newlines should be written as \n          */
 /* Comments written between these brackets on one line */
 
 

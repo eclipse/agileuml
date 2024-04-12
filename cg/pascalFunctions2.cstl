@@ -103,41 +103,10 @@ _1 |-->_1
 _* |-->null
 
 
-
-compoundStatement::
-_* |-->_*
-
-
-
-parameterGroup::
-_1 |-->_1
-_* |-->_*
-
-
-formalParameterList::
-_1 |-->_1
-_* |-->_*
-
-simpleStatement::
-_1 |-->_1
-
-formalParameterSection::
-_1 |-->_1
-
-unlabelledStatement::
-_1 |-->_1
-
-
-typeIdentifier::
-_1 |-->_1
-
-block::
-_1 |-->_1
-
-
-
-
 unsignedNumber::
+_1 |-->_1
+
+identifierList::
 _1 |-->_1
 
 
@@ -145,11 +114,22 @@ assignmentStatement::
 _* |-->_*
 
 
+compoundStatement::
+_* |-->_*
+
 statements::
 _1 |-->_1
 
 
+parameterGroup::
+_1 |-->_1
+_* |-->_*
+
+bool_::
+_1 |-->_1
+
 formalParameterList::
+_1 |-->_1
 _* |-->_*
 
 simpleStatement::
@@ -164,69 +144,59 @@ _1 |-->_1
 statement::
 _1 |-->_1
 
+variable::
+_1 |-->_1
 
 typeIdentifier::
+_1 |-->_1
+
+block::
 _1 |-->_1
 
 
 resultType::
 _1 |-->_1
 
-unsignedConstant::
-_1 |-->_1
 
 unsignedReal::
 _1 |-->_1
 
 
-
-
 functionDeclaration::
-function _2 : _4 ; _6  |-->operation _2 ( ) : _4`subruleset27 pre: true post: true activity: _6`subruleset36 ; 
+function _2 : _4 ; _6  |-->operation _2 ( ) : _4`subruleset19 pre: true post: true activity: _6`subruleset28 ; 
 
-function _2 _3 : _5 ; _7  |-->operation _2 ( _3`subruleset24 ) : _5`subruleset27 pre: true post: true activity: _7`subruleset36 ; 
+function _2 _3  : _5 ; _7  |-->operation _2 _3 : _5`subruleset19 pre: true post: true activity: _7`subruleset28 ; 
+
+
+subSourceF18::
+_1 |-->_1
 
 subSourceF21::
 _1 |-->_1
 
 subSourceF23::
-_1  |-->_1`subruleset22 : Real 
+_1  |-->_1`subruleset22 
 
-subSourceF26::
-_1 |-->_1
+subSourceF25::
+_1  |-->_1`subruleset24 
 
-subSourceF29::
-_1 |-->_1
+subSourceF27::
+begin _2 end  |-->return _2`subruleset26 
 
-subSourceF31::
-_1  |-->_1`subruleset30 
-
-subSourceF33::
-_1  |-->_1`subruleset32 
-
-subSourceF35::
-begin _2 end  |-->return _2`subruleset34 
+subruleset19::
+_1  |-->_1`subSourceF18
 
 subruleset22::
-_1 : Real  |-->_1`subSourceF21
+_1 := _3  |-->_3`subSourceF21
 
 subruleset24::
-( _2 )  |-->_2`subSourceF23
+_1  |-->_1`subSourceF23
 
-subruleset27::
-_1  |-->_1`subSourceF26
+subruleset26::
+_1  |-->_1`subSourceF25
 
-subruleset30::
-_1 := _3  |-->_3`subSourceF29
-
-subruleset32::
-_1  |-->_1`subSourceF31
-
-subruleset34::
-_1  |-->_1`subSourceF33
-
-subruleset36::
-_1  |-->_1`subSourceF35
+subruleset28::
+_1  |-->_1`subSourceF27
 
 
 
