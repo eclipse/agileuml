@@ -5860,7 +5860,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     
       if ("->select".startsWith(st))
       { mess[0] = "Selection (filter) operator on sets, sequences and maps.\n" + 
-          "col->select(x | P)  returns collection/map of same type as col.";  
+          "col->select(x | P)  returns collection/map of same type as col.\n" + 
+          "col->selectMaximals(e), col->selectMinimals(e)  return subcollections of col for which e is maximal/minimal";  
         return "arg1->select(x | Predicate)"; 
       }
 

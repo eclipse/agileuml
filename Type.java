@@ -3122,7 +3122,13 @@ public class Type extends ModelElement
       if (nme.equals("double"))
       { return "0.0"; }
 
-      if (nme.equals("Set"))
+      if (nme.equals("Set") && isSorted())
+      { if (elementType != null) 
+        { return "new TreeSet<" + elementType.typeWrapperJava7() + ">()"; }
+        else 
+        { return "new TreeSet()"; }
+      } 
+      else if (nme.equals("Set"))
       { if (elementType != null) 
         { return "new HashSet<" + elementType.typeWrapperJava7() + ">()"; }
         else 

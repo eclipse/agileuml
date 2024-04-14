@@ -4978,7 +4978,9 @@ public void findClones(java.util.Map clones,
       Entity seleft = lexp.right.getEntity();
       tcSelect(stleft,stright,seleft); 
 
-      if (operator.equals("|") || operator.equals("|R"))
+      if (operator.equals("|") || operator.equals("|R") || 
+          operator.equals("|selectMinimals") || 
+          operator.equals("|selectMaximals"))
       { isSorted = lexp.right.isSorted; } 
 
       return true; 
@@ -5011,7 +5013,9 @@ public void findClones(java.util.Map clones,
       tcSelect(stleft,stright,seleft);
 
       if (operator.equals("->select") || 
-          operator.equals("->reject"))
+          operator.equals("->reject") ||
+          operator.equals("->selectMinimals") || 
+          operator.equals("->selectMaximals"))
       { isSorted = left.isSorted; }
 
       return true; 
@@ -5900,8 +5904,12 @@ public void findClones(java.util.Map clones,
   private void tcSelect(Type tleft, Type tright, Entity eleft)
   { // left should be set, sequence or map, right a boolean
     // All cases where result is a subset or rearrangement of the selectleft
-    // ie., operators "selectMaximals", "selectMinimals", "sortedBy", "select", "reject" 
+    // ie., operators "selectMaximals", 
+    // "selectMinimals", "sortedBy", "select", "reject" 
 	
+    // The result is sorted if the LHS is, *except* for 
+    // 'sortedBy'
+
     Expression selectleft = left; 
 
     if (operator.equals("|") || operator.equals("|R") ||
@@ -5924,14 +5932,15 @@ public void findClones(java.util.Map clones,
     } 
     else if (Type.isSequenceType(tleft))
     { type = new Type("Sequence",null); } 
-    else if (operator.equals("->sortedBy") || operator.equals("|sortedBy"))
+    else if (operator.equals("->sortedBy") || 
+             operator.equals("|sortedBy"))
     { type = new Type("Sequence",null); } 
     else if (Type.isMapType(tleft))
     { type = new Type("Map", null); }
     else if (Type.isSetType(tleft)) 
     { type = new Type("Set",null); } 
     else 
-    { System.err.println("TYPE ERROR!!: LHS of select/reject must be a collection! " + this); 
+    { System.err.println("!!TYPE ERROR!!: LHS of select/reject must be a collection! " + this); 
       // JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection", 
       //                                    "Type error", JOptionPane.ERROR_MESSAGE);
       type = new Type("Set",null); 
@@ -5947,7 +5956,10 @@ public void findClones(java.util.Map clones,
     entity = eleft; // ? 
     // System.out.println("Element type of: " + this + " is " + elementType); 
 
-    if (isSorted())
+    if (operator.equals("->sortedBy") || 
+        operator.equals("|sortedBy"))
+    { type.setSorted(false); } 
+    else if (isSorted())
     { type.setSorted(true); } 
   } 
 
@@ -16646,11 +16658,12 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   }
 
   public boolean isSorted()
-  { 
-    // if (operator.equals("->sortedBy")) { return true; } 
+  { if (operator.equals("->sortedBy") || 
+        operator.equals("|sortedBy"))
+    { return false; } 
 
     if (operator.equals("\\/") || operator.equals("->union")) 
-    { return left.isSorted() && right.isSorted(); }
+    { return left.isSorted(); }
     // Union of two sorted collections uses a merge sort
     // merging.  
 
@@ -16686,13 +16699,15 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   { if (operator.equals("->sortedBy") || 
         operator.equals("->collect") ||
         operator.equals("|C") || 
+        "|sortedBy".equals(operator) ||
         "|concatenateAll".equals(operator)) 
     { return true; } 
 
     if (operator.equals("\\/") || operator.equals("->union")) 
     { return left.isOrdered() && right.isOrdered(); } 
 
-    if (operator.equals("->intersection") || operator.equals("->prepend") ||
+    if (operator.equals("->intersection") || 
+        operator.equals("->prepend") ||
         operator.equals("->including") || 
         operator.equals("->excluding") || 
         operator.equals("->excludingAt") ||
@@ -16709,7 +16724,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         "|selectMaximals".equals(operator))
     { return ((BinaryExpression) left).right.isOrdered(); }
  
-    if (operator.equals("->select") || operator.equals("->reject") ||
+    if (operator.equals("->select") || 
+        operator.equals("->reject") ||
         operator.equals("->selectMinimals") ||
         operator.equals("->selectMaximals"))
     { return left.isOrdered(); } 
@@ -16728,7 +16744,9 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   public boolean isOrderedB()
   { 
-    if (operator.equals("->sortedBy") || operator.equals("->collect") ||
+    if (operator.equals("->sortedBy") || 
+        "|sortedBy".equals(operator) ||
+        operator.equals("->collect") ||
         operator.equals("|C")) 
     { return true; } 
 
@@ -16739,14 +16757,17 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("->including") || operator.equals("->excluding") ||
         operator.equals("->excludingAt") ||
         operator.equals("->excludingFirst") ||  
-        operator.equals("/\\") || operator.equals("^") || "->concatenate".equals(operator) || operator.equals("->append") ||
+        operator.equals("/\\") || operator.equals("^") || 
+        "->concatenate".equals(operator) || 
+        operator.equals("->append") ||
         (operator.equals("-") && left.isMultiple())) 
     { return left.isOrderedB(); }
 
     if (operator.equals("|") || operator.equals("|R"))
     { return ((BinaryExpression) left).right.isOrderedB(); }
  
-    if (operator.equals("->select") || operator.equals("->reject") ||
+    if (operator.equals("->select") || 
+        operator.equals("->reject") ||
         operator.equals("->selectMinimals") ||
         operator.equals("->selectMaximals"))
     { return left.isOrderedB(); } 

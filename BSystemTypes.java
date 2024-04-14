@@ -8578,14 +8578,14 @@ public class BSystemTypes extends BComponent
 
   public static String maximalElementsOpJava7()
   { String res = 
-    "  public static <T extends Comparable<T>> ArrayList<T> maximalElements(List<T> s, List<Comparable> v)\n" +
+    "  public static <T, S extends Comparable> ArrayList<T> maximalElements(List<T> s, List<S> v)\n" +
     "  { ArrayList<T> res = new ArrayList<T>();\n" +
     "    if (s.size() == 0) { return res; }\n" +
-    "    Comparable largest = v.get(0);\n" + 
+    "    Comparable largest = (Comparable) v.get(0);\n" + 
     "    res.add(s.get(0));\n" +
     "    \n" +
     "    for (int i = 1; i < s.size(); i++)\n" +
-    "    { Comparable next = v.get(i);\n" +
+    "    { Comparable next = (Comparable) v.get(i);\n" +
     "      if (largest.compareTo(next) < 0)\n" +
     "      { largest = next;\n" +
     "        res.clear();\n" +
@@ -8595,7 +8595,18 @@ public class BSystemTypes extends BComponent
     "      { res.add(s.get(i)); }\n" +
     "    }\n" +
     "    return res;\n" + 
-    "  }"; 
+    "  }\n\n";
+
+    res = res + 
+    "  public static <T, S extends Comparable> TreeSet<T> maximalElements(TreeSet<T> s, List<S> v)\n" +
+    "  { ArrayList<T> lst = new ArrayList<T>();\n" +
+    "    lst.addAll(s); \n" +
+    "    ArrayList<T> lres = maximalElements(lst, v);\n" + 
+    "    TreeSet<T> res = new TreeSet<T>(); \n" +
+    "    res.addAll(lres); \n" +
+    "    return res;\n" +
+    "  }\n\n"; 
+
     return res; 
   } 
 
@@ -8748,14 +8759,14 @@ public class BSystemTypes extends BComponent
 
   public static String minimalElementsOpJava7()
   { String res = 
-    "  public static <T> ArrayList<T> minimalElements(ArrayList<T> s, ArrayList<Comparable> v)\n" +
+    "  public static <T, S extends Comparable> ArrayList<T> minimalElements(List<T> s, List<S> v)\n" +
     "  { ArrayList<T> res = new ArrayList<T>();\n" +
     "    if (s.size() == 0) { return res; }\n" +
-    "    Comparable smallest = v.get(0);\n" + 
+    "    Comparable smallest = (Comparable) v.get(0);\n" + 
     "    res.add(s.get(0));\n" +
     "    \n" +
     "    for (int i = 1; i < s.size(); i++)\n" +
-    "    { Comparable next = v.get(i);\n" +
+    "    { Comparable next = (Comparable) v.get(i);\n" +
     "      if (next.compareTo(smallest) < 0)\n" +
     "      { smallest = next;\n" +
     "        res.clear();\n" +
@@ -8765,7 +8776,18 @@ public class BSystemTypes extends BComponent
     "      { res.add(s.get(i)); }\n" +
     "    }\n" +
     "    return res;\n" +
-    "  }\n"; 
+    "  }\n\n";
+
+    res = res + 
+    "  public static <T, S extends Comparable> TreeSet<T> minimalElements(TreeSet<T> s, List<S> v)\n" +
+    "  { ArrayList<T> lst = new ArrayList<T>();\n" +
+    "    lst.addAll(s); \n" +
+    "    ArrayList<T> lres = minimalElements(lst, v);\n" + 
+    "    TreeSet<T> res = new TreeSet<T>(); \n" +
+    "    res.addAll(lres); \n" +
+    "    return res;\n" +
+    "  }\n\n"; 
+ 
     return res; 
   } 
 

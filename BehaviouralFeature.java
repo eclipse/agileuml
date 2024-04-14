@@ -3886,8 +3886,8 @@ public class BehaviouralFeature extends ModelElement
       Type typ = att.getType(); 
       if (typ == null) 
       { System.err.println("!! ERROR: null type for parameter " + att); 
-        JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,
-                                      "Type error", JOptionPane.ERROR_MESSAGE); 
+        // JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,  
+        // "Type error", JOptionPane.ERROR_MESSAGE); 
         typ = new Type("void",null); 
       } 
       res = res + typ.getJava7(att.getElementType()) + " " + attnme; 
@@ -4660,8 +4660,9 @@ public class BehaviouralFeature extends ModelElement
     { res = res + "static "; } 
 
     if (resultType == null || "void".equals(resultType + "")) 
-    { JOptionPane.showMessageDialog(null, "ERROR: null result type for: " + this,
-                                    "Type error", JOptionPane.ERROR_MESSAGE);
+    { JOptionPane.showMessageDialog(null, 
+        "ERROR: null result type of query operation: " + this,
+        "Type error", JOptionPane.ERROR_MESSAGE);
       return ""; 
     } 
 
@@ -4697,14 +4698,14 @@ public class BehaviouralFeature extends ModelElement
 	
     res = res + ")\n";
     res = res + "  { " + resultType.getJava7(elementType) + " " +
-          " result = " + resultType.getDefaultJava7() + ";\n";
+      " result = " + resultType.getDefaultJava7() + ";\n";
 
     for (int j = 0; j < cons.size(); j++)
     { Constraint con = (Constraint) cons.get(j);
       if (con.getEvent() != null &&
           con.getEvent().equals(this))
       res = res + "    " +
-          con.queryOperationJava7(ent) + "\n";  // Java6 version
+        con.queryOperationJava7(ent) + "\n"; // Java6 version
     }
     res = res + "    return result;\n";
     res = res + "  }\n\n";
