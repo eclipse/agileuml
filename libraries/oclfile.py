@@ -28,6 +28,7 @@ class OclFile:
     self.eof = False
     self.readable = False
     self.writable = False
+    self.bufferSize = 4096
     OclFile.oclfile_instances.append(self)
 
   def newOclFile(nme) : 
@@ -424,7 +425,7 @@ class OclFile:
       return s
     if self.remote : 
       if self.actualFile != None : 
-        s = self.actualFile.recv(1024)
+        s = self.actualFile.recv(self.bufferSize)
       return s
     if self.actualFile != None :
       try :  
@@ -504,7 +505,7 @@ class OclFile:
   def readObject(self) :
     if self.remote : 
       if self.actualFile != None : 
-        s = self.actualFile.recv(1024)
+        s = self.actualFile.recv(self.bufferSize)
       return s
     if self.actualFile != None : 
       return pickle.load(self.actualFile)
@@ -523,7 +524,7 @@ class OclFile:
       return s
     if self.remote : 
       if self.actualFile != None : 
-        s = self.actualFile.recv(1024)
+        s = self.actualFile.recv(self.bufferSize)
         if len(s) == 0 : 
           self.eof = True
         return s
@@ -545,7 +546,7 @@ class OclFile:
       return s
     if self.remote : 
       if self.actualFile != None : 
-        s = self.actualFile.recv(4096)
+        s = self.actualFile.recv(self.bufferSize)
       return s
     if self.actualFile != None : 
       return self.actualFile.read()

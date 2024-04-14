@@ -84,7 +84,7 @@ class OclMaplet<K,T>
     { System.out.println(s.actualMetatype); } 
 
 
-    public static <T> HashSet<T> selectSet(Set<T> _s, Predicate<T> _f)
+    public static <T> HashSet<T> selectSet(HashSet<T> _s, Predicate<T> _f)
     { HashSet<T> result = new HashSet<T>(); 
       for (T _x : _s) 
       { if (_f.test(_x))
@@ -93,8 +93,27 @@ class OclMaplet<K,T>
       return result; 
     } 
 
-    public static <T> HashSet<T> rejectSet(Set<T> _s, Predicate<T> _f)
+    public static <T> HashSet<T> rejectSet(HashSet<T> _s, Predicate<T> _f)
     { HashSet<T> result = new HashSet<T>(); 
+      for (T _x : _s) 
+      { if (_f.test(_x)) { } 
+        else 
+        { result.add(_x); }
+      } 
+      return result; 
+    } 
+
+    public static <T> TreeSet<T> selectSet(TreeSet<T> _s, Predicate<T> _f)
+    { TreeSet<T> result = new TreeSet<T>(); 
+      for (T _x : _s) 
+      { if (_f.test(_x))
+        { result.add(_x); }
+      } 
+      return result; 
+    } 
+
+    public static <T> TreeSet<T> rejectSet(TreeSet<T> _s, Predicate<T> _f)
+    { TreeSet<T> result = new TreeSet<T>(); 
       for (T _x : _s) 
       { if (_f.test(_x)) { } 
         else 
@@ -110,7 +129,7 @@ class OclMaplet<K,T>
       return result; 
     } 
 
-    public static <S> HashSet<S> selectMaximals(Set<S> _s, Function<S,Comparable> _f)
+    public static <S> HashSet<S> selectMaximals(HashSet<S> _s, Function<S,Comparable> _f)
     { HashSet<S> result = new HashSet<S>(); 
       
       for (S _x : _s) 
@@ -132,8 +151,52 @@ class OclMaplet<K,T>
       return result; 
     } 
 
-    public static <S> HashSet<S> selectMinimals(Set<S> _s, Function<S,Comparable> _f)
+    public static <S> TreeSet<S> selectMaximals(TreeSet<S> _s, Function<S,Comparable> _f)
+    { TreeSet<S> result = new TreeSet<S>(); 
+      
+      for (S _x : _s) 
+      { if (result.size() == 0) 
+        { result.add(_x); }
+        else 
+        { Comparable val = _f.apply(_x); 
+          S oldx = Ocl.any(result);
+          Comparable oldval = _f.apply(oldx);
+  
+          if (val.compareTo(oldval) == 0) 
+          { result.add(_x); } 
+          else if (val.compareTo(oldval) > 0) 
+          { result.clear(); 
+            result.add(_x); 
+          } 
+        } 
+      }  
+      return result; 
+    } 
+
+    public static <S> HashSet<S> selectMinimals(HashSet<S> _s, Function<S,Comparable> _f)
     { HashSet<S> result = new HashSet<S>(); 
+      
+      for (S _x : _s) 
+      { if (result.size() == 0) 
+        { result.add(_x); }
+        else 
+        { Comparable val = _f.apply(_x); 
+          S oldx = Ocl.any(result);
+          Comparable oldval = _f.apply(oldx);
+  
+          if (val.compareTo(oldval) == 0) 
+          { result.add(_x); } 
+          else if (val.compareTo(oldval) < 0) 
+          { result.clear(); 
+            result.add(_x); 
+          } 
+        } 
+      }  
+      return result; 
+    } 
+
+    public static <S> TreeSet<S> selectMinimals(TreeSet<S> _s, Function<S,Comparable> _f)
+    { TreeSet<S> result = new TreeSet<S>(); 
       
       for (S _x : _s) 
       { if (result.size() == 0) 
@@ -579,8 +642,8 @@ class OclMaplet<K,T>
   }
 
   public static <T> TreeSet<T> union(TreeSet<T> a, Collection<T> b)
-  { TreeSet<T> res = new TreeSet<T>(); 
-    res.addAll(a); res.addAll(b);
+  { TreeSet<T> res = (TreeSet<T>) a.clone(); 
+    res.addAll(b);
     return res; 
   }
 
@@ -599,8 +662,7 @@ class OclMaplet<K,T>
   }
 
   public static <T> TreeSet<T> subtract(TreeSet<T> a, Collection<T> b)
-  { TreeSet<T> res = new TreeSet<T>(); 
-    res.addAll(a);
+  { TreeSet<T> res = (TreeSet<T>) a.clone(); 
     res.removeAll(b);
     return res; 
   }

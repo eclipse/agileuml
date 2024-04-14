@@ -67,8 +67,9 @@ class FinanceLib {
     return result;
   }
 
-  public static double bisectionDiscrete(double r, double rl, double ru, 
-                                         ArrayList<Double> values)
+  public static double bisectionDiscrete(double r, double rl, 
+               double ru, 
+               ArrayList<Double> values)
   { double result = 0;
     result = 0;
     if ((r <= -1 || rl <= -1 || ru <= -1))
@@ -76,12 +77,25 @@ class FinanceLib {
   
     double v = 0;
     v = FinanceLib.netPresentValueDiscrete(r,values);
-    if (ru - rl < MathLib.defaultTolerance)
-    { return r; } 
-    if (v > 0)
-    { return FinanceLib.bisectionDiscrete((ru + r) / 2, r, ru, values); } 
-    else if (v < 0)
-    { return FinanceLib.bisectionDiscrete((r + rl) / 2, rl, r, values); }
+
+    double lowerBound = rl; 
+    double upperBound = ru; 
+
+    while (upperBound - lowerBound >= 
+           MathLib.defaultTolerance)
+    { if (v > 0)
+      { lowerBound = r; 
+        r = (upperBound + r) / 2; 
+        // return FinanceLib.bisectionDiscrete((ru + r) / 2, r, ru, values); 
+      } 
+      else 
+      { upperBound = r; 
+        r = (lowerBound + r) / 2;
+        // return FinanceLib.bisectionDiscrete((r + rl) / 2, rl, r, values); 
+      }
+      v = FinanceLib.netPresentValueDiscrete(r,values);
+    }
+
     return r; 
   }
 

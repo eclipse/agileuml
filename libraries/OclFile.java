@@ -37,9 +37,11 @@ class OclFile {
   private String lastRead = null; 
   private boolean eof = false; 
 
+  int bufferSize = 4096; 
+
   String name = ""; /* primary */
   static Map<String,OclFile> OclFile_index;
-
+  
 
   OclFile() { }
 
@@ -272,6 +274,7 @@ class OclFile {
     { try { outputStreamWriter.close(); } 
       catch (Exception _x) { } 
     } 
+
     if (inputStreamReader != null) 
     { try { inputStreamReader.close(); } 
       catch (Exception _x) { } 
@@ -284,6 +287,7 @@ class OclFile {
     { try { outputStream.close(); }
       catch (Exception _e) { } 
     } 
+
     if (inputStream != null)
     { try { inputStream.close(); }
       catch (Exception _f) { } 
@@ -407,13 +411,14 @@ class OclFile {
   public static boolean renameFile(String from, String to)
   { File f1 = new File(from); 
     File f2 = new File(to); 
-	if (f1 != null && f2 != null)
-	{ Path p1 = f1.toPath(); 
-	  Path p2 = f2.toPath(); 
-	  try { Files.move(p1,p2); } catch (Exception _m) { return false; }
-	  return true; 
-	} 
-	return false; 
+    if (f1 != null && f2 != null)
+    { Path p1 = f1.toPath(); 
+      Path p2 = f2.toPath(); 
+      try { Files.move(p1,p2); } 
+      catch (Exception _m) { return false; }
+      return true; 
+    } 
+    return false; 
   } 
   
   public static OclFile createTemporaryFile(String f, String ext)
@@ -421,10 +426,10 @@ class OclFile {
     if (f1 == null) { return null; }
     Path p1 = f1.toPath();
     try { Files.createFile(p1); } 
-	catch (Exception _ex) { return null; }
+    catch (Exception _ex) { return null; }
     OclFile res = createByPKOclFile(f + "." + ext); 
-	res.actualFile = f1; 
-	return res; 
+    res.actualFile = f1; 
+    return res; 
   } 
    	
   public ArrayList<String> list()
@@ -661,7 +666,8 @@ class OclFile {
         inputStreamReader instanceof BufferedReader) 
     { try 
       { 
-        lastRead = ((BufferedReader) inputStreamReader).readLine(); 
+        lastRead = 
+          ((BufferedReader) inputStreamReader).readLine(); 
         position += lastRead.length() + 1; 
         return lastRead; 
       } catch (Exception _e) { 

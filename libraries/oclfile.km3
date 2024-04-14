@@ -12,6 +12,8 @@ class OclFile
   attribute eof : boolean; 
   attribute lastRead : String; 
 
+  attribute bufferSize : int := 4096; 
+
   static operation newOclFile(nme : String) : OclFile
   pre: true 
   post: OclFile->exists( f | f.name = nme & result = f ); 

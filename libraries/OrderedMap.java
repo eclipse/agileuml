@@ -18,7 +18,10 @@ class OrderedMap<K,T> { static ArrayList<OrderedMap> OrderedMap_allInstances = n
     return result; }
 
   ArrayList<K> elements = (new ArrayList<K>());
+    /* Actually should be an ordered set of K */ 
+
   HashMap<K,T> items = (new HashMap<K,T>());
+
   String orderedmapId = ""; /* primary */
   static Map<String,OrderedMap> OrderedMap_index = new HashMap<String,OrderedMap>();
 
@@ -63,8 +66,9 @@ class OrderedMap<K,T> { static ArrayList<OrderedMap> OrderedMap_allInstances = n
 
 
   public void add(K k, T t)
-  {
-    elements = Ocl.append(elements,k);
+  { if (elements.contains(k)) { }
+    else 
+    { elements = Ocl.append(elements,k); }
     items.put(k,t);
   }
 
