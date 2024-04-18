@@ -40,6 +40,8 @@ public class BehaviouralFeature extends ModelElement
   private Statement activity = null; 
   private String text = "";  // The text of the operation
 
+  private String comments = null;  
+
   private boolean derived = false; 
   private boolean bx = false; 
 
@@ -124,6 +126,9 @@ public class BehaviouralFeature extends ModelElement
     else 
     { elementType = rt; }  // primitive, String, entity type
   } 
+
+  public void setComments(String comms)
+  { comments = comms; } 
 
   public Expression makeLambdaExpression(Expression inst) 
   { // lambda pars : ParTypes in inst.name(pars)
@@ -3368,6 +3373,8 @@ public class BehaviouralFeature extends ModelElement
               newopname, pars, query, resultType); 
           bf.setEntity(entity); 
           bf.setPost(new BasicExpression(true));
+          bf.setComments("Derived from " + nme + " by Split operation refactoring"); 
+
           if (residue.size() > 0) 
           { sseg.addStatements(residue); } 
           residue = new Vector();  
@@ -5814,6 +5821,9 @@ public class BehaviouralFeature extends ModelElement
 
         res = "  public " + statc + genPars + ts + " " + name + "(" + pars + ")\n  { "; 
 
+        if (comments != null) 
+        { res = res + "/* " + comments + " */\n  "; } 
+
         if (ent.isInterface())
         { return "  public " + genPars + ts + " " + name + "(" + pars + ");\n"; } 
  
@@ -5855,6 +5865,9 @@ public class BehaviouralFeature extends ModelElement
       { header = header + "static "; } 
 
       res = "  public " + header + genPars + ts + " " + name + "(" + pars + ")\n  {  "; 
+
+      if (comments != null) 
+      { res = res + "/* " + comments + " */\n  "; } 
 
       if (tp != null && !"void".equals(ts))
       { res = res + ts + " result;\n"; }
@@ -5992,6 +6005,9 @@ public class BehaviouralFeature extends ModelElement
 
         res = "  public " + statc + ts + " " + name + "(" + pars + ")\n{  "; 
 
+        if (comments != null) 
+        { res = res + "/* " + comments + " */\n  "; } 
+
         if (ent != null && ent.isInterface())
         { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
@@ -6033,6 +6049,9 @@ public class BehaviouralFeature extends ModelElement
       { header = header + "static "; } 
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
+
+      if (comments != null) 
+      { res = res + "/* " + comments + " */\n  "; } 
 
       if (tp != null && !("void".equals(ts)))
       { res = res + ts + " result;\n"; }
@@ -6192,6 +6211,9 @@ public class BehaviouralFeature extends ModelElement
 
         res = "  public " + statc + ts + " " + name + "(" + pars + ")\n{  "; 
 
+        if (comments != null) 
+        { res = res + "/* " + comments + " */\n  "; } 
+    
         if (ent != null && ent.isInterface())
         { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
@@ -6234,6 +6256,9 @@ public class BehaviouralFeature extends ModelElement
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  { "; 
 
+      if (comments != null) 
+      { res = res + "/* " + comments + " */\n  "; } 
+
       if (tp != null & !"void".equals(ts))
       { res = res + ts + " result;\n"; }
 	  
@@ -6266,10 +6291,12 @@ public class BehaviouralFeature extends ModelElement
             else 
             { actualtyp = new Type("Set",null); 
               actualtyp.setElementType(preterm.getElementType());
+              
               String jType = actualtyp.getJava7(preterm.getElementType()); 
               newdec = "    " + jType + " " + pre_var + " = new " + jType + "();\n" + 
                        "    " + pre_var + ".addAll(" + pretermqf + ");\n";
-            }  
+            } 
+ 
             actualtyp.setSorted(preterm.isSorted()); 
             prebe.setSorted(preterm.isSorted()); 
             System.out.println(">> Type of " + preterm + " = " + preterm.type + " { " + preterm.isSorted() + " }");
@@ -6281,7 +6308,7 @@ public class BehaviouralFeature extends ModelElement
           newdecs = newdecs + "    " + newdec; 
           prebe.type = actualtyp; 
           prebe.elementType = preterm.elementType; 
-          System.out.println("Pre variable " + prebe + " type= " + actualtyp + 
+          System.out.println(">> Pre variable " + prebe + " type= " + actualtyp + 
                              " elemtype= " + prebe.elementType); 
           
           Attribute preatt = 
@@ -6389,6 +6416,9 @@ public class BehaviouralFeature extends ModelElement
 
         res = "  public " + statc + ts + " " + name + genPars + "(" + pars + ")\n{  "; 
 
+        if (comments != null) 
+        { res = res + "/* " + comments + " */\n  "; } 
+
         if (ent != null && ent.isInterface())
         { return "  public " + ts + " " + name + genPars + "(" + pars + ");\n"; } 
  
@@ -6433,6 +6463,9 @@ public class BehaviouralFeature extends ModelElement
       { header = header + "static "; } 
 
       res = "  public " + header + ts + " " + name + genPars + "(" + pars + ")\n  {  "; 
+
+      if (comments != null) 
+      { res = res + "/* " + comments + " */\n  "; } 
 
       if (Statement.hasResultDeclaration(activity))
       {  } 
@@ -6612,6 +6645,9 @@ public class BehaviouralFeature extends ModelElement
         res = header + "  " + ts + " " + exname + "::" + name + "(" + pars + ")\n  {  "; 
         decs.add(opGenPars + "  " + isstatic + ts + " " + name + "(" + pars + ");\n"); 
 
+        if (comments != null) 
+        { res = res + "/* " + comments + " */\n  "; } 
+
         // if (ent.isInterface())
         // { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
@@ -6662,6 +6698,9 @@ public class BehaviouralFeature extends ModelElement
 
       res = header + "  " + ts + " " + exname + "::" + name + "(" + pars + ")\n  {  "; 
       decs.add(opGenPars + "  " + isstatic + ts + " " + name + "(" + pars + ");\n"); 
+
+      if (comments != null) 
+      { res = res + "/* " + comments + " */\n  "; } 
 
       if (Statement.hasResultDeclaration(activity))
       { } 
@@ -6844,6 +6883,9 @@ public class BehaviouralFeature extends ModelElement
     header = header + genPars + resT + " " +
                     opname + "(" + javaPars + ")\n  { ";
 
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n   "; } 
+
     java.util.Map env0 = new java.util.HashMap();
     if (ent == null || isClassScope() || isStatic()) { } 
     else 
@@ -7020,6 +7062,9 @@ public class BehaviouralFeature extends ModelElement
     header = header + genPars + resT + " " +
                     opname + "(" + javaPars + ")\n  { ";
 
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n   "; } 
+
     java.util.Map env0 = new java.util.HashMap();
     if (ent == null || isClassScope() || isStatic()) { } 
     else 
@@ -7134,6 +7179,9 @@ public class BehaviouralFeature extends ModelElement
 
     header = header + genPars + resT + " " +
                     opname + "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n   "; } 
 
     java.util.Map env0 = new java.util.HashMap();
     if (ent == null || isClassScope() || isStatic()) { } 
@@ -7259,6 +7307,9 @@ public class BehaviouralFeature extends ModelElement
 
     header = header + resT + " " +
              opname + genPars + "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n   "; } 
 
     java.util.Map env0 = new java.util.HashMap();
     if (ent == null || isClassScope() || isStatic()) { } 
@@ -7420,6 +7471,9 @@ public class BehaviouralFeature extends ModelElement
     { header = "  " + genPars + "\n"; }  
     header = header + "  " + resT + " " + exname + "::" + 
                     opname + "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n   "; } 
 
     String opdec = "";     
     if (typeParameters.size() > 0)
@@ -8418,6 +8472,9 @@ public class BehaviouralFeature extends ModelElement
     header = header + genPars + resT + " " +
                     opname + "(" + javaPars + ")\n  { ";
 
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n  "; } 
+
     java.util.Map env0 = new java.util.HashMap();
 
     if (ent == null || isClassScope() || isStatic()) { } 
@@ -8537,6 +8594,9 @@ public class BehaviouralFeature extends ModelElement
 
     header = header + genPars + resT + " " +
                     opname + "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n  "; } 
 
     java.util.Map env0 = new java.util.HashMap();
 
@@ -8663,6 +8723,9 @@ public class BehaviouralFeature extends ModelElement
 
     header = header + genPars + resT + " " +
                     opname + "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n  "; } 
 
     java.util.Map env0 = new java.util.HashMap();
 
@@ -8798,6 +8861,9 @@ public class BehaviouralFeature extends ModelElement
     header = header + resT + " " +
                     opname + genPars + 
                     "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n  "; } 
 
     java.util.Map env0 = new java.util.HashMap();
 
@@ -8973,6 +9039,10 @@ public class BehaviouralFeature extends ModelElement
     { header = "  " + genPars + "\n"; }  
     header = header + "  " + resT + " " + exname + "::" + 
                     opname + "(" + javaPars + ")\n  { ";
+
+    if (comments != null) 
+    { header = header + "/* " + comments + " */\n  "; } 
+
     decs.add(opGenPars + "  " + isstatic + resT + " " + opname + "(" + javaPars + ");\n"); 
  
     java.util.Map env0 = new java.util.HashMap();

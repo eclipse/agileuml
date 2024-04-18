@@ -1478,7 +1478,7 @@ public class UCDArea extends JPanel
     } 
     
     String cloneLimit = 
-          JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+      JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
     if (cloneLimit != null) 
     { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
       catch (Exception _ex) 

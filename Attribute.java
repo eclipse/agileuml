@@ -6704,12 +6704,12 @@ public String iosDbiExtractOp(String ent, int i)
       opTests.add(attname + " = false;");
     }
     else if ("String".equals(t))
-    { JOptionPane.showMessageDialog(null, 
+    { /* JOptionPane.showMessageDialog(null, 
              ">> Attribute " + this + " has fixed size: " + 
              type.getFixedSize() + 
              " Tests: " + res, 
              "", 
-             JOptionPane.INFORMATION_MESSAGE);
+             JOptionPane.INFORMATION_MESSAGE); */ 
       if (type.hasFixedSize())
       { Expression fs = type.getFixedSize(); 
         int fsize = Expression.convertInteger(fs + ""); 

@@ -392,7 +392,7 @@ public void findPlugins()
       new JMenuItem("Random models");
     randomModels.addActionListener(this);
     randomModels.setToolTipText(
-      "Creates random UML model and translates to Java");
+      "Creates random UML models and translates to Java");
     fileMenu.add(randomModels);
 
     fileMenu.addSeparator(); 
@@ -959,10 +959,14 @@ public void findPlugins()
     JMenuItem moveop = 
       new JMenuItem("Move operation"); 
     moveop.addActionListener(this);
+    moveop.setToolTipText(
+      "Moves operation from one class to another");
     qualityMenu.add(moveop);
 
     JMenuItem moveopto = 
       new JMenuItem("Move operation to parameter class"); 
+    moveopto.setToolTipText(
+      "Moves operation into class of first class-typed parameter");
     moveopto.addActionListener(this);
     qualityMenu.add(moveopto);
 
@@ -1837,9 +1841,14 @@ public void findPlugins()
         saved = true; 
       }
       else if (label.equals("Random models")) 
-      { for (int i = 0; i < 5; i++) 
-        { ucdArea = new UCDArea(this); 
-          ucdArea.randomModels2Java();
+      { String val = 
+          JOptionPane.showInputDialog("How many models to create?"); 
+        if (val != null) 
+        { int num = Integer.parseInt(val); 
+          for (int i = 0; i < num; i++) 
+          { ucdArea = new UCDArea(this); 
+            ucdArea.randomModels2Java();
+          }
         } 
       }
       else if (label.equals("Print"))

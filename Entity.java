@@ -49,6 +49,9 @@ public class Entity extends ModelElement implements Comparable
   int cardinalityValue = 1; // container is a sequence if > 1  
   int totalWidth = 0; // sum of attribute widths
 
+  String comments = null; 
+
+
   public Entity(String nme)
   { super(nme); 
     realEntity = this; 
@@ -65,6 +68,9 @@ public class Entity extends ModelElement implements Comparable
     res.interfaces.addAll(interfaces);
     return res; 
   } 
+
+  public void setComments(String comms)
+  { comments = comms; } 
 
   public Entity mergeEntity(Entity ent)
   { // Combine features of this with priority over ent
@@ -5046,6 +5052,8 @@ public class Entity extends ModelElement implements Comparable
       if (copies != null && copies.size() > 1)
       { Object obj = cdefs.get(clne); 
         System.out.println(">>> Extracting operation for clone: " + clne + " with copies " + copies);
+          
+        String opname = (String) copies.get(0); 
  
         if (obj instanceof Expression)
         { Expression expr = (Expression) obj;
@@ -5059,7 +5067,6 @@ public class Entity extends ModelElement implements Comparable
           Type elemtype = expr.getElementType(); 
           System.out.println(">> Clone expression type: " + etype + " (" + elemtype + ")"); 
 
-          String opname = (String) copies.get(0); 
           int colonIndex = opname.indexOf("::"); 
           opname = 
               opname.substring(colonIndex+2,opname.length()); 
@@ -5123,6 +5130,8 @@ public class Entity extends ModelElement implements Comparable
           BehaviouralFeature bf = 
               new BehaviouralFeature(fname,pars,true,etype); 
           bf.setPostcondition(eqn);  
+
+          bf.setComments("Operation for cloned expression of operation " + opname); 
  
           BasicExpression selfvar = 
               BasicExpression.newVariableBasicExpression(
@@ -5202,6 +5211,7 @@ public class Entity extends ModelElement implements Comparable
                       fname,oppars,false,null); 
             bf.setPostcondition(new BasicExpression(true));  
             bf.setActivity(stat); 
+            bf.setComments("Operation for cloned statements of operation " + opname); 
 
             BasicExpression bfcall = 
               BasicExpression.newCallBasicExpression(
@@ -9000,6 +9010,9 @@ public class Entity extends ModelElement implements Comparable
     out.println(); 
     out.println("{");
 
+    if (comments != null)
+    { out.println(" /* " + comments + " */"); } 
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       if (isInterface())
@@ -9110,6 +9123,9 @@ public class Entity extends ModelElement implements Comparable
     out.println(); 
     out.println("{");
 
+    if (comments != null)
+    { out.println(" /* " + comments + " */"); } 
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       if (isInterface())
@@ -9214,8 +9230,12 @@ public class Entity extends ModelElement implements Comparable
       if (bf != null && bf.getSm() != null)
       { addRunStates(bf.getSm()); } 
     } 
+
     out.println(); 
     out.println("{");
+
+    if (comments != null)
+    { out.println(" /* " + comments + " */"); } 
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
@@ -9397,6 +9417,9 @@ public class Entity extends ModelElement implements Comparable
     out.println(); 
     out.println("{");
 
+    if (comments != null)
+    { out.println(" /* " + comments + " */"); } 
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       if (isInterface())
@@ -9526,6 +9549,10 @@ public class Entity extends ModelElement implements Comparable
 
     out.println(); 
     out.println("{ "); 
+
+    if (comments != null)
+    { out.println(" /* " + comments + " */"); } 
+
     if (attributes.size() + associations.size() > 0)
     { if (subclasses.size() > 0)
       { out.println(" protected:"); } 
