@@ -28,20 +28,19 @@ class MathLib:
     MathLib.setSeeds(1001, 781, 913)
 
   def pi() :
-    result = 3.14159265
-    return result
-
+    return 3.14159265
+    
   def piValue() :
-    result = 3.14159265
-    return result
-
+    return 3.1415926535897932384626433
+    
   def e() :
-    result = math.exp(1)
-    return result
-
+    return math.exp(1)
+    
   def eValue() :
-    result = math.exp(1)
-    return result
+    return 2.71828182845904523536028747135266249775724709369995
+    
+  def gammaValue() : 
+    return 0.5772156649015328606065120900824024310421
 
   def intPower(x, p) :
   # more energy-efficient version than math.pow(x,p)
@@ -510,16 +509,22 @@ class FinanceLib :
       return result
   
     v = FinanceLib.netPresentValueDiscrete(r,values)
+    lowerBound = rl 
+    upperBound = ru 
 
-    if ru - rl < 0.001 :
-      return r
+    while upperBound - lowerBound >= MathLib.defaultTolerance :
+      oldr = r 
 
-    if v > 0 :
-      return FinanceLib.bisectionDiscrete((ru + r) / 2, r, ru, values)
-    else :
-      if v < 0 :
-        return FinanceLib.bisectionDiscrete((r + rl) / 2, rl, r, values)
-    return r; 
+      if v > 0 :
+        lowerBound = oldr 
+        r = (upperBound + lowerBound)/2.0 
+      else :
+        upperBound = oldr
+        r = (upperBound + lowerBound)/2.0
+        
+      v = FinanceLib.netPresentValueDiscrete(r,values)
+    
+    return r 
   
 
   def irrDiscrete(values) :
@@ -741,8 +746,11 @@ class FinanceLib :
 
 # print(FinanceLib.discountDiscrete(100,0.1,5))
 # print(FinanceLib.presentValueDiscrete(0.01, [-100,2,102]))
-# print(FinanceLib.netPresentValueDiscrete(0.01, [-100,2,102]))
-# print(FinanceLib.irrDiscrete([-100,2,102]))
+print(FinanceLib.netPresentValueDiscrete(0.01, [-100,0.5,100.5]))
+print(FinanceLib.irrDiscrete([-100,0.5,100.5]))
+
+print(FinanceLib.netPresentValueDiscrete(0.01, [-95,2,2,2,102]))
+print(FinanceLib.irrDiscrete([-95,2,2,2,102]))
 
 # print(MathLib.roundN(22.555,2))
 # print(MathLib.roundN(33.5,0))

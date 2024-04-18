@@ -82,6 +82,9 @@ class MathLib
   public static double eValue()
   { return Math.E; }
 
+  public static double gammaValue()
+  { return 0.5772156649015328606065120900824024310421; }
+
   public static double intPower(int x, int p)
   { // more energy-efficient version than Math.pow(x,p)
 

@@ -7,36 +7,36 @@ import java.util.Iterator;
 import java.util.Spliterator;
 
 
-class SortedSequence<T extends Comparable<T>> implements List<T> 
-{ ArrayList<T> elements = new ArrayList<T>(); 
+class SortedSequence implements List 
+{ ArrayList elements = new ArrayList(); 
 
   public SortedSequence() { }
 
-  public SortedSequence(List<T> col)
-  { elements = new ArrayList<T>(); 
+  public SortedSequence(List col)
+  { elements = new ArrayList(); 
     elements.addAll(col); 
     Collections.sort(elements); 
   } 
 
-  public SortedSequence(Collection<T> col)
-  { elements = new ArrayList<T>(); 
+  public SortedSequence(Collection col)
+  { elements = new ArrayList(); 
     elements.addAll(col); 
     Collections.sort(elements); 
   } 
 
-  public SortedSequence<T> clone()
-  { ArrayList<T> elems = (ArrayList<T>) elements.clone(); 
-    SortedSequence<T> ss = new SortedSequence<T>();
+  public SortedSequence clone()
+  { ArrayList elems = (ArrayList) elements.clone(); 
+    SortedSequence ss = new SortedSequence();
     ss.elements = elems; 
     return ss;
   }
   
-  public T get(int i) 
+  public Object get(int i) 
   { return elements.get(i); } 
 
-  public SortedSequence<T> subList(int i, int j)
-  { ArrayList<T> subelems = new ArrayList<T>(); 
-    SortedSequence<T> ss = new SortedSequence<T>();
+  public List subList(int i, int j)
+  { ArrayList subelems = new ArrayList(); 
+    SortedSequence ss = new SortedSequence();
     ss.elements.addAll(elements.subList(i,j)); 
     return ss; 
   } 
@@ -51,8 +51,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
   { return elements.iterator(); } 
 
   public int lastIndexOf(Object x)
-  { 
-	int insertPoint = Collections.binarySearch(elements, (T) x); 
+  { int insertPoint = Collections.binarySearch(elements, x); 
     
     if (insertPoint < 0)
     { return insertPoint; }
@@ -63,7 +62,6 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
       else 
       { return insertPoint; }
     } 
-	
     return insertPoint; 
   }  
 
@@ -73,7 +71,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
     if (insertPoint < 0)
     { return insertPoint; }
 	
-	for (int i = insertPoint-1; i >= 0; i--) 
+    for (int i = insertPoint-1; i >= 0; i--) 
     { if (x.equals(elements.get(i)))
       { insertPoint--; }
       else 
@@ -86,10 +84,10 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
   public boolean remove(Object x)
   { return elements.remove(x); } 
 
-  public T remove(int x)
+  public Object remove(int x)
   { return elements.remove(x); }
 
-  public void add(int i, T x)
+  public void add(int i, Object x)
   { // Only changes the list if i is the correct position
 
     int insertionPoint = 
@@ -108,7 +106,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
     } 
   } 
 
-  public boolean add(T x)
+  public boolean add(Object x)
   { int insertionPoint = 
            Collections.binarySearch(elements, x); 
                // log(elements.size()) time complexity
@@ -122,7 +120,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
     return true; 
   } 
 
-  public boolean add(T x, int nCopies)
+  public boolean add(Object x, int nCopies)
   { int insertionPoint = 
            Collections.binarySearch(elements, x); 
                // log(elements.size()) time complexity
@@ -140,7 +138,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
     return true; 
   } 
 
-  public T set(int i, T x)
+  public Object set(int i, Object x)
   { int insertionPoint = 
            Collections.binarySearch(elements, x); 
                // log(elements.size()) time complexity
@@ -167,8 +165,8 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
     return res;  
   } // ignores the index.  
 
-  public SortedSequence<T> merge(SortedSequence<T> sq)
-  { ArrayList<T> res = new ArrayList<T>();
+  public SortedSequence merge(SortedSequence sq)
+  { ArrayList res = new ArrayList();
 
     int reached = 0; 
  
@@ -177,42 +175,42 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
       Comparable sqelem = 
            (Comparable) sq.elements.get(reached);  
       if (obj.compareTo(sqelem) < 0)
-      { res.add((T) obj); } 
+      { res.add(obj); } 
       else 
-      { res.add((T) sqelem); 
+      { res.add(sqelem); 
         reached++; 
         while (reached < sq.elements.size() && 
                obj.compareTo(sq.elements.get(reached)) >= 0)
-        { res.add((T) sq.elements.get(reached)); 
+        { res.add(sq.elements.get(reached)); 
           reached++; 
         } 
-        res.add((T) obj); 
+        res.add(obj); 
       }
     } 
 
     for (int i = reached; i < sq.elements.size(); i++) 
-    { res.add((T) sq.elements.get(i)); } 
+    { res.add(sq.elements.get(i)); } 
  
-    SortedSequence<T> newsq = new SortedSequence<T>(); 
+    SortedSequence newsq = new SortedSequence(); 
     newsq.elements = res;   
     return newsq; 
   } 
     
-  public java.util.Set<T> uniqueSet()
+  public java.util.Set uniqueSet()
   { return asSet(); }
 
-  public java.util.Set<T> asSet()
-  { java.util.TreeSet<T> res = new java.util.TreeSet<T>(); 
+  public java.util.Set asSet()
+  { java.util.TreeSet res = new java.util.TreeSet(); 
     if (elements.size() == 0) 
     { return res; } 
 
-    T elem0 = elements.get(0); 
+    Object elem0 = elements.get(0); 
     res.add(elem0); 
 
-    T lastAdded = elem0;         
+    Object lastAdded = elem0;         
 
     for (int i = 1; i < elements.size(); i++) 
-    { T elem = elements.get(i); 
+    { Object elem = elements.get(i); 
       if (elem.equals(lastAdded)) { } 
       else 
       { res.add(elem); 
@@ -225,7 +223,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
 
   public boolean contains(Object x)
   { int insertionPoint = 
-           Collections.binarySearch(elements, (T) x); 
+           Collections.binarySearch(elements, x); 
                // log(elements.size()) time complexity
 
     if (insertionPoint < 0)
@@ -262,16 +260,16 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
   public Object[] toArray()
   { return elements.toArray(); } 
 
-  public <T> T[] toArray(T[] arr)
+  public Object[] toArray(Object[] arr)
   { return elements.toArray(arr); }
   
-  public T min()
+  public Object min()
   { return elements.get(0); }
 
-  public T max()
+  public Object max()
   { return elements.get(elements.size()-1); }
   
-  public int getCount(T x)
+  public int getCount(Object x)
   { int insertionPoint = 
            this.lastIndexOf(x); 
                // log(elements.size()) time complexity
@@ -307,19 +305,19 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
   } 
 
   public static void main(String[] args)
-  { SortedSequence<String> ss = new SortedSequence<String>(); 
+  { SortedSequence ss = new SortedSequence(); 
      
     ss.add("bb", 2); ss.add("aa", 3); ss.add("cc", 1);  ss.add("bb", 6); 
     System.out.println(ss); 
-	System.out.println(ss.indexOf("aa")); 
-	System.out.println(ss.indexOf("cc"));
-	System.out.println(ss.getCount("aa")); 
+	System.out.println(ss.lastIndexOf("dd")); 
+	System.out.println(ss.lastIndexOf("bb"));
+	System.out.println(ss.getCount("dd")); 
 	System.out.println(ss.getCount("bb"));
 
-    SortedSequence<String> tt = new SortedSequence<String>(); 
+    SortedSequence tt = new SortedSequence(); 
     tt.add("aa"); tt.add("ee"); 
 
-    SortedSequence<String> pp = ss.merge(tt); 
+    SortedSequence pp = ss.merge(tt); 
     System.out.println(pp); 
 
     System.out.println(pp.asSet()); 
