@@ -752,13 +752,15 @@ trailer::
 . add _1 |-->->including_1
 . copy _1 |-->->copy()
 . intersection _1 |-->->intersection_1
+. intersection_update _1 |-->->intersection_1
 . difference _1 |--> - _1
+. difference_update _1 |--> - _1
 . isdisjoint _1 |-->->intersection_1->isEmpty()
 . issubset _1 |--><: _1
 . issuperset _1 |-->->includesAll_1
 . symmetric_difference _1 |-->->symmetricDifference_1
 . update _1 |-->_1`allUnion
-. remove _1 |-->->excluding_1
+. remove _1 |-->->excludingFirst_1
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
 . items _1 |-->->asSequence()->collect( _mx | Sequence{_mx->keys()->any(), _mx->values()->any()})
@@ -1221,10 +1223,11 @@ trailerUpdateForm::
 . pop _1 |-->_1`popUpdateArguments
 . add _1 |-->->including_1
 . intersection _1 |-->->intersection_1
+. intersection_update _1 |-->->intersection_1
 . difference _1 |--> - _1
+. difference_update _1 |--> - _1
 . symmetric_difference _1 |-->->symmetricDifference_1
 . update _1 |-->_1`allUnion
-. remove _1 |-->->excluding_1
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
 
@@ -1242,8 +1245,8 @@ isUpdating::
 . reverse _1 |-->true
 . pop _1 |-->true
 . add _1 |-->true
-. intersection _1 |-->true
-. difference _1 |-->true
+. intersection_update _1 |-->true
+. difference_update _1 |-->true
 . symmetric_difference _1 |-->true
 . update _1 |-->true
 . remove _1 |-->true
