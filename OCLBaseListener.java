@@ -207,6 +207,18 @@ public class OCLBaseListener implements OCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterDatatypeDefinition(OCLParser.DatatypeDefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDatatypeDefinition(OCLParser.DatatypeDefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterEnumeration(OCLParser.EnumerationContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -214,6 +226,18 @@ public class OCLBaseListener implements OCLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitEnumeration(OCLParser.EnumerationContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterEnumerationLiterals(OCLParser.EnumerationLiteralsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitEnumerationLiterals(OCLParser.EnumerationLiteralsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -394,6 +418,18 @@ public class OCLBaseListener implements OCLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitStatement(OCLParser.StatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterStatementList(OCLParser.StatementListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStatementList(OCLParser.StatementListContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

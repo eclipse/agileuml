@@ -13453,7 +13453,8 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("->excludes") && left instanceof BinaryExpression)
     { return ((BinaryExpression) left).updateFormNotIn("Java4", env,right,local); }
     else if ((operator.equals(":") || 
-              operator.equals("<:") || operator.equals("/<:") ||
+              operator.equals("<:") || 
+              operator.equals("/<:") ||
               operator.equals("/:")) && 
              (right instanceof BasicExpression))
     { String val1 = left.queryForm(env,local);

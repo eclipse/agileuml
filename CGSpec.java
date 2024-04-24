@@ -783,6 +783,8 @@ public class CGSpec
       { return r; } // exact match
       else if (op.equals("while") && trimmedlhs.startsWith(op))
       { return r; }
+      else if (op.equals("repeat") && trimmedlhs.startsWith(op))
+      { return r; }
       else if (op.equals("for") && trimmedlhs.startsWith(op))
       { return r; }
       else if (op.equals("return") && trimmedlhs.startsWith(op))

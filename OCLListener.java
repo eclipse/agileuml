@@ -167,6 +167,16 @@ public interface OCLListener extends ParseTreeListener {
 	 */
 	void exitStereotype(OCLParser.StereotypeContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link OCLParser#datatypeDefinition}.
+	 * @param ctx the parse tree
+	 */
+	void enterDatatypeDefinition(OCLParser.DatatypeDefinitionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link OCLParser#datatypeDefinition}.
+	 * @param ctx the parse tree
+	 */
+	void exitDatatypeDefinition(OCLParser.DatatypeDefinitionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link OCLParser#enumeration}.
 	 * @param ctx the parse tree
 	 */
@@ -176,6 +186,16 @@ public interface OCLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitEnumeration(OCLParser.EnumerationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link OCLParser#enumerationLiterals}.
+	 * @param ctx the parse tree
+	 */
+	void enterEnumerationLiterals(OCLParser.EnumerationLiteralsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link OCLParser#enumerationLiterals}.
+	 * @param ctx the parse tree
+	 */
+	void exitEnumerationLiterals(OCLParser.EnumerationLiteralsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link OCLParser#enumerationLiteral}.
 	 * @param ctx the parse tree
@@ -326,6 +346,16 @@ public interface OCLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitStatement(OCLParser.StatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link OCLParser#statementList}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementList(OCLParser.StatementListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link OCLParser#statementList}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementList(OCLParser.StatementListContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link OCLParser#nlpscript}.
 	 * @param ctx the parse tree

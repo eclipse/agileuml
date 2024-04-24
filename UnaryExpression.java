@@ -1401,6 +1401,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
             
           return precopy + " = " + subrange1 + ";"; 
         }
+        else if (argument instanceof BasicExpression &&
+                 Type.isCollectionType(argument.getType()))
+        { // Or, if it is a collection/map, clear the 
+          // collection/Map. 
+
+          return pre + ".clear();"; 
+        } 
 
         return "{}";  
       }  
@@ -1520,6 +1527,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
             
           return precopy + " = " + subrange1 + ";"; 
         }
+        else if (argument instanceof BasicExpression &&
+                 Type.isCollectionType(argument.getType()))
+        { // Or, if it is a collection/map, clear the 
+          // collection/Map. 
+
+          return pre + ".clear();"; 
+        } 
 
         return "{}";  
       }  
@@ -1584,7 +1598,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
       Type argtype = argument.type; 
       if (argtype == null || !argtype.isEntity())
-      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument + " of type " + argument.getType());
 
         if (argument instanceof BasicExpression && 
 ((BasicExpression) argument).arrayIndex != null) 
@@ -1625,6 +1639,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
             
           return precopy + " = " + subrange1 + ";"; 
         }
+        else if (argument instanceof BasicExpression &&
+                 Type.isCollectionType(argument.getType()))
+        { // Or, if it is a collection/map, clear the 
+          // collection/Map. 
+
+          return pre + ".clear();"; 
+        } 
 
         return "{}";  
       }  
@@ -1718,7 +1739,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                           ind1 + "-1)"; 
           if (pars.size() > 1) 
           { Expression par2 = (Expression) pars.get(1); 
-            String ind2 = par2.queryForm(env,local);
+            String ind2 = par2.queryFormCSharp(env,local);
             String subrange2 = 
               "SystemTypes.subrange(" + precopy + ", " + 
                             ind2 + "+1," + 
@@ -1728,6 +1749,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
             else 
             { return precopy + " = " + subrange1 + " + (" + subrange2 + ");"; }  
           }
+        } 
+        else if (argument instanceof BasicExpression &&
+                 Type.isCollectionType(argument.getType()))
+        { // Or, if it is a collection/map, clear the 
+          // collection/Map. 
+
+          return pre + ".Clear();"; 
         } 
   
         return "{}";  
@@ -1769,6 +1797,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
   public String updateFormCPP(java.util.Map env, boolean local)
   { String cont = "Controller::inst->"; 
+    String pre = argument.queryFormCPP(env,local);
 
     if ("->isDeleted".equals(operator))
     { if (argument.umlkind == CLASSID && (argument instanceof BasicExpression) &&  
@@ -1794,10 +1823,54 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           String ind = ((BasicExpression) argument).arrayIndex.queryFormCPP(env,local); 
           return precopy + "->erase(" + precopy + "->begin() + (" + ind + "-1));";   
         }
+        // and subrange
+        else if (argument instanceof BasicExpression && 
+((BasicExpression) argument).getData().equals("subrange")) 
+        { // s.subrange(i,j)->isDeleted() means 
+          // s->erase(s->begin() + (i-1), s->begin() + j)
+          // for sequences, likewise for strings
+
+          BasicExpression argcopy = 
+             (BasicExpression) argument.clone(); 
+          Expression updatedVar = argcopy.getObjectRef(); 
+          String precopy = 
+             updatedVar.queryFormCPP(env,local);
+          Vector pars = argcopy.getParameters(); 
+          Expression par1 = (Expression) pars.get(0); 
+          String ind1 = par1.queryFormCPP(env,local);
+          if (pars.size() > 1) 
+          { Expression par2 = (Expression) pars.get(1); 
+            String ind2 = par2.queryFormCPP(env,local);
+            if (argument.isSequence())
+            { return precopy + "->erase(" + 
+                precopy + "->begin() + (" + ind1 + "-1), " + 
+                precopy + "->begin() + " + ind2 + ");"; 
+            } 
+            else // strings
+            { return precopy + ".erase(" + ind1 + "-1, " + 
+                       ind2 + ");"; 
+            }  
+          }
+          
+          if (argument.isSequence())
+          { return precopy + "->erase(" + 
+                precopy + "->begin() + (" + ind1 + "-1), " + 
+                precopy + "->end());"; 
+          } 
+          else // strings
+          { return precopy + ".erase(" + ind1 + "-1);"; }  
+        } 
+        else if (argument instanceof BasicExpression &&
+                 Type.isCollectionType(argument.getType()))
+        { // Or, if it is a collection/map, clear the 
+          // collection/Map. 
+
+          return pre + "->clear();"; 
+        } // also for sets
+
         return "{}";  
       }  
 
-      String pre = argument.queryFormCPP(env,local);
       String eename = argument.type.getName(); 
       Entity ent = null; 
       String all = ""; 

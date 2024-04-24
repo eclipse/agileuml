@@ -10244,8 +10244,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
-      { System.err.println("WARNING: No defined entity for operation: " + this); 
-        System.err.println("Assuming it is a global operation (use case, library op, etc)");
+      { System.err.println("! WARNING: No defined entity for operation: " + this); 
+        System.err.println("! Assuming it is a global operation (use case, library op, etc)");
  
         if (objectRef == null) 
         { return cont + "." + data + pars + ";"; } 
@@ -10329,7 +10329,7 @@ public Statement generateDesignSubtract(Expression rhs)
     { String pre = objectRef.queryForm(env,local);
       Type otype = objectRef.type; 
       if (otype == null) 
-      { System.err.println("ERROR: no type for " + objectRef); 
+      { System.err.println("!! ERROR: no type for " + objectRef); 
         return ""; 
       } 
       String eename = otype.getName(); 
@@ -10539,7 +10539,7 @@ public Statement generateDesignSubtract(Expression rhs)
     { String pre = objectRef.queryFormJava7(env,local);
       Type otype = objectRef.type; 
       if (otype == null) 
-      { System.err.println("ERROR: no type for " + objectRef); 
+      { System.err.println("!! ERROR: no type for " + objectRef); 
         return ""; 
       } 
       String eename = otype.getName(); 
@@ -10681,7 +10681,7 @@ public Statement generateDesignSubtract(Expression rhs)
     { String pre = objectRef.queryFormCSharp(env,local);
       Type otype = objectRef.type; 
       if (otype == null) 
-      { System.err.println("ERROR: no type for " + objectRef); 
+      { System.err.println("!! ERROR: no type for " + objectRef); 
         return ""; 
       } 
       String eename = otype.getName(); 
@@ -10862,6 +10862,8 @@ public Statement generateDesignSubtract(Expression rhs)
     { return updateFormSubset(env,val2,local); }
     else if (operator.equals("-"))
     { return updateFormSubtract(env,val2,exp2,local); }
+    else if (operator.equals("/<:"))
+    { return updateFormSubtract(env,val2,exp2,local); }
     else
     { return "{} /* invalid update to " + this + " by " + operator + " with " + val2 + " */"; }
   }
@@ -10878,6 +10880,8 @@ public Statement generateDesignSubtract(Expression rhs)
     else if (operator.equals("<:"))
     { return updateFormSubsetJava6(env,val2,local); }
     else if (operator.equals("-"))
+    { return updateFormSubtractJava6(env,val2,exp2,local); }
+    else if (operator.equals("/<:"))
     { return updateFormSubtractJava6(env,val2,exp2,local); }
     else
     { return "{} /* invalid update to " + this + " by " + operator + " with " + val2 + " */"; }
@@ -10896,6 +10900,8 @@ public Statement generateDesignSubtract(Expression rhs)
     { return updateFormSubsetJava7(env,val2,local); }
     else if (operator.equals("-"))
     { return updateFormSubtractJava7(env,val2,exp2,local); }
+    else if (operator.equals("/<:"))
+    { return updateFormSubtractJava7(env,val2,exp2,local); }
     else
     { return "{} /* invalid update to " + this + " by " + operator + " with " + val2 + " */"; }
   }
@@ -10913,6 +10919,8 @@ public Statement generateDesignSubtract(Expression rhs)
     { return updateFormSubsetCSharp(env,val2,local); }
     else if (operator.equals("-"))
     { return updateFormSubtractCSharp(env,val2,exp2,local); }
+    else if (operator.equals("/<:"))
+    { return updateFormSubtractCSharp(env,val2,exp2,local); }
     else
     { return "{} /* invalid update to " + this + " by " + operator + " with " + val2 + " */"; }
   }
@@ -10929,6 +10937,8 @@ public Statement generateDesignSubtract(Expression rhs)
     else if (operator.equals("<:"))
     { return updateFormSubsetCPP(env,val2,local); }
     else if (operator.equals("-"))
+    { return updateFormSubtractCPP(env,val2,exp2,local); }
+    else if (operator.equals("/<:"))
     { return updateFormSubtractCPP(env,val2,exp2,local); }
     else
     { return "{} /* invalid update to " + this + " by " + operator + " with " + val2 + " */"; }

@@ -6597,7 +6597,7 @@ public class BSystemTypes extends BComponent
   }
 
   public static String generateUnionOpJava7()
-  { String res = "  public static <T> HashSet<T> union(HashSet<Object> a, Collection<T> b)\n" +
+  { String res = "  public static <T> HashSet<T> union(HashSet a, Collection<T> b)\n" +
       "  { HashSet<T> res = new HashSet<T>(); \n" +
       "    for (Object x : a)\n" +
       "    { try \n" +

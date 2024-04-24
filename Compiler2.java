@@ -5791,9 +5791,16 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "arg->reverse()"; 
       }
 
+      if ("repeat".startsWith(st))
+      { mess[0] = "repeat statement until expression\n" +  
+                  "loop statement\n"; 
+        return "repeat statement until expression"; 
+      }
+
+
       if ("->restrict".startsWith(st))
       { mess[0] = "arg->restrict(keys) operator on maps.\n" + 
-          "Returns submap of arg: elements with key in keys"; 
+          "Returns submap of arg: the elements with key in keys"; 
         return "arg->restrict(keys)"; 
       }
 
@@ -6575,6 +6582,36 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       // System.err.println("Unable to parse while statement: " + lexicals.get(s) + " ... " + 
       //                    lexicals.get(e)); 
     }
+    else if ("repeat".equals(lexicals.get(s) + ""))
+    { Statement s1 = null;
+      Expression test = null;
+      for (int i = s+1; i < e; i++)
+      { String ss = lexicals.get(i) + "";
+        if (ss.equals("until"))
+        { s1 = parseStatement(s+1, i-1, entities, types);
+          if (s1 == null) { continue; } 
+          test = parse_statement_expression(0,i+1,e,entities,types);
+          if (test == null) 
+          { if ("(".equals(lexicals.get(i+1) + "") && 
+                ")".equals(lexicals.get(e-1) + ""))
+            { test = parse_statement_expression(0,i+2,e-2,entities,types); 
+              if (test == null)
+              { System.err.println("!!ERROR!!: Invalid test in while loop: " + showLexicals(i+1,e-1));
+                return null; // continue; ???
+              } 
+              test.setBrackets(true); 
+            }  
+          } 
+          if (s1 == null || test == null)
+          { return null; }
+          WhileStatement res = new WhileStatement(test,s1);
+          res.setLoopKind(Statement.REPEAT); 
+          System.out.println(">>> Parsed repeat statement: " + res);
+          return res;
+        }
+      }
+    }
+
     return null;
   }
 

@@ -308,6 +308,7 @@ setExpression
     : 'OrderedSet{' expressionList? '}'  
     | 'Bag{' expressionList? '}'  
     | 'Set{' expressionList? '}' 
+    | 'SortedSet{' expressionList? '}' 
     | 'Sequence{' expressionList? '}' 
     | 'Map{' expressionList? '}'
     ; 
@@ -321,6 +322,7 @@ statement
    | 'if' expression 'then' statement 'else' statement  
    | 'while' expression 'do' statement 
    | 'for' ID ':' expression 'do' statement 
+   | 'repeat' statement 'until' expression 
    | 'return' expression 
    | basicExpression ':=' expression 
    | 'execute' expression 

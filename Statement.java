@@ -22,6 +22,7 @@ abstract class Statement implements Cloneable
 
   public static final int WHILE = 0; 
   public static final int FOR = 1; 
+  public static final int REPEAT = 2; 
 
   public static final String[] spaces = { "", "  ", "    ", "      ", "        ", "          ", "            ", "              ", "                ", "                  ", "                    " }; 
   // spaces[i] is i*2 spaces
@@ -4297,7 +4298,7 @@ class WhileStatement extends Statement
   private Expression invariant; 
   private Expression variant; 
   int loopKind = WHILE; 
-  // FOR for a for loop
+  // FOR for a for loop, REPEAT for repeat ... until
   
   Expression loopVar; // for (loopVar : loopRange) do ...
   Expression loopRange; 
@@ -4396,6 +4397,8 @@ class WhileStatement extends Statement
   public String getOperator() 
   { if (loopKind == WHILE) 
     { return "while"; }
+    else if (loopKind == REPEAT)
+    { return "repeat"; } 
     return "for"; 
   } 
 
@@ -4564,7 +4567,7 @@ class WhileStatement extends Statement
     { loopRange.energyUse(uses,rUses,aUses); }  
     body.energyUse(uses,rUses,aUses);
 
-    if (loopKind == WHILE)
+    if (loopKind == WHILE || loopKind == REPEAT)
     { int acount = (int) uses.get("amber"); 
       uses.set("amber", acount + 1); 
       aUses.add("! Unbounded loops can be inefficient"); 
@@ -4671,6 +4674,7 @@ class WhileStatement extends Statement
     res = res + "  END";
     return res;  
   } // for loops: introduce new index variable
+    // repeat loops: repeat body.
 
   public BStatement bupdateForm(java.util.Map env, boolean local)
   { BExpression btest = new BBasicExpression("true"); 
@@ -4805,6 +4809,12 @@ class WhileStatement extends Statement
   { String loop = "while"; 
     if (loopKind == FOR)
     { loop = "for"; } 
+    else if (loopKind == REPEAT)
+    { System.out.println("  do {"); 
+      body.displayJava(t); 
+      System.out.println("  } while (!(" + loopTest.toJava() + "));"); 
+      return;
+    } 
 
     if (brackets)
     { System.out.println(" ( " + loop + " ( " + loopTest.toJava() + " )"); 
@@ -4824,6 +4834,12 @@ class WhileStatement extends Statement
   { String loop = "while"; 
     if (loopKind == FOR)
     { loop = "for"; } 
+    else if (loopKind == REPEAT)
+    { out.println("  do {"); 
+      body.displayJava(t,out); 
+      out.println("  } while (!(" + loopTest.toJava() + "));"); 
+      return;
+    } 
 
     if (brackets)
     { out.println(" ( " + loop + " ( " + loopTest.toJava() + " )"); 
@@ -4869,7 +4885,7 @@ class WhileStatement extends Statement
  
     
     return res; 
-  } 
+  } // Distinguish while, repeat
 
  
   public Statement substituteEq(String oldE, Expression newE)
@@ -4979,6 +4995,12 @@ class WhileStatement extends Statement
     String loop = "while"; 
     if (loopKind == FOR)
     { loop = "for"; } 
+    else if (loopKind == REPEAT)
+    { String rres = "  do {\n"; 
+      rres = rres + "  " + body.toStringJava(); 
+      rres = rres + "  } while (!(" + loopTest.queryForm(env,false) + "));\n"; 
+      return rres;
+    } 
 
     String res = "  " + loop + " (" + loopTest.queryForm(env,false) + ")"; 
     res = res + "  {\n "; 
@@ -4995,12 +5017,19 @@ class WhileStatement extends Statement
     res = res + "  {\n "; 
     res = res + body.toEtl(); 
     return res + "  }"; 
-  } 
+  } // no repeat
 
   public String toString()
   { String res = " while "; 
     if (loopKind == FOR)
-    { res = " for "; } 
+    { res = " for "; }
+    else if (loopKind == REPEAT)
+    { res = "  repeat "; 
+      res = res + body.toString(); 
+      res = res + "  until " + loopTest + " "; 
+      return res;
+    } 
+ 
     res = res + loopTest + " do " + body + " "; 
     if (brackets)
     { res = "( " + res + " )"; } 
@@ -5012,6 +5041,10 @@ class WhileStatement extends Statement
     if (loopKind == FOR)
     { res = res + "for " + loopVar + " : " + loopRange.toAST() + " do " + body.toAST() + " )"; 
     }
+    else if (loopKind == REPEAT)
+    { res = res + " repeat " + body.toAST() + " until " + 
+            loopTest.toAST() + " )"; 
+    } 
     else 
     { res = res + "while " + loopTest.toAST() + " do " + 
             body.toAST() + " )"; 
@@ -5026,7 +5059,7 @@ class WhileStatement extends Statement
   public Vector singleMutants()
   { Vector res = new Vector();
 
-    if (loopKind == WHILE)
+    if (loopKind == WHILE || loopKind == REPEAT)
     { Vector exprs = loopTest.singleMutants(); 
       for (int i = 0; i < exprs.size(); i++) 
       { Expression mut = (Expression) exprs.get(i); 
@@ -5138,7 +5171,10 @@ class WhileStatement extends Statement
   }  
 
   public Expression wpc(Expression post)
-  { return loopTest; } // actually the invariant
+  { if (loopKind == REPEAT)
+    { return new UnaryExpression("not", loopTest); } 
+    return loopTest; 
+  } // actually the invariant
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { Vector bodydeps = body.dataDependents(allvars,vars);
@@ -5161,7 +5197,7 @@ class WhileStatement extends Statement
       return result;  
     } // loopVar depends on range data
 
-    if (loopKind == WHILE && 
+    if ((loopKind == WHILE || loopKind == REPEAT) && 
         loopTest != null && body.updates(vars)) 
     { Vector testvars = loopTest.allReadData(); 
       result = VectorUtil.union(result,testvars); 
@@ -5225,7 +5261,7 @@ class WhileStatement extends Statement
       return result;  
     } // loopVar depends on range data
 
-    if (loopKind == WHILE && 
+    if ((loopKind == WHILE || loopKind == REPEAT) && 
         loopTest != null && body.updates(vars)) 
     { Vector testvars = loopTest.allReadData(); 
       result = VectorUtil.union(result,testvars); 
@@ -5279,7 +5315,8 @@ class WhileStatement extends Statement
     return result; 
   }  
 
-  public String updateForm(java.util.Map env, boolean local, Vector types, 
+  public String updateForm(java.util.Map env, 
+                           boolean local, Vector types, 
                            Vector entities, Vector vars)
   { if (loopKind == FOR)
     { if (loopVar != null && loopRange != null)
@@ -5330,7 +5367,8 @@ class WhileStatement extends Statement
                "    " + newbody + "\n" + 
                "  }"; 
       } // All pre terms within body, involving lv, should be evaluated before body. 
-      else if (loopTest != null && (loopTest instanceof BinaryExpression))
+      else if (loopTest != null && 
+               (loopTest instanceof BinaryExpression))
       { // assume it is  var : exp 
         BinaryExpression lt = (BinaryExpression) loopTest; 
         String lv = lt.left.queryForm(env, local); 
@@ -5365,9 +5403,15 @@ class WhileStatement extends Statement
       return "  for (" + loopTest.queryForm(env,local) + ") \n" + 
              "  { " + body.updateForm(env,local,types,entities,vars) + " }"; 
     } 
-    else // loopKind == WHILE
+    else if (loopKind == REPEAT)
+    { return "  do {\n  " +  
+          body.updateForm(env,local,types,entities,vars) + 
+          "\n  } while (!(" + loopTest.queryForm(env,local) + "));\n"; 
+    } 
+    else
     { return "  while (" + loopTest.queryForm(env,local) + ") \n" + 
-             "  { " + body.updateForm(env,local,types,entities,vars) + " }"; 
+        "  { " + body.updateForm(env,local,types,entities,vars) + 
+        " }"; 
     } 
  }  
 
@@ -5457,6 +5501,11 @@ class WhileStatement extends Statement
       } 
       return "  for (" + loopTest.queryFormJava6(env,local) + ") \n" + 
              "  { " + body.updateFormJava6(env,local) + " }"; 
+    } 
+    else if (loopKind == REPEAT)
+    { return "  do {\n  " +  
+        body.updateFormJava6(env,local) + 
+        "\n  } while (!(" + loopTest.queryFormJava6(env,local) + "));\n"; 
     } 
     else // loopKind == WHILE
     { return "  while (" + loopTest.queryFormJava6(env,local) + ") \n" + 
@@ -5570,12 +5619,18 @@ class WhileStatement extends Statement
       return "  for (" + loopTest.queryFormJava7(env,local) + ") \n" + 
              "  { " + body.updateFormJava7(env,local) + " }"; 
     } 
+    else if (loopKind == REPEAT)
+    { return "  do {\n  " +  
+        body.updateFormJava7(env,local) + 
+        "\n  } while (!(" + loopTest.queryFormJava7(env,local) + "));\n"; 
+    } 
     else // loopKind == WHILE
     { return "  while (" + loopTest.queryFormJava7(env,local) + ") \n" + 
              "  { " + body.updateFormJava7(env,local) + " }"; 
     } 
  }  
 
+  /* Also for REPEAT: */ 
   public String updateFormCSharp(java.util.Map env, boolean local)
   { if (loopKind == FOR)
     { if (loopVar != null && loopRange != null)
@@ -5645,6 +5700,11 @@ class WhileStatement extends Statement
       } 
       return "  for (" + loopTest.queryFormCSharp(env,local) + ") \n" + 
              "  { " + body.updateFormCSharp(env,local) + " }"; 
+    } 
+    else if (loopKind == REPEAT)
+    { return "  do {\n  " +  
+        body.updateFormCSharp(env,local) + 
+        "\n  } while (!(" + loopTest.queryFormCSharp(env,local) + "));\n"; 
     } 
     else // loopKind == WHILE
     { return "  while (" + loopTest.queryFormCSharp(env,local) + ") \n" + 
@@ -5733,11 +5793,16 @@ class WhileStatement extends Statement
       return "  for (" + loopTest.queryFormCPP(env,local) + ") \n" + 
              "  { " + body.updateFormCPP(env,local) + " }"; 
     } 
+    else if (loopKind == REPEAT)
+    { return "  do {\n  " +  
+        body.updateFormCPP(env,local) + 
+        "\n  } while (!(" + loopTest.queryFormCPP(env,local) + "));\n"; 
+    } 
     else // loopKind == WHILE
     { return "  while (" + loopTest.queryFormCPP(env,local) + ") \n" + 
              "  { " + body.updateFormCPP(env,local) + " }"; 
     } 
-  }  
+  }  /* and REPEAT */ 
 
   public Vector allPreTerms()
   { Vector res = body.allPreTerms();
@@ -5983,6 +6048,12 @@ class WhileStatement extends Statement
       eargs.add(ltest); 
       eargs.add(body); 
     } 
+    else if (loopKind == REPEAT) 
+    { args.add(bodyText);
+      args.add(ltest.cg(cgs));  
+      eargs.add(body); 
+      eargs.add(ltest); 
+    } 
     else 
     { args.add(loopVar + ""); 
       if (loopRange != null) 
@@ -5994,12 +6065,14 @@ class WhileStatement extends Statement
       eargs.add(loopRange); 
       eargs.add(body); 
     } 
+
     CGRule r = cgs.matchedStatementRule(this,etext);
 
     System.out.println(">> Matched statement rule: " + r + " for " + this); 
 
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
+
     return etext;
   } // for FOR, need the loopVar : loopRange
     // instead of test. 
@@ -6008,11 +6081,14 @@ class WhileStatement extends Statement
   { Vector res = new Vector(); 
     if (loopKind == WHILE && loopTest != null) 
     { res.addAll(loopTest.metavariables()); } 
-    else if (loopVar != null && loopRange != null) 
+    else if (loopKind == FOR && 
+             loopVar != null && loopRange != null) 
     { res.addAll(loopVar.metavariables()); 
       res.addAll(loopRange.metavariables()); 
     }  
     res = VectorUtil.union(res,body.metavariables()); 
+    if (loopKind == REPEAT && loopTest != null) 
+    { res.addAll(loopTest.metavariables()); } 
     return res; 
   } 
 
@@ -6021,6 +6097,10 @@ class WhileStatement extends Statement
     if (loopKind == WHILE) 
     { eargs.add(loopTest); 
       eargs.add(body); 
+    } 
+    else if (loopKind == REPEAT) 
+    { eargs.add(body); 
+      eargs.add(loopTest); 
     } 
     else 
     { eargs.add(loopVar); 
