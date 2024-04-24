@@ -513,7 +513,11 @@ _1 := _2 |-->    _1 = _2\n
 
 
 while _1 do _2 |-->    while (_1)\n    {\n  _2    }\n
+
+repeat _1 until _2 |-->    repeat {\n  _1    } while !(_2)\n
+
 for _1 : _2 do _3 |-->    for _1 in _2\n    {\n  _3    }\n
+
 if _1 then _2 else _3 |-->    if _1\n    {\n  _2    }\n    else {\n  _3    }\n
 _1 ; _2 |-->_1_2
 skip |-->    \n

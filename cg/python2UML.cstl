@@ -487,7 +487,18 @@ pickle _1 |-->    _1`thirdSecondArg.writeObject(_1`thirdFirstArg)<when> _1`secon
 asyncio _1 |-->    _1`asyncioTrailer
 numpy _1 |-->    _1`numpyTrailer
 
+
+_1 _2 |-->    execute (_2`third : _1)<when> _1 atom, _2`second append
+_1 _2 |-->    execute (_2`third : _1)<when> _1 atom, _2`second add
+_1 _2 |-->    execute (_2`third /: _1)<when> _1 atom, _2`second remove
+_1 _2 |-->    execute (_2`third /: _1)<when> _1 atom, _2`second discard
+_1 _2 |-->    execute (_2`third <: _1)<when> _1 atom, _2`second update
+_1 _2 |-->    execute (_2`third /<: _1)<when> _1 atom, _2`second difference_update
+_1 _2 |-->    execute ((_1 - _2`third) /<: _1)<when> _1 atom, _2`second intersection_update
+_1 _2 |-->    execute (_1 /<: _1)<when> _1 atom, _2`second clear
+
 _1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer, _2`isUpdating true
+
 _1 _2 |-->    _1_2<when> _1 atom, _2 trailer
 
 _1 , _* |-->    _1 ;\n_*`recurse

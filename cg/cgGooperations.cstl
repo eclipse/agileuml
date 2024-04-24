@@ -569,6 +569,8 @@ _1 := _2 |-->  _1 = _2\n
 
 while _1 do _2 |-->  for _1 {\n  _2  }\n
 
+repeat _1 until _2 |-->  for {\n  _1    if _2 {\n      break\n    }\n  }\n
+ 
 for _1 : _2 do _3 |-->  for _elem := _2.Front() ; _elem != nil ; _elem = _elem.Next() {\n    _1 := _elem.Value.(_2`elementType)\n  _3  }\n
 
 if _1 then _2 else _3 |-->  if _1 {\n  _2  } else {\n  _3  }\n
