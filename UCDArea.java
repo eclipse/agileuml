@@ -15146,6 +15146,14 @@ public void produceCUI(PrintWriter out)
     // System.out.println("New associations: " + assocs);    
   }
 
+  public void observerPattern()
+  { File oclobserver = new File("libraries/observer.km3"); 
+    if (oclobserver.exists())
+    { loadKM3FromFile(oclobserver); }
+    else 
+    { System.err.println("! Warning: no file libraries/observer.km3"); } 
+  } 
+
   public void java2python()
   { File ocltypes = new File("libraries/ocltype.km3"); 
     if (ocltypes.exists())
@@ -15780,6 +15788,16 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    ASTCompositeTerm cx; 
+    if (xx instanceof ASTCompositeTerm)
+    { cx = (ASTCompositeTerm) xx; } 
+    else 
+    { System.err.println("!! Invalid text for C AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+
     java.util.Map m1 = new java.util.HashMap();
     java.util.Map m2 = new java.util.HashMap();
     Vector v1 = new Vector();
@@ -15790,10 +15808,15 @@ public void produceCUI(PrintWriter out)
     Date d1 = new Date(); 
     long time1 = d1.getTime(); 
 
-    ((ASTCompositeTerm) xx).identifyCFunctions(null,m1,m2,v1,v2);
+    cx.identifyCFunctions(null,m1,m2,v1,v2);
 
-    Vector mxs = 
-      ((ASTCompositeTerm) xx).cprogramToKM3(null,m1,m2,v1,v2); 
+    Vector mxs = new Vector(); 
+    if ("statement".equals(cx.getTag()))
+    { Statement st = cx.cstatementToKM3(m1,m2,v1,v2); 
+      System.out.println(">>> OCL statement:\n" + st); 
+    } 
+    else 
+    { mxs = cx.cprogramToKM3(null,m1,m2,v1,v2); }  
 
     Date d2 = new Date(); 
     long time2 = d2.getTime(); 

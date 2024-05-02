@@ -3660,7 +3660,10 @@ public class ASTCompositeTerm extends ASTTerm
                                           pre,ws); 
       } // and pre before the loop. 
       else if ("do".equals(keyword) && terms.size() > 5)
-      { ASTTerm test = (ASTTerm) terms.get(4); 
+      { // do body while test is 
+        // while true do (body ; if test then skip else break)
+
+        ASTTerm test = (ASTTerm) terms.get(4); 
         ASTTerm body = (ASTTerm) terms.get(1);
         Expression loopTest = test.cexpressionToKM3(
                 vartypes, varelemtypes, types, entities); 
@@ -3676,23 +3679,29 @@ public class ASTCompositeTerm extends ASTTerm
         
         Statement wbody = 
           SequenceStatement.combineSequenceStatements(
-                                            pst,lbody);  
+                                              lbody,pre);
+        Statement pstbreak =
+          SequenceStatement.combineSequenceStatements(
+                                              pst,
+                                    new BreakStatement());
+
+        if (pst == null) 
+        { pst = new InvocationStatement("skip"); } 
+
+        BasicExpression truebe = new BasicExpression(true);  
+        ConditionalStatement cs = 
+           new ConditionalStatement(loopTest, pst, pstbreak); 
         Statement wbody1 = 
           SequenceStatement.combineSequenceStatements(
-                                            wbody,pre);  
+                                              wbody, cs);
+ 
         WhileStatement ws = 
-          new WhileStatement(loopTest,wbody1);
-        Statement pbody = 
-          SequenceStatement.combineSequenceStatements(
-                                            lbody,pre);  
-
-        SequenceStatement stat = new SequenceStatement(); 
-        stat.addStatement(pbody); 
-        stat.addStatement(ws); 
-        return stat;  
+          new WhileStatement(truebe,wbody1);
+        return ws; 
       } 
       else if ("for".equals(keyword)) 
-      { ASTCompositeTerm forCond = (ASTCompositeTerm) terms.get(2);
+      { ASTCompositeTerm forCond = 
+                    (ASTCompositeTerm) terms.get(2);
         int sze = forCond.terms.size(); 
 
         ASTTerm code = (ASTTerm) terms.get(terms.size()-1); 
@@ -9450,7 +9459,8 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
-    if ("iterationStatement".equals(tag) && terms.size() == 7 && 
+    if ("iterationStatement".equals(tag) && 
+        terms.size() == 7 && 
         "do".equals(terms.get(0) + "") && 
         "while".equals(terms.get(2) + "") && 
         "(".equals(terms.get(3) + "") && 
@@ -9474,13 +9484,34 @@ public class ASTCompositeTerm extends ASTTerm
       Vector testupdate = cond.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
+
       Vector whileBody = new Vector(); 
-      whileBody.addAll(testupdate); 
+      // whileBody.addAll(testupdate); 
       whileBody.addAll(doStats); 
+
+      
+      SequenceStatement doSkip = 
+        new SequenceStatement();
+      if (testupdate == null || testupdate.size() == 0)
+      { doSkip.addStatement(
+                  new InvocationStatement("skip")); 
+      } 
+      else 
+      { doSkip.addStatements(testupdate); } 
+ 
+      SequenceStatement doBreak = 
+        new SequenceStatement(testupdate); 
+      doBreak.addStatement(new BreakStatement()); 
+
+      ConditionalStatement cs = 
+        new ConditionalStatement(test, doSkip, doBreak); 
+      whileBody.add(cs); 
+
+      BasicExpression betrue = new BasicExpression(true); 
+      
       Vector res = new Vector();
       Statement whileStat = 
-        new WhileStatement(test,whileBody); 
-      res.addAll(doStats);
+        new WhileStatement(betrue,whileBody); 
       res.add(whileStat);  
       return res; 
     } 
@@ -36411,6 +36442,7 @@ public class ASTCompositeTerm extends ASTTerm
       } 
       else if (terms.size() > 3 && "do".equals(terms.get(0) + ""))
       { // do code while (expr);
+        // Same as: repeat code until not(expr)
 
         ASTTerm stat = (ASTTerm) terms.get(1);
         String statcode = stat.toKM3();  
@@ -36425,32 +36457,48 @@ public class ASTCompositeTerm extends ASTTerm
           texpr.expression.setType(
                    new Type("boolean", null)); 
           loopBody.setBrackets(true); 
-          Statement loop = 
-             new WhileStatement(texpr.expression,loopBody); 
-          statement = new SequenceStatement(); 
-          ((SequenceStatement) statement).addStatement(loopBody); 
-          ((SequenceStatement) statement).addStatement(loop); 
-          String resx = "  " + statcode + " ;\n  " + 
-            pse + ";\n" + 
-            "  while " + dotest + "\n   do\n" + 
-            "    ( " + statcode + "; \n  " + pse + "  )\n"; 
+          Expression invtest = 
+            new UnaryExpression("not", texpr.expression); 
+          invtest.setType(
+                   new Type("boolean", null)); 
+
+          statement = 
+             new WhileStatement(invtest,loopBody);
+          ((WhileStatement) statement).setLoopKind(Statement.REPEAT); 
+ 
+          // statement = new SequenceStatement(); 
+          // ((SequenceStatement) statement).addStatement(loopBody); 
+          // ((SequenceStatement) statement).addStatement(loop); 
+          String resx =  
+            "  repeat\n"  + 
+            "    ( " + statcode + "; \n  " + pse + "  )\n" + 
+            "  until not(" + dotest + ")\n"; 
           return resx; 
         } 
 
-
+        String dotest = texpr.queryForm(); 
+          
         if (texpr.expression != null && stat.statement != null) 
         { texpr.expression.setType(
                    new Type("boolean", null)); 
+          Expression invtest = 
+            new UnaryExpression("not", texpr.expression); 
+          invtest.setType(
+                   new Type("boolean", null)); 
+
           stat.statement.setBrackets(true); 
-          Statement loop = new WhileStatement(texpr.expression,stat.statement); 
-          statement = new SequenceStatement(); 
-          ((SequenceStatement) statement).addStatement(stat.statement); 
-          ((SequenceStatement) statement).addStatement(loop); 
+          statement = new WhileStatement(invtest,stat.statement);  
+          ((WhileStatement) statement).setLoopKind(Statement.REPEAT); 
+          System.out.println(">>> Repeat statement: " + statement); 
+
+          return "  repeat\n"  + 
+            "    " + statcode + "\n" + 
+            "  until " + invtest + "\n";
         } 
 
-        String res = "  " + statcode + " ;\n" + 
-          "  while " + texpr.toKM3() + "\n   do\n" + 
-          "    " + statcode; 
+        String res =  
+          "  while true do (" + statcode + " ;\n" + 
+          "    if " + dotest + " then skip else break)\n"; 
         return res; 
       } 
       else if (terms.size() > 2 && "for".equals(terms.get(0) + ""))

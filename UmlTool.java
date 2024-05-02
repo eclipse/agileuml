@@ -1069,9 +1069,9 @@ public void findPlugins()
       "Defines a selected class to be a singleton");
     patternsMenu.add(singletonMI);
 
-    // JMenuItem observerMI = new JMenuItem("Observer"); 
-    // observerMI.addActionListener(this);
-    // patternsMenu.add(observerMI);
+    JMenuItem observerMI = new JMenuItem("Observer"); 
+    observerMI.addActionListener(this);
+    patternsMenu.add(observerMI);
 
     JMenuItem facadeMI = new JMenuItem("Facade"); 
     facadeMI.setToolTipText(
@@ -2748,6 +2748,8 @@ public void findPlugins()
       { ucdArea.makeValueObjects(); }
       else if (label.equals("Singleton"))
       { makeSingletons(); }
+      else if (label.equals("Observer"))
+      { ucdArea.observerPattern(); }
       else if (label.equals("Facade"))
       { checkForFacades(); }  
       else if (label.equals("Phased Construction"))

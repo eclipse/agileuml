@@ -4868,8 +4868,28 @@ class WhileStatement extends Statement
     } 
     out.println(res + ".statId = \"" + res + "\""); 
 
-    String testid = loopTest.saveModelData(out); 
-    String bodyid = body.saveModelData(out); 
+    Statement actualBody = body; 
+    Expression actualTest = loopTest; 
+
+    if (loopKind == REPEAT)
+    { // same as 
+      // while true do (body; if loopTest then break else skip)
+
+      actualTest = new BasicExpression(true); 
+      Statement breakOut = new BreakStatement(); 
+      Statement skipStatement = new InvocationStatement("skip"); 
+
+      ConditionalStatement newif = 
+        new ConditionalStatement(loopTest, 
+                                 breakOut, skipStatement); 
+      actualBody = new SequenceStatement(); 
+      ((SequenceStatement) actualBody).addStatement(body); 
+      ((SequenceStatement) actualBody).addStatement(newif); 
+      actualBody.setBrackets(true); 
+    } 
+
+    String testid = actualTest.saveModelData(out); 
+    String bodyid = actualBody.saveModelData(out); 
     out.println(res + ".test = " + testid); 
     out.println(res + ".body = " + bodyid);  
 
