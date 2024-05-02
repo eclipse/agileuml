@@ -1242,8 +1242,8 @@ doLoopStmt::
 DO \r\n _1 \r\n LOOP |-->  while true do (\n_1\n    skip)
 DO WHILE _1 \r\n _2 \r\n LOOP |-->  while _1 do (\n_2\n    skip)
 DO UNTIL _1 \r\n _2 \r\n LOOP |-->  while not(_1) do (\n_2\n    skip)
-DO \r\n _1 \r\n LOOP WHILE _2 |-->  _1 ;\n  while _2 do (\n_1\n    skip)
-DO \r\n _1 \r\n LOOP UNTIL _2 |-->  _1 ;\n  while not(_2) do (\n_1\n    skip)
+DO \r\n _1 \r\n LOOP WHILE _2 |-->  while true do (\n_1\n    if _2 then skip else break)
+DO \r\n _1 \r\n LOOP UNTIL _2 |-->  while true do (\n_1\n    if _2 then break else skip)
 
 
 

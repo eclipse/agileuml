@@ -3264,7 +3264,9 @@ _1 : _2 |-->_2
 _1 : _2 ; |-->_2
 
 while _1 _2 |-->    while _1 do _2 ; 
+
 if _1 _2 else _3 |-->    if _1 then _2 else _3 ; 
+
 if _1 _2 |-->    if _1 then _2 else skip ; 
 
 for ( _1 ) _2 |-->  _1 _2 _1`forIncrement ) ; 
@@ -3280,7 +3282,8 @@ assert _1 ; |-->    assert _1 ;
 
 try _1 _2 _* |-->    try _1 _2 _*
 try _1 _2 |-->    try _1 _2
-do _1 while _2 ; |-->_1 ;\n  while _2 do _1
+
+do _1 while _2 ; |-->  while true do (_1    if _2 then skip else break) ;
   
 _1 ; |-->_1`updateForm ;<when> _1 expression
 _1 ; |-->_1

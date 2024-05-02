@@ -1121,9 +1121,9 @@ while _1 do _2  |-->\n    while _1 do (_2)
 
 
 repeatStatement::
-REPEAT _1 UNTIL _2 |-->\n    _1;\n    while not(_2) do (_1)
-Repeat _1 Until _2 |-->\n    _1;\n    while not(_2) do (_1)
-repeat _1 until _2 |-->\n    _1;\n    while not(_2) do (_1)
+REPEAT _1 UNTIL _2 |-->\n    while true do (_1 ;\n      if _2 then break else skip)
+Repeat _1 Until _2 |-->\n    while true do (_1 ;\n      if _2 then break else skip)
+repeat _1 until _2 |-->\n    while true do (_1 ;\n      if _2 then break else skip)
 
 
 forStatement::

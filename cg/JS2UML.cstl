@@ -82,19 +82,31 @@ if ( _1 ) _2 else _3 |-->    if _1 then\n  _2\n    else (\n  _3\n    )
 if ( _1 ) _2 |-->    if _1 then\n  _2\n    else skip
 
 iterationStatement::
-do _1 while ( _2 ) _3 |-->_1 ;\n    while _2 do (\n  _1 )\n                                                                        
+do _1 while ( _2 ) _3 |-->    while true do (\n  _1 ;\n      if _2 then skip else break\n    )\n
+                                                                        
 while ( _1 ) _2 |-->    while _1 do (\n  _1`updateForm_2 )\n                                                                       
+
 for ( _1 ; _2 ; _3 ) _4 |-->_1`updateForm ;\n    while _2 do (\n  _4; _3`updateForm )\n
+
 for ( _1 ; _2 ; ) _3 |-->_1`updateForm ;\n    while _2 do (\n  _3 )\n
+
 for ( _1 ; ; _2 ) _3 |-->_1`updateForm ;\n    while true do (\n  _3; _2`updateForm )\n
+
 for ( _1 ; ; ) _2 |-->_1`updateForm ;\n    while true do (\n  _2 )\n
+
 for ( ; _1 ; _2 ) _3 |-->    while _1 do (\n  _3; _2`updateForm )\n
+
 for ( ; _1 ; ) _2 |-->    while _1 do (\n  _2 )\n
+
 for ( ; ; _1 ) _2 |-->    while true do (\n  _2; _1`updateForm )\n
+
 for ( ; ; ) _1 |-->    while true do (\n  _1 )\n
+
 for ( _1 in _2 ) _3 |-->    for _1`variableName : _2`domain do (\n  _3 )\n
+
 for ( _1 of _2 ) _3 |-->    for _1`variableName : _2 do (\n  _3 )\n 
    
+
 domain::
 _1 |-->_1->keys()<when> _1 Map
 _1 |-->Integer.subrange(0,_1->size()-1)

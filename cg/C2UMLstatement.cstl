@@ -488,7 +488,7 @@ expressionStatement::
 _1 ; |-->_1`C2UMLupdateForm
 
 compoundStatement::
-{ _1 } |-->    (_1    ) 
+{ _1 } |-->    (_1    skip) 
 { } |-->    skip
 
 selectionStatement::
@@ -498,10 +498,14 @@ if ( _1 ) _2 else _3 |-->    if _1\n    then\n  _2\n    else\n  _3\n
 
 switch ( _1 ) _2 |-->    for _switchx : Integer.subrange(1,1)\n    do (\n    var _switchVar := _1 ;\n  _2\n    )\n
 
+
 iterationStatement::
 while ( _1 ) _2 |-->_1`C2UMLpresideeffect    while _1\n    do ( \n  _2\n  _1`C2UMLpresideeffect    )\n
-do _1 while ( _2 ) ; |-->_1 ;\n_2`C2UMLpresideeffect    while _2\n    do ( \n  _1\n  _2`C2UMLpresideeffect    )\n
+
+do _1 while ( _2 ) ; |-->while true\n    do ( \n  _1\n  _2`C2UMLpresideeffect    ; if _2 then skip else break\n    )\n
+
 for ( _1 ) _2 |-->_1`forInitialisation    while _1`forTest\n  do\n  (_2 \n  _1`forIncrement\n    )\n
+
 
 jumpStatement::
 goto _1 ; |-->    _1() ;\n
