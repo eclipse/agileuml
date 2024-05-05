@@ -6238,11 +6238,11 @@ public class Entity extends ModelElement implements Comparable
 
         Expression expr = new BasicExpression(att);
       
-        //    JOptionPane.showMessageDialog(null, 
-        //      ">> Attribute " + att + " Width: " + awidth + 
-        //      " Multiplicity: " + amult, 
-        //      "", 
-        //      JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, 
+              ">> Attribute " + att + " Width: " + awidth + 
+              " Multiplicity: " + amult, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
 
         if (att.isSequence())
         { Expression xvar = 

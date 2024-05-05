@@ -42654,6 +42654,16 @@ public class ASTCompositeTerm extends ASTTerm
               ((ASTCompositeTerm) occursClause).cobolOccursTimes(); 
           } 
         } 
+
+        JOptionPane.showMessageDialog(null, 
+               fieldName +  
+               // " Signed: " + isSigned + 
+               " Width: " + totalWidth + 
+               // " Integer width: " + integerWidth + 
+               // " Fraction width: " + fractionalWidth + 
+               " Multiplicity: " + multiplicity, 
+               "", 
+               JOptionPane.INFORMATION_MESSAGE);  
     
         if (ASTTerm.hasTag(ctrm.terms, "dataPictureClause"))
         { // It is a basic data item, not an entity
@@ -42698,7 +42708,8 @@ public class ASTCompositeTerm extends ASTTerm
                " Width: " + wdth + 
                " Integer width: " + integerWidth + 
                " Fraction width: " + fractionalWidth + 
-               " Multiplicity: " + multiplicity, 
+               " Multiplicity: " + multiplicity + 
+               " Container multiplicity: " + contMult, 
                "", 
                JOptionPane.INFORMATION_MESSAGE);  
          
@@ -42763,7 +42774,7 @@ public class ASTCompositeTerm extends ASTTerm
             att.setEndPosition(endPosn);   
             cent.addAttribute(att); 
           }
-          else // ERROR 
+          else // no type
           { for (int j = 1; j < entries.size(); j++) 
             { remainder.add(entries.get(j)); } 
             return res; 
@@ -43177,7 +43188,7 @@ public class ASTCompositeTerm extends ASTTerm
             cent.addAttribute(att); 
             ownername = 
                  cname.substring(0,cname.length()-6);
-            /*
+            
             JOptionPane.showMessageDialog(null, 
                  fieldName + 
                  " is subrecord of " + ownername + 
@@ -43185,7 +43196,8 @@ public class ASTCompositeTerm extends ASTTerm
                  " multiplicity " + multiplicity, 
                           "", 
                           JOptionPane.INFORMATION_MESSAGE);
-            */ 
+             att.setMultiplicity(multiplicity); 
+             
        // context.put("container", newent); 
        // context.put("previousLevel", new Integer(levelNumber));
        // context.put("startPosition", new Integer(1));
