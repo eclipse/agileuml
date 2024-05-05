@@ -2516,13 +2516,13 @@ _1 _* END-PERFORM  |-->    ( _1_*    skip) ; \n
 
 
 performProcedureStatement::
-_1 _2  |-->    _2 self._1_Call() _2`performIncrement ;\n<when> _2 performType
+_1 _2  |-->    _2    self._1_Call() _2`performIncrement ;\n<when> _2 performType
 _1  |-->    self._1_Call() ;\n
 
-_1 THROUGH _2 _3  |-->    _3 self._1_thru__2() ;\n _3`performIncrement<when> _3 performType
+_1 THROUGH _2 _3  |-->    _3    self._1_thru__2() _3`performIncrement ;\n<when> _3 performType
 _1 THROUGH _2  |-->    self._1_thru__2() ;\n
 
-_1 THRU _2 _3  |-->    _3 self._1_thru__2() ;\n _3`performIncrement<when> _3 performType
+_1 THRU _2 _3  |-->    _3    self._1_thru__2() _3`performIncrement ;\n<when> _3 performType
 _1 THRU _2  |-->    self._1_thru__2() ;\n
 
 
@@ -2532,8 +2532,8 @@ _1  |-->    for _performTimes : Integer.subrange(1,_1) do <when> _1 performTimes
 _1  |-->    repeat <when> _1 performUntil, _1`isTestAfter true
 _1  |-->    while not(_1) do <when> _1 performUntil
 
-_1  |-->    _1`performVariable := _1`performInitialValue;\n    repeat <when> _1 performVarying, _1`isTestAfter true
-_1  |-->    _1`performVariable := _1`performInitialValue;\n    while not(_1`performCondition) do (<when> _1 performVarying
+_1  |-->    _1`performVariable := _1`performInitialValue;\n    repeat\n  <when> _1 performVarying, _1`isTestAfter true
+_1  |-->_1<when> _1 performVarying
 
 
 performIncrement::
@@ -2542,8 +2542,8 @@ _1  |--><when> _1 performTimes
 _1  |--> until _1`performCondition<when> _1 performUntil, _1`isTestAfter true
 _1  |--><when> _1 performUntil
 
-_1  |-->; _1`performVaryingIncrement until _1`performCondition<when> _1`isTestAfter true
-_1  |-->; _1`performVaryingIncrement)
+_1  |-->; _1`performVaryIncrement until _1`performCondition<when> _1`isTestAfter true
+_1  |-->; _1`performVaryIncrement)
     
 
 performTimes::
@@ -2561,10 +2561,10 @@ _1 _2  |-->_1<when> _1 performVaryingClause, _2 performTestClause
 _1  |-->_1<when> _1 performVaryingClause
 
 
-performVaryingIncrement::
-_1 _2  |-->_2`performVaryingClauseIncrement<when> _1 performTestClause, _2 performVaryingClause
-_1 _2  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingClause, _2 performTestClause
-_1  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingClause
+performVaryIncrement::
+_1 _2  |-->_2`performVaryClauseIncrement<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1`performVaryClauseIncrement<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performVaryClauseIncrement<when> _1 performVaryingClause
 
 
 performVariable::
@@ -2624,22 +2624,24 @@ VARYING _1 _*  |-->_1`performVaryingCondition<when> _1 performVaryingPhrase
 _1 _2 _3 _4  |-->_4
 
 
-performVaryingClauseIncrement::
-VARYING _1  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingPhrase
+performVaryClauseIncrement::
+VARYING _1  |-->_1`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
-VARYING _1 _2  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingPhrase, _2 performAfter
+AFTER _1  |-->_1`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
-VARYING _1 _*  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1`performVaryClauseIncrement) ; _2`performVaryClauseIncrement<when> _1 performVaryingPhrase, _2 performAfter
+
+VARYING _1 _*  |-->_1`performVaryClauseIncrement) ; _*`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
 _1 _2 _3 _4  |-->_1 := _1 + _3
 
 
 performVaryingPhrase::
-_1 _2 _3 _4  |-->     while not(_4) do<when> _2 performFrom, _3 performBy, _4 performUntil
+_1 _2 _3 _4  |-->     _1 := _2;\n    while not(_4) do (\n  <when> _2 performFrom, _3 performBy, _4 performUntil
 
 
 performAfter::
-AFTER _1  |--> _1`performVariable := _1`performInitialValue;\n    while not(_1`performCondition) do (<when> _1 performVaryingPhrase
+AFTER _1  |-->_1<when> _1 performVaryingPhrase
 
 
 performFrom::
