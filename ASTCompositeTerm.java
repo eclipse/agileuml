@@ -42025,13 +42025,14 @@ public class ASTCompositeTerm extends ASTTerm
           fractionalWidth = 
               pictureClause.cobolFractionWidth(); 
 
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
              "Type of " + fieldName + " is " + typ + 
              " Signed: " + isSigned + 
              " Width: " + wdth + " " + integerWidth + " " + 
              fractionalWidth, 
              "", 
-             JOptionPane.INFORMATION_MESSAGE);  
+             JOptionPane.INFORMATION_MESSAGE);  */ 
+
           ASTTerm.setTaggedValue(fieldName, "integerWidth", 
                                      "" + integerWidth); 
           ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
@@ -42655,15 +42656,15 @@ public class ASTCompositeTerm extends ASTTerm
           } 
         } 
 
-        JOptionPane.showMessageDialog(null, 
-               fieldName +  
+        // JOptionPane.showMessageDialog(null, 
+        //       fieldName +  
                // " Signed: " + isSigned + 
-               " Width: " + totalWidth + 
+        //       " Width: " + totalWidth + 
                // " Integer width: " + integerWidth + 
                // " Fraction width: " + fractionalWidth + 
-               " Multiplicity: " + multiplicity, 
-               "", 
-               JOptionPane.INFORMATION_MESSAGE);  
+        //       " Multiplicity: " + multiplicity, 
+        //       "", 
+        //       JOptionPane.INFORMATION_MESSAGE);  
     
         if (ASTTerm.hasTag(ctrm.terms, "dataPictureClause"))
         { // It is a basic data item, not an entity
