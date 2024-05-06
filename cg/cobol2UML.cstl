@@ -2510,6 +2510,7 @@ PERFORM _1  |-->_1
 performInlineStatement::
 _1 END-PERFORM  |--><when> _1 performType
 _1 _* END-PERFORM  |-->    _1 (_*      skip) _1`performIncrement ;\n<when> _1 performType
+
 END-PERFORM  |--> 
 _1 END-PERFORM  |-->    ( _1    skip) ;\n<when> _1 statement
 _1 _* END-PERFORM  |-->    ( _1_*    skip) ; \n 
@@ -2532,7 +2533,7 @@ _1  |-->    for _performTimes : Integer.subrange(1,_1) do <when> _1 performTimes
 _1  |-->    repeat <when> _1 performUntil, _1`isTestAfter true
 _1  |-->    while not(_1) do <when> _1 performUntil
 
-_1  |-->    _1`performVariable := _1`performInitialValue;\n    repeat\n  <when> _1 performVarying, _1`isTestAfter true
+_1  |-->_1`performTestAfterVarying<when> _1 performVarying, _1`isTestAfter true
 _1  |-->_1<when> _1 performVarying
 
 
@@ -2542,7 +2543,7 @@ _1  |--><when> _1 performTimes
 _1  |--> until _1`performCondition<when> _1 performUntil, _1`isTestAfter true
 _1  |--><when> _1 performUntil
 
-_1  |-->; _1`performVaryIncrement until _1`performCondition<when> _1`isTestAfter true
+_1  |-->; _1`performVaryAfterIncrement<when> _1`isTestAfter true
 _1  |-->; _1`performVaryIncrement)
     
 
@@ -2561,22 +2562,31 @@ _1 _2  |-->_1<when> _1 performVaryingClause, _2 performTestClause
 _1  |-->_1<when> _1 performVaryingClause
 
 
+performTestAfterVarying::
+VARYING _1  |-->_1`performTestAfterVarying<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1`performTestAfterVarying _2`performTestAfterVarying<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1`performTestAfterVarying _*`performTestAfterVarying  |-->_1 _*<when> _1 performVaryingPhrase
+
+AFTER _1 |-->_1`performTestAfterVarying
+
+_1 _2 _3 _4  |-->     _1 := _2;\n    repeat (\n  <when> _2 performFrom, _3 performBy, _4 performUntil
+
+_1 _2 |-->_2`performTestAfterVarying<when> _1 performTestClause, _2 performVaryingClause
+_1 _2 |-->_1`performTestAfterVarying<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performTestAfterVarying<when> _1 performVaryingClause
+
+
+
 performVaryIncrement::
 _1 _2  |-->_2`performVaryClauseIncrement<when> _1 performTestClause, _2 performVaryingClause
 _1 _2  |-->_1`performVaryClauseIncrement<when> _1 performVaryingClause, _2 performTestClause
 _1  |-->_1`performVaryClauseIncrement<when> _1 performVaryingClause
 
 
-performVariable::
-_1 _2  |-->_2`performVaryingVariable<when> _1 performTestClause, _2 performVaryingClause
-_1 _2  |-->_1`performVaryingVariable<when> _1 performVaryingClause, _2 performTestClause
-_1  |-->_1`performVaryingVariable<when> _1 performVaryingClause
-
-
-performInitialValue::
-_1 _2  |-->_2`performVaryingInitialValue<when> _1 performTestClause, _2 performVaryingClause
-_1 _2  |-->_1`performVaryingInitialValue<when> _1 performVaryingClause, _2 performTestClause
-_1  |-->_1`performVaryingInitialValue<when> _1 performVaryingClause
+performVaryAfterIncrement::
+_1 _2  |-->_2`performVaryClauseAfterIncrement<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1`performVaryClauseAfterIncrement<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performVaryClauseAfterIncrement<when> _1 performVaryingClause
 
 
 performCondition::
@@ -2634,6 +2644,19 @@ VARYING _1 _2  |-->_1`performVaryClauseIncrement) ; _2`performVaryClauseIncremen
 VARYING _1 _*  |-->_1`performVaryClauseIncrement) ; _*`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
 _1 _2 _3 _4  |-->_1 := _1 + _3
+
+
+performVaryClauseAfterIncrement::
+VARYING _1  |-->_1`performVaryClauseAfterIncrement<when> _1 performVaryingPhrase
+
+AFTER _1  |-->_1`performVaryClauseAfterIncrement<when> _1 performVaryingPhrase
+
+VARYING _1 _2  |-->_1`performVaryClauseAfterIncrement ; _2`performVaryClauseAfterIncrement<when> _1 performVaryingPhrase, _2 performAfter
+
+VARYING _1 _*  |-->_1`performVaryClauseAfterIncrement ; _*`performVaryClauseAfterIncrement<when> _1 performVaryingPhrase
+
+_1 _2 _3 _4  |-->_1 := _1 + _3) until _4 
+
 
 
 performVaryingPhrase::
