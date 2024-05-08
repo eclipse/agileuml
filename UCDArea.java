@@ -15154,6 +15154,22 @@ public void produceCUI(PrintWriter out)
     { System.err.println("! Warning: no file libraries/observer.km3"); } 
   } 
 
+  public void blackboardPattern()
+  { File oclobserver = new File("libraries/blackboard.km3"); 
+    if (oclobserver.exists())
+    { loadKM3FromFile(oclobserver); }
+    else 
+    { System.err.println("! Warning: no file libraries/blackboard.km3"); } 
+  } 
+
+  public void mvcPattern()
+  { File oclobserver = new File("libraries/mvc.km3"); 
+    if (oclobserver.exists())
+    { loadKM3FromFile(oclobserver); }
+    else 
+    { System.err.println("! Warning: no file libraries/mvc.km3"); } 
+  } 
+
   public void java2python()
   { File ocltypes = new File("libraries/ocltype.km3"); 
     if (ocltypes.exists())

@@ -1073,6 +1073,14 @@ public void findPlugins()
     observerMI.addActionListener(this);
     patternsMenu.add(observerMI);
 
+    JMenuItem blackboardMI = new JMenuItem("Blackboard"); 
+    blackboardMI.addActionListener(this);
+    patternsMenu.add(blackboardMI);
+
+    JMenuItem mvcMI = new JMenuItem("MVC"); 
+    mvcMI.addActionListener(this);
+    patternsMenu.add(mvcMI);
+
     JMenuItem facadeMI = new JMenuItem("Facade"); 
     facadeMI.setToolTipText(
       "Checks if 2+ classes all reference 2+ same other classes");
@@ -2750,6 +2758,10 @@ public void findPlugins()
       { makeSingletons(); }
       else if (label.equals("Observer"))
       { ucdArea.observerPattern(); }
+      else if (label.equals("Blackboard"))
+      { ucdArea.blackboardPattern(); }
+      else if (label.equals("MVC"))
+      { ucdArea.mvcPattern(); }
       else if (label.equals("Facade"))
       { checkForFacades(); }  
       else if (label.equals("Phased Construction"))

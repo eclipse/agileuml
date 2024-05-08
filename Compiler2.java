@@ -5754,13 +5754,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "usecase parameter, eg: parameter name : Type;"; 
         return "parameter"; 
       } 
+
+      if ("oppositeOf".startsWith(st)) 
+      { mess[0] = "oppositeOf clause in reference,\n" + 
+          "e.g: reference children [*] ordered : Person oppositeOf parent;" + 
+          "The matching declaration\n" + 
+          "  reference parent : Person;\n" + 
+          "is also necessary."; 
+        return "oppositeOf"; 
+      } 
+
     } 
 
     if (st.length() > 3) 
     { if ("reference".startsWith(st)) 
       { mess[0] = "reference declaration, eg: reference name : Type;\nType is a class type or collection (of class element type)\nGeneral syntax is:\n" + 
         "reference role2 [cardinality] [stereotypes] : Entity2 [opp];\n" + 
-        "Eg: reference children [*] ordered : Person oppositeOf parent;";  
+        "E.g: reference children [*] ordered : Person oppositeOf parent;";  
         return "reference"; 
       }
 
@@ -6236,7 +6246,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
 
       if ("execute".startsWith(st))
-      { mess[0] = "Execute expression as statement. Eg., execute (x->display())"; 
+      { mess[0] = "Execute expression as statement. Eg., execute (x->display())\n" + 
+          " execute (x->isDeleted())\n" +
+          "This also specifies direct updates of collections:\n" + 
+          " execute (x : col)\n" + 
+          " execute (x /: col)\n" + 
+          " execute (x <: col)\n" +
+          " execute (x /<: col)\n" +
+          " execute col[i]->isDeleted()\n"; 
         return "execute"; 
       }
     } 
