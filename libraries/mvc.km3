@@ -1,0 +1,50 @@
+package app { 
+
+
+  class Model {
+
+    attribute modelState : OclAny := null;
+
+    query getState() : OclAny
+    pre: true
+    post: result = modelState;
+
+    operation setState(newstate : OclAny)
+    pre: true
+    post: modelState = newstate;
+  }
+
+
+  class Controller { 
+
+    attribute model : Model; 
+
+    operation event(data : OclAny)
+    pre: true 
+    post: model.setState(data); 
+  } 
+
+
+  class View {
+
+    attribute viewState : OclAny := null; 
+
+    attribute controller : Controller;
+
+    attribute model : Model; 
+
+    operation refresh() : void
+    pre: true
+    post: viewState = model.getState();
+
+    operation updateState(newstate : OclAny) 
+    pre: true 
+    post: viewState = newstate & 
+      controller.event(newstate); 
+
+  }
+
+
+}
+
+

@@ -1,0 +1,53 @@
+package app { 
+
+
+  class Blackboard {
+
+    attribute blackboardState : OclAny := null;
+
+
+    reference views[*] : View oppositeOf blackboard;
+
+
+    query getState() : OclAny
+    pre: true
+    post: result = blackboardState;
+
+    operation setState(newstate : OclAny)
+    pre: true
+    post: blackboardState = newstate;
+
+    operation addView(v : View ) : void
+    pre: true
+    post: views->includes(v);
+
+    operation removeView(v : View ) : void
+    pre: true
+    post: views->excludes(v);
+
+  }
+
+
+
+
+  class View {
+
+    attribute viewState : OclAny := null; 
+
+    reference blackboard : Blackboard oppositeOf views;
+
+    operation refresh() : void
+    pre: true
+    post: viewState = blackboard.getState();
+
+    operation updateState(newstate : OclAny) 
+    pre: true 
+    post: viewState = newstate & 
+      blackboard.setState(newstate); 
+
+  }
+
+
+}
+
+
