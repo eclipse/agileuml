@@ -538,7 +538,7 @@ return |-->    return;\n
 continue |-->    continue;\n
 break |-->    break;\n
 call _1 |-->    _1;\n 
-execute _1 |-->    /* do _1 */\n
+execute _1 |-->    _1`javaUpdateForm;\n
 
 assert _1 do _2 |-->    assert _1 : _2;\n
 assert _1 |-->    assert _1;\n

@@ -1,0 +1,44 @@
+BasicExpression::
+_1 |-->_1
+_1._2(_3) |-->_1._2(_3)
+_1(_2) |-->_1(_2)
+_1._2 |-->_1._2
+
+
+UnaryExpression::
+_1->display() |-->System.out.println(_1 + "")
+_1->isDeleted() |-->_1 = null
+
+
+
+BinaryExpression::
+_1 & _2 |-->_1;\n    _2 
+_1 or _2 |--> 
+_1 xor _2 |-->
+
+_1 = _2 |-->_1 = _2
+_1 : _2 |-->_2.add(_1)
+_1 /: _2 |-->_2.remove(_1)
+_1 <: _2 |-->_2.addAll(_1)
+_1 /<: _2 |-->_2.removeAll(_1)
+
+
+SetExpression::
+Set{} |-->(new HashSet())
+Set{_1} |-->Ocl.initialiseSet(_1) 
+SortedSet{} |-->(new TreeSet())
+SortedSet{_1} |-->Ocl.initialiseSortedSet(_1) 
+Sequence{} |-->(new ArrayList())
+Sequence{_1} |-->Ocl.initialiseSequence(_1)
+Map{} |-->(new HashMap())
+Map{_1} |-->Ocl.initialiseMap(_1)
+
+Ref(_1){_2} |-->(new _1[_2])
+Ref{_1} |-->(new Object[_1])
+
+
+ConditionalExpression::
+if _1 then _2 else _3 endif |-->((_1) ? _2 : _3)
+
+ 
+
