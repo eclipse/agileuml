@@ -6040,8 +6040,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
  
       if ("static".startsWith(st)) 
       { mess[0] = "static attribute or operation, ie., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
-              "static query pi() : double\npre: true post: result = 3.14159265\n\n" + 
-              "Static operations are not inherited. Define in concrete classes where possible.\n"; 
+          "static query pi() : double\npre: true post: result = 3.14159265\n\n" + 
+          "Static operations are not inherited. Define them in concrete classes where possible.\n"; 
         return "static"; 
       } 
 
@@ -6176,7 +6176,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "But SortedSet by itself is bad practice & non-portable.\n" + 
           "Operators include:  st->size()  st->includes(elem)  st1->union(st2) (merge)\n" + 
            "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n" + 
-          "Literal sorted sets are written as SortedSet{ x, y, z }\n"; 
+          "Literal sorted sets are written as SortedSet{ x, y, z }\n"  + 
+          "!! This type is only implemented in C++, Java7 and Java8 !!\n"; 
 
         return "SortedSet(Type)"; 
       }
@@ -6185,7 +6186,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "Map type, eg., Map(String,int)\n" + 
           "Operators include:  m->size()  m->at(key)  m1->union(m2)\n" + 
           "m->select(x|P)  m->keys()  m->values()\n" + 
-          "Literal maps are written as Map{ x |-> y, a |-> b }\n"; 
+          "Literal maps are written as Map{ x |-> y, a |-> b }\n" + 
+          "SortedMap(T) is available in C++, Java7, Java8 only.\n"; 
         return "Map(String,Type)"; 
       } 
 
@@ -6497,14 +6499,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { colours.add(Color.green);
         int lc = lineCount(txt,i); 
         int lp = linePosition(txt,i); 
-        errors.add("This } correctly matches { on line " + lc + " position " + lp); 
+        errors.add("This } correctly matches { on line " + lc + " position " + lp + ":\n"); 
         return i; 
       } 
       if (ch.equals(")") && chr.equals("(") && osqb == csqb && ocb == ccb && ob == cb)
       { colours.add(Color.green); 
         int lc = lineCount(txt,i); 
         int lp = linePosition(txt,i); 
-        errors.add("This ) correctly matches ( on line " + lc + " position " + lp); 
+        errors.add("This ) correctly matches ( on line " + lc + " position " + lp + ":\n"); 
         return i;
       } 
       if (ch.equals("]") && chr.equals("[") && ob == cb && ocb == ccb && osqb == csqb)
@@ -6512,23 +6514,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         int lc = lineCount(txt,i); 
         int lp = linePosition(txt,i); 
         errors.add("This ] correctly matches the [ on line " + lc + 
-                   " position " + lp); 
+                   " position " + lp + ":\n"); 
         return i;
       }
       if (ch.equals("}") && ( (chr.equals("(") && cb < ob ) || (chr.equals("[") && csqb < osqb ) ) )
       { colours.add(Color.red); 
         int lc = lineCount(txt,i); 
-        errors.add("Warning: incorrect bracket " + chr + " to match }: " + chr + " at line " + lc); 
+        errors.add("Warning: incorrect bracket " + chr + " to match }: " + chr + " at line " + lc + ":\n"); 
         return i; 
       } 
       if (ch.equals(")") && ( (chr.equals("[") && osqb+1 != csqb) || (chr.equals("{") && ocb+1 != ccb) ) )
       { colours.add(Color.red); 
-        errors.add("Error!: incorrect bracket to match ): " + chr + " at " + i); 
+        errors.add("Error!: incorrect bracket to match ): " + chr + " at " + i + ":\n"); 
         return i; 
       } 
       if (ch.equals("]") && ((chr.equals("(") && ob+1 != cb) || (chr.equals("{") && ocb+1 != ccb) ) )
       { colours.add(Color.red); 
-        errors.add("Error!: incorrect bracket to match ]: " + chr + " at " + i); 
+        errors.add("Error!: incorrect bracket to match ]: " + chr + " at " + i + ":\n"); 
         return i; 
       } 
 	  if (chr.equals("}"))

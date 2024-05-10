@@ -4120,8 +4120,10 @@ class ImplicitInvocationStatement extends Statement
   public Statement statLC(java.util.Map env, boolean local)
   { return callExp.statLC(env,local); }  
 
-  public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
-                           Vector vars)
+  public String updateForm(java.util.Map env, 
+                      boolean local, 
+                      Vector types, Vector entities, 
+                      Vector vars)
   { if (callExp != null)
     { String uf = callExp.updateForm(env,local);
       return "   " + uf;   
@@ -4263,21 +4265,30 @@ class ImplicitInvocationStatement extends Statement
   } 
 
   public String cg(CGSpec cgs)
-  { java.util.Map env = new java.util.HashMap(); 
-    Statement stat = callExp.generateDesign(env,true); 
-    if (stat != null) 
-    { return stat.cg(cgs); } 
-  
+  { 
     String etext = this + "";
+    
+    Vector eargs = new Vector();
     Vector args = new Vector();
+
     if (callExp != null) 
-    { args.add(callExp.cg(cgs)); } 
+    { callExp.setBrackets(false); 
+      eargs.add(callExp); 
+      args.add(callExp.cg(cgs)); 
+    }
+ 
     CGRule r = cgs.matchedStatementRule(this,etext);
 
     System.out.println(">> Matched statement rule: " + r + " for " + this); 
 
     if (r != null)
-    { return r.applyRule(args); }
+    { return r.applyRule(args,eargs,cgs); }
+
+    java.util.Map env = new java.util.HashMap(); 
+    Statement stat = callExp.generateDesign(env,true); 
+    if (stat != null) 
+    { return stat.cg(cgs); } 
+  
     return etext;
   } 
 

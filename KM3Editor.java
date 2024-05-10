@@ -14,7 +14,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.*;
 
-/* K. Lano 2010-2023
+/* K. Lano 2010-2024
    
   Adapted from Oracle example of JTextPane
 
@@ -374,8 +374,8 @@ public class KM3Editor extends JFrame implements DocumentListener
 	{ int offset = e.getOffset(); 
 	  int pos = textPane.getCaretPosition();
         
-	  try 
-	  { String ch = textPane.getText(pos,1); 
+       try 
+       { String ch = textPane.getText(pos,1); 
 	    // System.out.println("Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
          String prevpos = null; 
          if (pos > 0)
@@ -421,30 +421,38 @@ public class KM3Editor extends JFrame implements DocumentListener
          { messageArea.setText("Implication =>\n Pre => Post for use case postconditions or operation postconditions.\n\r"); 
          } 
          
-
-
          Vector errors = new Vector();
          Vector colours = new Vector();
   
          if ("}".equals(ch) || ")".equals(ch) || "]".equals(ch))
-         { int posb = Compiler2.matchPrecedingBracket(ch,txt,errors,colours);
+         { int posb = 
+             Compiler2.matchPrecedingBracket(
+                            ch,txt,errors,colours);
 		// System.out.println("Preceding bracket at: " + posb); 
            if (posb < 0) 
-           { messageArea.append("No matching opening bracket for " + ch + "!\n"); } 
+           { messageArea.append("!! No matching opening bracket for " + ch + "!\n"); } 
            else 
-           { if (errors.size() > 0)
+           { textPane.select(posb,pos);
+             if (errors.size() > 0)
              { String err = (String) errors.get(0); 
          
                messageArea.append(err + "\n\r");
                Color colr = (Color) colours.get(0);   
                if (colr == Color.red)
                { textPane.setSelectedTextColor(colr); }  
-		  // textPane.setCaretPosition(pos);
-             } 
-            }
-          } 
-	   } catch (Exception _e) { } 
-    }
+               else 
+               { textPane.setSelectedTextColor(Color.green); 
+                 String seltxt = textPane.getText(posb, (pos-posb+1));
+                 messageArea.append(seltxt + "\n\r"); 
+               }
+             }
+             textPane.wait(500);  
+           }
+         } 
+       } catch (Exception _e) { }
+
+       textPane.setCaretPosition(pos);  
+     }
 
 	public void removeUpdate(DocumentEvent e)
 	{ int offset = e.getOffset(); 

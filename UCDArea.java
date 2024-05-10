@@ -5014,6 +5014,7 @@ public class UCDArea extends JPanel
     auxcstls.add("jwrap.cstl"); 
     auxcstls.add("catchTest.cstl");
     auxcstls.add("java8deref.cstl");
+    auxcstls.add("javaUpdateForm.cstl");
 
     CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 
@@ -5070,6 +5071,8 @@ public class UCDArea extends JPanel
     auxcstls.add("jwrap.cstl"); 
     auxcstls.add("catchTest.cstl");
     auxcstls.add("java8deref.cstl");
+    auxcstls.add("javaUpdateForm.cstl");
+
 
     CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 
@@ -5811,7 +5814,10 @@ public class UCDArea extends JPanel
     Vector auxcstls = new Vector(); 
     auxcstls.add("cgmain.cstl"); 
     auxcstls.add("cginterface.cstl"); 
-    auxcstls.add("jwrap.cstl"); 
+    auxcstls.add("jwrap.cstl");
+    auxcstls.add("java8deref.cstl");
+    auxcstls.add("javaUpdateForm.cstl");
+ 
 
     CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 
@@ -6102,6 +6108,8 @@ public class UCDArea extends JPanel
     auxcstls.add("cgmain.cstl"); 
     auxcstls.add("cginterface.cstl"); 
     auxcstls.add("jwrap.cstl"); 
+    auxcstls.add("java8deref.cstl");
+    auxcstls.add("javaUpdateForm.cstl");
 
     CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 

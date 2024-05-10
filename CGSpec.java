@@ -806,7 +806,8 @@ public class CGSpec
         // else 
         { return r; } 
       } 
-      else if (op.equals("if") && trimmedlhs.startsWith(op) && (e instanceof IfStatement))
+      else if (op.equals("if") && trimmedlhs.startsWith(op) && 
+               (e instanceof IfStatement))
       { // IfStatement cs = (IfStatement) e; 
         // if ((cs.getTest() + "").equals("true") && 
         //     r.lhs.startsWith("if true"))
@@ -819,7 +820,8 @@ public class CGSpec
       } 
       else if (op.equals("break") && trimmedlhs.startsWith(op))
       { return r; }
-      else if (op.equals("continue") && trimmedlhs.startsWith(op))
+      else if (op.equals("continue") && 
+               trimmedlhs.startsWith(op))
       { return r; }
       else if (op.equals("error") && trimmedlhs.startsWith(op))
       { return r; }
@@ -837,7 +839,8 @@ public class CGSpec
         if (r.variables.size() == args.size())
         { return r; }
       }
-      else if (e instanceof SequenceStatement && (trimmedlhs.indexOf(";") > -1))
+      else if (e instanceof SequenceStatement && 
+               (trimmedlhs.indexOf(";") > -1))
       { return r; }
       else if (op.equals("var") && trimmedlhs.startsWith(op) && 
                e instanceof CreationStatement)
@@ -873,7 +876,7 @@ public class CGSpec
       }
       else if (op.equals("call") && trimmedlhs.startsWith(op))
       { Vector args = ((InvocationStatement) e).cgparameters();
-        System.out.println(">>> Call statement " + e + " matches rule " + r); 
+        // System.out.println(">>> Call statement " + e + " matches rule " + r); 
 		 
         if (r.satisfiesConditions(args,entities,this))
         { return r; }
@@ -887,6 +890,7 @@ public class CGSpec
         }
       }
    }
+
    return null;
   } 
 

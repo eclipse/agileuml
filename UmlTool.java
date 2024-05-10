@@ -1071,14 +1071,20 @@ public void findPlugins()
 
     JMenuItem observerMI = new JMenuItem("Observer"); 
     observerMI.addActionListener(this);
+    observerMI.setToolTipText(
+      "Optimised version of Observer pattern");
     patternsMenu.add(observerMI);
 
     JMenuItem blackboardMI = new JMenuItem("Blackboard"); 
     blackboardMI.addActionListener(this);
+    blackboardMI.setToolTipText(
+      "Optimised version of Blackboard pattern");
     patternsMenu.add(blackboardMI);
 
     JMenuItem mvcMI = new JMenuItem("MVC"); 
     mvcMI.addActionListener(this);
+    mvcMI.setToolTipText(
+      "Optimised version of MVC pattern");
     patternsMenu.add(mvcMI);
 
     JMenuItem facadeMI = new JMenuItem("Facade"); 
