@@ -389,11 +389,18 @@ public void findPlugins()
     fileMenu.add(randomModel);
 
     JMenuItem randomModels = 
-      new JMenuItem("Random models");
+      new JMenuItem("Random models (to Java)");
     randomModels.addActionListener(this);
     randomModels.setToolTipText(
       "Creates random UML models and translates to Java");
     fileMenu.add(randomModels);
+
+    JMenuItem randomModelsPy = 
+      new JMenuItem("Random models (to Python)");
+    randomModelsPy.addActionListener(this);
+    randomModelsPy.setToolTipText(
+      "Creates random UML models and translates to Python");
+    fileMenu.add(randomModelsPy);
 
     fileMenu.addSeparator(); 
 
@@ -1860,7 +1867,7 @@ public void findPlugins()
       { ucdArea.randomModel();
         saved = true; 
       }
-      else if (label.equals("Random models")) 
+      else if (label.equals("Random models (to Java)")) 
       { String val = 
           JOptionPane.showInputDialog("How many models to create?"); 
         if (val != null) 
@@ -1868,6 +1875,17 @@ public void findPlugins()
           for (int i = 0; i < num; i++) 
           { ucdArea = new UCDArea(this); 
             ucdArea.randomModels2Java();
+          }
+        } 
+      }
+      else if (label.equals("Random models (to Python)")) 
+      { String val = 
+          JOptionPane.showInputDialog("How many models to create?"); 
+        if (val != null) 
+        { int num = Integer.parseInt(val); 
+          for (int i = 0; i < num; i++) 
+          { ucdArea = new UCDArea(this); 
+            randomModels2Python();
           }
         } 
       }
@@ -4384,6 +4402,57 @@ public void findPlugins()
     }          
   } 
 
+  public void randomModels2Python()
+  { ucdArea.randomModel(); 
+    ucdArea.typeCheck(); 
+    ucdArea.typeCheck();
+    // ucdArea.generateDesign(); 
+
+    long index = (new java.util.Date()).getTime(); 
+
+    try
+    { File km3file = 
+        new File("output/example" + index + ".km3"); 
+
+      PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(km3file)));
+
+      ucdArea.saveKM3(out);
+      out.flush();  
+      out.close();
+
+      System.out.println(">>> Saved UML to file " + km3file); 
+
+      Thread.sleep(100); 
+    }
+    catch (Exception e) 
+    { System.err.println("!! Error saving KM3"); }
+ 
+    try
+    { Thread.sleep(100); 
+   
+      ucdArea = new UCDArea(this); 
+            
+      File km3file = 
+        new File("output/example" + index + ".km3"); 
+      ucdArea.loadKM3FromFile(km3file); 
+      ucdArea.typeCheck(); 
+      ucdArea.typeCheck();
+      // ucdArea.generateDesign(); 
+
+      ucdArea.saveModelToFile("output/model.txt"); 
+
+      RunApp rapp1 = new RunApp("uml2py3"); 
+      rapp1.setFile("app" + index + ".py"); 
+      Thread appthread = new Thread(rapp1); 
+      appthread.start();
+
+      Thread.sleep(200);  
+    } 
+    catch (Exception ee2) 
+    { System.err.println("!! Unable to run uml2py3.jar"); } 
+  } 
 
   public static void main(String[] args) 
   { UmlTool window = new UmlTool();

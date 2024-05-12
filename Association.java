@@ -4262,8 +4262,9 @@ String qual = "";
     String op;
     String body;
     if (card2 == ONE)
-    { body = "if (result.contains(" + ex + ".get" + role2 + "())) {}\n      " + 
-             "else { result.add(" + ex + ".get" + role2 + "()); }\n"; 
+    { body = 
+        "if (result.contains(" + ex + ".get" + role2 + "())) {}\n      " + 
+        "else { result.add(" + ex + ".get" + role2 + "()); }\n"; 
     }
     else 
     { body = "result = Set.union(result, " + ex + ".get" + role2 + "());"; }

@@ -890,7 +890,7 @@ public class UCDArea extends JPanel
     cons.setOwner(owner); 
     if (preEntity.length() > 0) 
     { cons.setisPre(true); 
-      System.out.println("Owner in pre-state form"); 
+      System.out.println(">> Owner in pre-state form"); 
     } 
     cons.typeCheck(types,entities,contexts,newparams); // to identify variables
 
@@ -909,7 +909,7 @@ public class UCDArea extends JPanel
     { if (useCases.get(i) instanceof UseCase)
       { UseCase uc = (UseCase) useCases.get(i); 
         uc.resetDesign(); 
-        System.out.println("The use case design of " + uc.getName() + " has been reset");
+        System.out.println(">> The use case design of " + uc.getName() + " has been reset");
       } 
     }
     BSystemTypes.resetDesigns();  
@@ -923,7 +923,7 @@ public class UCDArea extends JPanel
   { // for (int i = 0; i < cons.size(); i++) 
     // { uc.removeConstraint((Constraint) cons.get(i)); } 
     uc.removeConstraints(cons); // also resets the design
-    System.out.println("Warning: the design is no longer valid and needs to be recreated"); 
+    System.out.println("!! Warning: the design is no longer valid and needs to be recreated"); 
     // re-analyse the use case
   } 
 
@@ -1031,7 +1031,7 @@ public class UCDArea extends JPanel
         cc.update(i2,new Vector()); 
         cc.setOwner(owner); 
         cc.typeCheck(types,entities,contexts,newparams); // to identify variables
-        System.out.println("Constraint modified: " + cc);       
+        System.out.println(">> Constraint modified: " + cc);       
         resetDesigns(); 
         System.out.println("! Warning: the design is no longer valid and needs to be recreated"); 
       }
@@ -12280,7 +12280,9 @@ public void produceCUI(PrintWriter out)
     out.println("{");
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      if (e.hasStereotype("external") || e.hasStereotype("externalApp")) { continue; } 
+      if (e.hasStereotype("external") || 
+          e.hasStereotype("externalApp")) 
+      { continue; } 
 
       Entity es = e.getSuperclass(); 
       String nme = e.getName();
@@ -12331,7 +12333,8 @@ public void produceCUI(PrintWriter out)
       Vector eops = e.getOperations(); 
       for (int w = 0; w < eops.size(); w++) 
       { BehaviouralFeature bf = (BehaviouralFeature) eops.get(w); 
-        globalops = globalops + bf.getGlobalOperationCode(e,entities,types,
+        globalops = globalops + 
+          bf.getGlobalOperationCode(e,entities,types,
                                                           constraints); 
       } 
     }  // and set and others
@@ -13819,7 +13822,7 @@ public void produceCUI(PrintWriter out)
     out.println(); 
   } // and associations
 
-  private void saveKM3(PrintWriter out)
+  public void saveKM3(PrintWriter out)
   { if (systemName != null && systemName.length() > 0) 
     { out.println("package " + systemName + " { "); } 
     else 

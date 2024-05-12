@@ -538,7 +538,7 @@ public class BehaviouralFeature extends ModelElement
 
     // Add each instance _initialiseInstance() operation
     // res._initialiseInstance()
-	if (ent != null) 
+    if (ent != null) 
     { Vector allops = ent.getOperations(); 
       for (int i = 0; i < allops.size(); i++) 
       { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
@@ -1944,7 +1944,9 @@ public class BehaviouralFeature extends ModelElement
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds, attoptests); 
+      Vector testassignments = 
+        att.testCases("parameters", lowerBounds, 
+                      upperBounds, attoptests); 
       allOpTests.add(attoptests); 
 	  
       for (int j = 0; j < res.size(); j++) 
@@ -9943,13 +9945,13 @@ public class BehaviouralFeature extends ModelElement
       { preheader = "    if (!(" + pre1.queryForm(env0,false) + 
                     ")) { return" + returning + "; } \n  "; 
       }
-    }   // 5300 
+    }   
 
     String newdecs = ""; 
     String call = toString();
      
     header2 = header2 + "  for (int _i = 0; _i < " + exs + ".size(); _i++)\n" +
-              "    { " + ename + " " + ex + " = (" + ename + ") " + exs + ".get(_i);\n"; 
+      "    { " + ename + " " + ex + " = (" + ename + ") " + exs + ".get(_i);\n"; 
 
     // if (parlist.length() > 0)
     // { parlist = "," + parlist; } 
@@ -9957,11 +9959,16 @@ public class BehaviouralFeature extends ModelElement
     String newitem = ex + "." + opname + "(" + parlist + ")"; 
 
     if ("List".equals(resT))
-    { header2 = header2 + "      result.add(" + newitem + ");\n"; } // NOT addAll
+    { header2 = header2 + 
+        "      if (" + newitem + " != null)\n" + 
+        "      { result.addAll(" + newitem + "); }\n"; 
+    } // NOT addAll
     else 
     { if (t != null && t.isPrimitive())
       { newitem = Expression.wrap(resultType,newitem); }
-      header2 = header2 + "      result.add(" + newitem + ");\n"; 
+      header2 = header2 + 
+                "      if (" + newitem + " != null) \n" + 
+                "      { result.add(" + newitem + "); }\n"; 
     }
     
     header2 = header2 + "    }\n" + "    return result; \n" + "  }\n\n"; 
