@@ -1360,11 +1360,17 @@ public void findPlugins()
     // javaMenu.setEnabled(false); 
     buildMenu.add(ccMenu); 
 
-    JMenuItem pyMenu = new JMenuItem("Generate Python"); 
+    JMenuItem pyMenu = new JMenuItem("Generate Python 3.8"); 
     pyMenu.addActionListener(this);
     pyMenu.setToolTipText(
-      "Python 3.9"); 
+      "Python 3.8"); 
     buildMenu.add(pyMenu); 
+
+    JMenuItem py3Menu = new JMenuItem("Generate Python 3.10"); 
+    py3Menu.addActionListener(this);
+    py3Menu.setToolTipText(
+      "Python 3.10"); 
+    buildMenu.add(py3Menu);
 
     JMenuItem goMenu = new JMenuItem("Generate Go"); 
     goMenu.addActionListener(this);
@@ -2130,7 +2136,7 @@ public void findPlugins()
       { ucdArea.applyCGTL(); } 
       else if (label.equals("Apply CSTL/CGTL to AST"))
       { ucdArea.applyCSTLtoAST(); } 
-      else if (label.equals("Generate Python"))
+      else if (label.equals("Generate Python 3.8"))
       { ucdArea.saveModelToFile("output/model.txt"); 
 
 
@@ -2143,6 +2149,40 @@ public void findPlugins()
         } 
         catch (Exception ee2) 
         { System.err.println("!! Unable to run uml2py.jar"); } 
+
+        File pythonTests = new File("tester.py"); 
+        try
+        { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(pythonTests)));
+          Vector ucs = ucdArea.getGeneralUseCases(); 
+          Vector typs = ucdArea.getTypes(); 
+          Vector ents = ucdArea.getEntities(); 
+          String testcode = 
+             GUIBuilder.buildTestsGUIPython(
+                                ucs,"",typs,ents);    
+          out.println(testcode);
+          out.close();
+
+          ucdArea.generateMutationTesterPython(); 
+        }
+        catch (IOException ex)
+        { System.out.println("!! Error generating Python tests"); }
+        
+      }
+      else if (label.equals("Generate Python 3.10"))
+      { ucdArea.saveModelToFile("output/model.txt"); 
+
+
+        RunApp rapp1 = new RunApp("uml2py3"); 
+
+        try
+        { rapp1.setFile("app.py"); 
+          Thread appthread = new Thread(rapp1); 
+          appthread.start(); 
+        } 
+        catch (Exception ee2) 
+        { System.err.println("!! Unable to run uml2py3.jar"); } 
 
         File pythonTests = new File("tester.py"); 
         try

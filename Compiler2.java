@@ -5994,8 +5994,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
 
       if ("->display".startsWith(st))
-      { mess[0] = "Display operator on strings"; 
-        return "arg->display()"; 
+      { mess[0] = "Display operator on values. Used in statements\n" + 
+             "execute v->display()\n"; 
+        return "execute arg->display()"; 
       }
 
       if ("->apply".startsWith(st))
@@ -6077,7 +6078,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if ("Ref(".startsWith(st)) 
       { mess[0] = "Reference/pointer type Ref(T)\n" + 
           "The operator !x is used to dereference x : Ref(T)\n" + 
-          "and !x has type T.\n"; 
+          "and !x has type T."; 
         return "Ref"; 
       } 
 
@@ -6249,7 +6250,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
       if ("execute".startsWith(st))
       { mess[0] = "Execute expression as statement. Eg., execute (x->display())\n" + 
-          " execute (x->isDeleted())\n" +
           "This also specifies direct updates of collections:\n" + 
           " execute (x : col)\n" + 
           " execute (x /: col)\n" + 

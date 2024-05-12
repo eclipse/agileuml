@@ -2420,10 +2420,14 @@ public class Type extends ModelElement
   // sortedness
   public String getUMLName()
   { String nme = getName(); 
-    if (nme.equals("int")) { return "Integer"; } 
+    if (nme.equals("int")) { return "Integer"; }
+ 
     if (nme.equals("long")) { return "Long"; } 
+
     if (nme.equals("double")) { return "Real"; } 
+
     if (nme.equals("boolean")) { return "Boolean"; } 
+
     if (nme.equals("Set") || nme.equals("Sequence"))
     { if (elementType != null) 
       { return nme + "(" + elementType.getUMLName() + ")"; } 
