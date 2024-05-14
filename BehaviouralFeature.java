@@ -9964,10 +9964,11 @@ public class BehaviouralFeature extends ModelElement
         "      { result.addAll(" + newitem + "); }\n"; 
     } // NOT addAll
     else 
-    { if (t != null && t.isPrimitive())
+    { // header2 = header2 + 
+      //          "      if (" + newitem + " != null) \n"; 
+      if (t != null && t.isPrimitive())
       { newitem = Expression.wrap(resultType,newitem); }
       header2 = header2 + 
-                "      if (" + newitem + " != null) \n" + 
                 "      { result.add(" + newitem + "); }\n"; 
     }
     
