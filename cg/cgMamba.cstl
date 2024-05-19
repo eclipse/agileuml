@@ -1,0 +1,542 @@
+/* Main code-generation specification file for Mamba       */
+/* Created By Kevin Lano and Kunxiang Jin   May 2024       */
+/* Based On https://docs.zappdev.com/MambaLanguage/About/  */
+/*                                                         */
+/*                                                         */
+/* Note that newlines should be written as \n              */
+/* Comments written between these brackets on one line     */
+
+
+/* Package cannot be directly defined by code in Mamba */
+Package::  
+/*   package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java.util.*;\nimport java.util.Map;\nimport java.util.HashMap;\nimport java.io.Serializable;\nimport java.util.function.Function;\n\n\n_2 \n_3\npublic class _1\n{ public static void main(String[] args) { }\n\n_4 \n}\n   */
+
+package _1 { types: _2 classes: _3 usecases: _4 } |--> _3
+
+
+
+Type::
+
+Sequence(_1) |-->Array[_1]
+SortedSet(_1) |-->Collection[_1]
+Set(_1) |-->Collection[_1]
+SortedMap(_1,_2) |-->Dictionary[_1, _2]
+Map(_1,_2) |-->Dictionary[_1, _2]
+/*   $$$   Function(_1,_2) |-->Function<_1`jwrap,_2`jwrap>   */
+/*   $$$   Ref(_1) |-->_1[]   */
+
+Sequence |-->Array
+SortedSet |-->Collection
+Set |-->Collection
+SortedMap |-->Dictionary
+Map |-->Dictionary
+/*   $$$   Ref |-->Object[]   */
+
+
+OclAny |-->Object
+OclType |-->Object
+
+OclException |-->Exception
+ProgramException |-->Exception
+SystemException |-->Exception
+IOException |-->Exception
+CastingException |-->Exception
+NullAccessException |-->Exception
+IndexingException |-->Exception
+ArithmeticException |-->Exception
+IncorrectElementException |-->Exception
+AssertionException |-->Exception
+AccessingException |-->Exception
+
+
+_1 |-->_1
+
+
+/* Enumeration cannot be directly defined by code in Mamba */
+Enumeration::   
+/*   enumeration _1 { _2 } |-->enum _1 { _2 } \n   */
+
+literal _1, _2 |-->_1, _2
+literal _1 |-->_1
+
+
+
+
+BasicExpression::
+self |-->this
+OclAny |-->Object
+Sequence |-->Array
+Set |-->Collection
+SortedSet |-->Collection
+Map |-->Dictionary
+SortedMap |-->Dictionary
+/*   $$$   Ref |-->Object[]      Implicit conversion   */
+
+/*   $$$   Math_NaN |-->Double.NaN   */
+/*   $$$   Math_PINFINITY |-->Double.POSITIVE_INFINITY   */
+/*   $$$   Math_NINFINITY |-->Double.NEGATIVE_INFINITY   */
+
+AccessingException.newAccessingException() |-->Exception
+ArithmeticException.newArithmeticException() |-->Exception
+AssertionException.newAssertionException() |-->Exception
+ProgramException.newProgramException() |-->Exception
+SystemException.newSystemException() |-->Exception
+IOException.newIOException() |-->Exception
+CastingException.newCastingException() |-->Exception
+NullAccessException.newNullAccessException() |-->Exception
+IndexingException.newIndexingException() |-->Exception
+IncorrectElementException.newIncorrectElementException() |-->Exception
+ 
+
+
+/*   $$$   AssertionException.newAssertionException(_1) |-->(new AssertionError(_1))   */
+
+
+/*   $$$   _1 |-->_1`typename._1<when> _1 enumerationLiteral   */
+
+/*   $$$   _1.allInstances |-->_1._1_allInstances   */
+
+/*   $$$   _1.insertAt(_2,_3) |-->Ocl.insertAt(_1,_2,_3)   */
+/*   $$$   _1.setAt(_2,_3) |-->Ocl.setAt(_1,_2,_3)   */
+_1.replace(_2,_3) |-->_1.Replace(_2, _3)
+_1.replaceAll(_2,_3) |-->_1.ReplaceWithRegex(_2, _3)
+_1.replaceAllMatches(_2,_3) |-->_1.ReplaceWithRegex(_2, _3)
+_1.replaceFirstMatch(_2,_3) |-->_1.ReplaceFirst(_2, _3)
+
+
+/*   $$$   Integer.subrange(_1,_2) |-->Ocl.integerSubrange(_1,_2)   */
+
+/*   $$$   Integer.Sum(_1,_2,_3,_4) |-->(_4`type) Ocl.sum(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))   */
+
+/*   $$$   Integer.Prd(_1,_2,_3,_4) |-->(_4`type) Ocl.prd(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))   */
+
+/*   $$$   _1.subrange(_2,_3) |-->Ocl.subrange(_1,_2,_3)   */
+
+_1[_2] |-->(_1.CharAt(_2 - 1) + "")<when> _1 String
+/*   $$$   _1[_2] |-->_1._1_index.get(_2)<when> _1 classId   */
+
+_1[_2] |-->_1.Get(_2 - 1))<when> _2 numeric
+
+/*   $$$   _1[_2] |-->((_1`elementType) (_1).get(_2))<when> _2 not numeric   */
+
+/*   $$$   createByPK_1(_2) |-->_1.createByPK_1(_2)   */
+/*   $$$   create_1() |-->_1.create_1()   */
+/*   $$$   display_1(_2) |-->Ocl.display_1(_2)   */
+
+_1._2(_3) |-->_1._2(_3)
+/*   $$$   _1(_2) |-->_1.evaluate(_2)<when>_1 variable   */
+_1(_2) |-->_1(_2)
+_1._2 |-->_1._2
+
+
+
+
+
+UnaryExpression::
+-_1 |-->-1 * _1
++_1 |-->_1
+/*   $$$   ?_1 |-->Ocl.newRef_1`type(_1)<when> _1 numeric   */
+/*   $$$   ?_1 |-->Ocl.newRef_1`type(_1)<when> _1 boolean   */
+/*   $$$   ?_1 |-->Ocl.newRef_1`type(_1)<when> _1 String   */
+?_1 |-->_1
+
+/*   $$$   !_1 |-->_1`java8deref   */
+
+/*   $$$   _1->log() |-->Math.log(_1)   */
+/*   $$$   _1->log10() |-->Math.log10(_1)   */
+_1->exp() |-->Math.Pow(2.71828, _1)
+
+
+/*   _1 in OCL is radians, then convert radians to degrees   */
+_1->sin() |-->CommonLib.Math.Sin(_1 * (180 / CommonLib.Math.Pi()))
+_1->cos() |-->CommonLib.Math.Cos(_1 * (180 / CommonLib.Math.Pi()))
+_1->tan() |-->CommonLib.Math.Tan(_1 * (180 / CommonLib.Math.Pi()))
+
+/*   result in Mamba is degree, then convert degrees to radians   */
+_1->asin() |-->CommonLib.Math.Asin(_1) * (CommonLib.Math.Pi() / 180)
+_1->acos() |-->CommonLib.Math.Acos(_1) * (CommonLib.Math.Pi() / 180)
+_1->atan() |-->CommonLib.Math.Atan(_1) * (CommonLib.Math.Pi() / 180)
+
+
+_1->sqr() |-->(_1 ) * (_1)
+_1->sqrt() |-->CommonLib.Math.Sqrt(_1)
+_1->cbrt() |-->CommonLib.Math.Pow(_1, 1.0 / 3.0)
+_1->floor() |-->CommonLib.Math.Floor(_1)
+_1->ceil() |-->CommonLib.Math.Ceil(_1)
+_1->round() |-->CommonLib.Math.Round(_1, 0)
+_1->abs() |-->CommonLib.Math.Abs(_1)
+
+_1->size() |-->_1.Length<when> _1 String
+_1->size() |-->_1.Length
+
+_1->toInteger() |-->int.Parse(_1)<when> _1 String
+_1->toInteger() |-->int.Parse(_1.ToString())
+_1->toLong() |-->long.Parse(_1)<when> _1 String
+_1->toLong() |-->long.Parse(_1.ToString())
+_1->toReal() |-->float.Parse(_1)<when> _1 String
+_1->toReal() |-->float.Parse(_1.ToString())
+_1->toBoolean() |-->bool.Parse(_1.ToString())
+
+/*   $$$   _1->char2byte() |-->Ocl.char2byte(_1)   */
+/*   $$$   _1->byte2char() |-->Ocl.byte2char(_1)   */
+
+/*   $$$   _1->isInteger() |-->Ocl.isInteger(_1)   */
+/*   $$$   _1->isLong() |-->Ocl.isLong(_1)   */
+/*   $$$   _1->isReal() |-->Ocl.isReal(_1)   */
+
+_1->toUpper() |-->_1.ToUpper()
+_1->toLower() |-->_1.ToLower()
+_1->toUpperCase() |-->_1.TUpper()
+_1->toLowerCase() |-->_1.ToLower()
+_1->trim() |-->_1.Trim()
+/*   $$$   _1->characters() |-->Ocl.characters(_1)   */
+
+_1->oclIsUndefined() |-->(_1 == null)
+/*   $$$   _1->oclIsInvalid() |-->Double.isNaN(_1)   */
+
+_1->oclType() |-->int<when> _1 int
+_1->oclType() |-->long<when> _1 long
+_1->oclType() |-->long<when> _1 double
+_1->oclType() |-->bool<when> _1 boolean
+_1->oclType() |-->_1.GetType()
+
+/*   $$$   _1->allInstances() |-->_1._1_allInstances   */
+
+/*   $$$   _1->copy() |-->Ocl.copySequence(_1)<when> _1 Sequence   */
+/*   $$$   _1->copy() |-->Ocl.copySortedSet(_1)<when> _1 SortedSet   */
+/*   $$$   _1->copy() |-->Ocl.copySet(_1)<when> _1 Set   */
+/*   $$$   _1->copy() |-->Ocl.copySortedMap(_1)<when> _1 SortedMap   */
+/*   $$$   _1->copy() |-->Ocl.copyMap(_1)<when> _1 Map   */
+/*   $$$   _1->copy() |-->_1.clone()<when> _1 object   */
+_1->copy() |-->_1
+
+_1->first() |-->_1.First()
+_1->last() |-->_1.Last()
+_1->tail() |-->_1.Skip(1)
+_1->front() |-->_1.Take(_1.Length - 1)
+_1->reverse() |-->_1.Reverse()
+_1->max() |-->_1.Max(x => x)
+_1->min() |-->_1.Min(x => x)
+_1->sum() |-->_1.Sum(x => x)
+/*   $$$   _1->prd() |-->Ocl.prd_1`elementType(_1)   */
+_1->sort() |-->_1.Sort((x,y)=> x > y ? -1 : 1)
+_1->any() |-->_1.Any()
+_1->isEmpty() |-->(_1.Length == 0)
+_1->notEmpty() |-->(_1.Length > 0)
+
+/*   $$$   _1->asSet() |-->Ocl.asSet(_1)   */
+_1->asSequence() |-->_1.ToArray()
+/*   $$$   _1->asOrderedSet() |-->Ocl.asOrderedSet(_1)   */
+/*   $$$   _1->asBag() |-->Ocl.asBag(_1)   */
+
+/*   $$$   _1->flatten() |-->Ocl.unionAll(_1)<when> _1 Set   */
+/*   $$$   _1->flatten() |-->Ocl.concatenateAll(_1)<when> _1 Sequence   */
+/*   $$$   /* Recursive Ocl.flatten is missing */   */
+
+_1->values() |-->_1.GetValues()
+_1->keys() |-->_1.GetKeys()
+
+
+not(_1) |-->!(_1)
+_1->display() |-->    DebugLib.Logger.WriteInfoLine(_1 + "");
+
+/*   $$$   lambda _1 : _2 in _3 |-->(_1) -> { return _3; }   */
+
+/*   $$$   _1->unionAll() |-->Ocl.unionAllMap(_1)<when> _1 MapCollection   */
+/*   $$$   _1->unionAll() |-->Ocl.unionAll(_1)   */
+/*   $$$   _1->intersectAll() |-->Ocl.intersectAllMap(_1)<when> _1 MapCollection   */
+/*   $$$   _1->intersectAll() |-->Ocl.intersectAll(_1)   */
+/*   $$$   _1->concatenateAll() |-->Ocl.concatenateAll(_1)   */
+
+
+
+
+BinaryExpression::
+_1 & _2 |-->_1 && _2
+_1 or _2 |-->_1 || _2
+_1 xor _2 |-->((_1 || _2) && !(_1 && _2))
+
+
+_1 = _2 |-->_1 == _2<when> _1 not String, _1 not object, _1 not collection
+_1 = _2 |-->_1 == _2<when> _1 String
+_1 = _2 |-->_1.Equals(_2)<when> _1 object
+/*   $$$   _1 = _2 |-->_1.equals(_2)<when> _1 Sequence, _2 collection   */
+/*   $$$   _1 = _2 |-->Ocl.equalsSet(_1,_2)<when> _1 Set, _2 collection   */
+_1 = _2 |-->_1 == _2
+
+_1 <>= _2 |-->_1 == _2
+
+_1 /= _2 |-->_1 != _2<when> _1 not String, _1 not object, _1 not collection
+_1 /= _2 |-->_1 != _2<when> _1 String
+_1 /= _2 |-->!(_1.Equals(_2))<when> _1 object
+/*   $$$   _1 /= _2 |-->!(_1.equals(_2))<when> _1 Sequence, _2 collection   */
+/*   $$$   _1 /= _2 |-->!(Ocl.equalsSet(_1,_2))<when> _1 Set, _2 collection   */
+_1 /= _2 |-->_1 != _2
+
+_1 < _2 |-->_1.Length > _2.Length<when> _1 Ref, _2 Ref
+_1 < _2 |-->_1 < _2<when> _1 numeric, _2 numeric
+_1 < _2 |-->(string.Compare(_1, _2) < 0)<when> _1 String, _2 String
+
+_1 > _2 |-->_1.Length < _2.Length<when> _1 Ref, _2 Ref
+_1 > _2 |-->_1 > _2<when> _1 numeric, _2 numeric
+_1 > _2 |-->(string.Compare(_1, _2) > 0)<when> _1 String, _2 String
+
+_1 <= _2 |-->_1.Length >= _2.Length<when> _1 Ref, _2 Ref
+_1 <= _2 |-->_1 <= _2<when> _1 numeric, _2 numeric
+_1 <= _2 |-->(string.Compare(_1, _2) <= 0)<when> _1 String, _2 String
+
+_1 >= _2 |-->_1.Length <= _2.Length<when> _1 Ref, _2 Ref
+_1 >= _2 |-->_1 >= _2<when> _1 numeric, _2 numeric
+_1 >= _2 |-->(string.Compare(_1, _2) >= 0)<when> _1 String, _2 String
+
+/*   $$$   _1 + _2 |-->Arrays.copyOfRange(_1,_2,_1.length)<when> _1 Ref   */
+_1 + _2 |-->_1 + _2
+
+/*   $$$   _1 - _2 |-->_2.length - _1.length<when> _1 Ref, _2 Ref   */
+_1 - _2 |-->_1 - _2<when> _1 numeric, _2 numeric
+/*   $$$   _1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 String, _2 String   */
+/*   $$$   _1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Set   */
+/*   $$$   _1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Sequence   */
+/*   $$$   _1 - _2 |-->Ocl.excludeAllMap(_1,_2)<when>_1 Map   */
+
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 mod _2 |-->_1 % _2
+_1 div _2 |-->(int.Parse((_1 / _2).ToString()))
+
+
+/*   $$$   _1 |-> _2 |-->(new OclMaplet(_1,_2))   */
+
+/*   $$$   _1->compareTo(_2) |-->((Comparable) _1).compareTo(_2)<when> _1 object   */
+_1->compareTo(_2) |-->string.Compare(_1, _2)<when> _1 String
+_1->compareTo(_2) |-->((_1 < _2) ? -1 : ((_1 > _2) ? 1 : 0 ))
+
+_1->pow(_2) |-->CommonLib.Math.Pow(_1, _2)
+/*   $$$   _1->gcd(_2) |-->Ocl.gcd(_1,_2)   */
+/*   $$$   _1->truncateTo(_2) |-->Ocl.truncateTo(_1,_2)   */
+_1->roundTo(_2) |-->_1.Round(_2)
+
+_1^_2 |-->_1.Add(_2)
+_1->concatenate(_2) |-->_1.Add(_2)
+
+/*   $$$   _1->union(_2) |-->Ocl.unionMap(_1,_2)<when> _1 Map   */
+/*   $$$   _1->union(_2) |-->Ocl.union(_1,_2)   */
+
+/*   $$$   _1->unionAll(_2|_3) |-->Ocl.unionAll(_1,(_2)->{return _3;})   */
+
+/*   $$$   _1->intersection(_2) |-->Ocl.intersectionMap(_1,_2)<when> _1 Map   */
+_1->intersection(_2) |-->_1.Intersect(_2)
+
+/*   $$$   _1->intersectAll(_2|_3) |-->Ocl.intersectAllSet(_1,(_2)->{return _3;})<when> _3 Set   */
+/*   $$$   _1->intersectAll(_2|_3) |-->Ocl.intersectAllSequence(_1,(_2)->{return _3;})<when> _3 Sequence   */
+
+/*   $$$   _1->count(_2) |-->Collections.frequency(_1,_2)   */
+
+/*   $$$   _1->indexOf(_2) |-->(Collections.indexOfSubList(_1,_2) + 1)<when> _2 Sequence   */
+/*   $$$   _1->lastIndexOf(_2) |-->(Collections.lastIndexOfSubList(_1,_2) + 1)<when> _2 Sequence   */
+
+_1->indexOf(_2) |-->(_1.IndexOf(_2) + 1)
+_1->lastIndexOf(_2) |-->(_1.LastIndexOf(_2) + 1)
+
+/*   $$$   _1->equalsIgnoreCase(_2) |-->_1.equalsIgnoreCase(_2)   */
+/*   $$$   _1->split(_2) |-->Ocl.split(_1,_2)   */
+/*   $$$   _1->allMatches(_2) |-->Ocl.allMatches(_1,_2)   */
+/*   $$$   _1->firstMatch(_2) |-->Ocl.firstMatch(_1,_2)   */
+
+/*   $$$   _1->apply(_2) |-->(_1).apply(_2)   */
+/*   $$$   _1->subrange(_2) |-->Ocl.subrange(_1,_2)   */
+
+_1->at(_2) |-->_1.Get(_2))<when> _1 Map
+_1->at(_2) |-->(_1.CharAt(_2 - 1) + "")<when> _1 String
+_1->at(_2) |-->_1[_2-1]<when> _1 Ref
+_1->at(_2) |-->_1.Get(_2 - 1))<when> _2 numeric
+/*   $$$   _1->at(_2) |-->((_1`elementType) _1.get(_2))<when> _2 not numeric   */
+
+/*   $$$   _1->restrict(_2) |-->Ocl.restrictMap(_1,_2)   */
+/*   $$$   _1->antirestrict(_2) |-->Ocl.antirestrictMap(_1,_2)   */
+
+/*   $$$   _1->select(_2 | _3) |-->Ocl.selectSet(_1,(_2)->{return _3;})<when> _1 Set   */
+/*   $$$   _1->select(_2 | _3) |-->Ocl.selectSequence(_1,(_2)->{return _3;})<when> _1 Sequence   */
+/*   $$$   _1->select(_2 | _3) |-->Ocl.selectMap(_1,(_2)->{return _3;})<when> _1 Map   */
+
+/*   $$$   _1->reject(_2 | _3) |-->Ocl.rejectSet(_1,(_2)->{return _3;})<when> _1 Set   */
+/*   $$$   _1->reject(_2 | _3) |-->Ocl.rejectSequence(_1,(_2)->{return _3;})<when> _1 Sequence   */
+/*   $$$   _1->reject(_2 | _3) |-->Ocl.rejectMap(_1,(_2)->{return _3;})<when> _1 Map   */
+
+/*   $$$   _1->collect(_2 | _3) |-->Ocl.collectSet(_1,(_2)->{return _3;})<when> _1 Set   */
+/*   $$$   _1->collect(_2 | _3) |-->Ocl.collectSequence(_1,(_2)->{return _3;})<when> _1 Sequence   */
+/*   $$$   _1->collect(_2 | _3) |-->Ocl.collectMap(_1,(_2)->{return _3;})<when> _1 Map   */
+
+/*   $$$   _1->iterate(_2; _3 = _4 | _5) |-->Ocl.iterate(_1, _4, (_2)->((_3)->{return _5;}))   */
+
+/*   $$$   _1->sortedBy(_2|_3) |-->Ocl.sortedBy(_1, Ocl.collectSequence(_1, (_2)->{ return _3; }))   */
+
+/*   $$$   _1->selectMaximals(_2 | _3) |-->Ocl.selectMaximals(_1, (_2)->{ return _3; })   */
+/*   $$$   _1->selectMinimals(_2 | _3) |-->Ocl.selectMinimals(_1, (_2)->{ return _3; })   */
+
+/*   $$$   _1->any(_2|_3) |-->Ocl.any(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId   */
+/*   $$$   _1->any(_2|_3) |-->Ocl.any(_1, (_2)->{ return _3; })<when> _1 not classId   */
+
+
+/*   $$$   _1->forAll(_2 | _3) |-->Ocl.forAll(_1._1_allInstances, (_2)->{ return _3; })<when>_1 classId   */
+/*   $$$   _1->forAll(_2 | _3) |-->Ocl.forAll(_1, (_2)->{ return _3; })<when>_1 not classId   */
+
+/*   $$$   _1->exists(_2 | _3) |-->Ocl.exists(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId   */
+/*   $$$   _1->exists(_2 | _3) |-->Ocl.exists(_1, (_2)->{ return _3; })<when> _1 not classId   */
+
+/*   $$$   _1->exists1(_2 | _3) |-->Ocl.exists1(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId   */
+/*   $$$   _1->exists1(_2 | _3) |-->Ocl.exists1(_1, (_2)->{ return _3; })<when> _1 not classId   */
+
+/*   $$$   /* _1->isUnique(_2 | _3) |-->Ocl.isUnique(Ocl.collectSequence(_1, (_2)->{ return _3; })) */   */
+
+_1 : _2 |-->_2.Contains(_1)
+/*   $$$   _1 <: _2 |-->_2.containsAll(_1)   */
+_1 /: _2 |-->!(_2.Contains(_1))
+_1->includes(_2) |-->_1.Contains(_2)
+/*   $$$   _1->includesAll(_2) |-->_1.containsAll(_2)   */
+_1->excludes(_2) |-->!(_1.Contains(_2))
+/*   $$$   _1->excludesAll(_2) |-->Collections.disjoint(_1,_2)   */
+
+/*   $$$   _1->including(_2) |-->Ocl.includingSet(_1,_2)<when> _1 Set   */
+/*   $$$   _1->including(_2) |-->Ocl.includingSequence(_1,_2)<when> _1 Sequence   */
+/*   $$$   _1->prepend(_2) |-->Ocl.prepend(_1,_2)   */
+/*   $$$   _1->append(_2) |-->Ocl.append(_1,_2)   */
+/*   $$$   _1->excluding(_2) |-->Ocl.excludingSet(_1,_2)<when> _1 Set   */
+/*   $$$   _1->excluding(_2) |-->Ocl.excludingSequence(_1,_2)<when> _1 Sequence   */
+/*   $$$   _1->excludingAt(_2) |-->Ocl.removeAt(_1,_2)   */
+/*   $$$   _1->excludingFirst(_2) |-->Ocl.removeFirst(_1,_2)   */
+
+/*   $$$   _1->hasPrefix(_2) |-->_1.startsWith(_2)   */
+/*   $$$   _1->hasSuffix(_2) |-->_1.endsWith(_2)   */
+/*   $$$   _1->after(_2) |-->Ocl.after(_1,_2))   */
+/*   $$$   _1->before(_2) |-->Ocl.before(_1,_2)   */
+_1->isMatch(_2) |-->_1.IsMatch(_2)
+_1->hasMatch(_2) |-->_1.GetMatch(_2).Length == 0
+
+/*   $$$   _1->oclIsKindOf(_2) |-->(_1 instanceof _2)   */
+_1->oclIsTypeOf(_2) |-->(_1.GetType() == _2.GetType())
+
+_1->oclAsType(_2) |-->_1<when> _1 Ref
+_1->oclAsType(_2) |-->_1 as _2
+
+/*   $$$   let _1 : _2 = _3 in _4 |-->(new Object() { public _4`type call(_2 _1) { return _4; } }).call(_3)   */
+
+
+SetExpression::
+Set{} |-->(new Collection())
+/*   $$$   Set{_1} |-->Ocl.initialiseSet(_1)    */
+SortedSet{} |-->(new Collection())
+/*   $$$   SortedSet{_1} |-->Ocl.initialiseSortedSet(_1)    */
+Sequence{} |-->(new Array())
+/*   $$$   Sequence{_1} |-->Ocl.initialiseSequence(_1)   */
+Map{} |-->(new Dictionary())
+/*   $$$   Map{_1} |-->Ocl.initialiseMap(_1)   */
+
+/*   $$$   Ref(_1){_2} |-->(new _1[_2])   */
+/*   $$$   Ref{_1} |-->(new Object[_1])   */
+
+
+ConditionalExpression::
+if _1 then _2 else _3 endif |-->((_1) ? _2 : _3)
+
+
+/* Class cannot be directly defined by code in Mamba */
+Class::   
+/*   class _1 { _2 }   |-->interface _1 { _2`cginterface }\n<when> _1 interface   */
+/*   class _1 { _2 }   |-->class _1 implements Runnable\n{ static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_2}\n<when> _1 active   */
+/*   class _1 { _2 }   |-->class _1 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_2}\n    */
+
+class _1 { _2 }   |-->class _1 { \n _2 \n}\n
+
+/*   class _1 extends _2 { _3 }   |-->class _1 extends _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_3}\n   */
+/*   class _1 implements _2 { _3 }   |-->class _1 implements _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_3}\n   */
+/*   class _1 extends _2 implements _3 { _4 }   |-->class _1 extends _2 implements _3 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_4}\n   */
+/*   abstract class _1 { _2 }   |-->abstract class _1 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n  _1() { _1_allInstances.add(this); }\n\n_2}\n   */
+/*   abstract class _1 extends _2 { _3 }   |-->abstract class _1 extends _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n_3}\n   */
+/*   abstract class _1 implements _2 { _3 }   |-->abstract class _1 implements _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n_3}\n   */
+/*   abstract class _1 extends _2 implements _3 { _4 }   |-->abstract class _1 extends _2 implements _3 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n_4}\n   */
+
+
+
+/* Attribute cannot be directly defined by code in Mamba */
+Attribute::   
+static attribute _1 : _2 := _3; |-->  static _2 _1 = _3;\n
+static attribute _1 : _2; |-->  static _2 _1 = _2`defaultValue;\n
+/*   identity attribute _1 : _2 |-->  _2 _1 = _2`defaultValue; /* primary */\n  static Map<_2,_1`ownername> _1`ownername_index = new HashMap<_2,_1`ownername>();\n\n  static _1`ownername createByPK_1`ownername(_2 _1x)\n  { _1`ownername result = _1`ownername._1`ownername_index.get(_1x);\n    if (result != null) { return result; }\n    result = new _1`ownername();\n    _1`ownername._1`ownername_index.put(_1x,result);\n    result._1 = _1x;\n    return result; }\n\n  static void kill_1`ownername(_2 _1x)\n  { _1`ownername rem = _1`ownername_index.get(_1x);\n    if (rem == null) { return; }\n    ArrayList<_1`ownername> remd = new ArrayList<_1`ownername>();\n    remd.add(rem);\n    _1`ownername_index.remove(_1x);\n    _1`ownername_allInstances.removeAll(remd);\n  }\n\n   */
+identity attribute _1 : _2 |-->  _2 _1 = _2`defaultValue;\n
+attribute _1 : _2 := _3; |-->  _2 _1 = _3;\n
+attribute _1 : _2; |-->  _2 _1 = _2`defaultValue;\n
+/*   reference _1 : _2; |-->  _2 _1 = new _2();\n<when> _2 collection   */
+/*   reference _1 : _2; |-->  _2 _1 = new _2();\n<when> _2 map   */
+/*   reference _1 : _2; |-->  _2 _1 = null;\n   */
+
+
+
+
+
+Parameter::
+ _1 : _2, _3 |-->_2 _1, _3
+_1 : _2 |-->_2 _1
+
+
+ParameterArgument::
+_1, _2 |-->_1, _2
+_1 |-->_1
+
+
+/* Operation (object-oriented) cannot be directly defined by code in Mamba */
+Operation::   
+query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  function _3 _1(_2)  {\n_6  \n }\n\n
+/*   query _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->\n  public <_2> _4 _1(_3)\n  {\n_7  }\n\n   */
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  function _3 _1(_2)  {\n_6  \n}\n\n
+/*   operation _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->\n  public <_2> _4 _1(_3)\n  {\n_7  }\n\n   */
+static query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  static function _3 _1(_2)  {\n_6  \n}\n\n
+/*   static query _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->\n  public static <_2> _4 _1(_3)\n  {\n_7  }\n\n   */
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  static function _3 _1(_2)  {\n_6  \n}\n\n
+/*   static operation _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->\n  public static <_2> _4 _1(_3)\n  {\n_7  }\n\n   */
+
+
+Statement::
+_1[_2] := _3 |-->    _1.Set(_2 - 1,_3);\n<when>_2 String
+_1[_2] := _3 |-->    _1.Set(_2 - 1,_3);\n<when>_1 Map
+_1[_2] := _3 |-->    _1.Set(_2 - 1,_3);\n
+
+
+_1 := _2 |-->    _1 = _2;\n
+
+
+while _1 do _2 |-->    while (_1)    {\n  _2    }\n
+for _1 : _2 do _3 |-->   foreach _1 in _2    {\n  _3    }\n
+
+if _1 then _2 else _3 |-->    if (_1)    {\n  _2    }\n    else {\n  _3    }\n
+
+
+_1 ; _2 |-->_1_2
+skip |-->    {}\n
+return _1 |-->    return _1;\n
+return |--> return;\n
+continue |-->    continue;\n
+break |-->    break;\n
+call _1 |-->    _1;\n 
+execute _1 |-->    /* do _1 */\n
+
+/*   $$$   assert _1 do _2 |-->    assert _1 : _2;\n   */
+assert _1 |-->    assert _1;\n
+error _1 |-->    throw _1;\n
+
+/*   $$$   try _1 _2 _3 |-->    try { _1    }\n_2 _3\n   */
+/*   $$$   try _1 _2 |-->    try { _1    }\n_2\n   */
+catch _1 do _2 |-->      catch Exception _1 { _2      }\n
+finally _1 |-->      finally { _1      }\n
+
+var _1 : _2 := _3 |-->    _2 _1 = _3;\n
+var _1 : _2 |-->    _2 _1;\n<when> _2 Class
+var _1 : _2 |-->    _2 _1;\n<when> _2 collection
+var _1 : _2 |-->    _2 _1;\n<when> _2 Ref
+var _1 : _2 |-->    _2 _1;\n
+
+
+/* Class cannot be directly defined by code in Mamba */
+UseCase::   
+/*   usecase _1(_2) : _3 { _4 } |-->  public static _3 _1(_2)\n  {\n_4  }   */
+
