@@ -6452,7 +6452,7 @@ class CreationStatement extends Statement
     { return "  var " + assignsTo + " : " + declType + " := " + initialExpression; } 
     else
     { return "  var " + assignsTo + " : " + declType; }
-  } 
+  } // isFrozen? 
 
   public String toAST()
   { String res = "(OclStatement var " + assignsTo + " : " + instanceType.toAST() + " )"; 
@@ -6611,7 +6611,8 @@ class CreationStatement extends Statement
         createsInstanceOf.equals("double"))
     { return "  " + mode + createsInstanceOf + " " + assignsTo + ";"; } 
 
-    if (createsInstanceOf.startsWith("Set") || createsInstanceOf.startsWith("Sequence"))
+    if (createsInstanceOf.startsWith("Set") || 
+        createsInstanceOf.startsWith("Sequence"))
     { return "  List " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Map"))
     { return "  Map " + assignsTo + ";"; } 
@@ -6636,11 +6637,15 @@ class CreationStatement extends Statement
 
   public String toStringJava6()
   { java.util.Map env = new java.util.HashMap(); 
+
+    String mode = ""; 
+    if (isFrozen) 
+    { mode = "final "; } 
     
     if (instanceType != null)
     { String jType = instanceType.getJava6(); 
       if (initialExpression != null)
-      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryFormJava6(env,true) + ";\n"; }
+      { return "  " + mode + jType + " " + assignsTo + " = " + initialExpression.queryFormJava6(env,true) + ";\n"; }
       else if (Type.isRefType(instanceType))
       { String rt = jType; 
         if (instanceType.getElementType() != null) 
@@ -6650,27 +6655,27 @@ class CreationStatement extends Statement
           //     elemT.isStructEntityType() ||  
           //     "Ref".equals(elemT.getName()))
           // { 
-          return "  " + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
+          return "  " + mode + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
           // }
         }
-        return "  " + rt + " " + assignsTo + ";";   
+        return "  " + mode + rt + " " + assignsTo + ";";   
       }   
       else if (Type.isBasicType(instanceType)) 
-      { return "  " + jType + " " + assignsTo + ";"; } 
+      { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (Type.isMapType(instanceType))
-      { return "  Map " + assignsTo + " = new HashMap();"; } 
+      { return "  " + mode + "Map " + assignsTo + " = new HashMap();"; } 
       else if (Type.isFunctionType(instanceType))
-      { return "  " + jType + " " + assignsTo + " = null;"; } 
+      { return "  " + mode + jType + " " + assignsTo + " = null;"; } 
       else if (Type.isSetType(instanceType))
-      { return "  HashSet " + assignsTo + ";"; } 
+      { return "  " + mode + "HashSet " + assignsTo + ";"; } 
       else if (Type.isSequenceType(instanceType))
-      { return "  ArrayList " + assignsTo + ";"; } 
+      { return "  " + mode + "ArrayList " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
         if (ent.hasStereotype("external"))
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
+        { return "  " + mode + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
         else
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n" + 
+        { return "  " + mode + jType + " " + assignsTo + " = new " + jType + "();\n" + 
                  "  Controller.inst().add" + jType + "(" + assignsTo + ");"; 
         }
       }  
@@ -6680,7 +6685,7 @@ class CreationStatement extends Statement
         createsInstanceOf.equals("long") || 
         createsInstanceOf.equals("String") || 
         createsInstanceOf.equals("double"))
-    { return "  " + createsInstanceOf + " " + assignsTo + ";"; } 
+    { return "  " + mode + createsInstanceOf + " " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Set"))
     { return "  HashSet " + assignsTo + ";"; } 
@@ -6710,11 +6715,15 @@ class CreationStatement extends Statement
   public String toStringJava7()
   { 
     java.util.Map env = new java.util.HashMap(); 
+
+    String mode = ""; 
+    if (isFrozen) 
+    { mode = "final "; } 
     
     if (instanceType != null)
     { String jType = instanceType.getJava7(elementType); 
       if (initialExpression != null)
-      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryFormJava7(env,true) + ";\n"; }
+      { return "  " + mode + jType + " " + assignsTo + " = " + initialExpression.queryFormJava7(env,true) + ";\n"; }
       else if (Type.isRefType(instanceType))
       { String rt = jType; 
         if (instanceType.getElementType() != null) 
@@ -6724,26 +6733,27 @@ class CreationStatement extends Statement
           //     elemT.isStructEntityType() ||  
           //     "Ref".equals(elemT.getName()))
           // { 
-          return "  " + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
+          return "  " + mode + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
           // }
         }
-        return "  " + rt + " " + assignsTo + ";";   
+        return "  " + mode + rt + " " + assignsTo + ";";   
       }   
       else if (Type.isBasicType(instanceType)) 
-      { return "  " + jType + " " + assignsTo + ";"; } 
+      { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (Type.isMapType(instanceType))
-      { return "  " + jType + " " + assignsTo + " = new " + jType + "();"; } 
+      { return "  " + mode + jType + " " + assignsTo + " = new " + jType + "();"; } 
       else if (Type.isFunctionType(instanceType))
-      { return "  " + jType + " " + assignsTo + " = null;"; } 
-      else if (Type.isBasicType(instanceType) || Type.isSetType(instanceType) || 
-          Type.isSequenceType(instanceType)) 
-      { return "  " + jType + " " + assignsTo + ";"; } 
+      { return "  " + mode + jType + " " + assignsTo + " = null;"; } 
+      else if (Type.isBasicType(instanceType) || 
+               Type.isSetType(instanceType) || 
+               Type.isSequenceType(instanceType)) 
+      { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
         if (ent.hasStereotype("external"))
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
+        { return "  " + mode + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
         else
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n" + 
+        { return "  " + mode + jType + " " + assignsTo + " = new " + jType + "();\n" + 
                  "  Controller.inst().add" + jType + "(" + assignsTo + ");"; 
         }
       }  
@@ -6753,7 +6763,7 @@ class CreationStatement extends Statement
         createsInstanceOf.equals("long") || 
         createsInstanceOf.equals("String") || 
         createsInstanceOf.equals("double"))
-    { return "  " + createsInstanceOf + " " + assignsTo + ";"; } 
+    { return "  " + mode + createsInstanceOf + " " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Set"))
     { return "  HashSet " + assignsTo + ";"; } 
@@ -6778,7 +6788,7 @@ class CreationStatement extends Statement
     else if (Type.isOclLibraryType(createsInstanceOf))
     { return "  " + createsInstanceOf + " " + assignsTo + ";"; }
 
-    return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
+    return "  " + mode + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
   }
 
@@ -6841,7 +6851,8 @@ class CreationStatement extends Statement
         } 
       } 
     } 
-    else if (createsInstanceOf.startsWith("Set") || createsInstanceOf.startsWith("Sequence"))
+    else if (createsInstanceOf.startsWith("Set") || 
+             createsInstanceOf.startsWith("Sequence"))
     { return "  ArrayList " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Map"))
     { return "  Hashtable "  + assignsTo + ";"; }
@@ -6859,7 +6870,8 @@ class CreationStatement extends Statement
       return "  " + cstype + " " + assignsTo + ";"; 
     } 
     else if (createsInstanceOf.equals("int") || 
-             createsInstanceOf.equals("long") || createsInstanceOf.equals("double"))
+             createsInstanceOf.equals("long") ||  
+             createsInstanceOf.equals("double"))
     { return "  " + createsInstanceOf + " " + assignsTo + ";"; } 
     else if (createsInstanceOf.equals("OclAny"))
     { return "  object " + assignsTo + ";"; }
@@ -7356,7 +7368,7 @@ class CreationStatement extends Statement
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
     return etext;
-  } 
+  } // case of frozen
 }
 
 

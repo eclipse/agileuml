@@ -1383,6 +1383,12 @@ public void findPlugins()
     goMenu.addActionListener(this);
     buildMenu.add(goMenu); 
 
+    JMenuItem mambaMenu = new JMenuItem("Generate Mamba"); 
+    mambaMenu.addActionListener(this);
+    mambaMenu.setToolTipText(
+      "Mamba zAppDev language https://zappdev.io/"); 
+    buildMenu.add(mambaMenu); 
+
     /* JMenuItem runMI = new JMenuItem("Run"); 
     runMI.addActionListener(this);
     // javaMenu.setEnabled(false); 
@@ -2224,6 +2230,8 @@ public void findPlugins()
       }
       else if (label.equals("Generate Go"))
       { ucdArea.generateGo(); } 
+      else if (label.equals("Generate Mamba"))
+      { ucdArea.generateMamba(); } 
       else if (label.equals("Type-check"))
       { ucdArea.typeCheck(); } 
       else if (label.equals("Type inference"))

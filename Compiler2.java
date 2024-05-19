@@ -428,6 +428,8 @@ public class Compiler2
         "SortedSet{".equals(tok) ||
         "SortedSet".equals(tok) ||
         "Map{".equals(tok) || "Map".equals(tok) ||
+        "SortedMap{".equals(tok) || 
+        "SortedMap".equals(tok) ||
         "Integer".equals(tok) ||
         "|".equals(tok) || ",".equals(tok))
     { return true; }
@@ -540,10 +542,14 @@ public class Compiler2
         str.equals("new") || 
         str.equals("interface") || str.equals("byte") || 
         str.equals("finally") ||
-        str.equals("synchronized") || str.equals("until") || str.equals("do") || 
-        str.equals("interface") || str.equals("extends") || str.equals("implements") ||
-        str.equals("for") || str.equals("instanceof") || str.equals("private") || 
-        str.equals("public") || str.equals("final") || str.equals("static") ||
+        str.equals("synchronized") || 
+        str.equals("until") || str.equals("do") || 
+        str.equals("interface") || 
+        str.equals("extends") || str.equals("implements") ||
+        str.equals("for") || str.equals("instanceof") || 
+        str.equals("private") || 
+        str.equals("public") || str.equals("final") || 
+        str.equals("static") ||
         str.equals("void") || str.equals("abstract") || 
         str.equals("protected") ||
         str.equals("const") || str.equals("import") || 
@@ -563,6 +569,7 @@ public class Compiler2
         str.equals("container") || 
         str.equals("usecase") || 
         str.equals("stereotype") || 
+        str.equals("repeat") ||
         str.equals("null"))
     { return true; }  // Java keywords. "super" is allowed. 
     return false; 
@@ -1377,7 +1384,7 @@ public class Compiler2
     { Type tt = null; 
       if (st == en) 
       { System.err.println("!! Warning, map types must have type parameters"); 
-        tt = new Type(typ.substring(6), null);
+        tt = new Type("Map", null);
         tt.setSorted(true); 
         tt.setKeyType(new Type("OclAny", null)); 
         tt.setElementType(new Type("OclAny", null)); 
@@ -1394,7 +1401,7 @@ public class Compiler2
             { Type t1 = parseType(st+2,i-1,entities,types); 
               Type t2 = parseType(i+1,en-1,entities,types);
               if (t1 != null && t2 != null) 
-              { tt = new Type(typ.substring(6), t1, t2);
+              { tt = new Type("Map", t1, t2);
                 tt.setSorted(true); 
                 tt.setKeyType(t1);  
                 tt.setElementType(t2);
@@ -1411,8 +1418,8 @@ public class Compiler2
       } 
 
       if (tt == null) 
-      { System.err.println("!!ERROR!!: Invalid map/function type, it must have 2 type arguments: " + showLexicals(st,en)); 
-        tt = new Type(typ.substring(6), null);
+      { System.err.println("!!ERROR!!: Invalid map type, it must have 2 type arguments: " + showLexicals(st,en)); 
+        tt = new Type("Map", null);
         tt.setSorted(true); 
         tt.setKeyType(new Type("OclAny", null)); 
         tt.setElementType(new Type("OclAny", null)); 
@@ -3300,6 +3307,12 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     } 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
+        "SortedMap".equals(lexicals.get(pstart) + "") &&
+        "{".equals(lexicals.get(pstart + 1) + ""))
+    { System.out.println(">> Sorted map"); 
+      return parse_sortedmap_expression(bc,pstart+1,pend,entities,types); } 
+
+    if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Map".equals(lexicals.get(pstart) + "") &&
         "{".equals(lexicals.get(pstart + 1) + ""))
     { return parse_map_expression(bc,pstart+1,pend,entities,types); } 
@@ -3694,7 +3707,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return null; } 
     Expression res = new SetExpression(ve,false);
     res.setSorted(true);  
-    System.out.println(">>> Parsed set expression: " + res); 
+    System.out.println(">>> Parsed sorted set expression: " + res); 
     return res; 
   } 
 
@@ -3748,6 +3761,19 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     Expression res = new SetExpression(ve,true); 
     res.setType(new Type("Map",null)); 
     // System.out.println("Parsed map expression: " + res); 
+    return res; 
+  } 
+
+  public Expression parse_sortedmap_expression(int bc,int pstart,int pend, Vector entities, Vector types)
+  { Vector ve = parse_map_sequence(bc,pstart+1,pend-1,entities,types); 
+    if (ve == null) 
+    { return null; } 
+    Expression res = new SetExpression(ve,true); 
+    Type sortedMapType = new Type("Map", null); 
+    sortedMapType.setSorted(true); 
+    res.setType(sortedMapType);
+    res.setSorted(true);  
+    System.out.println(">> Parsed sorted map expression: " + res); 
     return res; 
   } 
 
@@ -4352,6 +4378,7 @@ public Attribute parseAttribute(Vector entities, Vector types)
   if (n <= 1) 
   { return null; } 
   String modality = "" + lexicals.get(0); 
+
   if ("attribute".equals(modality))
   { Attribute att = 
       parseParameterDec(1,n-1,entities,types); 
@@ -4364,6 +4391,14 @@ public Attribute parseAttribute(Vector entities, Vector types)
     att.setStatic(true);
     return att; 
   } 
+  /* else if ("frozen".equals(modality) && 
+           "attribute".equals("" + lexicals.get(1)))
+  { Attribute att = 
+      parseParameterDec(2,n-1,entities,types); 
+    att.setFrozen(true);
+    return att; 
+  } */ 
+
   return null; 
 } 
 
@@ -4386,7 +4421,8 @@ private Attribute parseParameterDec(int st, int en, Vector entities, Vector type
   { System.err.println("!! ERROR: Invalid/unknown parameter type: " + showLexicals(st+2, en)); 
     return null; 
   }
-  Attribute att = new Attribute(attname, typ, ModelElement.INTERNAL);
+  Attribute att = 
+    new Attribute(attname, typ, ModelElement.INTERNAL);
   att.setElementType(typ.getElementType()); 
   return att;
 }
@@ -5673,6 +5709,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { mess[0] = "Declaration/creation statement: var variable : Type\nCan only be used in an activity"; 
       return "var"; 
     } 
+
+    if ("frozen".startsWith(st)) 
+    { mess[0] = "Constant-valued attribute:\n" +
+        "  attribute attr frozen : Type"; 
+      return "frozen"; 
+    } 
  
     if ("operation".startsWith(st)) 
     { mess[0] = "Operation declaration:\noperation name(parameters) : Type\n" + 
@@ -5728,13 +5770,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
     if ("attribute".startsWith(st)) 
-    { mess[0] = "attribute declaration, eg: attribute name : Type; or\n" + 
-           "attribute name identity : String;\n"; 
+    { mess[0] = "attribute declaration, e.g.: attribute name : Type; or\n" + 
+           "attribute name identity : String;\n" +  
+           "attribute name frozen : String;\n"; 
       return "attribute"; 
     }
 
     if ("assert".startsWith(st)) 
-    { mess[0] = "assert statement, eg: assert condition do message;"; 
+    { mess[0] = "assert statement, e.g.: assert condition do message;"; 
       return "assert"; 
     }
 
@@ -5745,13 +5788,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
 
       if ("post".startsWith(st)) 
-      { mess[0] = "Operation postcondition, eg: post: true\n" + 
+      { mess[0] = "Operation postcondition, e.g.: post: true\n" + 
                 "or post: result = expression"; 
         return "post:"; 
       }
 
       if ("parameter".startsWith(st)) 
-      { mess[0] = "usecase parameter, eg: parameter name : Type;"; 
+      { mess[0] = "usecase parameter, e.g.: parameter name : Type;"; 
         return "parameter"; 
       } 
 
@@ -5920,11 +5963,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "arg1->intersection(arg2)"; 
       }
 
-      if ("->includes".startsWith(st) || "->includesAll".startsWith(st) || 
+      if ("->includes".startsWith(st) || 
+          "->includesAll".startsWith(st) || 
           "->including".startsWith(st))
       { mess[0] = "arg1->includes(elem) operator on sets, sequences. true if elem is in arg1\n" + 
-          "Or arg1->includesAll(arg2)  true if all arg2 elements are in arg1\n" + 
-          "Or arg1->including(elem)  The same as arg1->union(Set{elem})"; 
+          " arg1->includesAll(arg2)  true if all arg2 elements are in arg1\n" + 
+          " arg1->including(elem)  The same as arg1->union(Set{elem})"; 
         return "arg1->includes(elem)  or  arg1->includesAll(arg2)  or  arg1->including(elem)"; 
       }
 
@@ -5934,10 +5978,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "->excludingFirst".startsWith(st) ||
           "->excludingAt".startsWith(st))
       { mess[0] = "arg1->excludes(elem) operator on sets, sequences. true if elem is not in arg1\n" + 
-          "Or arg1->excludesAll(arg2)  True if arg1, arg2 have no common elements\n" + 
-          "Or arg1->excluding(elem)  The same as arg1 - Set{elem}\n" + 
-          "Or arg1->excludingFirst(elem)  Removes first elem from arg1\n" + 
-          "Or arg1->excludingAt(int)  Removes element at index ind"; 
+          " arg1->excludesAll(arg2)  true if arg1, arg2 have no common elements\n" + 
+          " arg1->excluding(elem)  The same as arg1 - Set{elem}\n" + 
+          " arg1->excludingFirst(elem)  Removes first elem from sequence arg1\n" + 
+          " arg1->excludingAt(int)  Removes sequence element at index ind"; 
         return "arg1->excludes(elem),  arg1->excludesAll(arg2),  arg1->excluding(elem), arg1->excludingFirst(elem) or arg1->excludingAt(int)"; 
       }
     
@@ -6040,7 +6084,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
  
       if ("static".startsWith(st)) 
-      { mess[0] = "static attribute or operation, ie., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
+      { mess[0] = "static attribute or operation, i.e., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
           "static query pi() : double\npre: true post: result = 3.14159265\n\n" + 
           "Static operations are not inherited. Define them in concrete classes where possible.\n"; 
         return "static"; 
@@ -6161,7 +6205,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
  
       if ("Set".startsWith(st)) 
-      { mess[0] = "Set type, eg., Set(String), Set(boolean), \n" + 
+      { mess[0] = "Set type, e.g., Set(String), Set(boolean), \n" + 
           "Set(double) or Set(C) for class C.\n" + 
           "But Set or Set(OclAny) is bad practice & non-portable.\n" + 
           "Operators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
@@ -6172,7 +6216,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
 
       if ("SortedSet".startsWith(st)) 
-      { mess[0] = "SortedSet type, eg., SortedSet(String), SortedSet(int), \n" + 
+      { mess[0] = "SortedSet type, e.g., SortedSet(String), SortedSet(int), \n" + 
           "SortedSet(double).\n" + 
           "But SortedSet by itself is bad practice & non-portable.\n" + 
           "Operators include:  st->size()  st->includes(elem)  st1->union(st2) (merge)\n" + 
@@ -6182,13 +6226,22 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
         return "SortedSet(Type)"; 
       }
+
+      if ("SortedMap".startsWith(st)) 
+      { mess[0] = "SortedMap type, e.g., SortedMap(String,int)\n" + 
+          "Operators include:  m->size()  m->at(key)  m1->union(m2)\n" + 
+          "m->select(x|P)  m->keys()  m->values()\n" + 
+          "Literal sorted maps are written as SortedMap{ x |-> y, a |-> b }\n" + 
+          "!! SortedMap(S,T) is available in C++, Java7, Java8 only.\n"; 
+        return "SortedMap(String,Type)"; 
+      } 
  
       if ("Map".startsWith(st)) 
-      { mess[0] = "Map type, eg., Map(String,int)\n" + 
+      { mess[0] = "Map type, e.g., Map(String,int)\n" + 
           "Operators include:  m->size()  m->at(key)  m1->union(m2)\n" + 
           "m->select(x|P)  m->keys()  m->values()\n" + 
           "Literal maps are written as Map{ x |-> y, a |-> b }\n" + 
-          "SortedMap(T) is available in C++, Java7, Java8 only.\n"; 
+          "SortedMap(S,T) is available in C++, Java7, Java8 only.\n"; 
         return "Map(String,Type)"; 
       } 
 
@@ -7403,7 +7456,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return null; 
     } 
 
-    ModelElement ent = ModelElement.lookupByName(rname, entities); 
+    ModelElement ent = 
+      ModelElement.lookupByName(rname, entities); 
     if (ent != null) 
     { return null; } 
 
@@ -7631,14 +7685,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if ("attribute".equals(lx2) || 
           "reference".equals(lx2) || 
           "operation".equals(lx2) ||
-          "query".equals(lx2) || 
+          "query".equals(lx2) || // "frozen".equals(lx2) ||
           "static".equals(lx2) || "invariant".equals(lx2) || 
           "stereotype".equals(lx2)) 
       { String lxr = lexicals.get(reached) + ""; 
         if ("attribute".equals(lxr) || 
             "reference".equals(lxr) || "query".equals(lxr) || 
             "operation".equals(lxr) || "static".equals(lxr) || 
-            "invariant".equals(lxr) ||
+            "invariant".equals(lxr) || 
+            // "frozen".equals(lxr) ||
             "stereotype".equals(lxr)) 
         { if ("static".equals(lxr))
           { if ("attribute".equals(lexicals.get(reached+1) + ""))
@@ -7675,6 +7730,24 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
               }  
             } 
           } 
+          /* else if ("frozen".equals(lxr))
+          { if ("attribute".equals(lexicals.get(reached+1) + ""))
+            { Attribute attr = parseAttributeClause(reached+1, i - 1, entities, types);
+              if (attr == null) 
+              { System.err.println("!! Cannot parse attribute " + 
+                                   lexicals.get(reached + 2)); 
+                Vector error2 = new Vector(); 
+                error2.add("Invalid attribute declaration"); 
+                error2.add(showLexicals(reached+1,i-1)); 
+                errors.add(error2); 
+              } 
+              else 
+              { atts.add(attr);
+                attr.setFrozen(true); 
+                res.addAttribute(attr);
+              } 
+            }
+          } */ 
           else if ("attribute".equals(lxr))
           { Attribute attr = parseAttributeClause(reached, i - 1, entities, types);
             if (attr == null) 
@@ -8240,7 +8313,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
   public Attribute parseAttributeClause(int st, int en, Vector entities, Vector types)
   { // attribute name [stereotypes] : type ;
-    // attribute name : type := init ;  
+    // attribute name [stereotypes] : type := init ;  
 
     String nme = lexicals.get(st+1) + ""; 
 
@@ -8251,16 +8324,39 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           { Expression init = 
               parse_expression(0,j+1,en-1,entities,types); 
             Type typ = 
-              parseType(i+1,j-1,entities,types); 
+              parseType(i+1,j-1,entities,types);
+ 
             if (typ != null) 
             { Attribute att = 
                  new Attribute(nme,typ,ModelElement.INTERNAL);
               att.setElementType(typ.getElementType());  
               System.out.println(">>> Attribute " + nme + ". Type = " + typ + ", elementType = " + att.getElementType()); 
+
               if (init != null) 
               { att.setInitialExpression(init); 
                 System.out.println(">>> Attribute " + nme + ". Initial expression = " + init); 
               }
+
+              for (int k = st+2; k < i; k++) 
+              { String lx = lexicals.get(k) + ""; 
+                if ("identity".equals(lx))
+                { att.stereotypes.add("identity"); 
+                  att.setIdentity(true); 
+                }
+                else if ("static".equals(lx))
+                { att.stereotypes.add("static"); 
+                  att.setStatic(true); 
+                }
+                else if ("derived".equals(lx))
+                { att.stereotypes.add("derived"); 
+                  att.setDerived(true); 
+                }
+                else if ("frozen".equals(lx))
+                { // att.stereotypes.add("readOnly"); 
+                  att.setFrozen(true); 
+                }
+              } 
+
               return att;  
             } 
             else 
@@ -8269,6 +8365,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         } 
 
         Type typ = parseType(i+1,en-1,entities,types); 
+
         if (typ != null) 
         { Attribute att = 
               new Attribute(nme,typ,ModelElement.INTERNAL);
@@ -8289,7 +8386,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             { att.stereotypes.add("derived"); 
               att.setDerived(true); 
             }
+            else if ("frozen".equals(lx))
+            { // att.stereotypes.add("readOnly"); 
+              att.setFrozen(true); 
+            }
           } 
+
           return att;
         }
         else 
@@ -10959,8 +11061,9 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // c.nospacelexicalanalysis("SortedSet{x,a,y}");
 
-    c.nospacelexicalanalysis("(a[i][j]).f(1)");  
+    // c.nospacelexicalanalysis("(a[i][j]).f(1)");  
     // c.nospacelexicalanalysis("(!a).f(1)"); 
+    c.nospacelexicalanalysis("SortedMap{}"); 
     Expression zz = c.parseExpression(); 
 
     System.out.println(zz); 

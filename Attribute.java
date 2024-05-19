@@ -508,6 +508,10 @@ public class Attribute extends ModelElement
 
       return true; 
     } 
+    else // no initialisation
+    { if (isFrozen())
+      { System.err.println("!! ERROR: frozen attributes must have an initialiser: " + getName()); } 
+    } 
 
     if (type == null) 
     { type = new Type("OclAny", null); 
@@ -1763,6 +1767,8 @@ public class Attribute extends ModelElement
 
     if (isStatic())
     { return "    static attribute " + getName() + " : " + getType() + init + ";"; } 
+    else if (isFrozen())
+    { return "    attribute " + getName() + " frozen : " + getType() + init + ";"; } 
     else if (isIdentity())
     { return "    attribute " + getName() + " identity : " + getType() + init + ";"; }
     else if (isDerived())
@@ -1818,8 +1824,13 @@ public class Attribute extends ModelElement
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("final "); } 
     type.generateJava(out);
-    // if (isFinal()) 
-    if (initialValue != null) 
+    
+    if (isFinal() && initialExpression != null)
+    { java.util.Map env0 = new java.util.HashMap(); 
+      out.print(nme + " = " + 
+            initialExpression.queryForm(env0,true) + ";"); 
+    }  
+    else if (initialValue != null) 
     { out.print(nme + " = " + initialValue + ";"); } 
     else 
     { out.print(nme + ";"); }
@@ -1883,10 +1894,15 @@ public class Attribute extends ModelElement
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("final "); } 
     type.generateJava6(out);
-    if (isFinal() && initialValue != null) 
-    { out.print(nme + " = " + initialValue + ";"); } 
+    
+    if (isFinal() && initialExpression != null)
+    { java.util.Map env0 = new java.util.HashMap(); 
+      out.print(nme + " = " + 
+        initialExpression.queryFormJava6(env0,true) + ";"); 
+    }  
     else 
     { out.print(nme + ";"); }
+
     if (kind == ModelElement.INTERNAL)
     { out.println(" // internal"); }
     else if (kind == ModelElement.SEN)
@@ -1920,8 +1936,12 @@ public class Attribute extends ModelElement
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("final "); } 
     type.generateJava7(out);  // ,elementType
-    if (isFinal() && initialValue != null) 
-    { out.print(nme + " = " + initialValue + ";"); } 
+    
+    if (isFinal() && initialExpression != null)
+    { java.util.Map env0 = new java.util.HashMap(); 
+      out.print(nme + " = " + 
+        initialExpression.queryFormJava7(env0,true) + ";"); 
+    }  
     else 
     { out.print(nme + ";"); }
     if (kind == ModelElement.INTERNAL)

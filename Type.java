@@ -1599,17 +1599,22 @@ public class Type extends ModelElement
   public String initialValueJava7()  // not used? 
   { if (isSequenceType(this))
     { return "new ArrayList<" + elementType.typeWrapperJava7() + ">()"; } 
+
     if (isSetType(this))
     { return "new HashSet<" + elementType.typeWrapperJava7() + ">()"; } 
     // Take account of sortedness
 
     if (isMapType(this))
-    { if (keyType != null) 
+    { String mapType = "HashMap"; 
+      if (sorted)
+      { mapType = "TreeMap"; } 
+
+      if (keyType != null) 
       { String kt = keyType.getJava7(); 
-        return "new HashMap<" + kt + ", " + elementType.typeWrapperJava7() + ">()"; 
+        return "new " + mapType + "<" + kt + ", " + elementType.typeWrapperJava7() + ">()"; 
       }
       else 
-      { return "new HashMap<String, " + elementType.typeWrapperJava7() + ">()"; 
+      { return "new " + mapType + "<String, " + elementType.typeWrapperJava7() + ">()"; 
       }
     }
  
@@ -3138,29 +3143,39 @@ public class Type extends ModelElement
         else 
         { return "new HashSet()"; }
       } 
+
       if (nme.equals("Sequence"))
       { if (elementType != null) 
         { return "new ArrayList<" + elementType.typeWrapperJava7() + ">()"; }
         else 
         { return "new ArrayList()"; } 
       } 
+
       if (nme.equals("Map"))
-      { if (keyType != null && elementType != null) 
+      { String mapType = "HashMap"; 
+
+        if (sorted)
+        { mapType = "TreeMap"; } 
+
+        if (keyType != null && elementType != null) 
         { String kt = keyType.typeWrapperJava7(); 
           String et = elementType.typeWrapperJava7(); 
-          return "new HashMap<" + kt + "," + et + ">()"; 
+          return "new " + mapType + "<" + kt + "," + et + ">()"; 
         } 
         else if (elementType != null) 
-        { return "new HashMap<String," + elementType.typeWrapperJava7() + ">()"; } 
+        { return "new " + mapType + "<String," + elementType.typeWrapperJava7() + ">()"; } 
         else 
-        { return "new HashMap()"; }
+        { return "new " + mapType + "()"; }
       }  
+
       if (alias != null)    // For datatypes
       { return alias.getDefaultJava7(); } 
+
       return "null";    // for class types, functions
     } 
     else if (values.size() > 0) 
     { return (String) values.get(0); } 
+
     return "null"; 
   }
   // sorted sets?
@@ -3946,12 +3961,16 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Map"))
-    { if (keyType != null && elementType != null) 
-      { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+    { String tname = "HashMap"; 
+      if (sorted) 
+      { tname = "TreeMap"; } 
+
+      if (keyType != null && elementType != null) 
+      { return tname + "<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "HashMap<Object, " + elementType.typeWrapperJava7() + ">"; } 
+      { return tname + "<Object, " + elementType.typeWrapperJava7() + ">"; } 
       else 
-      { return "HashMap"; } 
+      { return tname; } 
     
       // if (sorted) 
       // { tname = "TreeMap"; } 
@@ -4035,15 +4054,18 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Map"))
-    { if (keyType != null && elementType != null) 
-      { return "Map<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+    { String tname = "HashMap"; 
+      if (sorted) 
+      { tname = "TreeMap"; } 
+
+      if (keyType != null && elementType != null) 
+      { return tname + "<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "Map<Object, " + elementType.typeWrapperJava7() + ">"; } 
+      { return tname + "<Object, " + elementType.typeWrapperJava7() + ">"; } 
       else 
-      { return "Map"; } 
+      { return tname; } 
     
-      // if (sorted) 
-      // { tname = "TreeMap"; } 
+      // "Map" 
     } 
 
     if (nme.equals("Function"))
@@ -4126,12 +4148,25 @@ public class Type extends ModelElement
     }  
 
     if (nme.equals("Map"))
-    { if (keyType != null && elementType != null) 
-      { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+    { String tname = "HashMap"; 
+      if (sorted) 
+      { tname = "TreeMap"; } 
+
+      String kt = "Object"; 
+      if (keyType != null)
+      { kt = keyType.typeWrapperJava7(); } 
+
+      String etm = "Object"; 
+      if (elementType != null)
+      { etm = elementType.typeWrapperJava7(); } 
       else if (elemType != null) 
-      { return "HashMap<Object, " + elemType.typeWrapperJava7() + ">"; } 
-      else 
-      { return "HashMap"; }
+      { etm = elemType.typeWrapperJava7(); } 
+
+      if (keyType == null && elementType == null && 
+          elemType == null)
+      { return tname; } 
+
+      return tname + "<" + kt + ", " + etm + ">";  
     }  
 
     if (nme.equals("Function"))
@@ -4206,7 +4241,12 @@ public class Type extends ModelElement
     { return "ArrayList<" + et + ">"; } 
 
     if (nme.equals("Map"))
-    { return "HashMap<" + kt + ", " + et + ">"; } 
+    { String tname = "HashMap"; 
+      if (typ.isSorted()) 
+      { tname = "TreeMap"; } 
+
+      return tname + "<" + kt + ", " + et + ">"; 
+    } 
 
     if (nme.equals("Function"))
     { return "Function<" + kt + ", " + et + ">"; } 
@@ -4385,12 +4425,16 @@ public class Type extends ModelElement
     } 
 
     if ("Map".equals(nme)) 
-    { if (keyType != null && elementType != null) 
-      { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+    { String tname = "HashMap"; 
+      if (sorted) 
+      { tname = "TreeMap"; } 
+
+      if (keyType != null && elementType != null) 
+      { return tname + "<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "HashMap<Object, " + elementType.typeWrapperJava7() + ">"; }
+      { return tname + "<Object, " + elementType.typeWrapperJava7() + ">"; }
       else 
-      { return "HashMap<Object, Object>"; }
+      { return tname + "<Object, Object>"; }
     } 
 
     if ("Function".equals(nme)) 
@@ -5227,6 +5271,10 @@ public class Type extends ModelElement
       { kt = "String"; } 
       if (elementType == null)
       { et = "OclAny"; } 
+
+      if (isSorted())
+      { nme = "Sorted" + nme; } 
+
       return nme + "(" + kt + "," + et + ")"; 
     } 
 

@@ -4020,6 +4020,65 @@ public class UCDArea extends JPanel
     System.out.println(">>> Remove unnecessary imports"); 
   } 
 
+  public void generateMamba()
+  { Vector auxcstls = new Vector(); 
+    
+    CGSpec cgs = loadCSTL("cgMamba.cstl",auxcstls); 
+    cgs.setTypes(types); 
+    cgs.setEntities(entities); 
+
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      String ename = ent.getName(); 
+
+      if (ent.isDerived()) { }
+      else if (ent.isComponent()) { }
+      else 
+      { String entfile = ename + ".mamba"; 
+        File entf = new File("output/" + entfile); 
+        try
+        { PrintWriter entfout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(entf)));
+          		  					
+          ent.generateOperationDesigns(types,entities);  
+          String entcode = ent.cg(cgs);    
+          cgs.displayText(entcode,entfout);
+
+          entfout.println(); 
+          entfout.println(); 
+
+          // String maincode = ent.cg(cgswiftmain); 
+          // cgswiftmain.displayText(maincode,entfout); 
+
+          entfout.close();
+        } catch (Exception _e1) { _e1.printStackTrace(); }
+      }
+    } 			
+
+    System.out.println(">>> classes E are generated in files output/E.mamba"); 
+
+    String appfile = "App.mamba"; 
+    File appf = new File("output/" + appfile); 
+    try
+    { PrintWriter appfout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(appf)));
+        
+      Vector entusecases = new Vector(); 
+      for (int i = 0; i < useCases.size(); i++) 
+      { if (useCases.get(i) instanceof UseCase)
+        { UseCase uc = (UseCase) useCases.get(i);
+          entusecases.add(uc);
+          String uccode = uc.cgActivity(cgs,types,entities);
+          cgs.displayText(uccode,appfout);
+        }       
+      } 
+   
+      appfout.close();
+    } catch (Exception _e1) { _e1.printStackTrace(); }
+  } 
+
 
   public void generateSwiftUIApp()
   { IOSAppGenerator gen = new IOSAppGenerator(); 
@@ -4467,7 +4526,7 @@ public class UCDArea extends JPanel
       //   tabLabels.add(Named.capitalise(puc)); 
       // }
       // else 
-	  if ("map".equals(puc))
+      if ("map".equals(puc))
       { operationNames.add("MapScreen"); 
         tabLabels.add(Named.capitalise(puc)); 
         File mapoptions = new File("output/swiftuiapp/OptionsDialog.swift"); 
@@ -11533,6 +11592,7 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.ArrayList;"); 
     out.println("import java.util.Map;"); 
     out.println("import java.util.HashMap;"); 
+    out.println("import java.util.TreeMap;"); 
     out.println("import java.util.Set;"); 
     out.println("import java.util.TreeSet;"); 
     out.println("import java.util.HashSet;"); 
@@ -11587,6 +11647,12 @@ public void produceCUI(PrintWriter out)
 
     out.println("  public static <T,R> HashMap<T,R> singletonMap(T x, R y)"); 
     out.println("  { HashMap<T,R> res = new HashMap<T,R>();");  
+    out.println("    res.put(x,y); "); 
+    out.println("    return res; "); 
+    out.println("  }"); 
+    out.println(); 
+    out.println("  public static <T,R> TreeMap<T,R> singletonSortedMap(T x, R y)"); 
+    out.println("  { TreeMap<T,R> res = new TreeMap<T,R>();");  
     out.println("    res.put(x,y); "); 
     out.println("    return res; "); 
     out.println("  }"); 

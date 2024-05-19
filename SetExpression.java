@@ -153,12 +153,20 @@ public class SetExpression extends Expression
   } 
 
   public void findClones(java.util.Map clones, String rule, String op)
-  { return; } 
+  { for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i); 
+      elem.findClones(clones, rule, op);  
+    }
+  } 
 
   public void findClones(java.util.Map clones, 
                          java.util.Map cloneDefs, 
                          String rule, String op)
-  { return; } 
+  { for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i); 
+      elem.findClones(clones, cloneDefs, rule, op);  
+    }
+  } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { for (int i = 0; i < elements.size(); i++) 
@@ -182,6 +190,11 @@ public class SetExpression extends Expression
   public boolean isMap()
   { return type != null && "Map".equals(type.getName()); }
 
+  public boolean isSortedMap()
+  { return type != null && "Map".equals(type.getName()) && 
+           type.isSorted(); 
+  }
+
   public void setOrdered(boolean ord)
   { ordered = ord; } 
 
@@ -196,14 +209,16 @@ public class SetExpression extends Expression
 
   public Expression getLastElement()
   { int i = elements.size(); 
-    if (i == 0) { return new BasicExpression("Invalid"); } 
+    if (i == 0) 
+    { return new BasicExpression("Invalid"); } 
     else 
     { return (Expression) elements.get(i-1); } 
   } 
 
   public Expression getFirstElement()
   { int i = elements.size(); 
-    if (i == 0) { return new BasicExpression("Invalid"); } 
+    if (i == 0) 
+    { return new BasicExpression("Invalid"); } 
     else 
     { return (Expression) elements.get(0); } 
   } 
@@ -231,6 +246,8 @@ public class SetExpression extends Expression
       else 
       { res = "Ref{"; }
     }  
+    else if (isSortedMap())
+    { res = "SortedMap{"; }
     else if (isMap())
     { res = "Map{"; }
     else if (ordered) 
@@ -327,7 +344,10 @@ public class SetExpression extends Expression
 
   public String toOcl(java.util.Map env, boolean local)
   { String res;
-    if (isMap())
+
+    if (isSortedMap())
+    { res = "SortedMap{"; }
+    else if (isMap())
     { res = "Map{"; }
     else if (ordered) 
     { res = "Sequence{"; } 
@@ -491,6 +511,32 @@ public class SetExpression extends Expression
       return "new " + cset + "[" + refsze + "]"; 
     } 
 
+    if (isSortedMap())
+    { String mtype = type.getJava7(elementType); 
+      String result = "new TreeMap()";
+ 
+      if (elements.size() > 0)
+      { BinaryExpression elem1 = 
+          (BinaryExpression) elements.get(0); 
+        result = 
+          "Ocl.singletonSortedMap(" + 
+              elem1.getLeft().queryFormJava7(env,local) +
+              "," + 
+              elem1.getRight().queryFormJava7(env,local) +                  
+              ")"; 
+      } 
+
+      for (int i = 1; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
+        result = "Ocl.includingMap(" + result + "," + key.queryFormJava7(env,local) + "," + 
+		                           value.queryFormJava7(env,local) + ")";
+      }
+
+      return result; 
+    }
+    
     if (isMap())
     { String mtype = type.getJava7(elementType); 
       String result = "(new " + mtype + "())"; 
@@ -911,7 +957,11 @@ public class SetExpression extends Expression
     }
     // deduce element type and type itself, and the entity??
 
-    if (isMap())
+    if (isSortedMap())
+    { type = new Type("Map", null); 
+      type.setSorted(true); 
+    } 
+    else if (isMap())
     { type = new Type("Map", null); } 
     else if (ordered)
     { type = new Type("Sequence",null); }

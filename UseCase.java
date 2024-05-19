@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2810,13 +2810,16 @@ public void generateCUIcode(PrintWriter out)
       { newstat = new SequenceStatement(); 
         ReturnStatement returnstat = null; 
         if (resultType != null && !("void".equals(resultType + "")))
-        { Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
+        { Attribute att = 
+            new Attribute("result",resultType,
+                          ModelElement.INTERNAL); 
           att.setElementType(elementType);
-	     CreationStatement cres = new CreationStatement(resultType + "", "result");
-	     cres.setInstanceType(resultType);
+          CreationStatement cres = new CreationStatement(resultType + "", "result");
+          cres.setInstanceType(resultType);
 	     cres.setElementType(elementType);   
 	     ((SequenceStatement) newstat).addStatement(cres);
-	     returnstat = new ReturnStatement(new BasicExpression(att));   
+	     returnstat = 
+            new ReturnStatement(new BasicExpression(att));   
         }
         ((SequenceStatement) newstat).addStatement(stat); 
         Statement actstat = activity.generateDesign(env,false); 
@@ -2837,8 +2840,7 @@ public void generateCUIcode(PrintWriter out)
          returnstat = new ReturnStatement(new BasicExpression(att));   
 	   ((SequenceStatement) newstat).addStatement(returnstat);
       }
-        
-      
+       
       newstat.typeCheck(types,entities,contexts,newparams); 
       return newstat; 
     } 
@@ -3726,8 +3728,9 @@ public void generateCUIcode(PrintWriter out)
   public String cgActivity(CGSpec cgs, Vector types, Vector entities)
   { java.util.Map env = new java.util.HashMap(); 
   
-    System.out.println(">>> " + getName() + " classifierBehaviour= " + classifierBehaviour + 
-	                   " activity= " + activity); 
+    System.out.println(">>> " + getName() + 
+      " classifierBehaviour= " + classifierBehaviour + 
+	 " activity= " + activity); 
 
     if (classifierBehaviour != null && !Statement.isEmpty(classifierBehaviour))
     { // Statement impl = implementBehaviour(types,entities);
@@ -3736,14 +3739,15 @@ public void generateCUIcode(PrintWriter out)
       if (stat != null) 
       { return stat.cg(cgs); }  
     }
-	else if (activity != null) 
-	{ Statement stat1 = activity.generateDesign(env,false);
+    else if (activity != null) 
+    { Statement stat1 = activity.generateDesign(env,false);
       System.out.println(">>> Use case activity implementation is: " + stat1);  
       if (stat1 != null) 
       { return stat1.cg(cgs); }  
     }
+
     Statement nullstat = new SequenceStatement(); 
-    return "";    
+    return "";  
   }
 
   public String getAndroidValueObject() 

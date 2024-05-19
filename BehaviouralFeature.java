@@ -1893,7 +1893,9 @@ public class BehaviouralFeature extends ModelElement
     { System.out.println(">>> Matched operation rule: " + r + " with args " + args); 
       return r.applyRule(args,eargs,cgs); 
     }
+
     System.out.println("!!! No matching rule for operation " + getName()); 
+
     return etext;
   }
   
@@ -1908,6 +1910,7 @@ public class BehaviouralFeature extends ModelElement
 
     // We are only interested in those that are *read* 
     // by the operation - its readFrame. 
+    // And not frozen attributes. 
 	
     String nme = getName();  
     Vector res = new Vector(); 
@@ -1943,7 +1946,10 @@ public class BehaviouralFeature extends ModelElement
     for (int i = 0; i < allattributes.size(); i++) 
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
-      Attribute att = (Attribute) allattributes.get(i); 
+      Attribute att = (Attribute) allattributes.get(i);
+
+      if (att.isFrozen()) { continue; } 
+ 
       Vector testassignments = 
         att.testCases("parameters", lowerBounds, 
                       upperBounds, attoptests); 
@@ -2019,6 +2025,9 @@ public class BehaviouralFeature extends ModelElement
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
+
+      if (att.isFrozen()) { continue; } 
+
       Vector testassignments = 
         att.testCasesCSharp(
           "parameters", lowerBounds, upperBounds, attoptests); 
@@ -2094,6 +2103,9 @@ public class BehaviouralFeature extends ModelElement
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
+
+      if (att.isFrozen()) { continue; } 
+
       Vector testassignments = 
         att.testCasesCPP(
           "parameters", lowerBounds, upperBounds, attoptests); 
@@ -2169,6 +2181,9 @@ public class BehaviouralFeature extends ModelElement
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
+
+      if (att.isFrozen()) { continue; } 
+
       Vector testassignments = 
         att.testCasesPython(
           "parameters", lowerBounds, upperBounds, attoptests); 
@@ -2240,7 +2255,12 @@ public class BehaviouralFeature extends ModelElement
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCasesJava6("parameters", lowerBounds, upperBounds, attoptests); 
+
+      if (att.isFrozen()) { continue; } 
+
+      Vector testassignments = 
+         att.testCasesJava6("parameters", 
+               lowerBounds, upperBounds, attoptests); 
       allOpTests.add(attoptests); 
 	  
       for (int j = 0; j < res.size(); j++) 
@@ -2309,7 +2329,12 @@ public class BehaviouralFeature extends ModelElement
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCasesJava7("parameters", lowerBounds, upperBounds, attoptests); 
+    
+      if (att.isFrozen()) { continue; } 
+
+      Vector testassignments = 
+         att.testCasesJava7("parameters", 
+                lowerBounds, upperBounds, attoptests); 
       allOpTests.add(attoptests); 
 	  
       for (int j = 0; j < res.size(); j++) 
@@ -2377,8 +2402,13 @@ public class BehaviouralFeature extends ModelElement
     for (int i = 0; i < allattributes.size(); i++) 
     { Vector newres = new Vector(); 
       Vector attoptests = new Vector(); 
-      Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCasesJava8("parameters", lowerBounds, upperBounds, attoptests); 
+      Attribute att = (Attribute) allattributes.get(i);
+
+      if (att.isFrozen()) { continue; } 
+ 
+      Vector testassignments = 
+         att.testCasesJava8("parameters", 
+           lowerBounds, upperBounds, attoptests); 
       allOpTests.add(attoptests); 
 	  
       for (int j = 0; j < res.size(); j++) 
@@ -9969,7 +9999,7 @@ public class BehaviouralFeature extends ModelElement
       if (t != null && t.isPrimitive())
       { newitem = Expression.wrap(resultType,newitem); }
       header2 = header2 + 
-                "      { result.add(" + newitem + "); }\n"; 
+                "      result.add(" + newitem + ");\n"; 
     }
     
     header2 = header2 + "    }\n" + "    return result; \n" + "  }\n\n"; 

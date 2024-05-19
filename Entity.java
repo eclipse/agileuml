@@ -8477,6 +8477,9 @@ public class Entity extends ModelElement implements Comparable
       "    " + ename + " " + ex + " = new " + ename + "();\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+
+      if (att.isFrozen()) { continue; } 
+
       String aname = att.getName(); 
       Type atype = att.getType(); 
       String data = "(String) _line1vals.get(" + i + ")"; 
@@ -8490,9 +8493,11 @@ public class Entity extends ModelElement implements Comparable
         if (elemT != null && elemT.isParsable())
         res = res + "    " + atype.collectionExtractionCode(ex,aname,"_line1vals") + ";\n"; 
       }          
+
       if (att.isUnique())
       { res = res + "    " + controllerIndexCode(att,ex) + ";\n"; } 
     }  
+
     res = res + 
       "    return " + ex + ";\n" + 
       "  }\n\n"; 
@@ -8777,6 +8782,9 @@ public class Entity extends ModelElement implements Comparable
  
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+
+      if (att.isFrozen()) { continue; } 
+
       String aname = att.getName(); 
       Type atype = att.getType(); 
       String data = "(String) _line1vals.get(" + i + ")"; 
@@ -8828,7 +8836,10 @@ public class Entity extends ModelElement implements Comparable
     } 
  
     for (int i = 0; i < attributes.size(); i++) 
-    { Attribute att = (Attribute) attributes.get(i); 
+    { Attribute att = (Attribute) attributes.get(i);
+
+      if (att.isFrozen()) { continue; } 
+ 
       String aname = att.getName(); 
       Type atype = att.getType(); 
       String data = "_line1vals[" + i + "]"; 
@@ -9893,6 +9904,8 @@ public class Entity extends ModelElement implements Comparable
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
+      if (att.isFinal()) 
+      { continue; } 
       String aname = att.getName();
       out.println("    result." + aname + " = this." + aname + ";"); 
     }
@@ -13027,6 +13040,7 @@ public class Entity extends ModelElement implements Comparable
         previous = true;
       }
     }
+
     for (int j = 0; j < associations.size(); j++)
     { Association ast = (Association) associations.get(j);
       if (ast.isQualified()) { continue; } 
@@ -13039,6 +13053,7 @@ public class Entity extends ModelElement implements Comparable
         previous = true;
       }
     }
+
     return res;
   }
 
@@ -13119,7 +13134,7 @@ public class Entity extends ModelElement implements Comparable
     String res = createAllOpJava7(ename,ex) + "\n" + 
                  header + 
                  "  { " + ename + " " + ex + ";\n" + 
-                 cardcheck + tests + "    " + 
+                 cardcheck + tests + "    \n" + 
                  "    " + ex + " = new " + ename + "(" + createOpArgs() + ");\n";
     res = res + "    add" + ename + "(" + ex + ");\n";
     res = res + inits; 
@@ -19211,14 +19226,19 @@ public BehaviouralFeature designAbstractKillOp()
       Expression.identifyLowerBounds(
                          allattributes,aBounds,lowerBounds); 
     } 
-	
+
+    Vector relevantAttributes = new Vector(); 
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
-      if (att.isIdentity() && allattributes.size() > 1) 
-      { continue; }
-      if (att.isDerived() && allattributes.size() > 1) 
+      if (att.isIdentity() || att.isDerived() ||
+          att.isFrozen()) 
       { continue; } 
-	   
+      relevantAttributes.add(att); 
+    } 
+
+    for (int i = 0; i < relevantAttributes.size(); i++) 
+    { Attribute att = (Attribute) relevantAttributes.get(i);
+        
       Vector newres = new Vector(); 
       Vector javatests = new Vector(); 
       Vector testassignments = att.testCases(x,lowerBounds,
@@ -19241,7 +19261,7 @@ public BehaviouralFeature designAbstractKillOp()
     // All combinations of test values for all attributes
     // x : E\n x.att1 = v1\n x.att2 = v1
     // x : E\n x.att1 = v2\n x.att2 = v1, etc
-    // But not identity attributes. 
+    // But not identity, frozen or derived attributes. 
 
     String y = nme.toLowerCase() + "x_"; 
 
@@ -19266,7 +19286,7 @@ public BehaviouralFeature designAbstractKillOp()
 	
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
-      if (att.isIdentity() && allattributes.size() > 1) 
+      if (att.isIdentity() && relevantAttributes.size() > 1) 
       { res.clear(); 
         String attnme = att.getName(); // assumed to be a string or entity or int
         for (int j = 0; j < newres.size(); j++) 

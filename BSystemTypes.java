@@ -10782,9 +10782,15 @@ public class BSystemTypes extends BComponent
   } 
 
   public static String generateIncludingMapOpJava7()
-  { String res = "  public static <D,R> HashMap<D,R> includingMap(Map<D,R> m, D src, R trg)\n" + 
+  { String res = "  public static <D,R> HashMap<D,R> includingMap(HashMap<D,R> m, D src, R trg)\n" + 
       "  { HashMap<D,R> copy = new HashMap<D,R>();\n" + 
       "    copy.putAll(m); \n" +
+      "    copy.put(src,trg);\n" +
+      "    return copy;\n" +
+      "  } \n\n";
+    res = res + 
+      "  public static <D,R> TreeMap<D,R> includingMap(TreeMap<D,R> m, D src, R trg)\n" + 
+      "  { TreeMap<D,R> copy = (TreeMap<D,R>) m.clone();\n" + 
       "    copy.put(src,trg);\n" +
       "    return copy;\n" +
       "  } \n";
@@ -10828,7 +10834,7 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludeAllMapOpJava7()
   { String res = 
-      "  public static <D,R> HashMap<D,R> excludeAllMap(Map<D,R> m1, Map m2)\n" + 
+      "  public static <D,R> HashMap<D,R> excludeAllMap(HashMap<D,R> m1, Map m2)\n" + 
       "  { // m1 - m2\n" +
       "    HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    Set<D> keys = m1.keySet(); \n" +
@@ -10837,7 +10843,22 @@ public class BSystemTypes extends BComponent
       "    { if (m2.containsKey(key))\n" +
       "      { }\n" +
       "      else\n" +
-      "      { res.put(key,m1.get(key));  }\n" +
+      "      { res.put(key,m1.get(key)); }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n";
+
+    res = res + 
+      "  public static <D,R> TreeMap<D,R> excludeAllMap(TreeMap<D,R> m1, Map m2)\n" + 
+      "  { // m1 - m2\n" +
+      "    TreeMap<D,R> res = new TreeMap<D,R>();\n" +
+      "    Set<D> keys = m1.keySet(); \n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (m2.containsKey(key))\n" +
+      "      { }\n" +
+      "      else\n" +
+      "      { res.put(key,m1.get(key)); }\n" +
       "    }    \n" +
       "    return res;\n" +
       "  }\n"; 
@@ -10846,10 +10867,18 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludingMapKeyOpJava7()
   { String res = 
-      "  public static <D,R> HashMap<D,R> excludingMapKey(Map<D,R> m, D k)\n" + 
+      "  public static <D,R> HashMap<D,R> excludingMapKey(HashMap<D,R> m, D k)\n" + 
       "  { // m - { k |-> m(k) } \n" +
       "    HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    res.putAll(m);\n" +
+      "    res.remove(k);\n" +
+      "    return res;\n" +
+      "  }\n\n";
+
+    res = res +  
+      "  public static <D,R> TreeMap<D,R> excludingMapKey(TreeMap<D,R> m, D k)\n" + 
+      "  { // m - { k |-> m(k) } \n" +
+      "    TreeMap<D,R> res = (TreeMap<D,R>) m.clone();\n" +
       "    res.remove(k);\n" +
       "    return res;\n" +
       "  }\n";
@@ -10858,9 +10887,24 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludingMapValueOpJava7()
   { String res = 
-      "  public static <D,R> HashMap<D,R> excludingMapValue(Map<D,R> m, R v)\n" + 
+      "  public static <D,R> HashMap<D,R> excludingMapValue(HashMap<D,R> m, R v)\n" + 
       "  { // m - { k |-> v }\n" + 
       "    HashMap<D,R> res = new HashMap<D,R>();\n" +
+      "    Set<D> keys = m.keySet(); \n" +
+      "    \n" +
+      "    for (D key : keys)\n" +
+      "    { if (v.equals(m.get(key)))\n" +
+      "      { }\n" +
+      "      else\n" +
+      "      { res.put(key,m.get(key));  }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res +
+      "  public static <D,R> TreeMap<D,R> excludingMapValue(TreeMap<D,R> m, R v)\n" + 
+      "  { // m - { k |-> v }\n" + 
+      "    TreeMap<D,R> res = new TreeMap<D,R>();\n" +
       "    Set<D> keys = m.keySet(); \n" +
       "    \n" +
       "    for (D key : keys)\n" +
@@ -10876,19 +10920,39 @@ public class BSystemTypes extends BComponent
 
   public static String generateUnionMapOpJava7()
   { String res = 
-      "  public static <D,R> HashMap<D,R> unionMap(Map<D,R> m1, Map<D,R> m2)\n" + 
+      "  public static <D,R> HashMap<D,R> unionMap(HashMap<D,R> m1, Map<D,R> m2)\n" + 
       "  { HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    res.putAll(m1);\n" +
       "    res.putAll(m2);    \n" +
       "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res +
+      "  public static <D,R> TreeMap<D,R> unionMap(TreeMap<D,R> m1, Map<D,R> m2)\n" + 
+      "  { TreeMap<D,R> res = (TreeMap<D,R>) m1.clone();\n" +
+      "    res.putAll(m2);    \n" +
+      "    return res;\n" +
       "  }\n"; 
+
     return res; 
   } 
 
   public static String generateIntersectionMapOpJava7()
   { String res = 
-      "  public static <D,R> HashMap<D,R> intersectionMap(Map<D,R> m1, Map m2)\n" + 
+      "  public static <D,R> HashMap<D,R> intersectionMap(HashMap<D,R> m1, Map m2)\n" + 
       "  { HashMap<D,R> res = new HashMap<D,R>();\n" +
+      "    Set<D> keys = m1.keySet(); \n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (m2.containsKey(key) && m1.get(key) != null && m1.get(key).equals(m2.get(key)))\n" +
+      "      { res.put(key,m1.get(key));  }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n";
+
+    res = res + 
+      "  public static <D,R> TreeMap<D,R> intersectionMap(TreeMap<D,R> m1, Map m2)\n" + 
+      "  { TreeMap<D,R> res = new TreeMap<D,R>();\n" +
       "    Set<D> keys = m1.keySet(); \n" +
       "  \n" +
       "    for (D key : keys)\n" +
@@ -10916,7 +10980,7 @@ public class BSystemTypes extends BComponent
 
 
 	res = res + 
-	  "  public static <D,R> HashMap<D,R> restrictMap(Map<D,R> m1, Collection<D> ks) \n" +
+	  "  public static <D,R> HashMap<D,R> restrictMap(HashMap<D,R> m1, Collection<D> ks) \n" +
       "  { Set<D> keys = new HashSet<D>();\n" +
       "    keys.addAll(m1.keySet());\n" +
       "    HashMap<D,R> res = new HashMap<D,R>();\n" +
@@ -10927,9 +10991,22 @@ public class BSystemTypes extends BComponent
       "    }    \n" +
       "    return res;\n" +
       "  }\n\n"; 
+
+	res = res + 
+	  "  public static <D,R> TreeMap<D,R> restrictMap(TreeMap<D,R> m1, Collection<D> ks) \n" +
+      "  { Set<D> keys = new HashSet<D>();\n" +
+      "    keys.addAll(m1.keySet());\n" +
+      "    TreeMap<D,R> res = new TreeMap<D,R>();\n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (ks.contains(key))\n" +
+      "      { res.put(key,m1.get(key)); }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
  
       res = res + 
-      "  public static <D,R> HashMap<D,R> antirestrictMap(Map<D,R> m1, Collection<D> ks) \n" +
+      "  public static <D,R> HashMap<D,R> antirestrictMap(HashMap<D,R> m1, Collection<D> ks) \n" +
       "  { Set<D> keys = new HashSet<D>();\n" +
       "    keys.addAll(m1.keySet());\n" +
       "    HashMap<D,R> res = new HashMap<D,R>();\n" +
@@ -10943,7 +11020,21 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
       res = res + 
-      "  public static <D,R> HashMap<D,R> selectMap(Map<D,R> m, Predicate<R> f)\n" +
+      "  public static <D,R> TreeMap<D,R> antirestrictMap(TreeMap<D,R> m1, Collection<D> ks) \n" +
+      "  { Set<D> keys = new HashSet<D>();\n" +
+      "    keys.addAll(m1.keySet());\n" +
+      "    TreeMap<D,R> res = new TreeMap<D,R>();\n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (ks.contains(key)) { }\n" +
+      "      else \n" + 
+      "      { res.put(key,m1.get(key)); }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+      res = res + 
+      "  public static <D,R> HashMap<D,R> selectMap(HashMap<D,R> m, Predicate<R> f)\n" +
       "  { HashMap<D,R> result = new HashMap<D,R>();\n" +
       "    Set<D> keys = m.keySet();\n" +
       "    for (D k : keys)\n" +
@@ -10955,7 +11046,19 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
       res = res + 
-      "  public static <D,R> HashMap<D,R> rejectMap(Map<D,R> m, Predicate<R> f)\n" +
+      "  public static <D,R> TreeMap<D,R> selectMap(TreeMap<D,R> m, Predicate<R> f)\n" +
+      "  { TreeMap<D,R> result = new TreeMap<D,R>();\n" +
+      "    Set<D> keys = m.keySet();\n" +
+      "    for (D k : keys)\n" +
+      "    { R value = m.get(k);\n" +
+      "      if (f.test(value))\n" +
+      "      { result.put(k,value); }\n" +
+      "    }\n" +
+      "    return result;\n" +
+      "  }\n\n"; 
+
+      res = res + 
+      "  public static <D,R> HashMap<D,R> rejectMap(HashMap<D,R> m, Predicate<R> f)\n" +
       "  { HashMap<D,R> result = new HashMap<D,R>();\n" +
       "    Set<D> keys = m.keySet();\n" +
       "    for (D k : keys)\n" +
@@ -10967,8 +11070,21 @@ public class BSystemTypes extends BComponent
       "    return result;\n" +
       "  }\n\n"; 
 
+      res = res + 
+      "  public static <D,R> TreeMap<D,R> rejectMap(TreeMap<D,R> m, Predicate<R> f)\n" +
+      "  { TreeMap<D,R> result = new TreeMap<D,R>();\n" +
+      "    Set<D> keys = m.keySet();\n" +
+      "    for (D k : keys)\n" +
+      "    { R value = m.get(k);\n" +
+      "      if (f.test(value)) {}\n" +
+      "      else\n" +
+      "      { result.put(k,value); }\n" +
+      "    }\n" +
+      "    return result;\n" +
+      "  }\n\n"; 
+
       res = res +
-      "  public static <D,R,T> HashMap<D,T> collectMap(HashMap<D,R> m, Function<R,T> _f)\n" +
+      "  public static <D,R,T> HashMap<D,T> collectMap(Map<D,R> m, Function<R,T> _f)\n" +
       "  { HashMap<D,T> result = new HashMap<D,T>();\n" + 
       "    Set<D> keys = m.keySet();\n" +
       "    for (D k : keys)\n" +

@@ -334,13 +334,16 @@ class BinaryExpression extends Expression
          || operator.equals("\\/") || 
          operator.equals("->at") || operator.equals("->apply") || 
          operator.equals("/\\") || operator.equals("->union") ||
-         operator.equals("->intersection") || operator.equals("->symmetricDifference")) 
+         operator.equals("->intersection") || 
+         operator.equals("->symmetricDifference")) 
      { leftres = left.checkConversions(propType, propElemType, interp); 
        rightres = right.checkConversions(propType, propElemType, interp); 
        return new BinaryExpression(operator,leftres,rightres); 
      } 
-     else if (operator.equals("->append") || operator.equals("->including") ||
-              operator.equals("->prepend") || operator.equals("->excluding") ||
+     else if (operator.equals("->append") || 
+              operator.equals("->including") ||
+              operator.equals("->prepend") || 
+              operator.equals("->excluding") ||
               operator.equals("->excludingAt") ||
               operator.equals("->excludingFirst"))
      { leftres = left.checkConversions(propType, propElemType, interp); 
@@ -651,7 +654,8 @@ class BinaryExpression extends Expression
     { return re + "->includesAll(" + le + ")"; } 
     if (operator.equals("/<:"))
     { return "not(" + re + "->includesAll(" + le + "))"; }
-    if (operator.equals("\\/") || operator.equals("^") || "->concatenate".equals(operator))
+    if (operator.equals("\\/") || operator.equals("^") || 
+        "->concatenate".equals(operator))
     { return le + "->union(" + re + ")"; } 
     if (operator.equals("/\\"))
     { return le + "->intersection(" + re + ")"; } 
@@ -828,7 +832,7 @@ class BinaryExpression extends Expression
     { res.add(">="); }
     else if ("/=".equals(op))
     { res.add("="); }
-    else if ("=".equals(op) && left.isNotLocalVariable())
+    else if ("<>=".equals(op)) // && left.isNotLocalVariable())
     { res.add("/="); }
     else if ("->union".equals(op))
     { res.add("->intersection"); }
@@ -1514,7 +1518,8 @@ class BinaryExpression extends Expression
              operator.equals("->at") || 
              operator.equals("->apply") ||
              operator.equals("->closure") || 
-             operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
+             operator.equals("->intersection") || 
+             operator.equals("->symmetricDifference"))   
     { basicString = "(OclBinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; } 
 
     if (operator.startsWith("->"))
@@ -2531,16 +2536,21 @@ class BinaryExpression extends Expression
 
     if (operator.equals("->oclAsType"))
     { String typ = right + ""; 
-      if ("int".equals(typ) || "long".equals(typ) || "double".equals(typ) || 
+
+      if ("int".equals(typ) || 
+          "long".equals(typ) || "double".equals(typ) || 
           "boolean".equals(typ))
       { return true; } // or it is the name of an enum - but a strange thing to do
+
       if (right.type != null && right.type.isEnumeration())
       // ModelElement.lookupByName(typ, types) != null) 
       { return true; } 
+
       return false; 
     } 
 
-    if (operator.equals("->at") || operator.equals("|A") || operator.equals("->any"))
+    if (operator.equals("->at") || operator.equals("|A") || 
+        operator.equals("->any"))
     { return Type.isPrimitiveType(left.elementType); } 
 
     if (operator.equals("->apply"))
@@ -4530,28 +4540,61 @@ public void findClones(java.util.Map clones,
       left.multiplicity = ModelElement.MANY; 
       right.multiplicity = ModelElement.MANY; 
 
+      Type lftype = left.getType(); 
+      Type rtype = right.getType(); 
+
       if (left.isMap() && !right.isMap())
       { System.err.println("!! RHS of " + this + 
-                           " must be map"); 
-        right.setType(new Type("Map", null)); 
-        type = new Type("Map", null); 
-        elementType = left.elementType;
-        type.setKeyType(left.getType().getKeyType()); 
+                           " must be map");
+ 
+        rtype = new Type("Map", null); 
+        rtype.setKeyType(lftype.getKeyType()); // assume
+        rtype.setElementType(lftype.elementType);
+        right.setType(rtype); 
+
+        if (operator.equals("\\/") || 
+             operator.equals("->union") || 
+             operator.equals("->symmetricDifference") || 
+             operator.equals("->intersection") || 
+             operator.equals("/\\")) 
+        { type = new Type("Map", null); 
+          elementType = left.elementType;
+          type.setKeyType(lftype.getKeyType()); 
+          type.setElementType(left.elementType);
+          type.setSorted(lftype.isSorted());  
+        } 
+        else 
+        { type = new Type("boolean", null); } 
 
         if (right instanceof BasicExpression)
         { String vname = 
             ((BasicExpression) right).basicString(); 
-          vartypes.put(vname, right.getType()); 
+          vartypes.put(vname, rtype); 
         } 
       }
       else if (!left.isMap() && right.isMap())
       { System.err.println("!! LHS of " + this + 
                            " must be map"); 
-        left.setType(new Type("Map", null)); 
-        type = new Type("Map", null); 
-        elementType = right.elementType;
-        type.setKeyType(right.getType().getKeyType()); 
 
+        lftype = new Type("Map", null); 
+        lftype.setKeyType(rtype.getKeyType()); 
+        lftype.setElementType(right.elementType);
+        left.setType(lftype);
+
+        if (operator.equals("\\/") || 
+             operator.equals("->union") || 
+             operator.equals("->symmetricDifference") || 
+             operator.equals("->intersection") || 
+             operator.equals("/\\")) 
+        { type = new Type("Map", null); 
+          elementType = right.elementType;
+          type.setKeyType(rtype.getKeyType()); 
+          type.setElementType(right.elementType);
+          // type.setSorted(ltype.isSorted());  
+        } 
+        else 
+        { type = new Type("boolean", null); } 
+ 
         if (left instanceof BasicExpression)
         { String vname = 
             ((BasicExpression) left).basicString(); 
@@ -4561,10 +4604,19 @@ public void findClones(java.util.Map clones,
       else if (left.isCollection() && !right.isCollection())
       { System.err.println("!! RHS of " + this + 
                            " must be collection"); 
-        right.setType(left.getType()); 
-        type = left.getType(); 
-        elementType = left.getElementType();
-        
+        right.setType(lftype);
+ 
+        if (operator.equals("\\/") || 
+            operator.equals("->union") || 
+            operator.equals("->symmetricDifference") || 
+            operator.equals("->intersection") || 
+            operator.equals("/\\"))
+        { type = lftype; 
+          elementType = left.getElementType();
+        } 
+        else 
+        { type = new Type("boolean", null); } 
+
         if (right instanceof BasicExpression)
         { String vname = 
             ((BasicExpression) right).basicString(); 
@@ -4574,10 +4626,19 @@ public void findClones(java.util.Map clones,
       else if (!left.isCollection() && right.isCollection())
       { System.err.println("!! LHS of " + this + 
                            " must be collection"); 
-        left.setType(right.getType()); 
-        type = right.getType(); 
-        elementType = right.getElementType();
+        left.setType(rtype);
 
+        if (operator.equals("\\/") || 
+            operator.equals("->union") || 
+            operator.equals("->symmetricDifference") || 
+            operator.equals("->intersection") || 
+            operator.equals("/\\"))
+        { type = rtype; 
+          elementType = right.getElementType();
+        } 
+        else 
+        { type = new Type("boolean", null); } 
+ 
         if (left instanceof BasicExpression)
         { String vname = 
             ((BasicExpression) left).basicString(); 
@@ -4588,6 +4649,7 @@ public void findClones(java.util.Map clones,
       { System.err.println("!! Arguments of " + this + 
                            " must be collections");
         Type ltype = left.getType(); 
+ 
         if (ltype.getAlias() != null && 
             ltype.getAlias().isCollectionType()) 
         { left.setType(ltype.getAlias()); 
@@ -4599,8 +4661,17 @@ public void findClones(java.util.Map clones,
           left.setType(newsettype);
           right.setType(newsettype); 
         } 
-        type = left.getType(); 
-        elementType = left.getElementType();
+
+        if (operator.equals("\\/") || 
+            operator.equals("->union") || 
+            operator.equals("->symmetricDifference") || 
+            operator.equals("->intersection") || 
+            operator.equals("/\\"))
+        { type = left.getType(); 
+          elementType = left.getElementType();
+        } 
+        else 
+        { type = new Type("boolean", null); } 
 
         if (left instanceof BasicExpression)
         { String vname = 
@@ -4648,7 +4719,7 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("->including") ||
              operator.equals("->excluding") ||
              operator.equals("->excludingFirst"))
-    { // LHS must be a collection 
+    { // LHS must be a collection, not a map 
 
       if (!left.isCollection())
       { System.err.println("!! LHS of " + this + 
@@ -4663,6 +4734,8 @@ public void findClones(java.util.Map clones,
           vartypes.put(vname, left.getType()); 
         } 
       } 
+
+      type = left.getType(); 
     }  
     else if (operator.equals("->prepend") || 
              operator.equals("->append"))
@@ -4681,6 +4754,8 @@ public void findClones(java.util.Map clones,
           vartypes.put(vname, left.getType()); 
         } 
       } 
+
+      type = left.getType(); 
     }  
     else if (operator.equals("|->"))
     { type = new Type("OclAny", null); 
@@ -4972,7 +5047,8 @@ public void findClones(java.util.Map clones,
       env1.addAll(env); 
       env1.add(att); 
       lexp.typeCheck(types,entities,contexts,env1); 
-      boolean rtc = right.typeCheck(types,entities,context,env1);
+      boolean rtc = 
+        right.typeCheck(types,entities,context,env1);
       Type stleft = lexp.right.getType(); 
       Type stright = right.getType();
       Entity seleft = lexp.right.getEntity();
@@ -5377,11 +5453,13 @@ public void findClones(java.util.Map clones,
     { type = new Type("String",null); 
       elementType = new Type("String", null); 
     }  
-    else if (operator.equals("->excludingAt") && left.isString()) 
+    else if (operator.equals("->excludingAt") && 
+             left.isString()) 
     { type = new Type("String",null);
       elementType = new Type("String", null); 
     }  
-    else if (operator.equals("->excludingAt") && left.isCollection()) 
+    else if (operator.equals("->excludingAt") && 
+             left.isCollection()) 
     { type = left.type;
       elementType = left.elementType; 
       isSorted = left.isSorted; 
@@ -5426,9 +5504,10 @@ public void findClones(java.util.Map clones,
     { tcMinus(tleft,tright,eleft,eright); 
       isSorted = left.isSorted;
     }
-    else if (operator.equals("\\/") || operator.equals("^")  || 
-             "->concatenate".equals(operator)
-            || operator.equals("->append") ||
+    else if (operator.equals("\\/") || 
+             operator.equals("^")  || 
+             "->concatenate".equals(operator) ||
+             operator.equals("->append") ||
              operator.equals("->union") || 
              operator.equals("->including") ||
              operator.equals("->symmetricDifference") || 
@@ -5659,7 +5738,7 @@ public void findClones(java.util.Map clones,
       elementType = left.getElementType(); 
     } 
     else if (Type.isCollectionType(left.getType()))
-    { type = left.getType(); 
+    { type = left.getType(); // so inherits sortedness
       elementType = left.getElementType(); 
     } 
     else if (left.isMultiple() && left.isOrdered())
@@ -5754,7 +5833,7 @@ public void findClones(java.util.Map clones,
     { if ("Sequence".equals(tlname)) 
       { type = tleft; } 
       else 
-      { System.err.println("!! WARNING: ^, ->prepend, ->append must be applied to a sequence: " + this);  
+      { System.err.println("!! WARNING: ^, ->prepend, ->append can only be applied to a sequence: " + this);  
         type = new Type("Sequence",null);
         type.elementType = right.getType(); 
       }  
@@ -5793,13 +5872,13 @@ public void findClones(java.util.Map clones,
         type = tleft; 
       } 
     } 
-    else // ->symmetricDifference
-    { type = new Type("Set",null); 
+    else // ->symmetricDifference: & makes sense for maps
+    { type = left.getType(); 
       elementType = left.elementType; 
     } 
   
 
-    if (operator.equals("^")  || 
+    if (operator.equals("^") || 
         "->concatenate".equals(operator)
         || operator.equals("->union") ||
         operator.equals("->intersection") ||  
@@ -5821,7 +5900,8 @@ public void findClones(java.util.Map clones,
         System.err.println("!! Warning: null types on both sides of " + this);
         if (operator.equals("^") || "->concatenate".equals(operator))
         { type = new Type("Sequence", null); } 
-        else if (operator.equals("->restrict"))
+        else if (operator.equals("->restrict") ||
+                 operator.equals("->antirestrict"))
         { type = new Type("Map", null); } 
         else 
         { type = new Type("Set",null); }
@@ -5832,7 +5912,9 @@ public void findClones(java.util.Map clones,
     if (operator.equals("->restrict") ||
         operator.equals("->antirestrict"))
     { if (type == null) 
-      { type = new Type("Map", null); }
+      { type = new Type("Map", null); 
+        type.setSorted(left.isSorted); 
+      }
       isSorted = left.isSorted; 
     } 
 
@@ -5928,6 +6010,13 @@ public void findClones(java.util.Map clones,
       restype.elementType = tleft.elementType; 
       type = restype; 
       elementType = tleft.elementType; 
+
+      if (operator.equals("->sortedBy") || 
+          operator.equals("|sortedBy"))
+      { type.setSorted(false); } 
+      else if (tleft.isSorted())
+      { type.setSorted(true); } 
+
       return; 
     } 
     else if (Type.isSequenceType(tleft))
