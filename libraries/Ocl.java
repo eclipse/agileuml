@@ -413,6 +413,15 @@ class OclMaplet<K,T>
       return result; 
     } 
 
+    public static <K,T> TreeMap<K,T> initialiseSortedMap(OclMaplet ... args)
+    { TreeMap<K,T> result = new TreeMap<K,T>(); 
+      for (int i = 0; i < args.length; i++) 
+      { OclMaplet<K,T> x = (OclMaplet<K,T>) args[i]; 
+        result.put(x.key, x.value); 
+      } 
+      return result; 
+    } 
+
 	public static <T> HashSet<T> copySet(Collection<T> s)
      { HashSet<T> result = new HashSet<T>(); 
        result.addAll(s); 
@@ -1455,8 +1464,18 @@ class OclMaplet<K,T>
   { return str.matches(regex); }
 
 
-  public static <D,R> HashSet<D> mapKeys(Map<D,R> m)
+  public static <D,R> HashSet<D> mapKeys(HashMap<D,R> m)
   { HashSet<D> res = new HashSet<D>(); 
+    Set<D> keys = m.keySet(); 
+  
+    for (D key : keys)
+    { res.add(key); } 
+
+    return res; 
+  } 
+
+  public static <D,R> TreeSet<D> mapKeys(TreeMap<D,R> m)
+  { TreeSet<D> res = new TreeSet<D>(); 
     Set<D> keys = m.keySet(); 
   
     for (D key : keys)
@@ -1479,7 +1498,7 @@ class OclMaplet<K,T>
   } 
 
 
-  public static <D,R> HashMap<D,R> excludeAllMap(Map<D,R> m1, Map m2)
+  public static <D,R> HashMap<D,R> excludeAllMap(HashMap<D,R> m1, Map m2)
   { // m1 - m2
     HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
@@ -1493,8 +1512,21 @@ class OclMaplet<K,T>
     return res;
   }
 
+  public static <D,R> TreeMap<D,R> excludeAllMap(TreeMap<D,R> m1, Map m2)
+  { // m1 - m2
+    TreeMap<D,R> res = new TreeMap<D,R>();
+    Set<D> keys = m1.keySet(); 
+  
+    for (D key : keys)
+    { if (m2.containsKey(key))
+      { }
+      else
+      { res.put(key,m1.get(key));  }
+    }    
+    return res;
+  }
 
-  public static <D,R> HashMap<D,R> excludingMapKey(Map<D,R> m, D k)
+  public static <D,R> HashMap<D,R> excludingMapKey(HashMap<D,R> m, D k)
   { // m - { k |-> m(k) } 
     HashMap<D,R> res = new HashMap<D,R>();
     res.putAll(m);
@@ -1502,8 +1534,14 @@ class OclMaplet<K,T>
     return res;
   }
 
+  public static <D,R> TreeMap<D,R> excludingMapKey(TreeMap<D,R> m, D k)
+  { // m - { k |-> m(k) } 
+    TreeMap<D,R> res = (TreeMap<D,R>) m.clone();
+    res.remove(k);
+    return res;
+  }
 
-  public static <D,R> HashMap<D,R> excludingMapValue(Map<D,R> m, R v)
+  public static <D,R> HashMap<D,R> excludingMapValue(HashMap<D,R> m, R v)
   { // m - { k |-> v }
     HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m.keySet(); 
@@ -1517,16 +1555,34 @@ class OclMaplet<K,T>
     return res;
   }
 
+  public static <D,R> TreeMap<D,R> excludingMapValue(TreeMap<D,R> m, R v)
+  { // m - { k |-> v }
+    TreeMap<D,R> res = new TreeMap<D,R>();
+    Set<D> keys = m.keySet(); 
+    
+    for (D key : keys)
+    { if (v.equals(m.get(key)))
+      { }
+      else
+      { res.put(key,m.get(key));  }
+    }    
+    return res;
+  }
 
-  public static <D,R> HashMap<D,R> unionMap(Map<D,R> m1, Map<D,R> m2)
+  public static <D,R> HashMap<D,R> unionMap(HashMap<D,R> m1, Map<D,R> m2)
   { HashMap<D,R> res = new HashMap<D,R>();
     res.putAll(m1);
     res.putAll(m2);    
     return res;
   }
 
+  public static <D,R> TreeMap<D,R> unionMap(TreeMap<D,R> m1, Map<D,R> m2)
+  { TreeMap<D,R> res = (TreeMap<D,R>) m1.clone();
+    res.putAll(m2);    
+    return res;
+  }
 
-  public static <D,R> HashMap<D,R> intersectionMap(Map<D,R> m1, Map m2)
+  public static <D,R> HashMap<D,R> intersectionMap(HashMap<D,R> m1, Map m2)
   { HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
   
@@ -1538,7 +1594,19 @@ class OclMaplet<K,T>
     return res;
   }
 
-  public static <D,R> HashMap<D,R> restrictMap(Map<D,R> m1, Set<D> ks)
+  public static <D,R> TreeMap<D,R> intersectionMap(TreeMap<D,R> m1, Map m2)
+  { TreeMap<D,R> res = new TreeMap<D,R>();
+    Set<D> keys = m1.keySet(); 
+  
+    for (D key : keys)
+    { if (m2.containsKey(key) && m1.get(key) != null && 
+          m1.get(key).equals(m2.get(key)))
+      { res.put(key,m1.get(key));  }
+    }    
+    return res;
+  }
+
+  public static <D,R> HashMap<D,R> restrictMap(HashMap<D,R> m1, Set<D> ks)
   { HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
   
@@ -1549,7 +1617,18 @@ class OclMaplet<K,T>
     return res;
   }
 
-  public static <D,R> HashMap<D,R> antirestrictMap(Map<D,R> m1, Set<D> ks)
+  public static <D,R> TreeMap<D,R> restrictMap(TreeMap<D,R> m1, Set<D> ks)
+  { TreeMap<D,R> res = new TreeMap<D,R>();
+    Set<D> keys = m1.keySet(); 
+  
+    for (D key : keys)
+    { if (ks.contains(key))
+      { res.put(key,m1.get(key));  }
+    }    
+    return res;
+  }
+
+  public static <D,R> HashMap<D,R> antirestrictMap(HashMap<D,R> m1, Set<D> ks)
   { HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
   
@@ -1561,7 +1640,19 @@ class OclMaplet<K,T>
     return res;
   }
 
-  public static <D,R> HashMap<D,R> selectMap(Map<D,R> m, Predicate<R> f)
+  public static <D,R> TreeMap<D,R> antirestrictMap(TreeMap<D,R> m1, Set<D> ks)
+  { TreeMap<D,R> res = new TreeMap<D,R>();
+    Set<D> keys = m1.keySet(); 
+  
+    for (D key : keys)
+    { if (ks.contains(key)) { } 
+      else 
+      { res.put(key,m1.get(key));  }
+    }    
+    return res;
+  }
+
+  public static <D,R> HashMap<D,R> selectMap(HashMap<D,R> m, Predicate<R> f)
   { HashMap<D,R> result = new HashMap<D,R>();
     Set<D> keys = m.keySet();
     for (D k : keys)
@@ -1572,7 +1663,18 @@ class OclMaplet<K,T>
     return result;
   }
 
-  public static <D,R> HashMap<D,R> rejectMap(Map<D,R> m, Predicate<R> f)
+  public static <D,R> TreeMap<D,R> selectMap(TreeMap<D,R> m, Predicate<R> f)
+  { TreeMap<D,R> result = new TreeMap<D,R>();
+    Set<D> keys = m.keySet();
+    for (D k : keys)
+    { R value = m.get(k);
+      if (f.test(value))
+      { result.put(k,value); }
+    }
+    return result;
+  }
+
+  public static <D,R> HashMap<D,R> rejectMap(HashMap<D,R> m, Predicate<R> f)
   { HashMap<D,R> result = new HashMap<D,R>();
     Set<D> keys = m.keySet();
     for (D k : keys)
@@ -1584,15 +1686,27 @@ class OclMaplet<K,T>
     return result;
   }
 
-   public static <D,T,R> HashMap<D,T> collectMap(HashMap<D,R> m, Function<R,T> _f)
-    { HashMap<D,T> result = new HashMap<D,T>(); 
-      Set<D> keys = m.keySet();
-      for (D k : keys)
-      { R value = m.get(k);
-        result.put(k, _f.apply(value)); 
-      }
-      return result; 
-    } 
+  public static <D,R> TreeMap<D,R> rejectMap(TreeMap<D,R> m, Predicate<R> f)
+  { TreeMap<D,R> result = new TreeMap<D,R>();
+    Set<D> keys = m.keySet();
+    for (D k : keys)
+    { R value = m.get(k);
+      if (f.test(value)) {}
+      else
+      { result.put(k,value); }
+    }
+    return result;
+  }
+
+  public static <D,T,R> HashMap<D,T> collectMap(Map<D,R> m, Function<R,T> _f)
+  { HashMap<D,T> result = new HashMap<D,T>(); 
+    Set<D> keys = m.keySet();
+    for (D k : keys)
+    { R value = m.get(k);
+      result.put(k, _f.apply(value)); 
+    }
+    return result; 
+  } 
 
   public static <D,R> boolean existsMap(Map<D,R> m, Predicate<R> f)
   { Set<D> keys = m.keySet();
@@ -1630,6 +1744,11 @@ class OclMaplet<K,T>
   }
 
   public static <D,R> HashMap<D,R> addMap(HashMap<D,R> m, D key, R value)
+  { m.put(key,value);
+    return m;
+  }
+
+  public static <D,R> TreeMap<D,R> addMap(TreeMap<D,R> m, D key, R value)
   { m.put(key,value);
     return m;
   }

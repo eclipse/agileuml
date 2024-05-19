@@ -1,0 +1,10 @@
+class Singleton { 
+   static attribute inst : Singleton; 
+
+   static operation newSingleton() : Singleton
+   pre: true 
+   post: 
+       Singleton->exists( s | Singleton.inst = s & result = s ); 
+}
+
+
