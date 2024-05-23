@@ -295,25 +295,44 @@ public class Compiler2
   }    */ 
 
   public boolean isValidOCLOperator(String str) 
-  { if (str.equals("exists") || str.equals("existsLC") || str.equals("exists1") || 
+  { if (str.equals("exists") || str.equals("existsLC") || 
+        str.equals("exists1") || 
         str.equals("forAll") || str.equals("allInstances") ||
-        str.equals("select") || str.equals("collect") || str.equals("reject") ||
-        str.equals("includes") || str.equals("including") || str.equals("excludes") ||
-        str.equals("excluding") || str.equals("intersection") || str.equals("union") ||
-        str.equals("unionAll") || str.equals("intersectAll") || str.equals("at") ||
+        str.equals("select") || str.equals("collect") || 
+        str.equals("reject") ||
+        str.equals("includes") || str.equals("including") || 
+        str.equals("excludes") ||
+        str.equals("excluding") || str.equals("intersection") || 
+        str.equals("union") ||
+        str.equals("unionAll") || str.equals("intersectAll") || 
+        str.equals("at") ||
         str.equals("apply") || 
-        str.equals("selectMaximals") || str.equals("selectMinimals") || str.equals("not") ||
-        str.equals("any") || str.equals("size") || str.equals("last") ||
-        str.equals("first") || str.equals("includesAll") || str.equals("excludesAll") ||
-        str.equals("append") || str.equals("prepend") || str.equals("min") ||
-        str.equals("max") || str.equals("sum") || str.equals("display") ||
-        str.equals("before") || str.equals("after") || str.equals("xor") ||
-        str.equals("toLowerCase") || str.equals("toUpperCase") || str.equals("Sum") ||
-        str.equals("Prd") || str.equals("symmetricDifference") || str.equals("oclIsUndefined") ||
+        str.equals("selectMaximals") || 
+        str.equals("selectMinimals") || str.equals("not") ||
+        str.equals("any") || str.equals("size") || 
+        str.equals("last") ||
+        str.equals("first") || str.equals("includesAll") || 
+        str.equals("excludesAll") ||
+        str.equals("append") || str.equals("prepend") || 
+        str.equals("min") ||
+        str.equals("max") || str.equals("sum") || 
+        str.equals("display") ||
+        str.equals("before") || str.equals("after") || 
+        str.equals("xor") ||
+        str.equals("toLowerCase") || str.equals("toUpperCase") || 
+        str.equals("Sum") ||
+        str.equals("Prd") || str.equals("symmetricDifference") || 
+        str.equals("oclIsUndefined") ||
         str.equals("oclIsInvalid") ||
-        str.equals("reverse") || str.equals("sort") || str.equals("subcollections") || 
+        str.equals("oclAsType") || 
+        str.equals("oclIsKindOf") ||
+        str.equals("oclIsTypeOf") ||  
+        str.equals("oclIsNew") || 
+        str.equals("reverse") || str.equals("sort") || 
+        str.equals("subcollections") || 
         str.equals("iterator") || 
-        str.equals("front") || str.equals("tail") || str.equals("insertAt") || 
+        str.equals("front") || str.equals("tail") || 
+        str.equals("insertAt") || // str.equals("insertInto") || 
         str.equals("trim") || str.equals("lastIndexOf") ||
         str.equals("equalsIgnoreCase") || str.equals("split") ||
         str.equals("isMatch") || str.equals("hasMatch") ||
@@ -354,21 +373,19 @@ public class Compiler2
         str.equals("isEmpty") || str.equals("notEmpty") ||
         str.equals("isUnique") || str.equals("prd") || 
         str.equals("sortedBy") ||
-        // str.equals("excludingAt") || str.equals("excludingFirst") || 
+        // str.equals("excludingAt") ||
+        // str.equals("excludingSubrange") ||  
+        str.equals("excludingFirst") || 
         // str.equals("setAt") || str.equals("restrict") ||
         // str.equals("antirestrict") ||  
-        str.equals("sqrt") || str.equals("abs") || "flatten".equals(str) || 
-        str.equals("oclAsType") || 
-        str.equals("oclIsKindOf") ||
-        str.equals("oclIsTypeOf") ||  
-        str.equals("oclIsNew") || 
+        str.equals("sqrt") || str.equals("abs") || 
+        "flatten".equals(str) || 
         str.equals("or") ||
         str.equals("indexOf") || 
         str.equals("isDeleted") || str.equals("iterate"))
     { return true; } 
     return false; 
   } 
-  // Also toBoolean
 
   public boolean checkSyntax(Entity context, Vector entities, 
                              Vector varsymbs, Vector messages)
@@ -3227,7 +3244,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         { Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
           if (ee2 == null) { continue; } 
           UnaryExpression be = new UnaryExpression(ss+ss2,ee2); 
-          // System.out.println("Parsed new unary -> expression: " + be); 
+          // System.out.println(">> Parsed new unary -> expression: " + be); 
           return be; 
         } 
         else if (i + 3 <= pend) // && "(".equals(lexicals.get(i+2) + "") &&
@@ -3310,7 +3327,8 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         "SortedMap".equals(lexicals.get(pstart) + "") &&
         "{".equals(lexicals.get(pstart + 1) + ""))
     { System.out.println(">> Sorted map"); 
-      return parse_sortedmap_expression(bc,pstart+1,pend,entities,types); } 
+      return parse_sortedmap_expression(bc,pstart+1,pend,entities,types); 
+    } 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Map".equals(lexicals.get(pstart) + "") &&
@@ -3350,8 +3368,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       { // System.err.println("!! Not additive expression: " + showLexicals(pstart+1, pend)); 
         return null; 
       } 
+    
       return new UnaryExpression("-",arg); 
     } // likewise for "not" and "~" and "?"
+
 
     if (pstart < pend && "+".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_additive_expression(bc,pstart+1,pend,entities,types); 
@@ -3362,6 +3382,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       return arg; 
     } 
 
+
     if (pstart < pend && "?".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_basic_expression(bc,pstart+1,pend,entities,types); 
       if (arg == null) 
@@ -3371,6 +3392,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
       return new UnaryExpression("?",arg); 
     } // likewise for "not" and "~"
+
 
     if (pstart < pend && "!".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_basic_expression(bc,pstart+1,pend,entities,types); 
@@ -6327,9 +6349,16 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     if ("subrange".startsWith(st)) 
     { mess[0] = "subrange operator on sequences and strings\n"  + 
-           "ss.subrange(i,j) is subrange of ss starting at position i\n" + 
-           "and ending at position j. Positions start at 1\n"; 
+           "  ss.subrange(i,j) is subrange of ss starting at position i\n" + 
+           "  and ending at position j. Positions start at 1\n"; 
       return "subrange"; 
+    } 
+
+    if ("excludingSubrange".startsWith(st)) 
+    { mess[0] = "subrange removal operator on sequences and strings\n"  + 
+           "  ss.excludingSubrange(i,j) is ss with subrange\n" + 
+           "  from i to j removed. Positions start at 1\n"; 
+      return "excludingSubrange"; 
     } 
 
     if ("insert".startsWith(st)) 

@@ -1141,6 +1141,22 @@ public class CGSpec
         args.add(pars.get(1)); 
       }  
       else if (pars != null && pars.size() == 2 && 
+               e.data.equals("insertInto") && 
+               trimmedlhs.equals("_1.insertInto(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
+      else if (pars != null && pars.size() == 2 && 
+               e.data.equals("excludingSubrange") && 
+               trimmedlhs.equals("_1.excludingSubrange(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
+      else if (pars != null && pars.size() == 2 && 
                e.data.equals("setAt") && 
                trimmedlhs.equals("_1.setAt(_2,_3)"))
       { selected = r; 

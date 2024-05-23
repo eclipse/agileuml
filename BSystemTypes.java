@@ -9229,7 +9229,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.size(); i++)\n" +  
       "    { res.add(l.get(i)); }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static List excludingSubrange(List l, int startIndex, int endIndex)\n" + 
+      "  { List res = new Vector();\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    for (int i = endIndex; i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+
     res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
       "  { String res = \"\";\n" + 
       "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
@@ -9239,6 +9250,17 @@ public class BSystemTypes extends BComponent
       "    { res = res + l.charAt(i); }\n" + 
       "    return res;\n" + 
       "  }\n"; 
+
+    res = res + 
+      "  public static String excludingSubrange(String l, int startIndex, int endIndex)\n" + 
+      "  { String res = \"\";\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    for (int i = endIndex; i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+
     return res; 
   } 
 
@@ -9322,7 +9344,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.size(); i++)\n" +  
       "    { res.add(l.get(i)); }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static ArrayList excludingSubrange(ArrayList l, int startIndex, int endIndex)\n" + 
+      "  { ArrayList res = new ArrayList();\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    for (int i = endIndex; i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+ 
     res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
       "  { String res = \"\";\n" + 
       "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
@@ -9331,7 +9364,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.length(); i++)\n" +  
       "    { res = res + l.charAt(i); }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static String excludingSubrange(String l, int startIndex, int endIndex)\n" + 
+      "  { String res = \"\";\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    for (int i = endIndex; i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n";  
+
     return res; 
   } 
 
@@ -9417,7 +9461,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.size(); i++)\n" +  
       "    { res.add(l.get(i)); }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static <T> ArrayList<T> excludingSubrange(List<T> l, int startIndex, int endIndex)\n" + 
+      "  { ArrayList<T> res = new ArrayList<T>();\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    for (int i = endIndex; i < l.size(); i++)\n" +  
+      "    { res.add(l.get(i)); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+ 
     res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
       "  { String res = \"\";\n" + 
       "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
@@ -9426,7 +9481,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.length(); i++)\n" +  
       "    { res = res + l.charAt(i); }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static String excludingSubrange(String l, int startIndex, int endIndex)\n" + 
+      "  { String res = \"\";\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    for (int i = endIndex; i < l.length(); i++)\n" +  
+      "    { res = res + l.charAt(i); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+ 
     return res; 
   } 
 

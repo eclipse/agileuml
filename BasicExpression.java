@@ -1762,25 +1762,29 @@ class BasicExpression extends Expression
           data.equals("subcollections"))
       { return false; } 
       
-      if (data.equals("sort") || data.equals("allInstances") || data.equals("asSequence") ||
+      if (data.equals("sort") || data.equals("allInstances") || 
+          data.equals("asSequence") ||
           data.equals("sortedBy") || data.equals("characters"))
       { return true; } 
       
       if (objectRef == null) 
       { return false; } // invalid anyway
 
-      if (data.equals("any") || data.equals("first") || data.equals("last"))
+      if (data.equals("any") || data.equals("first") || 
+          data.equals("last"))
       { return Type.isSequenceType(elementType); } 
 
       if (objectRef.isOrdered())
       { if (data.equals("front") || data.equals("reverse") || 
             data.equals("tail") ||
             data.equals("insertInto") ||
+            data.equals("excludingSubrange") ||
             data.equals("insertAt") || data.equals("setAt") ||
             data.equals("subrange"))
         { return true; } 
       } 
-      else if ("Integer".equals("" + objectRef) && "subrange".equals(data))
+      else if ("Integer".equals("" + objectRef) && 
+               "subrange".equals(data))
       { return true; } 
 
       return false; 
@@ -1846,6 +1850,7 @@ class BasicExpression extends Expression
             data.equals("tail") ||
             data.equals("insertAt") ||
             data.equals("insertInto") ||
+            data.equals("excludingSubrange") ||
             data.equals("setAt") || data.equals("subrange"))
         { return true; } 
       } 
@@ -1914,7 +1919,7 @@ class BasicExpression extends Expression
       if (objectRef.isSorted())
       { if (data.equals("front") || 
             data.equals("tail") ||
-            // data.equals("removeAt") || 
+            data.equals("excludingSubrange") || 
             data.equals("subrange"))
         { return true; } 
       } 
@@ -3050,6 +3055,7 @@ class BasicExpression extends Expression
       else if (data.equals("subrange") || 
                data.equals("pow") || 
                data.equals("setAt") || 
+               data.equals("excludingSubrange") || 
                data.equals("insertAt") || 
                data.equals("insertInto"))
       { // if a String, substring, otherwise subSequence
@@ -3058,7 +3064,8 @@ class BasicExpression extends Expression
                                          parameters.get(1) + ")"; 
         } 
       } 
-      else if (data.equals("indexOf") || data.equals("count") || data.equals("oclAsType") ||
+      else if (data.equals("indexOf") || data.equals("count") || 
+               data.equals("oclAsType") ||
                data.equals("oclIsKindOf"))
       { // if a String, substring, otherwise subSequence
         if (parameters != null && parameters.size() > 0)
@@ -3484,7 +3491,7 @@ class BasicExpression extends Expression
       return true;
     }
 
-  if ("int".equals(data) || "long".equals(data) || 
+    if ("int".equals(data) || "long".equals(data) || 
         "boolean".equals(data) || "void".equals(data) ||  
         "double".equals(data) || "String".equals(data) ||
         "OclDate".equals(data) || "OclAny".equals(data) || 
@@ -3754,6 +3761,7 @@ class BasicExpression extends Expression
         !data.equals("setAt") && 
         !data.equals("insertAt") && 
         !data.equals("insertInto") && 
+        !data.equals("excludingSubrange") && 
         !(data.equals("replace")) && 
         !(data.equals("replaceFirstMatch")) && 
         !(data.equals("replaceAll")) && 
@@ -4221,7 +4229,8 @@ class BasicExpression extends Expression
       } 
       else if (data.equals("reverse") || 
                data.equals("tail") || 
-               data.equals("front") || 
+               data.equals("front") ||
+               data.equals("excludingSubrange") || 
                data.equals("insertAt") || 
                data.equals("insertInto") || 
                data.equals("setAt"))  
@@ -5536,6 +5545,7 @@ class BasicExpression extends Expression
         !data.equals("subrange") && 
         !data.equals("indexOf") && 
         !data.equals("setAt") && 
+        !data.equals("excludingSubrange") && 
         !data.equals("insertAt") && 
         !data.equals("insertInto") && 
         !(data.equals("replace")) && 
@@ -5807,6 +5817,7 @@ class BasicExpression extends Expression
                data.equals("front") || 
                data.equals("insertAt") || 
                data.equals("insertInto") || 
+               data.equals("excludingSubrange") || 
                data.equals("setAt"))  
       { type = objectRef.getType(); // Sequence or String
         elementType = objectRef.elementType; 
@@ -5830,12 +5841,18 @@ class BasicExpression extends Expression
           return res;
         } 
       }
-      else if (data.equals("sqrt") || data.equals("exp") || data.equals("pow") ||
-               data.equals("sqr") || data.equals("abs") || data.equals("toReal") ||  
-               data.equals("sin") || data.equals("cos") || data.equals("cbrt") ||
-               data.equals("sinh") || data.equals("cosh") || data.equals("tanh") ||
-               data.equals("atan") || data.equals("acos") || data.equals("asin") ||
-               data.equals("tan") || data.equals("log") || data.equals("log10"))
+      else if (data.equals("sqrt") || data.equals("exp") || 
+               data.equals("pow") ||
+               data.equals("sqr") || data.equals("abs") || 
+               data.equals("toReal") ||  
+               data.equals("sin") || data.equals("cos") || 
+               data.equals("cbrt") ||
+               data.equals("sinh") || data.equals("cosh") || 
+               data.equals("tanh") ||
+               data.equals("atan") || data.equals("acos") || 
+               data.equals("asin") ||
+               data.equals("tan") || data.equals("log") || 
+               data.equals("log10"))
       { type = new Type("double",null); 
         elementType = type; 
       } 
@@ -5893,7 +5910,9 @@ class BasicExpression extends Expression
     // Parameters or local variables of the 
     // current operation/usecase: 
 
-    Attribute paramvar = (Attribute) ModelElement.lookupByName(data,env); 
+    Attribute paramvar = 
+       (Attribute) ModelElement.lookupByName(data,env); 
+
     if (paramvar != null && objectRef == null) 
     { type = paramvar.getType(); 
       elementType = paramvar.getElementType(); 
@@ -7168,6 +7187,12 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
         return "Set.insertInto(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("excludingSubrange") && 
+               parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
@@ -7712,6 +7737,12 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("excludingSubrange") && 
+               parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
@@ -8255,6 +8286,12 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
         return "Ocl.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("excludingSubrange") && 
+               parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 

@@ -4021,7 +4021,9 @@ public class UCDArea extends JPanel
   } 
 
   public void generateMamba()
-  { Vector auxcstls = new Vector(); 
+  { applyCSTLSpecification("./cg/cgMamba.cstl"); }
+
+ /*   Vector auxcstls = new Vector(); 
     
     CGSpec cgs = loadCSTL("cgMamba.cstl",auxcstls); 
     cgs.setTypes(types); 
@@ -4077,7 +4079,7 @@ public class UCDArea extends JPanel
    
       appfout.close();
     } catch (Exception _e1) { _e1.printStackTrace(); }
-  } 
+  } */ 
 
 
   public void generateSwiftUIApp()
@@ -14473,6 +14475,17 @@ public void produceCUI(PrintWriter out)
       if (file == null) { return; }
     } catch (Exception e) { return; } 
 
+    applyCSTLSpecification(file); 
+  }
+
+  private void applyCSTLSpecification(String fname)
+  { File file = new File(fname); 
+
+    applyCSTLSpecification(file); 
+  }
+
+  private void applyCSTLSpecification(File file)
+  { 
     Vector vs = new Vector(); 
     CGSpec spec = loadCSTL(file,vs); 
 
@@ -14481,8 +14494,7 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
-
-    CSTL.loadTemplates(types,entities,file.getName()); 
+    // CSTL.loadTemplates(types,entities,file.getName()); 
 
     System.out.println(">>> Loaded " + file.getName()); 
 
@@ -15534,11 +15546,25 @@ public void produceCUI(PrintWriter out)
     typeInference(); 
     typeCheck(); 
 
-    // Show the model: 
+    // Save the model: 
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ext = (Entity) entities.get(i); 
-      System.out.println(ext.getKM3()); 
+
+      if (ext.isComponent() || ext.isDerived()) 
+      { continue; } 
+
+      String ename = ext.getName(); 
+
+      File oclout = new File("output/" + ename + ".km3");  
+      try
+      { PrintWriter eout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(oclout)));
+        eout.println(ext.getKM3());
+        eout.close(); 
+      }
+      catch (Exception _ex) { }  
     } 
 
     // Generate Java7: 

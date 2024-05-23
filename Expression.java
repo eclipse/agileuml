@@ -2044,25 +2044,39 @@ abstract class Expression
 
 
   public static boolean isFunction(String d)
-  { if (d.equals("sqr") || d.equals("sqrt") || d.equals("any") || d.equals("cbrt") || 
-        d.equals("sin") || d.equals("cos") || d.equals("tan") || d.equals("exp") ||
-        d.equals("sinh") || d.equals("cosh") || d.equals("tanh") || d.equals("log10") ||
-        d.equals("log") || d.equals("floor") || d.equals("round") || d.equals("ceil") || 
-        d.equals("atan") || d.equals("acos") || d.equals("asin") || d.equals("oclAsType") || 
-        d.equals("abs") || d.equals("max") || d.equals("subcollections") || d.equals("Prd") || 
-        d.equals("size") || d.equals("toLowerCase") || d.equals("pow") || d.equals("gcd") || d.equals("Sum") ||
+  { if (d.equals("sqr") || d.equals("sqrt") || 
+        d.equals("any") || d.equals("cbrt") || 
+        d.equals("sin") || d.equals("cos") || 
+        d.equals("tan") || d.equals("exp") ||
+        d.equals("sinh") || d.equals("cosh") || 
+        d.equals("tanh") || d.equals("log10") ||
+        d.equals("log") || d.equals("floor") || 
+        d.equals("round") || d.equals("ceil") || 
+        d.equals("atan") || d.equals("acos") || 
+        d.equals("asin") || d.equals("oclAsType") || 
+        d.equals("abs") || d.equals("max") || 
+        d.equals("subcollections") || d.equals("Prd") || 
+        d.equals("size") || d.equals("toLowerCase") || 
+        d.equals("pow") || d.equals("gcd") || d.equals("Sum") ||
         d.equals("replace") || d.equals("replaceAll") ||
         d.equals("replaceAllMatches") ||
         d.equals("replaceFirstMatch") || 
         // d.equals("toBoolean") || d.equals("toInteger") || 
         // d.equals("toReal") || d.equals("toLong") ||
         // d.equals("compareTo") ||  
-        d.equals("toUpperCase") || d.equals("closure") || d.equals("asSet") || d.equals("asSequence") ||
-        d.equals("min") || d.equals("sum") || d.equals("reverse") || d.equals("allInstances") || 
-        d.equals("sort") || d.equals("prd") || d.equals("last") || d.equals("insertAt") ||
+        d.equals("toUpperCase") || d.equals("closure") || 
+        d.equals("asSet") || d.equals("asSequence") ||
+        d.equals("min") || d.equals("sum") || 
+        d.equals("reverse") || d.equals("allInstances") || 
+        d.equals("sort") || d.equals("prd") || 
+        d.equals("last") || d.equals("insertAt") ||
+        d.equals("insertInto") ||  
+        d.equals("excludingSubrange") || 
         d.equals("setAt") ||
-        d.equals("first") || d.equals("tail") || d.equals("front") || d.equals("oclIsUndefined") || 
-        d.equals("subrange") || d.equals("indexOf") || d.equals("count") ||
+        d.equals("first") || d.equals("tail") || 
+        d.equals("front") || d.equals("oclIsUndefined") || 
+        d.equals("subrange") || d.equals("indexOf") || 
+        d.equals("count") ||
         d.equals("characters") || d.equals("isDeleted") || 
         d.equals("oclIsKindOf") || d.equals("oclIsTypeOf"))
     { return true; }  
