@@ -516,27 +516,31 @@ class OclFile:
       return pickle.load(self.actualFile)
     return None
 
-  def readLine(self) :
+  def readLine(self,prompt="") :
     if self.delegate != None : 
       s = self.delegate.read(128)
       if len(s) == 0 : 
         self.eof = True
       return s
+
     if self.remote : 
       if self.actualFile != None : 
         s = self.actualFile.recv(self.bufferSize)
         if len(s) == 0 : 
           self.eof = True
         return s
+
     if self.actualFile != None : 
       ss = self.actualFile.readline()
       self.position = self.position + len(ss)
       if len(ss) == 0 : 
         self.eof = True
       return ss
+
     if self.name == "System.in" : 
-      s = input("")
+      s = input(prompt)
       return s
+
     self.eof = True
     return ""
 
@@ -676,4 +680,6 @@ System_err = OclFile.newOclFile("System.err")
 # for f in dirfiles : 
 #   f.openRead()
 #   print(f.getName() + " " + str(f.lineCount()))
+
+# System_in.readLine()
 

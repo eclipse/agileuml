@@ -480,9 +480,9 @@ void OclFile::writeln(string s)
     cerr << s << endl;
   }
   else if (writable)
-    {
-        outFileStream << s << endl;
-    }
+  {
+    outFileStream << s << endl; 
+  }
 }
 
 void OclFile::println(string s)
@@ -605,6 +605,11 @@ void OclFile::writeAllBytes(vector<int>* sq)
 void OclFile::print(string s)
 {
     OclFile::write(s);
+} 
+
+string OclFile::readLine(string prompt)
+{ cout << prompt << endl; 
+  return OclFile::readLine(); 
 } 
 
 string OclFile::readLine()

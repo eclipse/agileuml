@@ -1230,11 +1230,29 @@ class OclMaplet<K,T>
     return res;
   }
 
+  public static <T> ArrayList<T> excludingSubrange(List<T> l, int startIndex, int endIndex)
+  { ArrayList<T> res = new ArrayList<T>();
+    for (int i = 0; i < startIndex-1 && i < l.size(); i++)
+    { res.add(l.get(i)); }
+    for (int i = endIndex; i < l.size(); i++)
+    { res.add(l.get(i)); }
+    return res;
+  }
+
   public static <T> ArrayList<T> removeAt(List<T> l, int ind)
   { ArrayList<T> res = new ArrayList<T>();
     res.addAll(l); 
     if (ind <= res.size() && ind >= 1)
     { res.remove(ind - 1); } 
+    return res;
+  }
+
+  public static String excludingSubrange(String l, int startIndex, int endIndex)
+  { String res = "";
+    for (int i = 0; i < startIndex-1 && i < l.length(); i++)
+    { res = res + l.charAt(i); }
+    for (int i = endIndex; i < l.length(); i++)
+    { res = res + l.charAt(i); }
     return res;
   }
 

@@ -239,6 +239,9 @@ class OclFile
   operation readLine() : String
   pre: true post: true; 
 
+  operation readLine(prompt : String) : String
+  pre: true post: true; 
+
   operation readAll() : String
   pre: true post: true;
 

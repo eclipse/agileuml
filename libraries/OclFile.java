@@ -681,6 +681,12 @@ class OclFile {
     return ""; 
   } 
 
+  public String readLine(String prompt)
+  { System.out.println(prompt); 
+
+    return readLine(); 
+  }
+
   public String read()
   { if (inputStreamReader != null) 
     { try 

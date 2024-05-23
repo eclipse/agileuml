@@ -711,6 +711,10 @@
             return default(T);
         }
 
+        public string readLine(string prompt)
+        { Console.WriteLine(prompt); 
+          return readLine(); 
+        } 
 
         public string readLine()
         {
