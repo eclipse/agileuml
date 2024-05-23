@@ -94,6 +94,9 @@ _1 |-->_1`typename._1<when> _1 enumerationLiteral
 _1.allInstances |-->_1._1_allInstances
 
 _1.insertAt(_2,_3) |-->Ocl.insertAt(_1,_2,_3)
+_1.insertInto(_2,_3) |-->Ocl.insertInto(_1,_2,_3)
+_1.excludingSubrange(_2,_3) |-->Ocl.excludingSubrange(_1,_2,_3)
+
 _1.setAt(_2,_3) |-->Ocl.setAt(_1,_2,_3)
 _1.replace(_2,_3) |-->Ocl.replace(_1,_2,_3)
 _1.replaceAll(_2,_3) |-->Ocl.replaceAll(_1,_2,_3)

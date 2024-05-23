@@ -197,7 +197,7 @@ hex _1 |-->MathLib.decimal2hex_1
 oct _1 |-->MathLib.decimal2octal_1
 
 id _1 |-->?_1
-input _1 |-->(OclFile["System.in"]).readLine()
+input _1 |-->(OclFile["System.in"]).readLine_1
 isinstance _1 |-->(_1`secondArg).isInstance(_1`firstArg)
 issubclass _1 |-->(_1`firstArg).isAssignableFrom(_1`secondArg)
 iter _1 |-->OclIterator.newOclIterator_Sequence_1
