@@ -9071,6 +9071,12 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
         return "SystemTypes.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("excludingSubrange") && 
+               parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 

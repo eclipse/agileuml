@@ -9578,7 +9578,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.Count; i++)\n" +  
       "    { res.Add(l[i]); }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static ArrayList excludingSubrange(ArrayList l, int startIndex, int endIndex)\n" + 
+      "  { ArrayList res = new ArrayList();\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.Count; i++)\n" +  
+      "    { res.Add(l[i]); }\n" + 
+      "    for (int i = endIndex; i < l.Count; i++)\n" +  
+      "    { res.Add(l[i]); }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+ 
     res = res + "  public static string insertInto(string l, int ind, object ob)\n" + 
       "  { string res = \"\";\n" + 
       "    for (int i = 0; i < ind-1 && i < l.Length; i++)\n" +  
@@ -9587,7 +9598,18 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.Length; i++)\n" +  
       "    { res = res + l[i]; }\n" + 
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static string excludingSubrange(string l, int startIndex, int endIndex)\n" + 
+      "  { string res = \"\";\n" + 
+      "    for (int i = 0; i < startIndex-1 && i < l.Length; i++)\n" +  
+      "    { res = res + l[i]; }\n" + 
+      "    for (int i = endIndex; i < l.Length; i++)\n" +  
+      "    { res = res + l[i]; }\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+
     return res; 
   } 
 
