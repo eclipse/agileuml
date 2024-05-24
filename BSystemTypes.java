@@ -9567,6 +9567,8 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  /* These are also needed for C++ */
+
   public static String generateInsertIntoOpCSharp()  
   { String res = 
       "  public static ArrayList insertInto(ArrayList l, int ind, ArrayList ob)\n" + 
@@ -9713,6 +9715,20 @@ public class BSystemTypes extends BComponent
       "    return l;\n" + 
       "  }\n\n"; 
 
+    res = res + 
+      "  static vector<_T>* removeSubrange(vector<_T>* l, int ind1, int ind2)\n" +
+      "  { vector<_T>* res = new vector<_T>();\n" +
+      "    if (ind1 > 1 && ind1 <= l->size())\n" +
+      "    {\n" +  
+      "      res->insert(res->end(), l->begin(), l->begin() + (ind1 - 2));\n" +
+      "    }\n" + 
+      "    if (ind2 >= ind1 && ind2 < l->size())\n" +
+      "    { res->insert(res->end(), l->begin() + ind2, l->end());\n" +
+      "\n" +
+      "    }\n" +
+      "    return l;\n" + 
+      "  }\n\n"; 
+
     res = res + "  static string removeAt(string ss, int ind)\n" +
       "  { if (ind >= 1 && ind <= ss.length())\n" +
       "    { string res = ss.substr(0,ind-1);\n" +
@@ -9741,7 +9757,8 @@ public class BSystemTypes extends BComponent
       "  { int res = 0; \n" +
       "    for (int i = 0; i < a->size(); i++)\n" + 
       "    { if (x == (*a)[i])\n" + 
-      "      { return i+1; } }\n" +
+      "      { return i+1; }\n" + 
+      "    }\n" +
       "    return res; \n" +
       "  }\n\n"; 
 
