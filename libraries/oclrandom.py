@@ -1,7 +1,6 @@
 import ocl
 import math
 import time
-import random
 import numpy as np
 
 from enum import Enum
