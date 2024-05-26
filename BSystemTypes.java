@@ -4812,7 +4812,7 @@ public class BSystemTypes extends BComponent
      "  static string collectionToString(vector<_T>* c)\n" +
      "  { ostringstream buff;\n" + 
      "    buff << \"Sequence{\";\n" + 
-     "    for (vector<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
+     "    for (auto _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
      "    { buff << *_pos;\n" +
      "      if (_pos + 1 < c->end())\n" +
      "      { buff << \", \"; }\n" +
@@ -4822,15 +4822,24 @@ public class BSystemTypes extends BComponent
      "  }\n\n"; 
 
    res = res + 
-     "  static string collectionToString(set<_T>* c)\n" +
+     "  static string collectionToString(std::set<_T>* c)\n" +
      "  { ostringstream buff;\n" +
      "    buff << \"Set{\"; \n" +
-     "    for (set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
-     "    { buff << *_pos;\n" +
-     "      if (_pos + 1 < c->end())\n" +
-     "      { buff << \", \"; }\n" +
+     "    auto _pos = c->begin(); \n" +
+     "    if (_pos == c->end())\n" +
+     "    {\n" +
+     "      buff << \"}\";\n" + 
      "    }\n" +
-     "    buff << \"}\";\n" +
+     "    else\n" +
+     "    {\n" +
+     "      buff << *_pos;\n" +
+     "      ++_pos;\n" +
+     "      for (; _pos != c->end(); ++_pos)\n" +
+     "      { buff << \", \"; \n" +
+     "        buff << *_pos;\n" +
+     "      }\n" +
+     "      buff << \"}\";\n" +
+     "    }\n" +
      "    return buff.str(); \n" +
      "  }\n\n"; 
 
@@ -8137,6 +8146,20 @@ public class BSystemTypes extends BComponent
       "    std::sort(res->begin(), res->end());\n" + 
       "    return res;\n" +   
       "  }\n\n";  
+
+    res = res + "  static vector<_T>* sort(vector<_T>* a, std::function<bool(_T, _T)> f)\n" + 
+      "  { vector<_T>* res = new vector<_T>();\n" +
+      "    res->insert(res->end(), a->begin(), a->end());\n" +
+      "    std::sort(res->begin(), res->end(), f);\n" +
+      "    return res;\n" +
+      "  }\n\n" +
+      "  static vector<_T>* sort(std::set<_T>* a, std::function<bool(_T, _T)> f)\n" +
+      "  { vector<_T>* res = new vector<_T>();\n" +
+      "    res->insert(res->end(), a->begin(), a->end());\n" +
+      "    std::sort(res->begin(), res->end(), f);\n" +
+      "    return res;\n" +
+      "  }\n"; 
+
     return res; 
   } 
 
@@ -9716,8 +9739,10 @@ public class BSystemTypes extends BComponent
       "  }\n\n"; 
 
     res = res + 
-      "  static vector<_T>* removeSubrange(vector<_T>* l, int ind1, int ind2)\n" +
+      "  static vector<_T>* excludingSubrange(vector<_T>* l, int ind1, int ind2)\n" +
       "  { vector<_T>* res = new vector<_T>();\n" +
+      "    if (ind1 < 1) { ind1 = 1; }\n" + 
+      "    if (ind2 > l->size()) { ind2 = l->size(); }\n" + 
       "    if (ind1 > 1 && ind1 <= l->size())\n" +
       "    {\n" +  
       "      res->insert(res->end(), l->begin(), l->begin() + (ind1 - 2));\n" +
@@ -9728,6 +9753,19 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return l;\n" + 
       "  }\n\n"; 
+
+    res = res + 
+      "  static string excludingSubrange(string l, int ind1, int ind2)\n" + 
+      "  { string res = \"\";\n" + 
+      "    if (ind1 < 1) { ind1 = 1; }\n" + 
+      "    if (ind2 > l.size()) { ind2 = l.size(); }\n" + 
+      "    if (ind1 > 1 && ind1 <= l.size())\n" +
+      "    { res = l.substr(0,ind1-1); }\n" +  
+      "    if (ind2 >= ind1 && ind2 < l.size())\n" +
+      "    { res = res + l.substr(ind2); }\n" +
+      "    return res;\n" + 
+      "  }\n\n"; 
+
 
     res = res + "  static string removeAt(string ss, int ind)\n" +
       "  { if (ind >= 1 && ind <= ss.length())\n" +

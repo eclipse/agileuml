@@ -8,11 +8,17 @@ import math
 # MemoryUse = 6 GB
 
 # Energy use in W is then 
-# t*(cpu*43.2 + 2.235)
+# t*(cpu*43.2 + mem*0.3725)
 
-cpu = 0.9
-durationMS = 4
+cpustring = input("Input CPU utilisation 0 to 1: ")
+cpu = float(cpustring)
 
-energyUse = (durationMS/3600.0)*(cpu*43.2 + 2.235)
+durstring = input("Input duration in milliseconds: ")
+durationMS = int(durstring)
+
+memstring = input("Input memory use in GB: ")
+memuse = float(memstring)
+
+energyUse = (durationMS/3600.0)*(cpu*43.2 + memuse*0.3725)
 
 print(energyUse)

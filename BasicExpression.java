@@ -9366,6 +9366,7 @@ class BasicExpression extends Expression
         { pre = "((" + ename + ") " + pre + ")"; } 
         res = pre + ".get" + data + "()";
       }
+
       if (arrayIndex != null) 
       { String ind = arrayIndex.queryFormCSharp(env,local); 
         if (isQualified())
@@ -9689,6 +9690,14 @@ class BasicExpression extends Expression
         ue.setType(new Type("int", null)); 
         String par2 = ue.queryFormCPP(env,local); 
         return "UmlRsdsLib<" + cetype + ">::subrange(" + pre + "," + par1 + "," + par2 + ")";
+      } 
+      else if (data.equals("excludingSubrange") && 
+               parameters != null && parameters.size() > 1)
+      { String par1 = 
+          ((Expression) parameters.get(0)).queryFormCPP(env,local); 
+        String par2 = 
+          ((Expression) parameters.get(1)).queryFormCPP(env,local); 
+        return "UmlRsdsLib<" + cetype + ">::excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("indexOf") && parameters != null && parameters.size() > 0)  // for strings or sequences
       { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
