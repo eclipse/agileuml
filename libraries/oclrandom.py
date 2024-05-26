@@ -268,7 +268,7 @@ class OclRandom :
     if ln == 0 : 
       return sq
     res = []
-    inds = random.sample(range(0,ln),ln)
+    inds = np.random.default_rng().choice(range(0,ln), ln, False)
     for x in inds :
       res.append(sq[x])
     return res
@@ -288,10 +288,10 @@ class OclRandom :
     return col[x]
 
   def randomUniqueElements(col,n) : 
-    return random.sample(col,n)    
+    return np.random.default_rng().choice(col, n, False)
 
   def randomElements(col,n) : 
-    return random.choices(col,k=n)    
+    return np.random.default_rng().choice(col, n)
 
   def defaultInstanceOclRandom() : 
     if OclRandom._defaultInstanceOclRandom == None : 
