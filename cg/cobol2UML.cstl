@@ -2639,7 +2639,7 @@ VARYING _1  |-->_1`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
 AFTER _1  |-->_1`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
-VARYING _1 _2  |-->_1`performVaryClauseIncrement) ; _2`performVaryClauseIncrement<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1 _2  |-->_2`performVaryClauseIncrement) ; _1`performVaryClauseIncrement<when> _1 performVaryingPhrase, _2 performAfter
 
 VARYING _1 _*  |-->_1`performVaryClauseIncrement) ; _*`performVaryClauseIncrement<when> _1 performVaryingPhrase
 
