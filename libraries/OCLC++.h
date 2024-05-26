@@ -29,11 +29,19 @@ public:
         return res;
     }
 
+    static double roundTo(double x, int n)
+    { if (n == 0) 
+      { return round(x); }
+      double y = x*pow(10,n); 
+      return round(y)/pow(10,n);
+    }
 
-
-
-
-
+    static double truncateTo(double x, int n)
+    { if (n < 0) 
+      { return (int) x; }
+      double y = x*pow(10,n); 
+      return ((int) y)/pow(10,n);
+    }
 
     static bool isIn(_T x, std::set<_T>* st)
     {
@@ -207,19 +215,26 @@ public:
         return buff.str();
     }
 
-    static string collectionToString(set<_T>* c)
+    static string collectionToString(std::set<_T>* c)
     {
         ostringstream buff;
         buff << "Set{";
-        for (auto _pos = c->begin(); _pos != c->end(); ++_pos)
+        auto _pos = c->begin(); 
+        if (_pos == c->end())
+        {
+            buff << "}"; 
+        }
+        else
         {
             buff << *_pos;
-            if (_pos + 1 < c->end())
+            ++_pos;
+            for (; _pos != c->end(); ++_pos)
             {
                 buff << ", ";
+                buff << *_pos;
             }
+            buff << "}";
         }
-        buff << "}";
         return buff.str();
     }
 
@@ -265,6 +280,7 @@ public:
     {
         return *std::max_element(l->begin(), l->end());
     }
+
     static _T max(vector<_T>* l)
     {
         return *std::max_element(l->begin(), l->end());
@@ -275,6 +291,7 @@ public:
     {
         return *std::min_element(l->begin(), l->end());
     }
+
     static _T min(vector<_T>* l)
     {
         return *std::min_element(l->begin(), l->end());
@@ -373,7 +390,8 @@ public:
         string res = "";
         for (int i = 0; i < a.length(); i++)
         {
-            if (b.find(a[i]) == string::npos) { res = res + a[i]; }
+            if (b.find(a[i]) == string::npos) 
+            { res = res + a[i]; }
         }
         return res;
     }
@@ -511,6 +529,7 @@ public:
         }
         return true;
     }
+
     static bool isUnique(std::set<_T>* evals)
     {
         return true;
@@ -1187,6 +1206,13 @@ public:
     }
 
 
+  static std::map<string,_T>* unionAllMap(vector<map<string,_T>*>* se)
+    { std::map<string,_T>* res = new std::map<string,_T>();
+      if (se->size() == 0) { return res; }
+      for (int i = 0; i < se->size(); ++i)
+      { res = UmlRsdsLib<_T>::unionMap(res, (*se)[i]); }
+      return res;
+    }
 
     static vector<_T>* insertAt(vector<_T>* l, int ind, _T ob)
     {
@@ -1327,6 +1353,32 @@ public:
         return res;
     }
 
+  static vector<_T>* excludingSubrange(vector<_T>* l, int ind1, int ind2)
+  { vector<_T>* res = new vector<_T>();
+    if (ind1 < 1) { ind1 = 1; }
+    if (ind2 > l->size()) { ind2 = l->size(); }
+    if (ind1 > 1 && ind1 <= l->size())
+    {
+      res->insert(res->end(), l->begin(), l->begin() + (ind1 - 2));
+    }
+    if (ind2 >= ind1 && ind2 < l->size())
+    { res->insert(res->end(), l->begin() + ind2, l->end());
+
+    }
+    return l;
+  }
+
+  static string excludingSubrange(string l, int ind1, int ind2)
+  { string res = "";
+    if (ind1 < 1) { ind1 = 1; }
+    if (ind2 > l.size()) { ind2 = l.size(); }
+    if (ind1 > 1 && ind1 <= l.size())
+    { res = l.substr(0,ind1-1); }
+    if (ind2 >= ind1 && ind2 < l.size())
+    { res = res + l.substr(ind2); }
+    return res;
+  }
+
     static vector<_T>* removeAt(vector<_T>* l, int ind)
     {
         if (ind >= 1 && ind <= l->size())
@@ -1349,6 +1401,8 @@ public:
         }
         return ss;
     }
+
+
     static vector<_T>* removeFirst(vector<_T>* sq, _T x)
     {
         vector<_T>* res = new vector<_T>();
@@ -1538,6 +1592,22 @@ public:
         catch (exception _e) { return false; }
     }
 
+
+    static string before(string s, string sep)
+    {
+        if (sep.length() == 0) { return s; }
+        if (s.find(sep) == string::npos) { return s; }
+        return s.substr(0, s.find(sep));
+    }
+
+
+    static string after(string s, string sep)
+    {
+        int seplength = sep.length();
+        if (s.find(sep) == string::npos) { return ""; }
+        if (seplength == 0) { return ""; }
+        return s.substr(s.find(sep) + seplength, s.length() - (s.find(sep) + seplength));
+    }
 
     static bool hasMatch(string str, string patt)
     {
@@ -1839,6 +1909,15 @@ public:
         }
         return res;
     }
+
+  static std::map<string, _T>* intersectAllMap(vector<map<string, _T>*>* se)
+  { std::map<string, _T>* res = new std::map<string, _T>();
+    if (se->size() == 0) { return res; }
+    res = (*se)[0]; 
+    for (int i = 1; i < se->size(); ++i)
+    { res = UmlRsdsLib<_T>::intersectionMap(res, (*se)[i]); }
+    return res;
+  }
 
 
     static std::set<string>* keys(map<string, _T>* s)
