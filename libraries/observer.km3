@@ -1,19 +1,19 @@
 package app { 
 
-
-  class Subject {
-
+  class Subject {
 
 
-    attribute subjectState : OclAny := null;
+    attribute subjectState : OclAny := null;
 
+    reference views[*] : View oppositeOf subject;
 
-    reference views[*] : View oppositeOf subject;
-
-
-    query getState() : OclAny
+    query getState() : OclAny
     pre: true
     post: result = subjectState;
+
+    operation setState(x : OclAny)
+    pre: true
+    post: subjectState = x; 
 
     operation addView(v : View ) : void
     pre: true
@@ -27,16 +27,14 @@ package app {
 
 
 
-
-  class View {
-
-
-    attribute viewState : OclAny := null; 
-
-    reference subject : Subject oppositeOf views;
+  class View {
 
 
-    operation refresh() : void
+    attribute viewState : OclAny := null;
+
+    reference subject : Subject oppositeOf views;
+
+    operation refresh() : void
     pre: true
     post: viewState = subject.getState();
 
@@ -45,7 +43,6 @@ package app {
 
 
 
-
-}
+}
 
 
