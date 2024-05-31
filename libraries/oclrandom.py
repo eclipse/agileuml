@@ -1,8 +1,7 @@
 import ocl
 import math
 import time
-import random
-
+import numpy as np
 
 from enum import Enum
 
@@ -268,7 +267,7 @@ class OclRandom :
     if ln == 0 : 
       return sq
     res = []
-    inds = random.sample(range(0,ln),ln)
+    inds = np.random.default_rng().choice(range(0,ln), ln, False)
     for x in inds :
       res.append(sq[x])
     return res
@@ -277,21 +276,21 @@ class OclRandom :
     chs = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$"
     res = ""
     for x in range(0,n) : 
-      res = res + chs[int(random.random()*54)]
+      res = res + chs[int(np.random.default_rng().random() * 54)]
     return res
 
   def randomElement(col) : 
     ln = len(col)
     if ln == 0 : 
       return None
-    x = int(random.random()*ln)
+    x = int(np.random.default_rng().random() * ln)
     return col[x]
 
   def randomUniqueElements(col,n) : 
-    return random.sample(col,n)    
+    return np.random.default_rng().choice(col, n, False)
 
   def randomElements(col,n) : 
-    return random.choices(col,k=n)    
+    return np.random.default_rng().choice(col, n)
 
   def defaultInstanceOclRandom() : 
     if OclRandom._defaultInstanceOclRandom == None : 
