@@ -3,6 +3,9 @@ import re
 import random
 import math
 
+from sortedcontainers import *
+# Needed for operations on sorted sets
+
 def sqr(x) : 
   return x*x
 
@@ -471,6 +474,17 @@ def insertInto(x,i,s) :
   x1.extend(x2)
   return x1
 
+def excludingSubrange(x,i,j) :
+  # i must be > 0, i <= j
+  if i <= 0 : 
+    return x
+  if i > j : 
+    return x
+  x1 = x[0:i-1]
+  x2 = x[j:]
+  x1.extend(x2)
+  return x1
+
 def insertAt(x,i,s) :
   # i must be > 0
   if i <= 0 : 
@@ -534,8 +548,12 @@ def includingSequence(s,x) :
   res.append(x)
   return res
 
-
 def includingSet(s,x) :
+  res = s.copy()
+  res.add(x)
+  return res
+
+def includingSortedSet(s,x) :
   res = s.copy()
   res.add(x)
   return res
@@ -555,6 +573,10 @@ def excludeAllSet(s1,s2) :
   res = s1.copy()
   return res.difference(s2)
 
+def excludeAllSortedSet(s1,s2) :
+  res = s1.copy()
+  return res.difference(s2)
+
 
 def excludingSequence(s,y) :
   res = []
@@ -571,6 +593,10 @@ def excludingSet(s,x) :
   subtr = {x}
   return res.difference(subtr)
 
+def excludingSortedSet(s,x) :
+  res = s.copy()
+  res.discard(x)
+  return res
 
 def prepend(s,x) :
   res = [x]
@@ -606,6 +632,10 @@ def unionSequence(s,t) :
 def unionSet(s,t) :
   res = s.copy()
   return res.union(t)
+
+def unionSortedSet(s,t) :
+  res = s.copy()
+  return res.union(t)
  
 
 def concatenate(s,t) :
@@ -624,6 +654,10 @@ def intersectionSet(s,t) :
   res = s.copy()
   return res.intersection(t) 
 
+def intersectionSortedSet(s,t) :
+  res = s.copy()
+  return res.intersection(t) 
+
 
 def concatenateAll(sq) :
   res = []
@@ -633,7 +667,7 @@ def concatenateAll(sq) :
 
 
 def unionAll(sq) :
-  res = set({})
+  res = any(sq)
   for s in sq : 
     res = res.union(s)
   return res
@@ -686,11 +720,17 @@ def sortMap(s) :
 def selectSet(s,f) : 
   return set({x for x in s if f(x)})
 
+def selectSortedSet(s,f) : 
+  return SortedSet({x for x in s if f(x)})
+
 def selectSequence(s,f) : 
   return [x for x in s if f(x)]
 
 def rejectSet(s,f) : 
   return set({x for x in s if not f(x)})
+
+def rejectSortedSet(s,f) : 
+  return SortedSet({x for x in s if not f(x)})
 
 def rejectSequence(s,f) : 
   return [x for x in s if not f(x)]
@@ -901,39 +941,30 @@ def includingMap(m,x,y) :
 
 
 def excludeAllMap(s1,s2) :
-  res = dict({})
+  res = s1.copy()
   for x in s1 :
     if x in s2 :
-      pass
-    else :
-      res[x] = s1[x]
+      del res[x]
   return res
 
 
-def excludingMapKey(s,y) :
-  res = dict({})
-  for x in s :
-    if x == y :
-      pass
-    else :
-      res[x] = s[x]
+def excludingMapKey(m,y) :
+  res = m.copy()
+  if y in m :  
+    del res[y]
   return res
 
 
 def excludingMapValue(s,y) :
-  res = dict({})
+  res = s.copy()
   for x in s :
     if s[x] == y :
-      pass
-    else :
-      res[x] = s[x]
+      del res[x]
   return res
 
 
 def unionMap(s,t) :
-  res = dict({})
-  for x in s :
-    res[x] = s[x]
+  res = s.copy()
   for x in t :
     res[x] = t[x]
   return res
@@ -946,10 +977,12 @@ def unionAllMap(sq) :
 
 
 def intersectionMap(s,t) :
-  res = dict({})
+  res = s.copy()
   for x in s :
     if x in t and s[x] == t[x] :
-      res[x] = s[x]
+      pass
+    else : 
+      del res[x]
   return res
 
 def intersectAllMap(sq) :
@@ -964,19 +997,20 @@ def intersectAllMap(sq) :
 
 
 def selectMap(m,p) :
-  res = dict({})
-  for x in m :
-    if p(m[x]) :
-      res[x] = m[x]
-  return res
-
-def rejectMap(m,p) :
-  res = dict({})
+  res = m.copy()
   for x in m :
     if p(m[x]) :
       pass
-    else :
-      res[x] = m[x]
+    else : 
+      del res[x]
+  return res
+
+
+def rejectMap(m,p) :
+  res = m.copy()
+  for x in m :
+    if p(m[x]) :
+      del res[x]
   return res
 
 
@@ -989,29 +1023,26 @@ def collectMap(m,e) :
 
 
 def restrict(m,ks) :
-  res = dict({})
+  res = m.copy()
   for x in m :
     if x in ks :
-      res[x] = m[x]
+      pass
+    else :
+      del res[x]
   return res
 
 
 def antirestrict(m,ks) :
-  res = dict({})
+  res = m.copy()
   for x in m :
     if x in ks :
-      pass
-    else : 
-      res[x] = m[x]
+      del res[x]
   return res
 
 def excludingAtMap(m,k) : 
-  res = dict({})
-  for x in m :
-    if x == k :
-      pass
-    else : 
-      res[x] = m[x]
+  res = m.copy()
+  if x in m : 
+    del res[k]
   return res
 
 

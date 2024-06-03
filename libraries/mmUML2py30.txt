@@ -1,0 +1,2662 @@
+Entity:
+NamedElement 103 30
+null  * abstract 
+name String 3 false false false
+
+
+Entity:
+Relationship 549 34
+NamedElement  * abstract 
+
+
+Entity:
+Feature 6 125
+NamedElement  * abstract 
+
+
+Entity:
+Type 261 133
+NamedElement  * abstract 
+typeId String 3 false true false isSorted boolean 3 false false false
+
+
+Operation:
+defaultInitialValue
+Type
+String
+
+ query abstract
+true
+true
+
+
+Operation:
+isPrimitiveType
+PrimitiveType
+boolean
+s String 
+ query static
+true
+( s = "double" => result = true ) & ( s = "long" => result = true ) & ( s = "String" => result = true ) & ( s = "boolean" => result = true ) & ( s = "int" => result = true ) & (s = "OclType" => result = true) & (s = "OclVoid" => result = true)
+
+
+
+
+Operation:
+isPythonPrimitiveType
+PrimitiveType
+boolean
+s String 
+ query static 
+true
+( s = "float" => result = true ) & ( s = "int" => result = true ) & ( s = "str" => result = true ) & ( s = "bool" => result = true ) 
+
+
+
+
+
+
+Operation:
+toPython
+Type
+String
+
+ query
+true
+result = name
+
+
+
+
+
+
+
+Type:
+UMLKind 789 846
+value attribute role variable constant function queryop operation classid 
+
+Entity:
+Association 603 345
+Relationship  * 
+addOnly boolean 3 false false false aggregation boolean 3 false false false
+
+Entity:
+Generalization 509 248
+Relationship  * 
+
+
+Entity:
+Classifier 28 258
+Type  * abstract 
+
+
+Entity:
+DataType 15 346
+Classifier  * abstract 
+
+
+
+Entity:
+Enumeration 469 160
+DataType  * 
+
+
+Entity:
+EnumerationLiteral 474 89
+NamedElement  * 
+
+
+
+Association:
+Enumeration EnumerationLiteral -1 492 163 490 111 0 ownedLiteral null 
+ordered 
+
+
+
+Operation:
+defaultInitialValue
+Enumeration
+String
+
+ query
+true
+result = name + "." + ownedLiteral[1].name
+
+
+
+Operation:
+toPython
+Enumeration
+String
+
+ query
+true
+result = name
+
+
+
+Operation:
+literals
+Enumeration
+String
+
+ query
+true
+result = ownedLiteral->collect( lt | "  " + lt.name + " = " + ownedLiteral->indexOf(lt) + "\n" )->sum()
+
+
+
+Entity:
+PrimitiveType 5 422
+DataType  * 
+
+
+Operation:
+defaultInitialValue
+PrimitiveType
+String
+
+ query
+true
+( name = "double" => result = "0.0" ) & ( name = "String" => result = "\"\"" ) & ( name = "boolean" => result = "False" ) & ( name = "int" => result = "0" ) & ( name = "long" => result = "0" ) & ( true => result = "None" )
+
+
+
+Operation:
+toPython
+PrimitiveType
+String
+
+ query
+true
+( name = "double" => result = "float" ) & ( name = "long" => result = "int" ) & ( name = "String" => result = "str" ) & ( name = "boolean" => result = "bool" ) & (name = "OclType" => result = "type") & (name = "OclVoid" => result = "None") & (name = "OclException" => result = "BaseException") & ( true => result = name )
+
+
+
+Entity:
+Entity 138 314
+Classifier  * 
+isAbstract boolean 3 false false false isInterface boolean 3 false false false stereotypes Sequence(String) 3 false false false
+
+
+Operation:
+allLeafSubclasses
+Entity
+Set(Entity)
+
+ query
+true
+( specialization.size = 0 => result = Set{self} ) & ( specialization.size > 0 => result = specialization->unionAll(specific.allLeafSubclasses()) )
+
+
+Operation:
+allProperties
+Entity
+Set(Property)
+
+ query
+true
+( generalization.size = 0 => result = ownedAttribute ) & ( generalization.size > 0 => result = ownedAttribute->union(generalization.general.allProperties()) )
+
+
+Operation:
+allOperations
+Entity
+Set(Operation)
+
+ query
+true
+oonames = self.ownedOperation->collect(name) & ( ( generalization.size = 0 => result = self.ownedOperation ) & ( generalization.size > 0 => result = self.ownedOperation->union(generalization.general.allOperations()->select( op | op.name /: oonames )) ) )
+
+
+
+Operation:
+isApplicationClass
+Entity
+boolean
+
+ query
+true
+("external" /: stereotypes & "component" /: stereotypes ) => result = true
+
+
+
+ 
+Operation:
+isActiveClass
+Entity
+boolean
+
+query
+true
+("active" : stereotypes => result = true)
+
+
+
+
+
+
+Operation:
+isSingleValued
+Entity
+boolean
+d String 
+ query
+true
+allProperties()->exists( p | p.name = d & p.lower = 1 & p.upper = 1 ) => result = true
+
+
+Operation:
+isSetValued
+Entity
+boolean
+d String 
+ query
+true
+allProperties()->exists( p | p.name = d & ( p.lower /= 1 or p.upper /= 1 ) & p.isOrdered = false ) => result = true
+
+
+Operation:
+isSequenceValued
+Entity
+boolean
+d String 
+ query
+true
+allProperties()->exists( p | p.name = d & ( p.lower /= 1 or p.upper /= 1 ) & p.isOrdered = true ) => result = true
+
+
+Operation:
+defaultInitialValue
+Entity
+String
+
+ query
+true
+result = "None"
+
+
+Operation:
+initialisations
+Entity
+String
+
+ query
+true
+result = allProperties()->select( a | a.isStatic = false )->collect( x | x.initialisation() )->sum()
+
+
+
+Operation:
+generalisationString
+Entity
+String
+
+ query
+true
+( generalization.size = 0 => result = "" ) & ( generalization.size > 0 => result = "(" + generalization.any.general.name + ")" )
+
+
+Operation:
+classHeader
+Entity
+String
+
+ query
+true
+(superclass.size = 0 => result = "class " + name + " : ") & (superclass->exists( c | c.isInterface = false ) => result = "class " + name + "(" + superclass.any.name + ") : ") & ( true => result = "class " + name + " : " )
+
+
+
+
+Operation:
+allStaticCaches
+Entity
+String
+
+ query
+true
+result = ownedOperation->select( x | x.isStatic & x.isCached & x.parameters.size = 1 )->collect( y | "  " + y.name + "_cache = dict({})" + "\n" )->sum()
+
+
+
+
+
+Operation:
+allInstanceCaches
+Entity
+String
+
+ query
+true
+result = ownedOperation->select( x | x.isStatic = false & x.isCached & x.parameters.size = 1 )->collect( y | "    self." + y.name + "_cache = dict({})" + "\n" )->sum()
+
+
+
+
+
+Operation:
+staticAttributes
+Entity
+String
+
+ query
+true
+result = "  " + name.toLowerCase() + "_instances = []\n" + "  " + name.toLowerCase() + "_index = dict({})\n" + allProperties()->select( x | x.isStatic )->collect( y | "  " + y.name + " = " + y.type.defaultInitialValue() + "\n" )->sum() + allStaticCaches()
+
+
+
+Operation:
+classConstructor
+Entity
+String
+
+ query
+true
+result = "  def __init__(self):\n" + initialisations() + "    " + name + "." + name.toLowerCase() + "_instances.append(self)\n" + allInstanceCaches() + "\n"
+
+
+
+
+Operation:
+abstractClassConstructor
+Entity
+String
+
+ query
+true
+result = "  def __init__(self):\n" + "    " + name + "." + name.toLowerCase() + "_instances.append(self)\n"
+
+
+
+
+Operation:
+callOp
+Entity
+String
+
+ query
+true
+(isActiveClass() => result = "  def __call__(self):\n" + "    self.run()\n\n") & (true => result = "")
+
+
+
+
+
+Operation:
+createOp
+Entity
+String
+
+ query
+true
+result = "def create" + name + "():\n" + "  " + name.toLowerCase() + " = " + name + "()\n" + "  return " + name.toLowerCase() + "\n"
+
+
+Operation:
+createPKOp
+Entity
+String
+key String 
+ query
+true
+result = "def createByPK" + name + "(_value):\n" + "  result = get" + name + "ByPK(_value)\n" + "  if (result != None) : \n" + "    return result\n" + "  else :\n" + "    result = " + name + "()\n" + "    result." + key + " = _value\n" + "    " + name + "." + name.toLowerCase() + "_index[_value] = result\n" + "    return result\n"
+
+
+Operation:
+deleteOp
+Entity
+String
+
+ query static
+true
+result = "def free(x):\n" + "  del x\n\n"
+
+
+Operation:
+instancesOps
+Entity
+String
+leafs Set(Entity) 
+ query static
+true
+( leafs.size = 1 => result = "allInstances_" + leafs.first.name + "()" ) & ( leafs.size > 1 => result = "ocl.union(allInstances_" + leafs.first.name + "(), " + Entity.instancesOps(leafs.tail) + ")" )
+
+
+
+
+
+Operation:
+createOclTypeOp
+Entity
+String
+
+ query
+true
+typename = name.toLowerCase() + "_OclType" & result = typename + " = createByPKOclType(\"" + name + "\")\n" + typename + ".instance = create" + name + "()\n" + typename + ".actualMetatype = type(" + typename + ".instance)\n"
+
+
+
+
+
+
+Operation:
+allInstancesOp
+Entity
+String
+
+ query
+true
+( specialization.size = 0 => result = "def allInstances_" + name + "():\n" + "  return " + name + "." + name.toLowerCase() + "_instances\n" ) & ( specialization.size > 0 => result = "def allInstances_" + name + "():\n" + "  return " + Entity.instancesOps(allLeafSubclasses()) )
+
+
+
+
+
+Operation:
+displayOps
+Entity
+String
+
+ query static
+true
+result = "def displayint(x):\n" + "  print(str(x))\n\n" + "def displaylong(x):\n" + "  print(str(x))\n\n" + "def displaydouble(x):\n" + "  print(str(x))\n\n" + "def displayboolean(x):\n" + "  print(str(x))\n\n" + "def displayString(x):\n" + "  print(x)\n\n" + "def displaySequence(x):\n" + "  print(x)\n\n" + "def displaySet(x):\n" + "  print(x)\n\n" + "def displayMap(x):\n" + "  print(x)\n\n"
+
+
+
+Entity:
+CollectionType 139 397
+DataType  *
+
+
+
+Operation:
+defaultInitialValue
+CollectionType
+String
+
+ query
+true
+( name = "Sequence" => result = "[]" ) & ( name = "Set" & isSorted = true => result = "SortedSet({})") & ( name = "Set" => result = "set({})" ) & ( name = "Map" & isSorted = true => result = "SortedDict({})" ) & ( name = "Map" => result = "dict({})" ) & (name = "Function" => result = "None") & ( name = "Ref" => result = "[" + elementType.defaultInitialValue() + "]" )
+
+
+
+Entity:
+Expression 268 -110
+null  * abstract 
+needsBracket boolean 3 false false false umlKind UMLKind 3 false false false expId String 3 false true false isStatic boolean 3 false false false
+
+
+
+Operation:
+tolist
+Expression
+String
+s Sequence(String) 
+ query static
+true
+( s.size = 0 => result = "" ) & ( s.size = 1 => result = s->first() ) & ( s.size > 1 => result = s->first() + "," + Expression.tolist(s->tail()) )
+
+
+
+
+Operation:
+maptolist
+Expression
+String
+s Sequence(String) 
+ query static
+true
+( s.size = 0 => result = "" ) & ( s.size = 1 => result = s->first() ) & ( s.size > 1 => result = s->first() + "," + Expression.maptolist(s->tail()) )
+
+
+
+
+Operation:
+typeName
+Expression
+String
+
+query
+true
+(type->oclIsUndefined() => result = "") & (type.isSorted = true => result = "Sorted" + type.name) & (type.isSorted = false => result = type.name)
+
+
+
+Operation:
+indexstring
+Expression
+String
+ax Sequence(String) aind Set(String) 
+ query static
+true
+( aind.size > 0 & ax->includes("String") => result = "[" + aind->any() + "]" ) & ( aind.size > 0 & not(ax->includes("String")) => result = "[" + aind->any() + " -1]" ) & ( aind.size = 0 => result = "" )
+
+
+Operation:
+parstring
+Expression
+String
+pars Sequence(String) 
+ query static
+true
+( pars.size = 1 => result = "(" + pars->first() + ")" ) & ( pars.size > 1 => result = "(" + pars->first() + pars->tail()->collect( p | ", " + p )->sum() + ")" ) & ( pars.size = 0 => result = "()" )
+
+
+Operation:
+leftBracket
+Expression
+String
+tn String 
+ query static
+true
+( tn = "Set" => result = "set({" ) & ( tn = "SortedSet" => result = "SortedSet({" ) & ( tn = "Sequence" => result = "[" ) & ( tn = "Map" => result = "dict({" ) & ( tn = "SortedMap" => result = "SortedDict({" )
+
+
+Operation:
+rightBracket
+Expression
+String
+tn String 
+ query static
+true
+( tn = "Set" => result = "})" ) & ( tn = "SortedSet" => result = "})" ) & ( tn = "Sequence" => result = "]" ) & ( tn = "Map" => result = "})" ) & ( tn = "SortedMap" => result = "})" )
+
+
+Operation:
+addReference
+Expression
+Expression
+x BasicExpression 
+ abstract
+true
+true
+
+
+Operation:
+isMathFunction
+BasicExpression
+boolean
+fname String 
+ query static
+true
+( fname = "sqrt" or fname = "exp" or fname = "log" or fname = "sin" or fname = "cos" or fname = "tan" or fname = "pow" or fname = "log10" or fname = "cbrt" or fname = "tanh" or fname = "cosh" or fname = "sinh" or fname = "asin" or fname = "acos" or fname = "atan" or fname = "ceil" or fname = "round" or fname = "floor" or fname = "abs" => result = true )
+
+
+Operation:
+isComparitor
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "=" or fname = "/=" or fname = "<>" or fname = "<" or fname = ">" or fname = "<=" or fname = ">=" or fname = "<>=" => result = true )
+
+
+Operation:
+isInclusion
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = ":" or fname = "->includes" or fname = "<:" or fname = "->includesAll" => result = true )
+
+
+Operation:
+isExclusion
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "/:" or fname = "/<:" or fname = "->excludes" or fname = "->excludesAll" => result = true )
+
+
+Operation:
+isBooleanOp
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "&" or fname = "or" or fname = "=>" or fname = "->exists" or fname = "->forAll" or fname = "->exists1" => result = true )
+
+
+
+Operation:
+isStringOp
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "->indexOf" or fname = "->count" or fname = "->hasPrefix" or fname = "->hasSuffix" or fname = "->after" or fname = "->before" or fname = "->lastIndexOf" or fname = "->equalsIgnoreCase" or fname = "->split" or fname = "->isMatch" or fname = "->hasMatch" or fname = "->allMatches" or fname = "->firstMatch" or fname = "->excludingAt" => result = true )
+
+
+
+Operation:
+isUnaryStringOp
+UnaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "->size" or fname = "->first" or fname = "->last" or fname = "->front" or fname = "->tail" or fname = "->reverse" or fname = "->display" or fname = "->toUpperCase" or fname = "->toLowerCase" or fname = "->toInteger" or fname = "->toReal" or fname = "->toLong" or fname = "->toBoolean" or fname = "->trim" => result = true)
+
+
+
+Operation:
+isCollectionOp
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "->including" or fname = "->excluding" or fname = "->excludingAt" or fname = "->excludingFirst" or fname = "->append" or fname = "->count" or fname = "->indexOf" or fname = "->lastIndexOf" or fname = "->union" or fname = "->intersection" or fname = "^" or fname = "->isUnique" or fname = "->at" ) => result = true
+
+
+Operation:
+isDistributedIteratorOp
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "->sortedBy" or fname = "->unionAll" or fname = "->concatenateAll" or fname = "->intersectAll" or fname = "->selectMinimals" or fname = "->selectMaximals" => result = true )
+
+
+
+
+Operation:
+isCollection
+Expression
+boolean
+
+ query
+true
+( type->oclIsUndefined() => result = false) & ( type.name = "Set" => result = true ) & ( type.name = "Sequence" => result = true )
+
+
+
+Operation:
+isSet
+Expression
+boolean
+
+query
+true
+( type->oclIsUndefined() => result = false) & ( type.name = "Set" => result = true )
+
+
+
+
+Operation:
+isMap
+Expression
+boolean
+
+ query
+true
+( type->oclIsUndefined() => result = false) & ( type.name = "Map" => result = true )
+
+
+
+
+Operation:
+isNumeric
+Expression
+boolean
+
+ query
+true
+( type->oclIsUndefined() => result = false) & ( type.name = "int" or type.name = "long" or type.name = "double" => result = true )
+
+
+
+
+Operation:
+isString
+Expression
+boolean
+
+ query
+true
+( type->oclIsUndefined() => result = false) & ( type.name = "String" => result = true )
+
+
+
+Operation:
+isRef
+Expression
+boolean
+
+query
+true
+( type->oclIsUndefined() => result = false) & ( type.name = "Ref" => result = true )
+
+
+
+
+Operation:
+isEnumeration
+Expression
+boolean
+
+ query
+true
+( type->oclIsUndefined() => result = false) & ( Enumeration->collect(name)->includes(type.name) => result = true )
+
+
+
+Operation:
+isStringType
+Type
+boolean
+
+ query
+true
+( name = "String" => result = true )
+
+
+
+
+Operation:
+isUnaryCollectionOp
+Expression
+boolean
+fname String 
+ query static
+true
+( fname = "->size" or fname = "->any" or fname = "->reverse" or fname = "->front" or fname = "->tail" or fname = "->first" or fname = "->last" or fname = "->sort" or fname = "->asSet" or fname = "->asSequence" or fname = "->asOrderedSet" or fname = "->asBag" ) => result = true
+
+
+Operation:
+isIteratorOp
+BinaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "->collect" or fname = "->select" or fname = "->reject" or fname = "->iterate" ) => result = true
+
+
+Operation:
+isReduceOp
+UnaryExpression
+boolean
+fname String 
+ query static
+true
+( fname = "->min" or fname = "->max" or fname = "->sum" or fname = "->prd" ) => result = true
+
+
+Operation:
+toPython
+Expression
+String
+
+ query abstract
+true
+true
+
+
+
+Operation:
+updateForm
+Expression
+String
+
+ query abstract
+true
+true
+
+
+
+
+Entity:
+BinaryExpression 57 10
+Expression  * 
+operator String 3 false false false variable String 3 false false false
+
+
+
+Operation:
+mapDividesExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( type.name = "int" or type.name = "long" => result = ls + "//" + rs ) & ( true => result = ls + "/" + rs )
+
+
+
+
+
+Operation:
+mapNumericExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( operator = "/" => result = mapDividesExpression(ls,rs) ) & ( operator = "mod" => result = ls + " % " + rs ) & ( operator = "div" => result = ls + " // " + rs ) & ( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = "->pow" => result = "math.pow(" + ls + ", " + rs + ")" ) & ( operator = "->gcd" => result = "ocl.gcd(" + ls + ", " + rs + ")" ) & ( operator = "->truncateTo" => result = "ocl.truncateTo(" + ls + ", " + rs + ")" ) & ( operator = "->roundTo" => result = "ocl.roundTo(" + ls + ", " + rs + ")" ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+
+
+Operation:
+mapComparitorExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = "<>" => result = ls + " != " + rs ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+Operation:
+mapStringExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = ":" => result = ls + " in " + rs ) & ( operator = "/:" => result = ls + " not in " + rs ) & ( operator = "->includes" => result = rs + " in " + ls ) & ( operator = "->excludes" => result = rs + " not in " + ls ) & ( operator = "-" => result = "ocl.subtractString(" + ls + ", " + rs + ")" ) & ( operator = "->hasPrefix" => result = ls + ".startswith(" + rs + ")" ) & ( operator = "->hasSuffix" => result = ls + ".endswith(" + rs + ")" ) & ( operator = "->equalsIgnoreCase" => result = "ocl.equalsIgnoreCase(" + ls + "," + rs + ")" ) & ( operator = "->indexOf" => result = "(" + ls + ".find(" + rs + ") + 1)" ) & ( operator = "->lastIndexOf" => result = "ocl.lastIndexOf(" + ls + ", " + rs + ")" ) & ( operator = "->count" => result = ls + ".count(" + rs + ")" ) & ( operator = "->isMatch" => result = "ocl.isMatch(" + ls + ", " + rs + ")" ) & ( operator = "->hasMatch" => result = "ocl.hasMatch(" + ls + ", " + rs + ")" ) & ( operator = "->allMatches" => result = "ocl.allMatches(" + ls + ", " + rs + ")" ) & ( operator = "->firstMatch" => result = "ocl.firstMatch(" + ls + ", " + rs + ")" ) & ( operator = "->before" => result = "ocl.before(" + ls + ", " + rs + ")" ) & ( operator = "->after" => result = "ocl.after(" + ls + ", " + rs + ")" ) & ( operator = "->split" => result = "ocl.split(" + ls + ", " + rs + ")" ) & ( operator = "->excludingAt" => result = "ocl.removeAtString(" + ls + ", " + rs + ")" ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+Operation:
+mapStringPlus
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( left.isString() => result = ls + " + str(" + rs + ")" ) & ( right.isString() => result = "str(" + ls + ") + " + rs )
+
+
+
+Operation:
+mapRefPlus
+BinaryExpression
+String
+ls String rs String
+query
+true
+result = "(" + ls + ")[" + rs + ":]"
+
+
+
+Operation:
+mapBooleanExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( operator = "&" => result = ls + " and " + rs ) & ( operator = "=>" => result = "((" + rs + ") if (" + ls + ") else (True))" ) & ( operator = "or" => result = ls + " or " + rs ) & ( operator = "->exists" => result = "ocl.exists(" + ls + ", lambda " + variable + " : " + rs + ")" ) & ( operator = "->forAll" => result = "ocl.forAll(" + ls + ", lambda " + variable + " : " + rs + ")" ) & ( operator = "->exists1" => result = "ocl.exists1(" + ls + ", lambda " + variable + " : " + rs + ")" ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+Operation:
+mapBinaryCollectionExpression
+BinaryExpression
+String
+ls String rs String lt String rt String 
+ query
+true
+( operator = ":" => result = ls + " in " + rs ) & ( operator = "->includes" => result = rs + " in " + ls ) & ( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = "/:" => result = ls + " not in " + rs ) & ( operator = "->excludes" => result = rs + " not in " + ls ) & ( operator = "<:" => result = "ocl.includesAll(" + rs + ", " + ls + ")" ) & ( operator = "/<:" => result = "(not ocl.includesAll(" + rs + ", " + ls + "))" ) & ( operator = "->includesAll" => result = "ocl.includesAll(" + ls + ", " + rs + ")" ) & ( operator = "->excludesAll" => result = "ocl.excludesAll(" + rs + ", " + ls + ")" ) & ( operator = "->including" => result = "ocl.including" + lt + "(" + ls + ", " + rs + ")" ) & ( operator = "->excluding" => result = "ocl.excluding" + lt + "(" + ls + ", " + rs + ")" ) & ( operator = "->excludingFirst" => result = "ocl.excludingFirst(" + ls + ", " + rs + ")" ) & ( operator = "->excludingAt" => result = "ocl.removeAt(" + ls + ", " + rs + ")" ) & ( operator = "->union" => result = "ocl.union" + lt + "(" + ls + ", " + rs + ")" ) & ( operator = "->intersection" => result = "ocl.intersection" + lt + "(" + ls + ", " + rs + ")" ) & ( operator = "^" => result = "ocl.concatenate(" + ls + ", " + rs + ")" ) & ( operator = "->prepend" => result = "ocl.prepend(" + ls + ", " + rs + ")" ) & ( operator = "->append" => result = "ocl.append(" + ls + ", " + rs + ")" ) & ( operator = "-" => result = "ocl.excludeAll" + lt + "(" + ls + ", " + rs + ")" ) & ( operator = "->indexOf" & right.type.name = "Sequence" => result = "ocl.indexOfSubSequence(" + ls + "," + rs + ")" ) & ( operator = "->indexOf" & right.type.name /= "Sequence" => result = "ocl.indexOfSequence(" + ls + ", " + rs + ")" ) & ( operator = "->lastIndexOf" & right.type.name = "Sequence" => result = "ocl.lastIndexOfSubSequence(" + ls + ", " + rs + ")" ) & ( operator = "->lastIndexOf" & right.type.name /= "Sequence" => result = "ocl.lastIndexOfSequence(" + ls + ", " + rs + ")" ) & ( operator = "->count" => result = "(" + ls + ").count(" + rs + ")" ) & ( operator = "->at" => result = "(" + ls + ")[" + rs + " - 1]" ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+
+
+Operation:
+mapBinaryMapExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( operator = ":" => result = ls + " in " + rs ) & ( operator = "->includes" => result = rs + " in " + ls ) & ( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = "/:" => result = ls + " not in " + rs ) & ( operator = "->excludes" => result = rs + " not in " + ls ) & ( operator = "<:" => result = "ocl.includesAllMap(" + rs + ", " + ls + ")" ) & ( operator = "/<:" => result = "(not ocl.includesAllMap(" + rs + ", " + ls + "))" ) & ( operator = "->includesAll" => result = "ocl.includesAllMap(" + ls + ", " + rs + ")" ) & ( operator = "->excludesAll" => result = "ocl.excludesAllMap(" + rs + ", " + ls + ")" ) & ( operator = "->including" => result = "ocl.includingMap(" + ls + ", " + rs + ", " + variable + ")" ) & ( operator = "->excluding" => result = "ocl.excludingMapValue(" + ls + ", " + rs + ")" ) & ( operator = "->excludingAt" => result = "ocl.excludingAtMap(" + ls + ", " + rs + ")" ) & ( operator = "->union" => result = "ocl.unionMap(" + ls + ", " + rs + ")" ) & ( operator = "->intersection" => result = "ocl.intersectionMap(" + ls + ", " + rs + ")" ) & ( operator = "->restrict" => result = "ocl.restrict(" + ls + ", " + rs + ")" ) & ( operator = "->antirestrict" => result = "ocl.antirestrict(" + ls + ", " + rs + ")" ) & ( operator = "-" => result = "ocl.excludeAllMap(" + ls + ", " + rs + ")" ) & ( operator = "->at" => result = "(" + ls + ")[" + rs + "]" ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+
+
+
+Operation:
+mapDistributedIteratorExpression
+BinaryExpression
+String
+ls String rs String rexp Expression 
+ query
+true
+( operator = "->sortedBy" => result = "sorted(" + ls + ", key = lambda " + variable + " : " + rs + ")" ) & ( operator = "->concatenateAll" => result = "ocl.concatenateAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Sequence" => result = "ocl.concatenateAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Set" => result = "ocl.unionAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Map" => result = "ocl.unionAllMap([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->intersectAll" => result = "ocl.intersectAll" + type.name + "([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->selectMaximals" => result = "ocl.selectMaximals" + left.type.name + "(" + ls + ", lambda " + expId + " : " + rexp.toPython() + ")" ) & ( operator = "->selectMinimals" => result = "ocl.selectMinimals" + left.type.name + "(" + ls + ", lambda " + expId + " : " + rexp.toPython() + ")" )
+
+
+
+
+Operation:
+mapMapIteratorExpression
+BinaryExpression
+String
+ls String rs String
+ query
+true
+( operator = "->select" => result = "ocl.selectMap(" + ls + ", lambda " + variable + " : " + rs + ")" ) & ( operator = "->reject" => result = "ocl.rejectMap(" + ls + ", lambda " + variable + " : " + rs + ")" ) & ( operator = "->collect" => result = "ocl.collectMap(" + ls + ", lambda " + variable + " : " + rs + ")" )
+
+
+
+
+
+
+
+Operation:
+mapIteratorExpression
+BinaryExpression
+String
+ls String rs String tn String 
+ query
+true
+lbracket = Expression.leftBracket(tn) & rbracket = Expression.rightBracket(tn) & (tn = "Map" => result = mapMapIteratorExpression(ls,rs)) & ( operator = "->iterate" => result = "ocl.iterate(" + ls + "," + accumulator.initialValue.toPython() + ", lambda " + variable + ", " + accumulator.name + " : (" + rs + "))") & ( operator = "->select" => result = lbracket + variable + " for " + variable + " in " + ls + " if " + rs + rbracket ) & ( operator = "->reject" => result = lbracket + variable + " for " + variable + " in " + ls + " if not " + rs + rbracket ) & ( operator = "->collect" => result = "[" + rs + " for " + variable + " in " + ls + "]" )
+
+
+
+Operation:
+mapTypeCastExpression
+BinaryExpression
+String
+ls String rs String
+query
+true
+(PrimitiveType.isPythonPrimitiveType(rs) => result = type.toPython() + "(" + ls + ")") & (true => result = ls)
+
+
+
+Operation:
+mapCatchExpression
+BinaryExpression
+String
+ls String rs String
+query
+true
+(":" = operator => result = right.mapTypeExpression(Set{}) + " as " + ls) & (true => result = mapBinaryExpression(ls,rs))
+
+
+
+
+Operation:
+bothNumeric
+BinaryExpression
+boolean
+
+query
+true
+left.isNumeric() & right.isNumeric() => result = true
+
+
+
+
+
+
+
+Operation:
+bothString
+BinaryExpression
+boolean
+
+query
+true
+left.isString() & right.isString() => result = true
+
+
+
+
+Operation:
+isStringPlus
+BinaryExpression
+boolean
+
+query
+true
+operator = "+" & ( left.isString() or right.isString() ) => result = true
+
+
+
+Operation:
+isRefPlus
+BinaryExpression
+boolean
+
+query
+true
+operator = "+" & left.isRef() => result = true
+
+
+
+
+Operation:
+mapBinaryExpression
+BinaryExpression
+String
+ls String rs String 
+ query
+true
+( operator = ":" => result = ls + " in " + rs ) & (operator = "->apply" => result = "(" + ls + ")(" + rs + ")") & (operator = "let" => result = "(lambda " + variable + " : " + rs + ")(" + ls + ")") & ( operator = "->oclAsType" => result = mapTypeCastExpression(ls,rs) ) & (operator = "->oclIsTypeOf" => result = "(type(" + ls + ") == " + rs + ")") & (operator = "->oclIsKindOf" => result = ls + " in " + rs) & ( operator = "->compareTo" => result = "ocl.compareTo(" + ls + "," + rs + ")" ) & (operator = "|->" => result = ls + ":" + rs) & (operator = "->restrict" => result = "ocl.restrict(" + ls + "," + rs + ")") & (operator = "->antirestrict" => result = "ocl.antirestrict(" + ls + "," + rs + ")") & ( operator = "->append" => result = "ocl.append(" + ls + ", " + rs + ")" ) & ( BinaryExpression.isComparitor(operator) => result = mapComparitorExpression(ls,rs) ) & ( BinaryExpression.isDistributedIteratorOp(operator) => BasicExpression->exists( be | be.data = expId & be.expId = expId + "_variable" & result = mapDistributedIteratorExpression(ls,rs,right.addReference(be)) ) ) & ( bothNumeric() => result = mapNumericExpression(ls,rs) ) & ( bothString() => result = mapStringExpression(ls,rs) ) & ( left.isString() & operator = "->excludingAt" => result = "ocl.removeAtString(" + ls + "," + rs + ")" ) &  ( BinaryExpression.isIteratorOp(operator) => result = mapIteratorExpression(ls,rs,left.typeName()) ) & ( BinaryExpression.isBooleanOp(operator) => result = mapBooleanExpression(ls,rs) ) & ( isStringPlus() => result = mapStringPlus(ls,rs) ) & ( isRefPlus() => result = mapRefPlus(ls,rs) ) & ( ( left.isCollection() or right.isCollection() ) => result = mapBinaryCollectionExpression(ls,rs,left.typeName(), right.typeName() ) ) & ( ( left.isMap() or right.isMap() ) => result = mapBinaryMapExpression(ls,rs) ) & ( operator = "->at" => result = "(" + ls + ")[" + rs + "]" ) & ( operator = "->pow" => result = "math.pow(" + ls + ", " + rs + ")" ) & ( true => result = ls + " " + operator + " " + rs )
+
+
+
+Operation:
+toPython
+BinaryExpression
+String
+
+ query
+true
+(needsBracket => result = "(" +  mapBinaryExpression(left.toPython(),right.toPython()) + ")") & (true => result = mapBinaryExpression(left.toPython(),right.toPython()))
+
+
+
+Operation:
+updateFormBinaryExpression
+BinaryExpression
+String
+ls String rs String
+query
+true
+( operator = ":" & right.isSet() => result = rs + ".add(" + ls + ")" ) & ( operator = ":" & right.isCollection() => result = rs + ".append(" + ls + ")" ) & ( operator = "/:" & right.isSet() => result = rs + ".discard(" + ls + ")" ) & ( operator = "/:" & right.isCollection() => result = rs + ".remove(" + ls + ")" ) & ( operator = "<:" & right.isSet() => result = rs + ".update(" + ls + ")" ) & ( operator = ":" & right.isCollection() => result = rs + ".extend(" + ls + ")" ) & ( operator = "/<:" & right.isSet() => result = rs + ".difference_update(" + ls + ")" ) & (true => result = "exec(\"" + self.toPython() + "\")") 
+
+
+
+
+Operation:
+updateForm
+BinaryExpression
+String
+
+query
+true
+result = updateFormBinaryExpression(left.toPython(), right.toPython())
+
+
+Operation:
+addReference
+BinaryExpression
+Expression
+x BasicExpression 
+
+x.data /= self.variable
+BinaryExpression->exists( e | e.expId = expId + "_" + x.data & e.operator = operator & e.variable = self.variable & e.umlKind = umlKind & e.left = left.addReference(x) & e.right = right.addReference(x) & result = e )
+
+
+
+
+Entity:
+ConditionalExpression 557 10
+Expression  * 
+
+
+
+Operation:
+mapConditionalExpression
+ConditionalExpression
+String
+ts String ls String rs String 
+ query
+true
+result = "(" + ls + " if " + ts + " else " + rs + ")"
+
+
+
+Operation:
+toPython
+ConditionalExpression
+String
+
+ query
+true
+result = mapConditionalExpression(test.toPython(), ifExp.toPython(), elseExp.toPython())
+
+
+
+Operation:
+updateFormConditionalExpression
+ConditionalExpression
+String
+ts String ls String rs String
+query
+true
+result = "  if " + ts + ":\n" + "    " + ls + "\n  else:\n    " + rs
+
+
+Operation:
+updateForm
+ConditionalExpression
+String
+
+query
+true
+result = updateFormConditionalExpression(test.toPython(), ifExp.updateForm(), elseExp.updateForm())
+
+
+
+Operation:
+addReference
+ConditionalExpression
+Expression
+x BasicExpression 
+
+true
+ConditionalExpression->exists( e | e.expId = expId + "_" + x.data & e.test = test.addReference(x) & e.umlKind = umlKind & e.ifExp = ifExp.addReference(x) & e.elseExp = elseExp.addReference(x) & result = e )
+
+
+
+
+
+
+
+
+
+
+Entity:
+UnaryExpression 654 -38
+Expression  * 
+operator String 3 false false false variable String 3 false false false
+
+
+
+
+Operation:
+mapNumericExpression
+UnaryExpression
+String
+arg String 
+ query
+true
+( operator = "->sqrt" => result = "math.sqrt(" + arg + ")" ) & ( operator = "->sin" => result = "math.sin(" + arg + ")" ) & ( operator = "->tan" => result = "math.tan(" + arg + ")" ) & ( operator = "->cos" => result = "math.cos(" + arg + ")" ) & ( operator = "->sqr" => result = "ocl.sqr(" + arg + ")" ) & ( operator = "->floor" => result = "int(math.floor(" + arg + "))" ) & ( operator = "->ceil" => result = "int(math.ceil(" + arg + "))" ) & ( operator = "->round" => result = "round(" + arg + ")" ) & ( operator = "->cbrt" => result = "ocl.cbrt(" + arg + ")" ) & ( operator = "->display" => result = "print(str(" + arg + "))" ) & ( operator = "->abs" => result = "math.fabs(" + arg + ")" ) & ( operator = "->exp" => result = "math.exp(" + arg + ")" ) & ( operator = "->log" => result = "math.log(" + arg + ")" ) & ( operator = "->log10" => result = "math.log10(" + arg + ")" ) & ( operator = "->asin" => result = "math.asin(" + arg + ")" ) & ( operator = "->acos" => result = "math.acos(" + arg + ")" ) & ( operator = "->atan" => result = "math.atan(" + arg + ")" ) & ( operator = "->sinh" => result = "math.sinh(" + arg + ")" ) & ( operator = "->cosh" => result = "math.cosh(" + arg + ")" ) & ( operator = "->tanh" => result = "math.tanh(" + arg + ")" )
+
+
+
+Operation:
+mapStringExpression
+UnaryExpression
+String
+arg String 
+ query
+true
+( operator = "->size" => result = "len(" + arg + ")" ) & ( operator = "->front" => result = "(" + arg + ")[0:-1]" ) & ( operator = "->tail" => result = "(" + arg + ")[1:]" ) & ( operator = "->first" => result = "(" + arg + ")[0:1]" ) & ( operator = "->last" => result = "(" + arg + ")[-1:]" ) & ( operator = "->toLowerCase" => result = "ocl.toLowerCase(" + arg + ")" ) & ( operator = "->toUpperCase" => result = "ocl.toUpperCase(" + arg + ")" ) & ( operator = "->characters" => result = "ocl.characters(" + arg + ")" ) & ( operator = "->trim" => result = "ocl.trim(" + arg + ")" ) & ( operator = "->reverse" => result = "ocl.reverseString(" + arg + ")" ) & ( operator = "->display" => result = "print(" + arg + ")" ) & ( operator = "->isInteger" => result = "(" + arg + ").isdigit()" ) & ( operator = "->isLong" => result = "(" + arg + ").isdigit()" ) & ( operator = "->isReal" => result = "ocl.isReal(" + arg + ")" ) & ( operator = "->toInteger" => result = "ocl.toInteger(" + arg + ")" ) & ( operator = "->toLong" => result = "ocl.toInteger(" + arg + ")" ) & ( operator = "->toReal" => result = "float(" + arg + ")" ) & ( operator = "->toBoolean" => result = "ocl.toBoolean(" + arg + ")" )
+
+
+Operation:
+mapReduceExpression
+UnaryExpression
+String
+arg String tn String et Type
+ query
+true
+( operator = "->sum" & et->oclIsUndefined() => result = "ocl.sum(" + arg + ")") & ( operator = "->sum" & et.isStringType() => result = "ocl.sumString(" + arg + ")" ) & ( operator = "->sum" & not(et.isStringType()) => result = "ocl.sum(" + arg + ")" ) & ( operator = "->prd" => result = "ocl.prd(" + arg + ")" ) & ( operator = "->max" => result = "ocl.max" + tn + "(" + arg + ")" ) & ( operator = "->min" => result = "ocl.min" + tn + "(" + arg + ")" )
+
+
+Operation:
+mapUnaryCollectionExpression
+UnaryExpression
+String
+arg String tn String 
+ query
+true
+( operator = "->size" => result = "len(" + arg + ")" ) & ( operator = "->isEmpty" => result = "(len(" + arg + ") == 0)" ) & ( operator = "->notEmpty" => result = "(len(" + arg + ") > 0)" ) & ( operator = "->asSet" => result = "set(" + arg + ")" ) & ( operator = "->asSequence" => result = "list(" + arg + ")" ) & ( operator = "->asOrderedSet" => result = "ocl.asOrderedSet(" + arg + ")" ) & ( operator = "->asBag" => result = "ocl.sortSequence(" + arg + ")" ) & ( operator = "->unionAll" & type.name = "Sequence" => result = "ocl.concatenateAll(" + arg + ")" ) & ( operator = "->unionAll" & type.name = "Set" => result = "ocl.unionAll(" + arg + ")" ) & ( operator = "->unionAll" & type.name = "Map" => result = "ocl.unionAllMap(" + arg + ")" ) & ( operator = "->intersectAll" => result = "ocl.intersectAll" + type.name + "(" + arg + ")" ) & ( operator = "->concatenateAll" => result = "ocl.concatenateAll(" + arg + ")" ) & ( operator = "->isUnique" => result = "ocl.isUnique(" + arg + ")" ) & ( operator = "->isDeleted" => result = "del " + arg ) & ( operator = "->copy" => result = "copy.copy(" + arg + ")" ) & ( operator = "->any" => result = "ocl.any(" + arg + ")" ) & ( operator = "->reverse" => result = "ocl.reverse" + tn + "(" + arg + ")" ) & ( operator = "->front" => result = "(" + arg + ")[0:-1]" ) & ( operator = "->tail" => result = "(" + arg + ")[1:]" ) & ( operator = "->first" => result = "(" + arg + ")[0]" ) & ( operator = "->last" => result = "(" + arg + ")[-1]" ) & ( operator = "->sort" => result = "ocl.sort" + tn + "(" + arg + ")" ) & ( operator = "->display" => result = "print(str(" + arg + "))" )
+
+
+
+Operation:
+mapUnaryMapExpression
+UnaryExpression
+String
+arg String tn String
+ query
+true
+( operator = "->size" => result = "len(" + arg + ")" ) & ( operator = "->isEmpty" => result = "(len(" + arg + ") == 0)" ) & ( operator = "->notEmpty" => result = "(len(" + arg + ") > 0)" ) & ( operator = "->asSet" => result = "set(" + arg + ")" ) & ( operator = "->asSequence" => result = "list(" + arg + ")" ) & ( operator = "->asOrderedSet" => result = "ocl.asOrderedSet(" + arg + ")" ) & ( operator = "->asBag" => result = "ocl.sortSequence(" + arg + ")" ) & ( operator = "->unionAll" & type.name = "Sequence" => result = "ocl.concatenateAll(" + arg + ")" ) & ( operator = "->unionAll" & type.name = "Set" => result = "ocl.unionAll(" + arg + ")" ) & ( operator = "->unionAll" & type.name = "Map" => result = "ocl.unionAllMap(" + arg + ")" ) & ( operator = "->intersectAll" => result = "ocl.intersectAll" + type.name + "(" + arg + ")" ) & ( operator = "->concatenateAll" => result = "ocl.concatenateAll(" + arg + ")" ) & ( operator = "->isUnique" => result = "ocl.isUnique(" + arg + ")" ) & ( operator = "->isDeleted" => result = "del " + arg ) & ( operator = "->copy" => result = "copy.copy(" + arg + ")" ) & ( operator = "->any" => result = "ocl.anyMap(" + arg + ")" ) & ( operator = "->reverse" => result = "ocl.reverse" + tn + "(" + arg + ")" ) & ( operator = "->front" => result = "(" + arg + ")[0:-1]" ) & ( operator = "->tail" => result = "(" + arg + ")[1:]" ) & ( operator = "->first" => result = "(" + arg + ")[0]" ) & ( operator = "->last" => result = "(" + arg + ")[-1]" ) & ( operator = "->sort" => result = "ocl.sort" + tn + "(" + arg + ")" ) & ( operator = "->display" => result = "print(str(" + arg + "))" )
+
+
+
+Operation:
+mapUnaryExpression
+UnaryExpression
+String
+arg String 
+ query
+true
+( operator = "-" => result = "-" + arg ) & ( operator = "?" => result = "[" + arg + "]" ) & ( operator = "!" => result = "(" + arg + ")[0]" ) & ( operator = "not" => result = "not " + arg ) & ( operator = "->isDeleted" => result = "del " + arg ) & ( operator = "->copy" => result = "copy.copy(" + arg + ")" ) & ( operator = "->oclIsUndefined" => result = "(" + arg + " == None)" ) & ( operator = "->oclIsInvalid" => result = "math.isnan(" + arg + ")" ) & ( operator = "->oclType" => result = "type(" + arg + ")" ) & (operator = "lambda" => result = "lambda " + variable + " : " + arg) & ( operator = "->byte2char" => result = "chr(" + arg + ")" ) & ( operator = "->char2byte" => result = "ord(" + arg + ")" ) & ( operator = "->keys" => result = "ocl.keys(" + arg + ")" ) & ( operator = "->values" => result = "ocl.values(" + arg + ")" ) & ( operator = "->exp" => result = "math.exp(" + arg + ")" ) & ( operator = "->log" => result = "math.log(" + arg + ")" ) &  ( argument.isNumeric() => result = mapNumericExpression(arg) ) & ( argument.isString() => result = mapStringExpression(arg) ) & ( operator = "->isInteger" => result = "ocl.isInteger(" + arg + ")" ) & ( operator = "->isLong" => result = "ocl.isInteger(" + arg + ")" ) & ( operator = "->isReal" => result = "ocl.isReal(" + arg + ")" ) & ( operator = "->toInteger" => result = "ocl.toInteger(" + arg + ")" ) & ( operator = "->toLong" => result = "ocl.toInteger(" + arg + ")" ) & ( operator = "->toReal" => result = "ocl.toReal(" + arg + ")" ) & ( operator = "->toBoolean" => result = "ocl.toBoolean(" + arg + ")" ) & ( UnaryExpression.isReduceOp(operator) => result = mapReduceExpression(arg,argument.type.name,argument.elementType) ) & ( argument.isCollection() => result = mapUnaryCollectionExpression(arg,argument.type.name) ) & ( argument.isMap() => result = mapUnaryMapExpression(arg,argument.type.name) ) & (operator = "->display" => result = "print(str(" + arg + "))" ) & ( operator = "->toBoolean" => result = "ocl.toBoolean(" + arg + ")" ) & ( true => result = "ocl." + operator.tail.tail + "(" + arg + ")")
+
+
+
+Operation:
+toPython
+UnaryExpression
+String
+
+ query
+true
+(needsBracket = true => result = "(" +  mapUnaryExpression(argument.toPython()) + ")") & (true => result = mapUnaryExpression(argument.toPython()))
+
+
+
+Operation:
+updateFormUnaryExpression
+UnaryExpression
+String
+arg String
+query
+true
+(operator = "->isDeleted" => result = "del " + arg) & (operator = "->display" => result = "print(" + arg + ")") & (true => result = "exec(\"" + toPython() + "\")")
+
+
+
+Operation:
+updateForm
+UnaryExpression
+String
+
+query
+true
+result = updateFormUnaryExpression(argument.toPython())
+
+
+Operation:
+addReference
+UnaryExpression
+Expression
+x BasicExpression 
+
+true
+UnaryExpression->exists( e | e.expId = expId + "_" + x.data & e.operator = operator & e.umlKind = umlKind & e.argument = argument.addReference(x) & result = e )
+
+
+Entity:
+CollectionExpression 646 -112
+Expression  * 
+isOrdered boolean 3 false false false isSorted boolean 3 false false false
+
+
+
+Operation:
+mapCollectionExpression
+CollectionExpression
+String
+elems Sequence(String) tn String 
+ query
+true
+( tn = "Set" & isSorted = true => result = "SortedSet({" + Expression.tolist(elems) + "})" ) & ( tn = "Set" => result = "set({" + Expression.tolist(elems) + "})" ) & ( tn = "Sequence" => result = "[" + Expression.tolist(elems) + "]" ) & ( tn = "Map" & isSorted = true => result = "SortedDict({" + Expression.maptolist(elems) + "})") & ( tn = "Map" => result = "dict({" + Expression.maptolist(elems) + "})") & ( tn = "Ref" & elems.size > 0 => result = "[" + elementType.defaultInitialValue() + "]*" + elems[1] )
+
+
+
+
+
+Operation:
+toPython
+CollectionExpression
+String
+
+ query
+true
+result = mapCollectionExpression(elements.toPython(),type.name)
+
+
+Operation:
+updateForm
+CollectionExpression
+String
+
+query
+true
+result = "exec(\"" + self.toPython() + "\")"
+
+
+
+Operation:
+addReference
+CollectionExpression
+Expression
+x BasicExpression 
+
+true
+CollectionExpression->exists( e | e.expId = expId + "_" + x.data & e.isOrdered = isOrdered & e.umlKind = umlKind & e.elements = elements.addReference(x) & result = e )
+
+
+
+
+Entity:
+BasicExpression 284 78
+Expression  * 
+data String 3 false false false prestate boolean 3 false false false
+
+
+
+
+Operation:
+noContextnoObject
+BasicExpression
+boolean
+obs Set(String)
+query
+true
+obs.size = 0 & context.size = 0 => result = true
+
+
+
+
+
+Operation:
+contextAndObject
+BasicExpression
+boolean
+obs Set(String)
+query
+true
+context.size > 0 & obs.size > 0 => result = true
+
+
+
+Operation:
+isOclExceptionCreation
+BasicExpression
+boolean
+obs Set(String)
+query
+true
+(data = "newOclException" or data = "newAssertionException" or data = "newProgramException" or data = "newSystemException" or data = "newIOException" or data = "newCastingException" or data = "newNullAccessException" or data = "newIndexingException" or data = "newArithmeticException" or data = "newIncorrectElementException" or data = "newAccessingException" or data = "newOclDate") => result = true
+
+
+
+
+Operation:
+mapTypeExpression
+BasicExpression
+String
+ainds Set(String)
+ query
+true
+( data = "long" => result = "int" ) & ( data = "double" => result = "float" ) & ( data = "boolean" => result = "bool" ) & ( data = "String" => result = "str" ) & (data = "OclType" & ainds.size > 0 => result = "getOclTypeByPK(" + ainds->any() + ")") & (data = "OclType" & ainds.size = 0 => result = "type") & (data = "OclVoid" => result = "None") & (data = "OclAny" => result = "None") & (data = "OclException" => result = "BaseException") & (data = "ProgramException" => result = "Exception") & (data = "SystemException" => result = "OSError") & (data = "IOException" => result = "IOError") & (data = "CastingException" => result = "TypeError") & (data = "NullAccessException" => result = "AttributeError") & (data = "IndexingException" => result = "LookupError") & (data = "ArithmeticException" => result = "ArithmeticError") & (data = "IncorrectElementException" => result = "ValueError") & (data = "AssertionException" => result = "AssertionError") & (data = "AccessingException" => result = "OSError") & ( true => result = data )
+
+
+
+Operation:
+mapValueExpression
+BasicExpression
+String
+aind Set(String) 
+ query
+true
+( data = "true" => result = "True" ) & ( data = "false" => result = "False" ) & ( data = "null" => result = "None" ) & ( data = "Math_NaN" => result = "math.nan" ) & ( data = "Math_PINFINITY" => result = "math.inf" ) & ( data = "Math_NINFINITY" => result = "-math.inf" ) & ( aind.size > 0 => result = data + "[" + aind->any() + "]" ) & ( self.isEnumeration() => result = type.name + "." + data ) & ( true => result = data )
+
+
+
+Operation:
+mapVariableExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String)
+ query
+true
+( obs.size = 0 & aind.size = 0 & pars.size = 0 => result = data ) & ( obs.size = 0 & aind.size = 0 & pars.size > 0 => result = data + Expression.parstring(pars) ) & ( obs.size = 0 & aind.size > 0 & arrayIndex.type.name->includes("String") => result = data + "[" + aind->any() + "]") & ( obs.size = 0 & aind.size > 0 => result = data + "[" + aind->any() + " -1]" ) & ( obs.size > 0 => result = obs->any() + "." + mapVariableExpression(Set{},aind,pars) ) 
+
+
+
+Operation:
+mapStaticAttributeExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+( obs.size = 0 => result = data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( contextAndObject(obs) => result = objectRef.any.data + "." + data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) )
+
+
+
+
+Operation:
+mapReferencedAttributeExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+( objectRef.any.type /: CollectionType => result = obs->any() + "." + data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( type.name = "Sequence" => result = "[ _x." + data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) + " for _x in " + obs->any() + "]" ) & ( type.name = "Set" => result = "set({ _x." + data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) + " for _x in " + obs->any() + "})" )
+
+
+
+
+
+Operation:
+mapAttributeExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+( isStatic = true => result = mapStaticAttributeExpression(obs,aind,pars) ) & ( noContextnoObject(obs) => result = data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( obs.size = 0 => result = "self." + data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( contextAndObject(obs) => result = mapReferencedAttributeExpression(obs,aind,pars) ) & ( obs.size > 0 => result = obs->any() + "." + data + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) )
+
+
+
+
+Operation:
+mapErrorCall
+BasicExpression
+String
+obs Set(String) pars Sequence(String) 
+ query
+true
+( obs.size > 0 => result = objectRef.any.mapTypeExpression(Set{}) + Expression.parstring(pars) ) & ( obs.size = 0 => result = data )
+
+
+
+Operation:
+mapStaticOperationExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+( isOclExceptionCreation(obs) => result = mapErrorCall(obs,pars) ) & ( obs.size > 0 => result = objectRef.any.data + "." + data + Expression.parstring(pars) + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( obs.size = 0 => result = data + Expression.parstring(pars) + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) )
+
+
+
+
+
+
+
+
+
+Operation:
+mapInstanceOperationExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+( noContextnoObject(obs) => result = data + Expression.parstring(pars) + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( contextAndObject(obs) => result = obs->any() + "." + data + Expression.parstring(pars) + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( context.size > 0  => result = "self." + data + Expression.parstring(pars) + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) ) & ( obs.size > 0 => result = obs->any() + "." + data + Expression.parstring(pars) + Expression.indexstring(arrayIndex->collect(expr|expr.type.name),aind) )
+
+
+
+
+
+Operation:
+mapOperationExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+( isStatic = true => result = mapStaticOperationExpression(obs,aind,pars) ) & ( isStatic = false => result = mapInstanceOperationExpression(obs, aind, pars) )
+
+
+
+
+Operation:
+mapIntegerFunctionExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+obs.size > 0
+arg = obs->any() & ( "subrange" = data & pars.size() > 1 => result = "range(" + pars->first() + ", " + pars->at(2) + " +1)" ) & ( "Sum" = data => result = "ocl.sum([(" + pars[4] + ") for " + pars[3] + " in range(" + pars[1] + ", " + pars[2] + " + 1)])" ) & ( "Prd" = data => result = "ocl.prd([(" + pars[4] + ") for " + pars[3] + " in range(" + pars[1] + ", " + pars[2] + " + 1)])" )
+ 
+
+
+
+Operation:
+mapInsertAtFunctionExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+obs.size > 0
+arg = obs->any() & (type.name = "String" => result = "ocl.insertAtString(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( type.name /= "String" => result = "ocl.insertAt(" + arg + ", " + pars[1] + ", " + pars[2] + ")" )
+
+
+
+Operation:
+mapSetAtFunctionExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+obs.size > 0
+arg = obs->any() & (type.name = "String" => result = "ocl.setAtString(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( type.name /= "String" => result = "ocl.setAt(" + arg + ", " + pars[1] + ", " + pars[2] + ")" )
+
+
+
+
+Operation:
+mapSubrangeFunctionExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+obs.size > 0
+arg = obs->any() & (pars->size() > 1 => result = arg + "[(" + pars[1] + "-1):" + pars[2] + "]" ) & ( pars->size() <= 1 => result = arg + "[(" + pars[1] + "-1):]" )
+
+
+
+
+
+
+
+
+Operation:
+mapFunctionExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+obs.size > 0
+arg = obs->any() & ( data = "allInstances" => result = "allInstances_" + arg + "()" ) & ( "Integer" = objectRef.any.data => result = mapIntegerFunctionExpression(obs,aind,pars) ) & ( data = "ceil" or data = "floor" => result = "int(math." + data + "(" + arg + "))" ) & ( data = "sqr" or data = "cbrt" => result = "ocl." + data + "(" + arg + ")" ) & ( BasicExpression.isMathFunction(data) => result = "math." + data + "(" + arg + ")" ) & ( data = "replace" => result = "ocl.replace(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceFirstMatch" => result = "ocl.replaceFirstMatch(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceAllMatches" => result = "ocl.replaceAllMatches(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceAll" => result = "ocl.replaceAll(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "insertAt" => result = mapInsertAtFunctionExpression(obs,aind,pars) ) & ( data = "insertInto" => result = "ocl.insertInto(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "excludingSubrange" => result = "ocl.excludingSubrange(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "setAt" => result = mapSetAtFunctionExpression(obs, aind, pars) ) & ( data = "oclIsUndefined" => result = "(" + arg + " == None)" ) & ( data = "oclAsType" => result = pars->first() + "(" + arg + ")" ) & ( data = "sum" => result = "ocl.sum(" + arg + ")" ) & ( data = "prd" => result = "ocl.prd(" + arg + ")" ) & ( data = "max" => result = "ocl.max" + type.name + "(" + arg + ")" ) & ( data = "min" => result = "ocl.min" + type.name + "(" + arg + ")" ) & ( data = "front" => result = "(" + arg + ")[0:-1]" ) & ( data = "tail" => result = "(" + arg + ")[1:]" ) & ( data = "first" => result = "(" + arg + ")[0]" ) & ( data = "last" => result = "(" + arg + ")[-1]" ) & ( data = "sort" => result = "ocl.sort" + type.name + "(" + arg + ")" ) & ( data = "size" => result = "len(" + arg + ")" ) & ( data = "toLowerCase" => result = "ocl.toLowerCase(" + arg + ")" ) & ( data = "toUpperCase" => result = "ocl.toUpperCase(" + arg + ")" ) & ( data = "reverse" => result = "ocl.reverse" + type.name + "(" + arg + ")" ) & ( data = "subrange" => result = mapSubrangeFunctionExpression(obs,aind,pars) ) & ( true => result = "ocl." + data + "(" + arg + ")" )
+
+
+
+
+
+
+Operation:
+mapClassArrayExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+umlKind = classid
+(arrayIndex.any.type : CollectionType => result = "get" + elementType.name + "ByPKs(" + aind->any() + ")" ) & (arrayIndex.any.type /: CollectionType => result = "get" + elementType.name + "ByPK(" + aind->any() + ")" ) 
+
+
+
+
+
+
+
+
+
+Operation:
+mapClassExpression
+BasicExpression
+String
+obs Set(String) aind Set(String) pars Sequence(String) 
+ query
+umlKind = classid
+( arrayIndex.size > 0 => result = mapClassArrayExpression(obs,aind,pars) ) & ( arrayIndex.size = 0 => result = "allInstances_" + data + "()" )
+
+
+
+
+
+Operation:
+mapBasicExpression
+BasicExpression
+String
+ob Set(String) aind Set(String) pars Sequence(String) 
+ query
+true
+(data = "skip" => result = "pass") & (data = "super" => result = "super()") & ( PrimitiveType.isPrimitiveType(data) => result = mapTypeExpression(aind) ) & ( umlKind = value => result = mapValueExpression(aind) ) & ( umlKind = variable => result = mapVariableExpression(ob,aind,pars) ) & ( umlKind = attribute or umlKind = role => result = mapAttributeExpression(ob,aind,pars) ) & ( umlKind = operation => result = mapOperationExpression(ob,aind,pars) ) & ( umlKind = function => result = mapFunctionExpression(ob,aind,pars) ) & ( umlKind = classid => result = mapClassExpression(ob,aind,pars) )
+
+
+Operation:
+toPython
+BasicExpression
+String
+
+ query
+true
+result = mapBasicExpression(objectRef.toPython(),arrayIndex.toPython(),parameters.toPython())
+
+
+
+Operation:
+updateForm
+BasicExpression
+String
+
+query
+true
+result = "exec(\"" + toPython() + "\")"
+
+
+Operation:
+addClassIdReference
+BasicExpression
+Expression
+x BasicExpression 
+
+true
+BasicExpression->exists( e | e.expId = expId + "_" + x.data & e.data = data & e.prestate = prestate & e.umlKind = umlKind & e.objectRef = objectRef & e.arrayIndex = arrayIndex.addReference(x) & e.parameters = parameters.addReference(x) & result = e )
+
+
+
+
+
+Operation:
+addBEReference
+BasicExpression
+Expression
+x BasicExpression 
+
+true
+BasicExpression->exists( e | e.expId = expId + "_" + x.data & e.data = data & e.prestate = prestate & e.umlKind = umlKind & e.objectRef = Set{x} & e.arrayIndex = arrayIndex.addReference(x) & e.parameters = parameters.addReference(x) & result = e )
+
+
+
+
+
+Operation:
+addSelfBEReference
+BasicExpression
+Expression
+x BasicExpression 
+
+true
+BasicExpression->exists( e | e.expId = expId + "_" + x.data & e.data = data & e.prestate = prestate & e.umlKind = umlKind & e.objectRef = Set{x} & e.arrayIndex = arrayIndex.addReference(x) & e.parameters = parameters.addReference(x) & result = e )
+
+
+
+
+Operation:
+addObjectRefBEReference
+BasicExpression
+Expression
+x BasicExpression 
+
+true
+BasicExpression->exists( e | e.expId = expId + "_" + x.data & e.data = data & e.prestate = prestate & e.umlKind = umlKind & e.objectRef = objectRef.addReference(x) & e.arrayIndex = arrayIndex.addReference(x) & e.parameters = parameters.addReference(x) & result = e )
+
+
+
+
+
+
+Operation:
+addReference
+BasicExpression
+Expression
+x BasicExpression 
+
+true
+result = (if (umlKind = classid) then addClassIdReference(x) else if (objectRef.size = 0) then addBEReference(x) else if ("self" = objectRef->any() + "") then addSelfBEReference(x) else addObjectRefBEReference(x) endif endif endif)
+
+
+
+
+
+
+
+
+
+
+Entity:
+Property 828 127
+null  * 
+name String 3 false false false lower int 3 false false false upper int 3 false false false isOrdered boolean 3 false false false isUnique boolean 3 false false false isDerived boolean 3 false false false isReadOnly boolean 3 false false false isStatic boolean 3 false false false
+
+
+
+Operation:
+initialisation
+Property
+String
+
+ query
+true
+(type->oclIsUndefined() => result = "    self." + name + " = None\n") & ( qualifier.size > 0 => result = "    self." + name + " = dict({})\n" ) & ( qualifier.size = 0 & initialValue->oclIsUndefined() => result = "    self." + name + " = " + type.defaultInitialValue() + "\n" ) & ( qualifier.size = 0 => result = "    self." + name + " = " + initialValue.toPython() + "\n" )
+
+
+
+Operation:
+getPKOp
+Property
+String
+ent String 
+ query
+true
+e = ent.toLowerCase & result = "def get" + ent + "ByPK(_ex) :\n" + "  if (_ex in " + ent + "." + e + "_index) :\n" + "    return " + ent + "." + e + "_index[_ex]\n" + "  else :\n" + "    return None\n\n"
+
+
+Operation:
+getPKOps
+Property
+String
+ent String 
+ query
+true
+e = ent.toLowerCase & result = "def get" + ent + "ByPKs(_exs) :\n" + "  result = []\n" + "  for _ex in _exs :\n" + "    if (_ex in " + ent + "." + e + "_index) :\n" + "      result.append(" + ent + "." + e + "_index[_ex])\n" + "  return result\n\n"
+
+
+Entity:
+Statement 366 968
+null  * abstract 
+statId String 3 false true false
+
+
+Operation:
+tab
+Statement
+String
+indent int 
+ query static
+true
+( indent <= 0 => result = "" ) & ( indent > 0 => result = " " + Statement.tab(indent - 1) )
+
+
+Operation:
+toPython
+Statement
+String
+indent int 
+ query abstract
+true
+true
+
+
+Entity:
+ReturnStatement 272 1025
+Statement  * 
+
+
+Operation:
+toPython
+ReturnStatement
+String
+indent int 
+ query
+true
+( returnValue.size = 0 => result = Statement.tab(indent) + "return" + "\n" ) & ( returnValue.size > 0 => result = Statement.tab(indent) + "return " + returnValue.any.toPython() + "\n" )
+
+
+
+Entity:
+AssertStatement 372 1025
+Statement  * 
+
+
+
+Operation:
+toPython
+AssertStatement
+String
+indent int 
+ query
+true
+( message.size = 0 => result = Statement.tab(indent) + "assert " + condition.toPython() + "\n" ) & ( message.size > 0 => result = Statement.tab(indent) + "assert " + condition.toPython() + ", " + message.any.toPython() + "\n" )
+
+
+
+Entity:
+ErrorStatement 572 1025
+Statement  * 
+
+
+
+Operation:
+toPython
+ErrorStatement
+String
+indent int 
+ query
+true
+obs = thrownObject.objectRef & pars = thrownObject.parameters => result = Statement.tab(indent) + "raise " + thrownObject.mapErrorCall(obs.toPython(),pars.toPython()) + "\n"
+
+
+
+Entity:
+CatchStatement 672 1025
+Statement  * 
+
+
+
+Operation:
+toPython
+CatchStatement
+String
+indent int 
+ query
+true
+cleft = caughtObject.left & cright = caughtObject.right & result = Statement.tab(indent) + "except " + caughtObject.mapCatchExpression(cleft.toPython(),cright.toPython()) + ":\n" + action.toPython(indent+2)
+
+
+
+Entity:
+FinalStatement 872 1025
+Statement  * 
+
+
+
+Operation:
+toPython
+FinalStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + "finally :\n" + body.toPython(indent+2)
+
+
+
+
+
+
+Entity:
+Operation 388 377
+BehaviouralFeature  * 
+isQuery boolean 3 false false false isAbstract boolean 3 false false false isCached boolean 3 false false false
+
+
+
+
+
+Operation:
+displayStaticCachedOperation
+Operation
+void
+indent int p String obj String
+
+true
+(Statement.tab(indent) + "def " + name + "(" + p + ") :")->display() & (Statement.tab(indent+2) + "if str(" + p + ") in " + obj + "." + name + "_cache :")->display() & (Statement.tab(indent + 4) + "return " + obj + "." + name + "_cache[str(" + p + ")]")->display() & (Statement.tab(indent+2) + "result = " + obj + "." + name + "_uncached(" + p + ")")->display() & (Statement.tab(indent+2) + obj + "." + name + "_cache[str(" + p + ")] = result")->display() & (Statement.tab(indent+2) + "return result")->display() & "\n"->display() & (Statement.tab(indent) + "def " + name + "_uncached(" + p + ") :")->display() &  activity.toPython(indent + 2)->display() & "\n"->display()
+
+
+
+
+
+
+Operation:
+displayInstanceCachedOperation
+Operation
+void
+indent int p String obj String
+
+true
+(Statement.tab(indent) + "def " + name + "(self, " + p + ") :")->display() & (Statement.tab(indent+2) + "if str(" + p + ") in " + obj + "." + name + "_cache :")->display() & (Statement.tab(indent + 4) + "return " + obj + "." + name + "_cache[str(" + p + ")]")->display() & (Statement.tab(indent+2) + "result = " + obj + "." + name + "_uncached(" + p + ")")->display() & (Statement.tab(indent+2) + obj + "." + name + "_cache[str(" + p + ")] = result")->display() & (Statement.tab(indent+2) + "return result")->display() & "\n"->display() & (Statement.tab(indent) + "def " + name + "_uncached(self, " + p + ") :")->display() &  activity.toPython(indent + 2)->display() & "\n"->display()
+
+
+
+
+
+
+Operation:
+displayStaticOperation
+Operation
+void
+indent int 
+
+true
+(isCached = true & parameters.size = 1 => displayStaticCachedOperation(indent,parameters[1].name,owner.name)) & ( ( isCached = false or parameters.size /= 1 ) => ( Statement.tab(indent) + "def " + name + "(" + Expression.tolist(parameters.name) + ") :" )->display() & activity.toPython(indent + 2)->display() )
+
+
+
+
+
+Operation:
+displayInstanceOperation
+Operation
+void
+indent int 
+
+true
+(isCached = true & parameters.size = 1 => displayInstanceCachedOperation(indent,parameters[1].name,"self")) & ( (isCached = false or parameters.size /= 1) => ( Statement.tab(indent) + "def " + name + "(self" + parameters->collect( p | ", " + p.name )->sum() + ") :" )->display() & activity.toPython(indent + 2)->display() ) 
+
+
+
+
+
+
+Operation:
+displayOperation
+Operation
+void
+indent int 
+
+true
+(isStatic = true => displayStaticOperation(indent) ) &  (isStatic = false => displayInstanceOperation(indent) ) 
+
+
+
+
+
+Entity:
+UseCase 539 857
+null  * 
+name String 3 false false false
+
+
+
+Operation:
+mapUseCase
+UseCase
+String
+
+ query
+true
+( classifierBehaviour->oclIsUndefined() = false & resultType.name /= "void" => result = "def " + name + "(" + Expression.tolist(parameters.name) + ") :\n" + classifierBehaviour.toPython(2) + "  return result\n") & ( classifierBehaviour->oclIsUndefined() = false & resultType.name = "void" => result = "def " + name + "(" + Expression.tolist(parameters.name) + ") :\n" + classifierBehaviour.toPython(2) + "\n") 
+
+
+
+Entity:
+BreakStatement 289 1059
+Statement  * 
+
+
+Operation:
+toPython
+BreakStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + "break" + "\n"
+
+
+
+
+
+Entity:
+ContinueStatement 489 1059
+Statement  * 
+
+
+
+
+Operation:
+toPython
+ContinueStatement
+String
+indent int
+ query
+true
+result = Statement.tab(indent) + "continue" + "\n"
+
+
+
+
+
+
+
+Entity:
+OperationCallStatement 248 1216
+Statement  * 
+assignsTo String 3 false false false
+
+
+
+Operation:
+toPython
+OperationCallStatement
+String
+indent int 
+ query
+true
+(callExp->oclIsUndefined() => result = Statement.tab(indent) + "pass\n") & (true => result = Statement.tab(indent) + callExp.toPython() + "\n")
+
+
+
+Entity:
+ImplicitCallStatement 305 1263
+Statement  * 
+assignsTo String 3 false false false
+
+Operation:
+toPython
+ImplicitCallStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + callExp.updateForm() + "\n"
+
+
+Entity:
+LoopStatement 509 1154
+Statement  * abstract 
+
+
+Entity:
+BoundedLoopStatement 501 1250
+LoopStatement  * 
+
+
+Operation:
+toPython
+BoundedLoopStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + "for " + test.toPython() + " :\n" + body.toPython(indent + 2)
+
+
+Entity:
+UnboundedLoopStatement 543 1204
+LoopStatement  * 
+
+
+Operation:
+toPython
+UnboundedLoopStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + "while " + test.toPython() + " :\n" + body.toPython(indent + 2)
+
+
+Entity:
+AssignStatement 28 872
+Statement  * 
+
+
+Operation:
+toPython
+AssignStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + left.toPython() + " = " + right.toPython() + "\n"
+
+
+Entity:
+SequenceStatement 683 973
+Statement  * 
+kind int 3 false false false
+
+Operation:
+toPython
+SequenceStatement
+String
+indent int 
+ query
+true
+( statements.size = 0 => result = Statement.tab(indent) + "pass\n" ) & ( statements.size > 0 => result = statements->collect( s | s.toPython(indent) )->sum() )
+
+
+
+Entity:
+TryStatement 1683 973
+Statement  *
+
+
+
+Operation:
+toPython
+TryStatement
+String
+indent int 
+ query
+true
+( endStatement.size = 0 => result = Statement.tab(indent) + "try :\n" + body.toPython(indent+2) + catchClauses->collect( s | s.toPython(indent) )->sum() ) & ( endStatement.size() > 0 =>  result = Statement.tab(indent) + "try :\n" + body.toPython(indent+2) + catchClauses->collect( s | s.toPython(indent) )->sum() + endStatement.any.toPython(indent) )
+
+
+
+
+
+Entity:
+ConditionalStatement 135 913
+Statement  * 
+
+
+Operation:
+elsecode
+ConditionalStatement
+String
+indent int 
+ query
+true
+( elsePart.size = 0 => result = "" ) & ( elsePart.size > 0 => result = Statement.tab(indent) + "else :\n" + elsePart.any.toPython(indent + 2) )
+
+
+Operation:
+toPython
+ConditionalStatement
+String
+indent int 
+ query
+true
+result = Statement.tab(indent) + "if " + test.toPython() + " :\n" + ifPart.toPython(indent + 2) + elsecode(indent)
+
+
+Entity:
+CreationStatement 286 1095
+Statement  * 
+createsInstanceOf String 3 false false false assignsTo String 3 false false false
+
+
+Operation:
+toPython
+CreationStatement
+String
+indent int 
+ query
+true
+( type : Entity => result = Statement.tab(indent) + assignsTo + " = None\n" ) & ( type->oclIsUndefined() => result = Statement.tab(indent) + assignsTo + " = None\n" ) & ( initialExpression->size() > 0 => result = Statement.tab(indent) + assignsTo + " = " + initialExpression.any.toPython() + "\n" ) & ( true => result = Statement.tab(indent) + assignsTo + " = " + type.defaultInitialValue() + "\n" )
+
+
+
+Entity:
+BehaviouralFeature 310 -141
+Feature  * abstract 
+isStatic boolean 3 false false false
+
+Association:
+Feature Type 0 210 130 262 140 1 type null 
+
+
+Association:
+Feature Type 0 220 130 272 140 1 elementType null 
+
+
+Association:
+Association Property -1 604 394 248 392 0 memberEnd null 
+ordered 
+
+Association:
+Property Property -1 176 414 186 423 -1 qualifier null 
+
+
+Association:
+BehaviouralFeature Property -1 166 474 186 423 0 parameters null 
+ordered 
+
+Association:
+Entity Generalization 1 362 143 511 101 0 generalization specific 
+
+
+Association:
+Generalization Entity 0 579 123 523 175 1 general specialization 
+
+
+Association:
+Entity Operation 1 326 196 208 380 0 ownedOperation owner 
+ordered 
+
+Association:
+Operation Entity 0 211 359 326 196 0 definers null 
+ordered 
+
+Association:
+Property Type 0 830 130 42 110 1 type null 
+
+
+Association:
+CollectionType Type 0 203 398 108 144 1 elementType null 
+
+
+
+Association:
+CollectionType Type 0 396 100 307 136 1 keyType null 
+
+
+
+
+
+
+Association:
+Expression Type 0 270 -84 27 105 1 type null 
+
+
+Association:
+Expression Type 0 268 -60 108 107 1 elementType null 
+
+
+Association:
+CollectionExpression Expression 0 647 -93 516 -82 0 elements null 
+
+
+Association:
+BinaryExpression Expression 0 124 10 267 -39 1 left null 125 -22 
+
+
+Association:
+BinaryExpression Expression 0 208 22 293 -35 1 right null 221 31 
+
+
+Association:
+BinaryExpression Property 0 200 265 500 500 1 accumulator null
+
+
+
+Association:
+ConditionalExpression Expression 0 524 10 267 -20 1 test null 125 -2 
+
+
+Association:
+ConditionalExpression Expression 0 524 10 267 -30 1 ifExp null 125 -2 
+
+
+Association:
+ConditionalExpression Expression 0 508 22 293 -30 1 elseExp null 221 31 
+
+
+
+Association:
+BasicExpression Expression 0 427 83 471 -35 0 parameters null 
+ordered 
+
+Association:
+UnaryExpression Expression -1 657 -35 513 -58 1 argument null 
+
+
+Association:
+BasicExpression Property 0 588 87 627 129 -1 referredProperty null 
+
+
+Association:
+BasicExpression Entity 0 588 87 627 129 0 context null 
+
+
+Association:
+BasicExpression Expression -1 287 184 339 208 -1 arrayIndex null 227 183 227 246 307 247 
+
+
+Association:
+Property Expression -1 664 128 485 -34 1 initialValue null 665 76 514 72 
+
+
+Association:
+BasicExpression Expression -1 490 203 408 212 -1 objectRef null 552 203 551 252 443 253 
+
+
+Association:
+Property Entity 0 674 148 364 359 1 owner ownedAttribute 672 362 
+
+
+Association:
+Entity Entity 0 300 142 333 156 -1 superclass subclasses 
+
+
+Association:
+UseCase Property -1 664 900 246 271 0 parameters null 
+ordered 
+
+Association:
+UseCase Type 0 545 -122 148 72 1 resultType null 
+
+
+Association:
+AssignStatement Type 0 27 916 27 105 -1 type null 
+
+
+Association:
+CreationStatement Type 0 270 1116 27 105 1 type null 
+
+
+Association:
+CreationStatement Type 0 268 1129 108 107 1 elementType null 
+
+
+Association:
+CreationStatement Expression 0 268 1129 128 127 0 initialExpression null 
+
+
+Association:
+BehaviouralFeature Statement -1 424 -118 430 966 1 activity null 
+
+
+Association:
+ReturnStatement Expression -1 275 1028 200 35 -1 returnValue null 
+
+
+Association:
+AssertStatement Expression 0 375 1028 200 35 1 condition null 
+
+
+Association:
+AssertStatement Expression 0 375 1028 200 35 -1 message null 
+
+
+Association:
+ErrorStatement Expression 0 575 1028 200 35 1 thrownObject null 
+
+
+Association:
+CatchStatement Expression 0 675 1028 200 35 1 caughtObject null 
+
+
+Association:
+CatchStatement Statement 0 675 1028 300 1000 1 action null 
+
+
+Association:
+FinalStatement Statement 0 875 1028 300 1000 1 body null
+
+
+
+Association:
+UseCase Statement -1 545 878 448 972 1 classifierBehaviour null 
+
+
+Association:
+OperationCallStatement Expression -1 254 1218 175 59 1 callExp null 201 1159 
+
+
+Association:
+ImplicitCallStatement Expression -1 309 1284 110 56 1 callExp null 180 1250 
+
+
+Association:
+LoopStatement Expression -1 510 1165 201 48 1 test null 267 1159 
+
+
+Association:
+AssignStatement Expression -1 32 893 106 48 1 left null 
+
+
+Association:
+AssignStatement Expression -1 118 894 124 30 1 right null 
+
+
+Association:
+ConditionalStatement Expression -1 179 937 179 27 1 test null 
+
+
+Association:
+ConditionalStatement Statement -1 302 934 367 972 1 ifPart null 303 -30 
+
+
+Association:
+ConditionalStatement Statement -1 218 935 367 989 -1 elsePart null 217 989 
+
+
+Association:
+SequenceStatement Statement -1 687 1009 453 980 0 statements null 
+ordered 
+
+
+Association:
+TryStatement Statement -1 1687 1009 453 980 0 catchClauses null 
+ordered
+
+
+Association:
+TryStatement Statement -1 1689 1009 455 982 1 body null
+
+
+Association:
+TryStatement Statement -1 1718 935 367 989 -1 endStatement null
+
+
+
+
+
+
+Association:
+LoopStatement Statement -1 627 1155 451 991 1 body null 625 1025 
+
+
+Association:
+BoundedLoopStatement Expression -1 515 1165 211 48 1 loopRange null 
+
+
+Association:
+BoundedLoopStatement Expression -1 520 1165 221 48 1 loopVar null 
+
+
+Generalisation:
+NamedElement Relationship 552 40 261 35
+
+
+
+Generalisation:
+NamedElement Type 278 135 243 68
+
+
+
+Generalisation:
+Relationship Association 731 348 650 58
+
+
+Generalisation:
+DataType Enumeration 471 165 425 163
+
+
+
+Generalisation:
+NamedElement EnumerationLiteral 475 93 260 58
+
+
+
+
+Generalisation:
+Relationship Generalization 588 247 583 56
+
+
+
+Generalisation:
+Type Classifier 56 259 52 143
+
+
+
+Generalisation:
+DataType PrimitiveType 32 424 27 370
+
+
+
+Generalisation:
+Classifier Entity 37 353 36 281
+
+
+
+Generalisation:
+Classifier DataType 139 351 106 278
+
+
+
+Generalisation:
+DataType CollectionType 142 402 98 369
+
+
+
+Generalisation:
+Expression UnaryExpression 655 -11 511 -40
+
+
+
+Generalisation:
+Expression BasicExpression 357 76 357 -37
+
+
+
+Generalisation:
+Expression BinaryExpression 57 68 288 -112
+23 69 24 -132 288 -134 
+
+
+Generalisation:
+Expression ConditionalExpression 57 68 557 -20
+ 
+
+
+Generalisation:
+Expression CollectionExpression 722 -111 475 -113
+722 -127 474 -128 
+
+
+Generalisation:
+BehaviouralFeature Operation 385 378 335 -127
+
+
+
+Generalisation:
+Statement ReturnStatement 383 1029 380 990
+
+
+
+Generalisation:
+Statement AssertStatement 483 1029 380 990
+
+
+Generalisation:
+Statement ErrorStatement 583 1029 380 990
+
+
+Generalisation:
+Statement CatchStatement 683 1029 380 990
+
+
+Generalisation:
+Statement FinalStatement 883 1029 380 990
+
+
+Generalisation:
+Statement BreakStatement 417 1063 414 993
+
+
+
+Generalisation:
+Statement OperationCallStatement 439 1215 429 993
+
+
+
+Generalisation:
+Statement ImplicitCallStatement 467 1266 439 994
+
+
+
+Generalisation:
+Statement LoopStatement 515 1157 447 994
+
+
+
+Generalisation:
+LoopStatement BoundedLoopStatement 522 1254 519 1178
+
+
+
+Generalisation:
+LoopStatement UnboundedLoopStatement 635 1206 634 1177
+
+
+
+Generalisation:
+Statement SequenceStatement 686 978 451 974
+
+
+
+Generalisation:
+Statement TryStatement 1686 978 451 974
+
+
+
+
+Generalisation:
+Statement ConditionalStatement 312 918 385 969
+383 917 
+
+
+Generalisation:
+Statement AssignStatement 164 884 408 970
+403 897 
+
+
+Generalisation:
+Statement CreationStatement 427 1094 422 992
+
+
+
+Generalisation:
+NamedElement Feature 53 127 105 67
+
+
+
+Generalisation:
+Feature BehaviouralFeature 12 472 14 165
+
+
+
+
+
+
+
+GeneralUseCase:
+printcode 
+
+
+
+false
+
+
+Constraint:
+null
+true
+"import ocl"->display() & "import math"->display() & "import re"->display() & "import copy"->display() & ""->display() & "from mathlib import *"->display() & "from oclfile import *"->display() & "from ocltype import *"->display() & "from ocldate import *"->display() & "from oclprocess import *"->display() & "from ocliterator import *"->display() & "from oclrandom import *"->display() & "from ocldatasource import *"->display() & "from sortedcontainers import *"->display() & "from enum import Enum"->display() & ""->display() & Entity.deleteOp()->display() & Entity.displayOps()->display()
+null printcode
+false
+
+
+
+Constraint:
+null
+true
+("class " + name + "(Enum) :")->display() & literals()->display() & "\n"->display()
+Enumeration printcode
+false
+
+
+
+
+Constraint:
+null
+isInterface = true & isApplicationClass()
+classHeader()->display() & staticAttributes()->display() & abstractClassConstructor()->display() & self.allOperations()->forAll( op | op.displayOperation(2))
+Entity printcode
+false
+
+
+
+Constraint:
+null
+isInterface = false & isApplicationClass()
+classHeader()->display() & staticAttributes()->display() & classConstructor()->display() & callOp()->display() & self.allOperations()->forAll( op | op.displayOperation(2))
+Entity printcode
+false
+
+
+
+
+
+Constraint:
+null
+isInterface = false & isApplicationClass()
+createOp()->display() & allInstancesOp()->display() & ""->display() & createOclTypeOp()->display() & ""->display()
+Entity printcode
+false
+
+
+
+Constraint:
+null
+isInterface = true & isApplicationClass()
+allInstancesOp()->display() & ""->display()
+Entity printcode
+false
+
+
+
+Constraint:
+null
+isApplicationClass() & allProperties()->exists( k | k.isUnique ) & key = allProperties()->select(isUnique)->any()
+key.getPKOp(name)->display() & key.getPKOps(name)->display() & self.createPKOp(key.name)->display()
+Entity printcode
+false
+
+
+
+Constraint:
+isStatic = true
+owner->oclIsUndefined()
+self.displayOperation(0) & ""->display()
+Operation printcode
+false
+
+
+
+Constraint:
+null
+true
+mapUseCase()->display() & ""->display() & ""->display() & ""->display()
+UseCase printcode
+false
+
+
+

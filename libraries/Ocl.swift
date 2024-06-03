@@ -1262,6 +1262,19 @@ class Ocl
     return result
   }
 
+  static func excludingSubrange<T>(s : [T], ind1 : Int, ind2 : Int) -> [T]
+  { var result : [T] = [T]()
+
+    for (i,x) in s.enumerated()
+    { if i < ind1-1
+      { result.append(x) }
+      if i >= ind2
+      { result.append(x) }
+    }
+
+    return result
+  }
+
   static func characters(str: String) -> [String]
   { var res : [String] = [String]()
     for ind in str.indices
