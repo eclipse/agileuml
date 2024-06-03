@@ -80,6 +80,8 @@ Integer.Prd(_1,_2,_3,_4) |-->Ocl.prd(s: (Ocl.integerSubrange(st: _1, en: _2)).ma
 _1.subrange(_2,_3) |-->Ocl.stringSubrange(str: _1, st: _2, en: _3)<when> _1 String
 _1.subrange(_2,_3) |-->Ocl.subrange(s: _1, st: _2, en: _3)
 
+_1.excludingSubrange(_2,_3) |-->Ocl.excludingSubrange(s: _1, ind1: _2, ind2: _3)
+
 _1.replace(_2,_3) |-->Ocl.replace(str: _1, delim: _2, s2: _3)
 _1.replaceAll(_2,_3) |-->Ocl.replaceAll(str: _1, pattern: _2, rep: _3)
 _1.replaceAllMatches(_2,_3) |-->Ocl.replaceAll(str: _1, pattern: _2, rep: _3)
