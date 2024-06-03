@@ -2454,6 +2454,7 @@ public class Type extends ModelElement
   } 
 
   // Also record sortedness. 
+  // For asTextModel:
   public String getUMLModelName(PrintWriter out)
   { String nme = getName(); 
     if (nme.equals("int")) 
@@ -2479,6 +2480,9 @@ public class Type extends ModelElement
       { out.println("SetType" + tid + ".elementType = void"); }
   
       out.println("SetType" + tid + ".keyType = void");
+
+      if (sorted)
+      { out.println("SetType" + tid + ".isSorted = true"); }
     
    /* if (keyType != null) 
       { String etype = keyType.getUMLModelName(out); 
@@ -2557,6 +2561,10 @@ public class Type extends ModelElement
       // assume key type is String
 	  
       out.println("MapType" + tid + ".typeId = \"" + tid + "\""); 
+
+      if (sorted)
+      { out.println("MapType" + tid + ".isSorted = true"); }
+
       return "MapType" + tid; 
     } 
     else if (nme.equals("Function"))
@@ -3658,6 +3666,8 @@ public class Type extends ModelElement
     return nme;  // enumerations, int, long and double 
   } 
 
+
+  // Save as text model, i.e. as metamodel instance
   public void asTextModel(PrintWriter out)
   { if (values != null) 
     { String nme = getName(); 

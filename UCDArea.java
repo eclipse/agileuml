@@ -3837,7 +3837,7 @@ public class UCDArea extends JPanel
         else if (tt.isDatatype())
         { typecode = tt.cgDatatype(cgs); } 
     
-        cgs.displayText(typecode,tfout);
+        CGSpec.displayText(typecode,tfout);
 
         tfout.println(); 
         tfout.println(); 
@@ -3939,7 +3939,7 @@ public class UCDArea extends JPanel
 		  					
           ent.generateOperationDesigns(types,entities);  
           String entcode = ent.cg(cgs);    
-          cgs.displayText(entcode,entfout);
+          CGSpec.displayText(entcode,entfout);
 
           entfout.println(); 
           entfout.println(); 
@@ -4021,7 +4021,51 @@ public class UCDArea extends JPanel
   } 
 
   public void generateMamba()
-  { applyCSTLSpecification("./cg/cgMamba.cstl"); }
+  { Vector auxcstls = new Vector(); 
+    
+    CGSpec cgs = loadCSTL("cgMamba.cstl",auxcstls); 
+    cgs.setTypes(types); 
+    cgs.setEntities(entities); 
+
+    File entf = new File("output/" + systemName + ".json"); 
+    try
+    { PrintWriter entfout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(entf)));
+      entfout.println("{ \"Classes\": ["); 
+
+      Vector generatedClasses = new Vector(); 
+
+      for (int j = 0; j < entities.size(); j++) 
+      { Entity ent = (Entity) entities.get(j); 
+
+        if (ent.isDerived()) { }
+        else if (ent.isComponent()) { }
+        else 
+        { generatedClasses.add(ent); } 
+      } 
+
+      for (int j = 0; j < generatedClasses.size(); j++) 
+      { Entity ent = (Entity) generatedClasses.get(j); 
+        String ename = ent.getName(); 
+        RectForm rf2 = (RectForm) getVisualOf(ent);
+
+        ent.generateMamba(entfout,systemName, cgs, 
+                          rf2.getx(),rf2.gety(),
+                          rf2.getwidth(),rf2.getheight());
+ 
+        if (j < generatedClasses.size() - 1)
+        { entfout.println(","); }  
+      } 
+
+      entfout.println("  ]"); 
+      entfout.println("}"); 
+
+      entfout.close(); 
+    } catch (Exception _ex) { } 
+  }
+
+// applyCSTLSpecification("./cg/cgMamba.cstl"); }
 
  /*   Vector auxcstls = new Vector(); 
     
@@ -4045,7 +4089,7 @@ public class UCDArea extends JPanel
           		  					
           ent.generateOperationDesigns(types,entities);  
           String entcode = ent.cg(cgs);    
-          cgs.displayText(entcode,entfout);
+          CGSpec.displayText(entcode,entfout);
 
           entfout.println(); 
           entfout.println(); 
@@ -4073,7 +4117,7 @@ public class UCDArea extends JPanel
         { UseCase uc = (UseCase) useCases.get(i);
           entusecases.add(uc);
           String uccode = uc.cgActivity(cgs,types,entities);
-          cgs.displayText(uccode,appfout);
+          CGSpec.displayText(uccode,appfout);
         }       
       } 
    
@@ -4345,13 +4389,13 @@ public class UCDArea extends JPanel
 		  					
           ent.generateOperationDesigns(types,entities);  
           String entcode = ent.cg(cgs);    
-          cgs.displayText(entcode,entfout);
+          CGSpec.displayText(entcode,entfout);
 
           entfout.println(); 
           entfout.println(); 
 
           String maincode = ent.cg(cgswiftmain); 
-          cgswiftmain.displayText(maincode,entfout); 
+          CGSpec.displayText(maincode,entfout); 
 
           ent.generateClassExtension(entfout); 
 
@@ -4836,13 +4880,13 @@ public class UCDArea extends JPanel
 		  					
           ent.generateOperationDesigns(types,entities);  
           String entcode = ent.cg(cgs);    
-          cgs.displayText(entcode,entfout);
+          CGSpec.displayText(entcode,entfout);
 
           entfout.println(); 
           entfout.println(); 
 
           String maincode = ent.cg(cgswiftmain); 
-          cgswiftmain.displayText(maincode,entfout); 
+          CGSpec.displayText(maincode,entfout); 
 
           entfout.close();
 
@@ -4852,8 +4896,8 @@ public class UCDArea extends JPanel
           simpleentfout.println("import Foundation"); 
           simpleentfout.println("import Darwin"); 
           simpleentfout.println(); 
-		  cgs.displayText(entcode,simpleentfout);
-		  cgswiftmain.displayText(maincode,simpleentfout); 
+          CGSpec.displayText(entcode,simpleentfout);
+          CGSpec.displayText(maincode,simpleentfout); 
           simpleentfout.close(); 
         } catch (Exception _e1) { _e1.printStackTrace(); }
 				
@@ -5118,7 +5162,7 @@ public class UCDArea extends JPanel
       ee.generateOperationDesigns(types,entities);  
 
       String entcode = ee.cg(cgs);
-      cgs.displayText(entcode,out); 
+      CGSpec.displayText(entcode,out); 
     }
 
     out.close();
@@ -5520,6 +5564,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         ffout.println("import java.util.*;"); 
         ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.TreeMap;"); 
         ffout.println("import java.util.Collection;");
         ffout.println("import java.util.List;");
         ffout.println("import java.util.ArrayList;");
@@ -5532,7 +5577,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         // ent.generateJava7(entities,types,ffout);
         String entcode = ent.cg(cgs);
-        cgs.displayText(entcode,ffout); 
+        CGSpec.displayText(entcode,ffout); 
 		 
         ffout.close();
 		
@@ -5541,6 +5586,7 @@ public class UCDArea extends JPanel
                                      new FileWriter(simpleentff)));
         simplefout.println("import java.util.*;"); 
         simplefout.println("import java.util.HashMap;"); 
+        simplefout.println("import java.util.TreeMap;"); 
         simplefout.println("import java.util.Collection;");
         simplefout.println("import java.util.List;");
         simplefout.println("import java.util.ArrayList;");
@@ -5551,7 +5597,7 @@ public class UCDArea extends JPanel
         simplefout.println("import java.util.function.Function;"); 
         simplefout.println("import java.io.Serializable;"); 
         simplefout.println(); 
-        cgs.displayText(entcode,simplefout); 
+        CGSpec.displayText(entcode,simplefout); 
 		 
         simplefout.close(); 
       } catch (Exception e) { e.printStackTrace(); } 
@@ -5814,6 +5860,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         ffout.println("import java.util.*;"); 
         ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.TreeMap;"); 
         ffout.println("import java.util.Collection;");
         ffout.println("import java.util.List;");
         ffout.println("import java.util.ArrayList;");
@@ -5824,7 +5871,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         // ent.generateJava7(entities,types,ffout);
         String entcode = ent.cg(cgs);
-        cgs.displayText(entcode,ffout); 
+        CGSpec.displayText(entcode,ffout); 
 		 
         ffout.close(); 
       } catch (Exception e) { e.printStackTrace(); } 
@@ -6041,6 +6088,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         ffout.println("import java.util.*;"); 
         ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.TreeMap;"); 
         ffout.println("import java.util.Collection;");
         ffout.println("import java.util.List;");
         ffout.println("import java.util.ArrayList;");
@@ -6051,7 +6099,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         // ent.generateJava7(entities,types,ffout);
         String entcode = ent.cg(cgs);
-        cgs.displayText(entcode,ffout); 
+        CGSpec.displayText(entcode,ffout); 
 		 
         ffout.close(); 
       } catch (Exception e) { e.printStackTrace(); } 
@@ -6326,7 +6374,8 @@ public class UCDArea extends JPanel
         ffout.println("// package " + appname + ";"); 
         ffout.println(); 
         ffout.println("import java.util.*;"); 
-        ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.HashMap;");
+        ffout.println("import java.util.TreeMap;"); 
         ffout.println("import java.util.Collection;");
         ffout.println("import java.util.List;");
         ffout.println("import java.util.ArrayList;");
@@ -6337,7 +6386,7 @@ public class UCDArea extends JPanel
         ffout.println(); 
         // ent.generateJava7(entities,types,ffout);
         String entcode = ent.cg(cgs);
-        cgs.displayText(entcode,ffout); 
+        CGSpec.displayText(entcode,ffout); 
 		 
         ffout.close(); 
       } catch (Exception e) { } 

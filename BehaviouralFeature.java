@@ -4562,6 +4562,33 @@ public class BehaviouralFeature extends ModelElement
     { activity.findMagicNumbers(mgns, null, nme); } 
   } 
 
+  public void generateMamba(PrintWriter out, CGSpec cgs)
+  { String nme = getName();
+
+    String rt = "null"; 
+    if (resultType != null)
+    { rt = resultType.getCSharp(); } 
+
+    String fdef = this.cg(cgs); 
+    String actualDef = CGSpec.replaceActualNewlines(fdef); 
+ 
+    out.println("        {"); 
+    out.println("          \"Name\": \"" + nme + "\","); 
+    out.println("          \"Description\": \"\",");
+    out.println("          \"Syntax\": \"\",");
+    out.println("          \"Text\": \"" + actualDef + "\",");     
+    out.println("          \"BaseInfo\": \"\",");
+    out.println("          \"IsStatic\": " + isStatic() + ",");
+    out.println("          \"IsInherited\": false,");
+    out.println("          \"IsExternal\": false,");
+    out.println("          \"ReturnDataType\": " + rt + ",");
+    out.println("          \"Parameters\": [],");
+    out.println("          \"RuleType\": 0,");
+    out.println("          \"EventName\": \"\",");
+    out.println("          \"ApplyToAttribute\": \"\"");
+    out.print("        }"); 
+  } 
+
   public void generateJava(PrintWriter out)
   { out.print(toString()); } 
 
@@ -4578,8 +4605,9 @@ public class BehaviouralFeature extends ModelElement
     { res = res + "static "; } 
 
     if (resultType == null || "void".equals(resultType + "")) 
-    { JOptionPane.showMessageDialog(null, "ERROR: null result type for query operation: " + this,
-                                    "Type error", JOptionPane.ERROR_MESSAGE);
+    { JOptionPane.showMessageDialog(null, 
+        "ERROR: null result type for query operation: " + this,        
+        "Semantic error", JOptionPane.ERROR_MESSAGE);
       return ""; 
     } 
 

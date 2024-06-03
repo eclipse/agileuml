@@ -8938,6 +8938,69 @@ public class Entity extends ModelElement implements Comparable
   { generateJava(new Vector(), new Vector(),out); } 
   // never called
 
+  public void generateMamba(PrintWriter out, String sysName,
+                            CGSpec cgs, 
+                            int x, int y, int w, int h)
+  { String nme = getName(); 
+    Attribute key = getPrincipalKey(); 
+
+    out.println("  { \"Name\": \"" + nme + "\","); 
+    out.println("    \"Description\": \"\","); 
+    if (key != null)
+    { out.println("    \"Pk\": \"" + key.getName() + "\","); } 
+    else 
+    { out.println("    \"Pk\": \"\","); } 
+
+    out.println("    \"Stereotype\": 0,"); 
+    out.println("    \"ModelName\": \"" + sysName + "\","); 
+    if (superclass != null)
+    { out.println("    \"BaseClass\": \"" + superclass.getName() + "\","); } 
+    else 
+    { out.println("    \"BaseClass\": \"\","); } 
+
+    out.println("    \"TableName\": \"\","); 
+    out.println("    \"ConcurencyControl\": true,"); 
+    out.println("    \"AutoAssignPrimaryKey\": true,"); 
+    out.println("    \"IdGeneratorType\": 0,"); 
+
+    out.println("    \"Attributes\": [");
+    for (int i = 0; i < attributes.size(); i++)
+    { Attribute attr = (Attribute) attributes.get(i); 
+      attr.generateMamba(out); 
+      if (i < attributes.size() - 1)
+      { out.println(","); } 
+    } 
+    out.println("    ],"); 
+
+    out.println("    \"Operations\": ["); 
+    for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature bf = 
+          (BehaviouralFeature) operations.get(i); 
+      bf.generateMamba(out,cgs); 
+      if (i < operations.size() - 1)
+      { out.println(","); } 
+    } 
+    out.println("    ],"); 
+
+    out.println("    \"Parameters\": [],");
+    out.println("    \"ShadowModel\": \"\",");
+    out.println("    \"ShadowClass\": \"\",");
+    out.println("    \"BaseClasses\": \"\",");
+    out.println("    \"BaseModel\": \"\",");
+    out.println("    \"IsPersisted\": true,");
+    out.println("    \"IsStatic\": true,");
+    out.println("    \"IsExpanded\": true,");
+    out.println("    \"Width\": \"" + w + "\",");
+    out.println("    \"Height\": \"" + h + "\",");
+    out.println("    \"Top\": \"" + y + "\",");
+    out.println("    \"Left\": \"" + x + "\",");
+    out.println("    \"ImportedFrom\": null,");
+    out.println("    \"IsRefreshed\": false,");
+    out.println("    \"CanRead\": null,");
+    out.println("    \"CanWrite\": null");
+    out.print("  }"); 
+  } 
+
   public void generateCode(String language, Vector entities, Vector types, PrintWriter out,
                            PrintWriter out2)
   { if ("Java4".equals(language))

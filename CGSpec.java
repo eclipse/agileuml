@@ -554,8 +554,10 @@ public class CGSpec
     displayText(classesstring,out); 
   }  
 
-  public void displayText(String str, PrintWriter out) 
-  { int n = str.length();
+  public static void displayText(String str, PrintWriter out) 
+  { // replaces \\n by an actual newline
+
+    int n = str.length();
     StringBuffer res = new StringBuffer(); 
  
     boolean instring = false; 
@@ -581,6 +583,28 @@ public class CGSpec
       { res.append(x); } 
     }
     out.println(res);  
+  }       
+
+  public static String replaceActualNewlines(String str) 
+  { // replaces actual newlines by \\n
+    
+    int n = str.length();
+    StringBuffer res = new StringBuffer(); 
+ 
+    boolean instring = false; 
+
+    for (int i = 0; i < n; i++) 
+    { char x = str.charAt(i); 
+
+      if (x == '\n') 
+      { res.append('\\'); 
+        res.append('n'); 
+      }
+      else       
+      { res.append(x); } 
+    }
+
+    return new String(res); 
   }       
 
   public CGRule matchedEnumerationRule(Object t, String typetext)

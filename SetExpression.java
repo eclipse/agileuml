@@ -309,6 +309,7 @@ public class SetExpression extends Expression
     return res; 
   }  
 
+  // saveAsTextModel:
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("collectionexpression_");
     out.println(res + " : CollectionExpression"); 
@@ -324,6 +325,7 @@ public class SetExpression extends Expression
     if (type != null) 
     { String tname = type.getUMLModelName(out); 
       out.println(res + ".type = " + tname); 
+      out.println(res + ".isSorted = " + type.isSorted()); 
     } 
     // else 
     // { out.println(res + ".type = Sequence"); } 

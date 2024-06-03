@@ -1803,6 +1803,48 @@ public class Attribute extends ModelElement
     res = res + ";\n";
     return res;  
   } 
+
+  public void generateMamba(PrintWriter out)
+  { String nme = getName();
+    out.println("      {"); 
+    out.println("        \"Name\": \"" + nme + "\","); 
+    out.println("        \"Description\": \"\",");
+    out.println("        \"Datatype\": \"" + type.getCSharp() + "\",");
+    out.println("        \"Readonly\": " + isFrozen() + ","); 
+    out.println("        \"IsRequired\": true,");
+    out.println("        \"IsPersisted\": true,");
+    out.println("        \"ColumnName\": \"\",");
+    out.println("        \"IsInherited\": false,");
+    out.println("        \"IsEncrypted\": false,");
+    out.println("        \"IsStatic\": " + isStatic() + ",");
+    out.println("        \"MinLength\": \"0\",");
+    out.println("        \"MaxLength\": \"100\",");
+    out.println("        \"MinValue\": \"\",");
+    out.println("        \"MaxValue\": \"\",");
+    out.println("        \"CustomValidation\": \"\",");
+    out.println("        \"IsCreditCard\": false,");
+    out.println("        \"IsEmail\": false,");
+    out.println("        \"IsURL\": false,");
+    out.println("        \"Scale\": 2,");
+    out.println("        \"InitValue\": \"\",");
+    out.println("        \"Precision\": 2,");
+    out.println("        \"Length\": \"100\",");
+    out.println("        \"IsExternal\": false,");
+    out.println("        \"BaseInfo\": \"\",");
+    out.println("        \"IsValueClass\": false,");
+    out.println("        \"Edge1\": 0,");
+    out.println("        \"Percent1\": null,");
+    out.println("        \"Edge2\": 0,");
+    out.println("        \"Percent2\": null,");
+    out.println("        \"Path\": null,");
+    out.println("        \"Getterakos\": null,");
+    out.println("        \"Setterakos\": null,");
+    out.println("        \"CanRead\": null,");
+    out.println("        \"CanWrite\": null,");
+    out.println("        \"MaskOperation\": null");
+    out.print("      }"); 
+  }
+
     
   public void generateJava(PrintWriter out)
   { String nme = getName();
