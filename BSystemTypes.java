@@ -9751,7 +9751,7 @@ public class BSystemTypes extends BComponent
       "    { res->insert(res->end(), l->begin() + ind2, l->end());\n" +
       "\n" +
       "    }\n" +
-      "    return l;\n" + 
+      "    return res;\n" + 
       "  }\n\n"; 
 
     res = res + 

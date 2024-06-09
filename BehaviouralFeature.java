@@ -4581,7 +4581,7 @@ public class BehaviouralFeature extends ModelElement
     out.println("          \"IsStatic\": " + isStatic() + ",");
     out.println("          \"IsInherited\": false,");
     out.println("          \"IsExternal\": false,");
-    out.println("          \"ReturnDataType\": " + rt + ",");
+    out.println("          \"ReturnDataType\": \"" + rt + "\",");
     out.println("          \"Parameters\": [],");
     out.println("          \"RuleType\": 0,");
     out.println("          \"EventName\": \"\",");
