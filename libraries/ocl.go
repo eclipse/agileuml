@@ -837,6 +837,39 @@ func InsertInto(col *list.List, ind int, sq *list.List) *list.List {
   return result
 }
 
+func ExcludingSubrange(col *list.List, ind1 int, ind2 int) *list.List {
+  pind := ind1-1
+
+  if ind2 < ind1 { 
+    return col
+  } 
+
+  if pind < 0 { 
+    pind = 0
+  } 
+
+  if pind >= col.Len() { 
+    return col
+  } 
+
+  result := list.New()
+
+  i := 0
+
+  for x := col.Front(); x != nil; x = x.Next() { 
+    if i < pind {
+        result.PushBack(x.Value)  
+    } else {
+      if i >= ind2 {
+        result.PushBack(x.Value)
+      }		
+    } 
+    
+    i++
+  }
+
+  return result
+}
   
 func Sort(col *list.List) *list.List {
   arr := AsArray(col)

@@ -1357,15 +1357,18 @@ public:
   { vector<_T>* res = new vector<_T>();
     if (ind1 < 1) { ind1 = 1; }
     if (ind2 > l->size()) { ind2 = l->size(); }
+
     if (ind1 > 1 && ind1 <= l->size())
     {
       res->insert(res->end(), l->begin(), l->begin() + (ind1 - 2));
     }
-    if (ind2 >= ind1 && ind2 < l->size())
-    { res->insert(res->end(), l->begin() + ind2, l->end());
 
+    if (ind2 >= ind1 && ind2 < l->size())
+    { 
+      res->insert(res->end(), l->begin() + ind2, l->end());
     }
-    return l;
+
+    return res;
   }
 
   static string excludingSubrange(string l, int ind1, int ind2)

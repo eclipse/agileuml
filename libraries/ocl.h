@@ -1819,6 +1819,34 @@ int** insertIntoint(int* col1[], int ind, int* col2[])
   return result;
 }
 
+int** excludingSubrangeint(int* col[], int ind1, int ind2)
+{ int n = length((void**) col);
+    
+  int** res = (int**) calloc(n + 1, sizeof(int*));
+  int i = 0;
+  int j = 0; 
+ 
+  if (ind1 < 1) { ind1 = 1; }
+  if (ind2 > n) { ind2 = n; }
+
+  if (ind1 > 1 && ind1 <= n)
+  { for ( ; i <= ind1-2; i++) 
+    { res[i] = col[i]; } 
+  }
+  
+  if (ind2 >= ind1 && ind2 < n)
+  { j = i; 
+    i = ind2; 
+    for ( ; i < n; i++) 
+    { res[j] = col[i]; 
+      j++; 
+    }
+  }
+
+  return res;
+}
+
+
 long** insertIntolong(long* col1[], int ind, long* col2[])
 { if (ind <= 0) { return col1; }
   int n = length((void**) col1);
@@ -1846,6 +1874,33 @@ long** insertIntolong(long* col1[], int ind, long* col2[])
 
   result[n+m] = NULL;
   return result;
+}
+
+long** excludingSubrangelong(long* col[], int ind1, int ind2)
+{ int n = length((void**) col);
+    
+  long** res = (long**) calloc(n + 1, sizeof(long*));
+  int i = 0;
+  int j = 0; 
+ 
+  if (ind1 < 1) { ind1 = 1; }
+  if (ind2 > n) { ind2 = n; }
+
+  if (ind1 > 1 && ind1 <= n)
+  { for ( ; i <= ind1-2; i++) 
+    { res[i] = col[i]; } 
+  }
+  
+  if (ind2 >= ind1 && ind2 < n)
+  { j = i; 
+    i = ind2; 
+    for ( ; i < n; i++) 
+    { res[j] = col[i]; 
+      j++; 
+    }
+  }
+
+  return res;
 }
 
 double** insertIntodouble(double* col1[], int ind, double* col2[])
@@ -1876,6 +1931,34 @@ double** insertIntodouble(double* col1[], int ind, double* col2[])
   result[n+m] = NULL;
   return result;
 }
+
+double** excludingSubrangedouble(double* col[], int ind1, int ind2)
+{ int n = length((void**) col);
+    
+  double** res = (double**) calloc(n + 1, sizeof(double*));
+  int i = 0;
+  int j = 0; 
+ 
+  if (ind1 < 1) { ind1 = 1; }
+  if (ind2 > n) { ind2 = n; }
+
+  if (ind1 > 1 && ind1 <= n)
+  { for ( ; i <= ind1-2; i++) 
+    { res[i] = col[i]; } 
+  }
+  
+  if (ind2 >= ind1 && ind2 < n)
+  { j = i; 
+    i = ind2; 
+    for ( ; i < n; i++) 
+    { res[j] = col[i]; 
+      j++; 
+    }
+  }
+
+  return res;
+}
+
 
 char** insertAtString(char* col1[], int ind, char* x)
 { if (ind <= 0) { return col1; }
@@ -1931,6 +2014,34 @@ char** insertIntoString(char* col1[], int ind, char* col2[])
   result[n+m] = NULL;
   return result;
 }
+
+char** excludingSubrangeString(char* col[], int ind1, int ind2)
+{ int n = length((void**) col);
+    
+  char** res = (char**) calloc(n + 1, sizeof(char*));
+  int i = 0;
+  int j = 0; 
+ 
+  if (ind1 < 1) { ind1 = 1; }
+  if (ind2 > n) { ind2 = n; }
+
+  if (ind1 > 1 && ind1 <= n)
+  { for ( ; i <= ind1-2; i++) 
+    { res[i] = col[i]; } 
+  }
+  
+  if (ind2 >= ind1 && ind2 < n)
+  { j = i; 
+    i = ind2; 
+    for ( ; i < n; i++) 
+    { res[j] = col[i]; 
+      j++; 
+    }
+  }
+
+  return res;
+}
+
 
 long** removelong(long* col[], long ex)
 { int len = length((void**) col);
