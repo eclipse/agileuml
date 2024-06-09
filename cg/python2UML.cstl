@@ -208,7 +208,8 @@ list _1 |-->_1->characters()<when> _1`ocltype String
 list _1 |-->_1->keys()->asSequence()<when> _1`ocltype Map
 list _1 |-->_1
 
-
+deque _1 |-->_1
+OrderedDict _1 |-->_1
 
 max _1 |-->_1->max()<when> _1`argCount 1
 max _1 |-->Set{_1`argList}->max()
@@ -254,6 +255,8 @@ hasattr _1 |-->OclType.hasAttribute_1
 delattr _1 |-->OclType.removeAttribute_1
 
 eval _1 |-->_0`pythonEval
+
+collections _1 |-->_1
 
 math _1 |-->_1`mathTrailer
 re _1 |-->_1`reTrailer
@@ -496,6 +499,7 @@ _1 _2 |-->    execute (_2`third <: _1)<when> _1 atom, _2`second update
 _1 _2 |-->    execute (_2`third /<: _1)<when> _1 atom, _2`second difference_update
 _1 _2 |-->    execute ((_1 - _2`third) /<: _1)<when> _1 atom, _2`second intersection_update
 _1 _2 |-->    execute (_1 /<: _1)<when> _1 atom, _2`second clear
+
 
 _1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer, _2`isUpdating true
 
@@ -760,6 +764,7 @@ trailer::
 . sort _1 |-->->sort()
 . reverse _1 |-->->reverse()
 . pop _1 |-->_1`popArguments
+. popleft _1 |-->_1`popleftArguments
 . add _1 |-->->including_1
 . copy _1 |-->->copy()
 . intersection _1 |-->->intersection_1
@@ -805,6 +810,9 @@ trailer::
 . create_task _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).startProcess()
 . run _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).start()
 
+. deque _1 |-->_1
+. OrderedDict _1 |-->_1
+
 . gauss _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
 . normalvariate _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
 . uniform _1 |-->.nextUniform_1
@@ -819,6 +827,8 @@ trailer::
 . hour |-->.getHours()
 . minute |-->.getMinutes()
 . second |-->.getSeconds()
+
+. maxlen |-->->size()
 
 . _1 |-->._1
 . _1 _* |-->._1_*
@@ -1111,6 +1121,15 @@ mathType::
 _1 |-->OclAny
 
 
+collectionsType::
+. deque _1 |-->Sequence
+. OrderedDict _1 |-->Map
+
+. _1 |-->OclAny
+. _1 _* |-->OclAny
+_1 |-->OclAny
+
+
 numpyType::
 . inf |-->double
 . Inf |-->double
@@ -1232,6 +1251,7 @@ trailerUpdateForm::
 . sort _1 |-->->sort()
 . reverse _1 |-->->reverse()
 . pop _1 |-->_1`popUpdateArguments
+. popleft _1 |-->_1`popleftUpdateArguments
 . add _1 |-->->including_1
 . intersection _1 |-->->intersection_1
 . intersection_update _1 |-->->intersection_1
@@ -1241,6 +1261,9 @@ trailerUpdateForm::
 . update _1 |-->_1`allUnion
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
+
+. appendleft _1 |-->->prepend_1
+. extendleft _1 |-->->reverse()->union_1->reverse()
 
 . _1 |-->._1
 . _1 _* |-->._1_*
@@ -1255,6 +1278,7 @@ isUpdating::
 . sort _1 |-->true
 . reverse _1 |-->true
 . pop _1 |-->true
+. popleft _1 |-->true
 . add _1 |-->true
 . intersection_update _1 |-->true
 . difference_update _1 |-->true
@@ -1263,6 +1287,9 @@ isUpdating::
 . remove _1 |-->true
 . discard _1 |-->true
 . clear _1 |-->true
+
+. appendleft _1 |-->true
+. extendleft _1 |-->true
 
 . _1 |-->false
 . _1 _* |-->false
@@ -1332,16 +1359,25 @@ allUnion::
 [ _1 ] |-->->union(Set{_1}->unionAll())
 
 popArguments::
-( ) |-->->any()
+( ) |-->->last()
 ( _1 ) |-->->at(_1`firstArg+1)
-[ ] |-->->any()
+[ ] |-->->last()
 [ _1 ] |-->->at(_1`firstArg+1)
 
 popUpdateArguments::
-( ) |-->->tail()
+( ) |-->->front()
 ( _1 ) |-->->excludingAt(_1+1)
-[ ] |-->->tail()
+[ ] |-->->front()
 [ _1 ] |-->->excludingAt(_1`firstArg+1)
+
+popleftArguments::
+( ) |-->->first()
+[ ] |-->->first()
+
+popleftUpdateArguments::
+( ) |-->->tail()
+[ ] |-->->tail()
+
 
 createTaskArguments::
 ( ) |-->
@@ -1790,6 +1826,7 @@ float |-->double
 str |-->String
 dict |-->Map
 list |-->Sequence
+deque |-->Sequence
 set |-->Set
 tuple |-->Sequence
 bool |-->boolean
@@ -1815,6 +1852,7 @@ hasattr _1 |-->boolean
 
 len _1 |-->int
 list _1 |-->Sequence
+deque _1 |-->Sequence
 map _1 |-->Sequence
 set _1 |-->Set
 sorted _1 |-->Sequence
@@ -1842,6 +1880,7 @@ slice _1 |-->Sequence
 open _1 |-->OclFile
 asyncio _1 |-->OclProcess
 
+collections _1 |-->_1`collectionsType
 math _1 |-->_1`mathType
 re _1 |-->_1`reType
 np _1 |-->_1`numpyType

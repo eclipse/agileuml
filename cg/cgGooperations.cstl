@@ -168,6 +168,7 @@ _1.allInstances |-->_1_instances
 _1.insertAt(_2,_3) |-->ocl.InsertAtString(_1, _2, _3)<when> _1 String
 _1.insertAt(_2,_3) |-->ocl.InsertAt(_1, _2, _3)
 _1.insertInto(_2,_3) |-->ocl.InsertInto(_1, _2, _3)
+_1.excludingSubrange(_2,_3) |-->ocl.ExcludingSubrange(_1, _2, _3)
 
 _1.setAtString(_2,_3) |-->ocl.SetAtString(_1, _2, _3)<when> _1 String
 _1.setAt(_2,_3) |-->ocl.SetAt(_1, _2, _3)
