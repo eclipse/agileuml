@@ -740,6 +740,15 @@ public:
         return res;
     }
 
+    static std::set<_T>* front(std::set<_T>* a)
+    {
+        std::set<_T>* res = new std::set<_T>();
+        if (a->size() == 0) { return res; }
+        auto _pos = a->end();
+        _pos--;
+        res->insert(a->begin(), _pos);
+        return res;
+    }
 
     static vector<_T>* tail(vector<_T>* a)
     {
@@ -751,6 +760,15 @@ public:
         return res;
     }
 
+  static std::set<_T>* tail(std::set<_T>* a)
+    {
+        std::set<_T>* res = new std::set<_T>();
+        if (a->size() == 0) { return res; }
+        auto _pos = a->begin();
+        _pos++;
+        res->insert(_pos, a->end());
+        return res;
+    }
 
     static vector<_T>* sort(vector<_T>* a)
     {
