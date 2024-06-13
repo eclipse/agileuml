@@ -1237,6 +1237,9 @@ trailerSideEffect::
 . pop ( ) |-->true
 . pop _1 |-->true
 
+. popleft ( ) |-->true
+. popleft _1 |-->true
+
 . _1 |-->
 . _1 _* |-->
 _1 |-->
