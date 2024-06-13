@@ -17210,19 +17210,19 @@ public Statement generateDesignSubtract(Expression rhs)
              umlkind == QUERY) 
     { if ("OclProcess".equals(objectRef + "") &&
           "newOclProcess".equals(data))
-      { rUses.add("!!! Call of process/task creation");
+      { rUses.add("!!! Expensive operation: Call of process/task creation: " + this);
         int rscore = (int) res.get("red"); 
         res.set("red", rscore+1); 
       }
       else if ("OclType".equals(objectRef + "") && 
                "loadExecutableObject".equals(data))
-      { rUses.add("!!! Runtime library loading");
+      { rUses.add("!!! Expensive operation: Runtime library loading: " + this);
         int rscore = (int) res.get("red"); 
         res.set("red", rscore+1); 
       } 
       else if ("OclDatasource".equals(objectRef + "") && 
                "getConnection".equals(data))
-      { rUses.add("!!! Database/internet connection");
+      { rUses.add("!!! Expensive operation: Database/internet connection: " + this);
         int rscore = (int) res.get("red"); 
         res.set("red", rscore+1); 
       } 
@@ -17231,7 +17231,7 @@ public Statement generateDesignSubtract(Expression rhs)
                 "setAttributeValue".equals(data) || 
                 "hasAttribute".equals(data) || 
                 "removeAttribute".equals(data)))
-      { rUses.add("!!! Reflection is expensive");
+      { rUses.add("!!! Reflection is expensive: " + this);
         int rscore = (int) res.get("red"); 
         res.set("red", rscore+1); 
       } 

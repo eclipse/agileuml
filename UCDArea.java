@@ -583,7 +583,8 @@ public class UCDArea extends JPanel
   public void editUseCase(String nme) 
   { if (nme == null)
     { return; } 
-    UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
+    UseCase uc = 
+      (UseCase) ModelElement.lookupByName(nme,useCases); 
 
     if (uc == null) { return; } 
 

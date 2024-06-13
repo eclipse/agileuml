@@ -165,9 +165,9 @@ public class ConditionalExpression extends Expression
           (testbe.getRight() + "").equals(elsebe.getRight() + ""))
       { if (elsebe.getOperator().equals("->including") || 
             elsebe.getOperator().equals("->append"))
-        { oUses.add("! Using sequence " + ifExp + " as set"); 
-          int oscore = (int) res.get("amber"); 
-          res.set("amber", oscore + 1); 
+        { rUses.add("!! Using sequence " + ifExp + " as set in " + this + "\n>> Recommend declaring " + ifExp + " as a Set or SortedSet"); 
+          int oscore = (int) res.get("red"); 
+          res.set("red", oscore + 1); 
         } 
       } 
     } 

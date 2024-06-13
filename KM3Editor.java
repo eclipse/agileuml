@@ -597,7 +597,9 @@ public class KM3Editor extends JFrame implements DocumentListener
   }
 
   class SearchAction extends javax.swing.AbstractAction
-  { public SearchAction()
+  { int searchPosition = 0; 
+
+    public SearchAction()
     { super("Search"); }
 
     public void actionPerformed(ActionEvent e)
@@ -609,20 +611,25 @@ public class KM3Editor extends JFrame implements DocumentListener
       int len = searchfor.length();
       int en = doc.getLength(); 
 	  
-      for (int i = 0; i + len < en; i++)
-      try 
-      { String txt = textPane.getText(i, len);
-        if (searchfor.equalsIgnoreCase(txt))
-        { textPane.select(i,i+len);
-          textPane.setSelectedTextColor(Color.gray);
-          found = true;   
-        }   
-      } catch (Exception ee) { }
+      for (int i = searchPosition; i + len < en; i++)
+      { try 
+        { String txt = textPane.getText(i, len);
+          if (searchfor.equalsIgnoreCase(txt))
+          { textPane.select(i,i+len);
+            textPane.setSelectedTextColor(Color.gray);
+            found = true;   
+            searchPosition = i+1; 
+            break; 
+          }   
+        } catch (Exception ee) { }
+      }
 	  
       if (found)
       { System.out.println("Found: " + found); } 
       else 
-      { System.out.println("Did not find " + searchfor); }  
+      { System.out.println("!! Did not find " + searchfor);
+        searchPosition = 0; 
+      }  
     }
   }
 

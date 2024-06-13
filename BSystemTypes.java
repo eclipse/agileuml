@@ -5758,7 +5758,8 @@ public class BSystemTypes extends BComponent
   } // map
 
   public static String generateFirstOp()
-  { String res = "    public static Object first(List v)\n" +
+  { String res = 
+    "    public static Object first(List v)\n" +
     "    { if (v.size() == 0) { return null; }\n" +
     "      return v.get(0);\n" +
     "    }\n";
@@ -7280,7 +7281,21 @@ public class BSystemTypes extends BComponent
                  "  { ArrayList res = new ArrayList(); \n" + 
                  "    for (int i = 0; i < a.size() - 1; i++)\n" + 
                  "    { res.add(a.get(i)); } \n" + 
-                 "    return res; }\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n";
+
+    res = res + 
+      "  public static HashSet front(HashSet a)\n" +
+      "  { HashSet res = new HashSet(); \n" +
+      "    Object lst = null; \n" +
+      "    for (Object x : a)\n" +
+      "    { res.add(x); \n" +
+      "      lst = x; \n" +
+      "    } \n" +
+      "    res.remove(lst);\n" + 
+      "    return res; \n" +
+      "  }\n\n"; 
+ 
     return res; 
   }  
 
@@ -7289,7 +7304,33 @@ public class BSystemTypes extends BComponent
                  "  { ArrayList<T> res = new ArrayList<T>(); \n" + 
                  "    for (int i = 0; i < a.size() - 1; i++)\n" + 
                  "    { res.add(a.get(i)); } \n" + 
-                 "    return res; }\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n";
+
+    res = res + 
+      "  public static <T> HashSet<T> front(HashSet<T> a)\n" +
+      "  { HashSet<T> res = new HashSet<T>();\n" + 
+      "    T lst = null;\n" + 
+      "    for (T x : a)\n" +
+      "    { res.add(x); \n" +
+      "      lst = x; \n" +
+      "    } \n" +
+      "    res.remove(lst);\n" + 
+      "    return res; \n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static <T> TreeSet<T> front(TreeSet<T> a)\n" +
+      "  { TreeSet<T> res = new TreeSet<T>();\n" + 
+      "    T lst = null;\n" + 
+      "    for (T x : a)\n" +
+      "    { res.add(x); \n" +
+      "      lst = x; \n" +
+      "    } \n" +
+      "    res.remove(lst);\n" + 
+      "    return res; \n" +
+      "  }\n\n"; 
+ 
     return res; 
   }  
 
@@ -7303,13 +7344,27 @@ public class BSystemTypes extends BComponent
   }  
 
   public static String generateFrontOpCPP()
-  { String res = "  static vector<_T>* front(vector<_T>* a)\n" + 
-                 "  { vector<_T>* res = new vector<_T>(); \n" + 
-                 "    if (a->size() == 0) { return res; } \n" + 
-                 "    vector<_T>::iterator _pos = a->end(); \n" +
-                 "    _pos--; \n" + 
-                 "    res->insert(res->end(), a->begin(), _pos); \n" +  
-                 "    return res; }\n"; 
+  { String res = 
+      "  static vector<_T>* front(vector<_T>* a)\n" + 
+      "  { vector<_T>* res = new vector<_T>(); \n" + 
+      "    if (a->size() == 0) { return res; } \n" + 
+      "    auto _pos = a->end(); \n" +
+      "    _pos--; \n" + 
+      "    res->insert(res->end(), a->begin(), _pos); \n" +  
+      "    return res;\n" + 
+      "  }\n\n";
+
+    res = res + 
+    "  static std::set<_T>* front(std::set<_T>* a)\n" +
+    "  {\n" +
+    "    std::set<_T>* res = new std::set<_T>();\n" +
+    "    if (a->size() == 0) { return res; }\n" +
+    "    auto _pos = a->end();\n" +
+    "    _pos--;\n" +
+    "    res->insert(a->begin(), _pos);\n" +
+    "    return res;\n" +
+    "  }\n\n"; 
+ 
     return res; 
   }  
 
@@ -7327,7 +7382,21 @@ public class BSystemTypes extends BComponent
                  "  { ArrayList res = new ArrayList(); \n" + 
                  "    for (int i = 1; i < a.size(); i++)\n" + 
                  "    { res.add(a.get(i)); } \n" + 
-                 "    return res; }\n"; 
+                 "    return res;\n" + 
+                 "   }\n\n";
+
+    res = res + 
+    "  public static HashSet tail(HashSet a)\n" +
+    "  { HashSet res = new HashSet(); \n" +
+    "    Object fst = null; \n" +
+    "    for (Object x : a)\n" +
+    "    { res.add(x); \n" +
+    "      if (fst == null) { fst = x; }\n" + 
+    "    } \n" +
+    "    res.remove(fst);\n" + 
+    "    return res; \n" +
+    "  }\n\n"; 
+ 
     return res; 
   }  
 
@@ -7336,7 +7405,33 @@ public class BSystemTypes extends BComponent
                  "  { ArrayList<T> res = new ArrayList<T>(); \n" + 
                  "    for (int i = 1; i < a.size(); i++)\n" + 
                  "    { res.add(a.get(i)); } \n" + 
-                 "    return res; }\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n";
+
+    res = res + 
+    "  public static <T> HashSet<T> tail(HashSet<T> a)\n" +
+    "  { HashSet<T> res = new HashSet<T>(); \n" +
+    "    T fst = null; \n" +
+    "    for (T x : a)\n" +
+    "    { res.add(x); \n" +
+    "      if (fst == null) { fst = x; }\n" + 
+    "    } \n" +
+    "    res.remove(fst);\n" + 
+    "    return res; \n" +
+    "  }\n\n"; 
+
+    res = res + 
+    "  public static <T> TreeSet<T> tail(TreeSet<T> a)\n" +
+    "  { TreeSet<T> res = new TreeSet<T>(); \n" +
+    "    T fst = null; \n" +
+    "    for (T x : a)\n" +
+    "    { res.add(x); \n" +
+    "      if (fst == null) { fst = x; }\n" + 
+    "    } \n" +
+    "    res.remove(fst);\n" + 
+    "    return res; \n" +
+    "  }\n\n"; 
+ 
     return res; 
   }  // more efficient just to remove the first element
 
@@ -7350,13 +7445,27 @@ public class BSystemTypes extends BComponent
   }  
 
   public static String generateTailOpCPP()
-  { String res = "  static vector<_T>* tail(vector<_T>* a)\n" + 
-                 "  { vector<_T>* res = new vector<_T>(); \n" + 
-                 "    if (a->size() == 0) { return res; } \n" + 
-                 "    vector<_T>::iterator _pos = a->begin(); \n" +
-                 "    _pos++; \n" + 
-                 "    res->insert(res->end(), _pos, a->end()); \n" +  
-                 "    return res; }\n"; 
+  { String res = 
+    "  static vector<_T>* tail(vector<_T>* a)\n" + 
+    "  { vector<_T>* res = new vector<_T>(); \n" + 
+    "    if (a->size() == 0) { return res; } \n" + 
+    "    auto _pos = a->begin(); \n" +
+    "    _pos++; \n" + 
+    "    res->insert(res->end(), _pos, a->end()); \n" +  
+    "    return res;\n" + 
+    "  }\n\n";
+
+    res = res + 
+    "  static std::set<_T>* tail(std::set<_T>* a)\n" +
+    "  {\n" +
+    "    std::set<_T>* res = new std::set<_T>();\n" +
+    "    if (a->size() == 0) { return res; }\n" +
+    "    auto _pos = a->begin();\n" +
+    "    _pos++;\n" +
+    "    res->insert(_pos, a->end());\n" +
+    "    return res;\n" +
+    "  }\n\n"; 
+ 
     return res; 
   }  
 
@@ -9940,6 +10049,16 @@ public class BSystemTypes extends BComponent
     "    { if (v.size() == 0) { return null; }\n" +
     "      return v.get(v.size() - 1);\n" +
     "    }\n\n";
+
+    res = res + 
+    "    public static Object last(HashSet v)\n" +
+    "    { int n = v.size(); \n" +
+    "      if (n == 0) { return null; }\n" +
+    "      Object res = null; \n" +
+    "      for (Object o : v) { res = o; }\n" + 
+    "      return res;\n" +
+    "    }\n"; 
+
     return res;
   }
 
@@ -9948,6 +10067,16 @@ public class BSystemTypes extends BComponent
     "    { if (v.size() == 0) { return null; }\n" +
     "      return v.get(v.size() - 1);\n" +
     "    }\n\n";
+
+    res = res + 
+    "    public static <T> T last(Set<T> v)\n" +
+    "    { int n = v.size(); \n" +
+    "      if (n == 0) { return null; }\n" +
+    "      T res = null; \n" +
+    "      for (T o : v) { res = o; }\n" + 
+    "      return res;\n" +
+    "    }\n"; 
+
     return res;
   }
 

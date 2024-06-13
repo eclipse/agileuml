@@ -4581,13 +4581,14 @@ class WhileStatement extends Statement
     if (loopKind == WHILE || loopKind == REPEAT)
     { int acount = (int) uses.get("amber"); 
       uses.set("amber", acount + 1); 
-      aUses.add("! Unbounded loops can be inefficient"); 
+      aUses.add("! Unbounded loops can be inefficient: " + this + 
+                "\n>> Recommend replacing by a bounded loop"); 
     } 
 
     if (Statement.hasLoopStatement(body))
     { int rcount = (int) uses.get("red"); 
       uses.set("red", rcount + 1); 
-      rUses.add("!!! Nested loops can be very inefficient"); 
+      rUses.add("!!! Nested loops can be very inefficient: " + this); 
     }
 
     return uses; 
@@ -13172,9 +13173,10 @@ class ConditionalStatement extends Statement
             (testbe.getRight() + "").equals(elsebe.getRight() + ""))
         { if (elsebe.getOperator().equals("->including") || 
               elsebe.getOperator().equals("->append"))
-          { oUses.add("! Possibly using sequence " + ifExp + " as set"); 
-            int oscore = (int) uses.get("amber"); 
-            uses.set("amber", oscore + 1); 
+          { rUses.add("!! Possibly using sequence " + ifExp + " as set in: " + this + 
+               "\n>> Recommend declaring " + ifExp + " as a Set or SortedSet"); 
+            int oscore = (int) uses.get("red"); 
+            uses.set("red", oscore + 1); 
           }
         } 
       } 

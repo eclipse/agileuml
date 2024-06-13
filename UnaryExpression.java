@@ -402,7 +402,8 @@ public class UnaryExpression extends Expression
         "->first".equals(operator) ||
         "->front".equals(operator) || 
         "->tail".equals(operator) ||
-        "->max".equals(operator) || "->min".equals(operator) ||
+        "->max".equals(operator) || 
+        "->min".equals(operator) ||
         "->any".equals(operator))
     { Expression zero = new BasicExpression(0);
       BasicExpression orsize = new BasicExpression("size",0);
@@ -600,15 +601,20 @@ public void findClones(java.util.Map clones,
       argument = argres; 
     } 
 
-    if ("boolean".equals(type + "") || "int".equals(type + "") || "long".equals(type + "") ||
-        "double".equals(type + "") || "String".equals(type + ""))
+    if ("boolean".equals(type + "") || 
+        "int".equals(type + "") || "long".equals(type + "") ||
+        "double".equals(type + "") || 
+        "String".equals(type + ""))
     { return this; } 
 
     if (operator.equals("->last") || 
         operator.equals("->first") ||
-        operator.equals("->front") || operator.equals("->tail") || 
+        operator.equals("->front") || 
+        operator.equals("->tail") || 
         operator.equals("->flatten") || 
-        operator.equals("->any") || operator.equals("->max") || operator.equals("->reverse") || 
+        operator.equals("->any") || 
+        operator.equals("->max") || 
+        operator.equals("->reverse") || 
         operator.equals("->copy") ||
         operator.equals("->iterator") || 
         operator.equals("->asSequence") || 
@@ -621,7 +627,8 @@ public void findClones(java.util.Map clones,
         if (ent.hasStereotype("source"))
         { Entity tent = (Entity) interp.get(ent + ""); 
           if (tent == null) 
-          { if (propElemType != null && propElemType.isEntity())
+          { if (propElemType != null && 
+                propElemType.isEntity())
             { tent = propElemType.getEntity(); } 
           }  
           BasicExpression res = new BasicExpression(tent); 
@@ -631,7 +638,9 @@ public void findClones(java.util.Map clones,
           res.setElementType(new Type(tent)); 
           res.setUmlKind(Expression.CLASSID); 
           // if (isMultiple())
-          if (operator.equals("->front") || operator.equals("->tail") || operator.equals("->sort") ||
+          if (operator.equals("->front") || 
+              operator.equals("->tail") || 
+              operator.equals("->sort") ||
               operator.equals("->reverse") || 
               operator.equals("->asSet") || 
               operator.equals("->asBag") || 
@@ -691,13 +700,15 @@ public void findClones(java.util.Map clones,
 
         if (lbe.operator.equals("|") ||
             lbe.operator.equals("->select"))
-        { rUses.add("!!! Inefficient ->select(x | P)->any(), use ->any(x | P)");
+        { rUses.add("!!! Inefficient " + argument + "->select(x | P)->any(),\n" + 
+                    ">>> instead use:    " + argument + "->any(x | P)");
           int rscore = (int) res.get("red"); 
           res.set("red", rscore+1); 
         }
         else if (lbe.operator.equals("|R") ||
             lbe.operator.equals("->reject"))
-        { rUses.add("!!! Inefficient ->reject(x | P)->any(), use ->any(x | not(P))");
+        { rUses.add("!!! Inefficient " + argument + "->reject(x | P)->any(), \n" + 
+            ">>> instead, use:   " + argument + "->any(x | not(P))");
           int rscore = (int) res.get("red"); 
           res.set("red", rscore+1); 
         }
@@ -705,12 +716,12 @@ public void findClones(java.util.Map clones,
     }
     else if ("->sort".equals(operator))
     { if (argument.isSorted())
-      { aUses.add("! Redundant operation " + operator + 
+      { aUses.add("! Redundant ->sort operation: " + this + 
             "\n! Argument is already sorted.");
       }
       else if (argument.isSet()) 
-      { aUses.add("! n*log(n) sorting algorithm used for " + operator + 
-            "\n! It may be more efficient to use SortedSet type.");
+      { aUses.add("! n*log(n) sorting algorithm used for " + this + 
+            "\n>>> It may be more efficient to use a SortedSet type.");
       }
       else 
       { aUses.add("! n*log(n) sorting algorithm used for " + operator); } 
@@ -2253,8 +2264,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return true; } 
 
     // otherwise, if the argument element type is primitive
-    if (operator.equals("->any") || operator.equals("->last") ||
-        operator.equals("->first") || operator.equals("->max") ||
+    if (operator.equals("->any") || 
+        operator.equals("->last") ||
+        operator.equals("->first") || 
+        operator.equals("->max") ||
         operator.equals("->min") || 
         operator.equals("->sum") || operator.equals("!") ||
         operator.equals("->prd"))
@@ -2263,8 +2276,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return true; 
     } 
 
-	if ("lambda".equals(operator))
-	{ return argument.isPrimitive(); }
+    if ("lambda".equals(operator))
+    { return argument.isPrimitive(); }
 
     return false; 
   } 
@@ -2272,8 +2285,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public int typeCheck(final Vector sms)
   { return argument.typeCheck(sms); } 
 
-  public boolean typeCheck(final Vector typs, final Vector ents,
-                           final Vector contexts, final Vector env)
+  public boolean typeCheck(final Vector typs, 
+                    final Vector ents,
+                    final Vector contexts, final Vector env)
   { if (operator.equals("lambda") && accumulator != null)
     { Vector context = new Vector(); 
       context.addAll(contexts); 
@@ -2923,7 +2937,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     // be navigated & modified. iterators of a map
     // are iterators of its *values* (not keys)
     
-    if (operator.equals("->last") || operator.equals("->first"))
+    if (operator.equals("->last") || 
+        operator.equals("->first"))
     { type = argument.elementType; 
       if (type != null && type.isCollectionType())
       { multiplicity = ModelElement.MANY; 
@@ -2938,7 +2953,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         elementType = type; 
       } 
 
-      if (argumentType.isString() || argumentType.isCollection())
+      if (argumentType.isString() || 
+          argumentType.isCollection())
       { } 
       else 
       { System.err.println("!! Argument of " + operator + 
@@ -3678,7 +3694,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         "->min".equals(operator) ||
         "->any".equals(operator))
     { Type argelemtype = argument.getElementType(); 
-      return (argelemtype != null && argelemtype.isCollectionType());  
+      return (argelemtype != null && 
+              argelemtype.isCollectionType());  
     } 
 
     if ("->copy".equals(operator))
@@ -3998,13 +4015,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->abs") || 
         operator.equals("->sin") ||
-        operator.equals("->cos") || operator.equals("->tan") ||
-        operator.equals("->exp") || operator.equals("->log") ||
+        operator.equals("->cos") || 
+        operator.equals("->tan") ||
+        operator.equals("->exp") || 
+        operator.equals("->log") ||
         operator.equals("->atan") || 
-        operator.equals("->acos") || operator.equals("->asin") ||
+        operator.equals("->acos") || 
+        operator.equals("->asin") ||
         operator.equals("->cosh") || 
         operator.equals("->sinh") ||
-        operator.equals("->tanh") || operator.equals("->sqrt"))  
+        operator.equals("->tanh") || 
+        operator.equals("->sqrt"))  
     { return "Math." + data + "(" + pre + ")"; }
     else if (operator.equals("->cbrt"))
     { return "Math.pow(" + pre + ", 1.0/3)"; } 
@@ -4014,7 +4035,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
              operator.equals("->ceil") || 
              operator.equals("->floor"))
     { return "((int) Math." + data + "(" + pre + "))"; } 
-    else if (data.equals("toUpperCase") || data.equals("toLowerCase"))
+    else if (data.equals("toUpperCase") || 
+             data.equals("toLowerCase"))
     { return pre + "." + data + "()"; } 
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // was getType(); -- correct below 
@@ -4026,7 +4048,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         return "Set.sumString(" + pre + ")"; 
       } 
       String tname = sumtype.getName();   // only int, long, double, String are valid
-      if ("int".equals(tname) || "long".equals(tname) || "double".equals(tname) ||
+      if ("int".equals(tname) || "long".equals(tname) || 
+          "double".equals(tname) ||
           "String".equals(tname))
       { return "Set.sum" + tname + "(" + pre + ")"; } 
       else
@@ -4107,7 +4130,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       else 
       { return "((" + ctname + ") Set." + data + "(" + pre + "))"; }
     } 
-    else if (data.equals("any") || data.equals("last") || data.equals("first"))
+    else if (data.equals("any") || data.equals("last") || 
+             data.equals("first"))
     { Type et = argument.elementType; 
       if (et != null) 
       { if ("String".equals("" + et) || et.isEntity())
@@ -4482,7 +4506,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }  
       return "Set.closure" + entity.getName() + rel + "(" + arg.queryFormJava6(env,local) + ")";
     } 
-    else if (argument.type != null && "String".equals("" + argument.getType()))
+    else if (argument.type != null && 
+             "String".equals("" + argument.getType()))
     { // last,first,front,tail on strings
       if (data.equals("first") || data.equals("any"))
       { return "(" + pre + ".charAt(0) + \"\")"; } 
@@ -4493,7 +4518,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (data.equals("tail"))
       { return pre + ".substring(1," + pre + ".length())"; } 
     } 
-    else if (data.equals("any") || data.equals("last") || data.equals("first"))
+    else if (data.equals("any") || 
+             data.equals("last") || data.equals("first"))
     { Type et = argument.elementType; 
       if (et != null) 
       { if ("String".equals("" + et) || et.isEntity())
@@ -4588,7 +4614,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "!(" + qf + ")"; } 
 
     if (operator.equals("->size"))
-    { if (argument.umlkind == CLASSID && (argument instanceof BasicExpression) && 
+    { if (argument.umlkind == CLASSID && 
+          (argument instanceof BasicExpression) && 
           ((BasicExpression) argument).arrayIndex == null)
       { return cont + "." + qf.toLowerCase() + "s.size()"; } 
       if (argument.type != null && argument.type.getName().equals("String"))

@@ -20079,7 +20079,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else if ("->sortedBy".equals(operator) || 
              "|sortedBy".equals(operator))
-    { aUses.add("! n*log(n) sorting algorithm used for " + operator); 
+    { aUses.add("! n*log(n) sorting algorithm used for " + this); 
 
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
@@ -20090,7 +20090,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "|concatenateAll".equals(operator) ||
              "->intersectAll".equals(operator) || 
              "|intersectAll".equals(operator))
-    { aUses.add("! Expensive operator: " + operator);
+    { aUses.add("! Expensive operator in: " + this);
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 

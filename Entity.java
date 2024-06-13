@@ -5435,6 +5435,11 @@ public class Entity extends ModelElement implements Comparable
     res.set("amber", 0); 
 
     String ename = getName(); 
+
+    System.out.println(); 
+    System.out.println("++++++++ Energy analysis of class " + ename + " ++++++++++++"); 
+    System.out.println(); 
+
     int n = operations.size(); 
 
     for (int i = 0; i < n; i++) 
@@ -5476,6 +5481,10 @@ public class Entity extends ModelElement implements Comparable
         res.set("amber", amberscore + amberop); 
       } 
     } 
+
+    System.out.println(); 
+    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++"); 
+    System.out.println(); 
 
     return res; 
   } 
