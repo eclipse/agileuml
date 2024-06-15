@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Terminal=false
+Terminal=true
 Name=AgileUML Toolset
 Comment=Tools for rapid MDE-based software development with UML for various software platforms
 GenericName=MDE-based UML editor and code generator for building software applications
