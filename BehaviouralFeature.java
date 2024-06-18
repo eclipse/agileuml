@@ -4247,7 +4247,8 @@ public class BehaviouralFeature extends ModelElement
         } 
 
         if (actualClones.size() > 0)
-        { redUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones); 
+        { redUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones + "\n" + 
+             ">>> Use Extract Local Variable refactoring"); 
           int rscore = (int) res.get("red");
           rscore = rscore + actualClones.size();
           res.set("red", rscore);
@@ -4277,7 +4278,8 @@ public class BehaviouralFeature extends ModelElement
         } 
 
         if (actualClones.size() > 0)
-        { amberUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones); 
+        { amberUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones + "\n" + 
+             ">>> Use Extract Local Variable refactoring"); 
           int ascore = (int) res.get("amber");
           ascore = ascore + actualClones.size();
           res.set("amber", ascore);
