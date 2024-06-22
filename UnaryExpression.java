@@ -700,15 +700,15 @@ public void findClones(java.util.Map clones,
 
         if (lbe.operator.equals("|") ||
             lbe.operator.equals("->select"))
-        { rUses.add("!!! Inefficient " + argument + "->select(x | P)->any(),\n" + 
-                    ">>> instead use:    " + argument + "->any(x | P)");
+        { rUses.add("!!! Inefficient col->select(x | P)->any() expression in: " + this + ",\n" + 
+                    ">>> instead use:    col->any(x | P)");
           int rscore = (int) res.get("red"); 
           res.set("red", rscore+1); 
         }
         else if (lbe.operator.equals("|R") ||
             lbe.operator.equals("->reject"))
-        { rUses.add("!!! Inefficient " + argument + "->reject(x | P)->any(), \n" + 
-            ">>> instead, use:   " + argument + "->any(x | not(P))");
+        { rUses.add("!!! Inefficient col->reject(x | P)->any() expression in " + this + ", \n" + 
+            ">>> instead, use:   col->any(x | not(P))");
           int rscore = (int) res.get("red"); 
           res.set("red", rscore+1); 
         }

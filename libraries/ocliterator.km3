@@ -32,7 +32,7 @@ class OclIteratorResult
 
     query isAfterLast() : boolean
     pre: true 
-    post: if position > elements.size() then result = true else result = false endif; 
+    post: if position > elements->size() then result = true else result = false endif; 
 
     query isBeforeFirst() : boolean
     pre: true 

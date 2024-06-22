@@ -10580,6 +10580,9 @@ public void produceCUI(PrintWriter out)
       dirName = systemName; 
     } 
 
+    java.util.Date d1 = new java.util.Date(); 
+    long t1 = d1.getTime(); 
+
     out.println("import java.util.*;"); 
     out.println("import java.util.HashMap;"); 
     out.println("import java.util.Collection;");
@@ -10694,6 +10697,10 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
+    java.util.Date d2 = new java.util.Date(); 
+    long t2 = d2.getTime(); 
+
+    System.out.println(">>> Code generation took " + (t2-t1) + "ms"); 
   }
 
   public void printJava4Header(PrintWriter out)
@@ -15299,6 +15306,14 @@ public void produceCUI(PrintWriter out)
     { loadKM3FromFile(oclobserver); }
     else 
     { System.err.println("! Warning: no file libraries/blackboard.km3"); } 
+  } 
+
+  public void iteratorPattern()
+  { File ocliterator = new File("libraries/ocliterator.km3"); 
+    if (ocliterator.exists())
+    { loadKM3FromFile(ocliterator); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocliterator.km3"); } 
   } 
 
   public void mvcPattern()

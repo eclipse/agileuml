@@ -1082,6 +1082,12 @@ public void findPlugins()
       "Optimised version of Observer pattern");
     patternsMenu.add(observerMI);
 
+    JMenuItem iteratorMI = new JMenuItem("Iterator"); 
+    iteratorMI.addActionListener(this);
+    iteratorMI.setToolTipText(
+      "Optimised version of Iterator pattern");
+    patternsMenu.add(iteratorMI);
+
     JMenuItem blackboardMI = new JMenuItem("Blackboard"); 
     blackboardMI.addActionListener(this);
     blackboardMI.setToolTipText(
@@ -2197,12 +2203,15 @@ public void findPlugins()
       else if (label.equals("Generate Python 3.10"))
       { ucdArea.saveModelToFile("output/model.txt"); 
 
+        // java.util.Date d1 = new java.util.Date(); 
+        // long t1 = d1.getDate(); 
 
         RunApp rapp1 = new RunApp("uml2py3"); 
-
+        Thread appthread = null;
+ 
         try
         { rapp1.setFile("app.py"); 
-          Thread appthread = new Thread(rapp1); 
+          appthread = new Thread(rapp1); 
           appthread.start(); 
         } 
         catch (Exception ee2) 
@@ -2223,10 +2232,15 @@ public void findPlugins()
           out.close();
 
           ucdArea.generateMutationTesterPython(); 
+          if (appthread != null) 
+          { appthread.join(); } 
         }
-        catch (IOException ex)
+        catch (Exception ex)
         { System.out.println("!! Error generating Python tests"); }
-        
+
+        // java.util.Date d2 = new java.util.Date(); 
+        // long t2 = d2.getDate(); 
+        // System.out.println(">>> Code generation took " + (t2-t1) + "ms"); 
       }
       else if (label.equals("Generate Go"))
       { ucdArea.generateGo(); } 
@@ -2830,6 +2844,8 @@ public void findPlugins()
       { makeSingletons(); }
       else if (label.equals("Observer"))
       { ucdArea.observerPattern(); }
+      else if (label.equals("Iterator"))
+      { ucdArea.iteratorPattern(); }
       else if (label.equals("Blackboard"))
       { ucdArea.blackboardPattern(); }
       else if (label.equals("MVC"))
