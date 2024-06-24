@@ -903,6 +903,12 @@ _1 _* |--><when> _1 dataOccursClause
 _1 _* |-->_*`recurse
 
 
+getType::
+ZERO |-->int
+ZEROS |-->int
+_1 |-->_1`oclType
+
+
 dataAlignedClause::
 ALIGNED |-->
 
@@ -1023,6 +1029,7 @@ X |-->String
 A |-->String
 S |-->int
 P |-->double
+Z |-->int
 $ |-->String
 / |-->String
 , |-->String
@@ -1051,6 +1058,7 @@ $ _1 |-->String<when> _1 pictureCardinality
 > _1 |-->String<when> _1 pictureCardinality
 V _1 |-->double<when> _1 pictureCardinality
 9 _1 |-->_1`picCardDataType<when> _1 pictureCardinality
+Z _1 |-->_1`picCardDataType<when> _1 pictureCardinality
 . _1 |-->String<when> _1 pictureCardinality
 _1 _2 |-->String<when> _2 pictureCardinality
 X _* |-->String
@@ -1068,6 +1076,7 @@ $ _* |-->String
 > _* |-->String
 V _* |-->double
 9 _* |-->_*`recurse
+Z _* |-->_*`recurse
 . _* |-->String
 _1 _* |-->_*`recurse
 
@@ -1080,6 +1089,7 @@ X |-->""
 A |-->""
 S |-->0
 P |-->0.0
+Z |-->0
 $ |-->""
 / |-->""
 , |-->""
@@ -1108,12 +1118,14 @@ $ _1 |-->""<when> _1 pictureCardinality
 > _1 |-->""<when> _1 pictureCardinality
 V _1 |-->0.0<when> _1 pictureCardinality
 9 _1 |-->0<when> _1 pictureCardinality
+Z _1 |-->0<when> _1 pictureCardinality
 . _1 |-->""<when> _1 pictureCardinality
 _1 _2 |-->""<when> _2 pictureCardinality
 X _* |-->""
 A _* |-->""
 S _* |-->_*`recurse
 P _* |-->0.0
+Z _* |-->0.0
 $ _* |-->""
 / _* |-->""
 , _* |-->""
@@ -1125,6 +1137,7 @@ $ _* |-->""
 > _* |-->""
 V _* |-->0.0
 9 _* |-->_*`recurse
+Z _* |-->_*`recurse
 . _* |-->""
 _1 _* |-->_*`recurse
 
@@ -1134,6 +1147,7 @@ X |-->String
 A |-->String
 S |-->int
 P |-->double
+Z |-->int
 $ |-->String
 / |-->String
 , |-->String
@@ -1162,6 +1176,15 @@ picCardDataType::
 ( 7 ) |-->int
 ( 8 ) |-->int
 ( 9 ) |-->int
+( 01 ) |-->int
+( 02 ) |-->int
+( 03 ) |-->int
+( 04 ) |-->int
+( 05 ) |-->int
+( 06 ) |-->int
+( 07 ) |-->int
+( 08 ) |-->int
+( 09 ) |-->int
 ( _1 ) |-->long
 
 
@@ -1579,6 +1602,7 @@ FROM YYYYDDD  |-->
 
 
 acceptFromMnemonicStatement::
+FROM SYSIN |-->System.in
 FROM _1  |-->_1<when> _1 mnemonicName
 
 
@@ -1668,7 +1692,7 @@ INTO _1  |-->_1`roundFunction
 GIVING _1  |-->_1`roundFunction
 GIVING _1 _*  |-->_1`roundFunction
 _1 ROUNDED  |-->->roundTo(_1`fractionWidth)
-_1  |-->->truncateTo(_1`fractionWidth)
+_1  |-->->truncateTo(_1`getFractWidth)
 
 
 addToGiving::
@@ -1681,11 +1705,11 @@ _1  |-->_1<when> _1 identifier
 
 additions::
 _1 ROUNDED |-->      _1 := (_1 + _addTmp)->roundTo(_1`fractionWidth);\n
-_1 |-->      _1 := (_1 + _addTmp)->truncateTo(_1`fractionWidth);\n
+_1 |-->      _1 := (_1 + _addTmp)->truncateTo(_1`getFractWidth);\n
 
 addGivingAssigns::
-_1 ROUNDED  |-->      _1 := _addGivingTmp->roundTo(_1`fractionWidth);\n
-_1 |-->      _1 := _addGivingTmp->truncateTo(_1`fractionWidth);\n
+_1 ROUNDED  |-->      _1 := _addGivingTmp->roundTo(_1`getFractWidth);\n
+_1 |-->      _1 := _addGivingTmp->truncateTo(_1`getFractWidth);\n
 
 
 alteredGoTo::
@@ -1795,13 +1819,16 @@ _1 |-->    execute _1`trimQuotes_Class.allInstances()->last()->isDeleted();\n<wh
 
 displayStatement::
 DISPLAY _1 |-->    execute ("" + _1)->display() ;\n
-DISPLAY _1 _2 _3 _4  |-->    OclFile["_3"].print(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayUpon, _4 displayWith
-DISPLAY _1 _2 _3  |-->    OclFile["_3"].println(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayUpon
-DISPLAY _1 _2 _3  |-->    OclFile["System.out"].print(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayWith
+DISPLAY _1 _2  |-->    execute (_1)->display() ;\n<when> _1 displayOperand, _2`isSysout true 
 DISPLAY _1 _2  |-->    execute ("" + _1)->display() ;\n<when> _1 displayOperand, _2 displayAt
-DISPLAY _1 _2 _3  |-->    OclFile["_2"].print(_1) ;\n<when> _1 displayOperand, _2 displayUpon, _3 displayWith
-DISPLAY _1 _2  |-->    OclFile["_2"].println(_1) ;\n<when> _1 displayOperand, _2 displayUpon
-DISPLAY _1 _2  |-->    OclFile["System.out"].print(_1) ;\n<when> _1 displayOperand, _2 displayWith
+
+DISPLAY _1 _2 _3 _4  |-->    execute (OclFile["_3"]).print(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayUpon, _4 displayWith
+DISPLAY _1 _2 _3  |-->    execute (OclFile["_3"]).println(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayUpon
+DISPLAY _1 _2 _3  |-->    execute (OclFile["System.out"]).print(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayWith
+DISPLAY _1 _2 _3  |-->    execute (OclFile["_2"]).print(_1) ;\n<when> _1 displayOperand, _2 displayUpon, _3 displayWith
+
+DISPLAY _1 _2  |-->    execute (OclFile["_2"]).println(_1) ;\n<when> _1 displayOperand, _2 displayUpon
+DISPLAY _1 _2  |-->    execute (OclFile["System.out"]).print(_1) ;\n<when> _1 displayOperand, _2 displayWith
 DISPLAY _*  |-->    execute ("" + _*`sum)->display() ;\n
 
 
@@ -1813,6 +1840,12 @@ AT _1  |-->_1
 
 displayUpon::
 UPON _1  |-->_1
+
+
+isSysout::
+UPON SYSOUT  |-->true
+_* |-->false
+
 
 displayWith::
 WITH NO ADVANCING  |--> 
@@ -1947,7 +1980,7 @@ _1  |-->_1
 
 divideIntoAssignment::
 _1 ROUNDED  |-->      _1 := (_1/_divideIntoTmp)->roundTo(_1`fractionWidth) ;\n
-_1  |-->      _1 := (_1/_divideIntoTmp)->truncateTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := (_1/_divideIntoTmp)->truncateTo(_1`getFractWidth) ;\n
 
 
 divideGiving::
@@ -1956,11 +1989,11 @@ _1  |-->_1
 
 divideGivingAssignment::
 _1 ROUNDED  |-->      _1 := _divideIntoGivingTmp->roundTo(_1`fractionWidth) ;\n
-_1  |-->      _1 := _divideIntoGivingTmp->truncateTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := _divideIntoGivingTmp->truncateTo(_1`getFractWidth) ;\n
 
 divideByGivingAssignment::
 _1 ROUNDED  |-->      _1 := _divideByGivingTmp->roundTo(_1`fractionWidth) ;\n
-_1  |-->      _1 := _divideByGivingTmp->truncateTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := _divideByGivingTmp->truncateTo(_1`getFractWidth) ;\n
 
 
 divideRemainder::
@@ -2016,6 +2049,7 @@ execSqlStatement::
 
 exitStatement::
 EXIT PROGRAM |-->    return;\n
+EXIT PERFORM |-->    break;\n
 EXIT |-->    return;\n
 
 closeStatement::
@@ -2374,7 +2408,7 @@ moveToStatement::
 _1 TO _2  |-->    _2 := StringLib.leftAlignInto("" + _1, _2`fieldWidth);\n<when> _1`oclType String
 _1 TO _2  |-->    _2 := StringLib.padLeftWithInto("" + _1, " ", _2`fieldWidth);\n<when> _2`oclType String
 _1 TO _2  |-->    _2 := _1 ;\n
-_1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
+_1 TO _2 _*  |-->    (var _moveTmp : _1`getType ; _moveTmp := _1;\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
 
 moveAll::
 _1 TO _2  |-->    _2 := Integer.subrange(1,_2`fieldWidth)->collect(_1)->sum();\n
@@ -2437,7 +2471,7 @@ _* |-->_*
 
 multiplyRegularOperand::
 _1 ROUNDED |-->      _1 := (_1*_multTmp)->roundTo(_1`fractionWidth) ;\n
-_1  |-->      _1 := (_1*_multTmp)->truncateTo(_1`fractionWidth) ;\n 
+_1  |-->      _1 := (_1*_multTmp)->truncateTo(_1`getFractWidth) ;\n 
 
 
 multiplyGiving::
@@ -2508,7 +2542,7 @@ performStatement::
 PERFORM _1  |-->_1
 
 performInlineStatement::
-_1 END-PERFORM  |--><when> _1 performType
+_1 END-PERFORM  |-->    _1 skip _1`performIncrement ;\n<when> _1 performType
 _1 _* END-PERFORM  |-->    _1 (_*      skip) _1`performIncrement ;\n<when> _1 performType
 
 END-PERFORM  |--> 
@@ -3214,11 +3248,11 @@ _1  |-->_1
 
 subtractAssigns::
 _1 ROUNDED |-->      _1 := _subtractTmp->roundTo(_1`fractionWidth);\n
-_1 |-->      _1 := _subtractTmp->truncateTo(_1`fractionWidth);\n
+_1 |-->      _1 := _subtractTmp->truncateTo(_1`getFractWidth);\n
 
 subtractionAssigns::
 _1 ROUNDED |-->      _1 := (_1 - _subtractionTmp)->roundTo(_1`fractionWidth);\n
-_1 |-->      _1 := (_1 - _subtractionTmp)->truncateTo(_1`fractionWidth);\n
+_1 |-->      _1 := (_1 - _subtractionTmp)->truncateTo(_1`getFractWidth);\n
 
 
 unstringStatement::
@@ -3672,6 +3706,7 @@ _1 |-->_1
 functionCall::
 FUNCTION ABS ( _1 ) |-->(_1)->abs()
 FUNCTION ACOS ( _1 ) |-->(_1)->acos()
+FUNCTION ANNUITY ( _1 , _2 ) |-->(if _1 = 0 then 1.0/_2 else _1 / (1 - (1 + _1)->pow(-_2)) endif)
 FUNCTION ANNUITY ( _1 _2 ) |-->(if _1 = 0 then 1.0/_2 else _1 / (1 - (1 + _1)->pow(-_2)) endif)
 FUNCTION ASIN ( _1 ) |-->(_1)->asin()
 FUNCTION ATAN ( _1 ) |-->(_1)->atan()
@@ -3679,6 +3714,7 @@ FUNCTION CHAR ( _1 ) |-->(_1)->byte2char()
 FUNCTION COS ( _1 ) |-->(_1)->cos()
 FUNCTION CURRENT_DATE |-->("" + OclDate.newOclDate()) 
 FUNCTION CURRENT_DATE ( ) |-->("" + OclDate.newOclDate()) 
+FUNCTION DIV ( _1 , _2 ) |-->((_1) div (_2))
 FUNCTION DIV ( _1 _2 ) |-->((_1) div (_2))
 FUNCTION EXP ( _1 ) |-->(_1)->exp()
 FUNCTION FACTORIAL ( _1 ) |-->MathLib.factorial(_1)
@@ -3694,9 +3730,11 @@ FUNCTION MEAN ( _1 _* ) |-->MathLib.mean(Sequence{_1_*`arguments})
 FUNCTION MEDIAN ( _1 _* ) |-->MathLib.median(Sequence{_1_*`arguments})
 FUNCTION MIDRANGE ( _1 _* ) |-->(Set{_1_*`arguments}->max() + Set{_1_*`arguments}->min())/2.0 
 FUNCTION MIN ( _1 _* ) |-->Set{_1_*`arguments}->min()
+FUNCTION MOD ( _1 , _2 ) |-->((_1) mod (_2))
 FUNCTION MOD ( _1 _2 ) |-->((_1) mod (_2))
 FUNCTION NUMVAL ( _1 ) |-->("" + _1)->toReal()
 FUNCTION NUMVAL_C ( _1 ) |-->("" + _1)->toReal()
+FUNCTION NUMVAL_C ( _1 , _2 ) |-->("" + _1)->toReal()
 FUNCTION NUMVAL_C ( _1 _2 ) |-->("" + _1)->toReal()
 FUNCTION ORD ( _1 ) |-->(_1)->char2byte()
 FUNCTION PRESENT_VALUE ( _1 _2 _* ) |-->FinanceLib.presentValueDiscrete(_1, Sequence{_2_*`arguments})
@@ -3704,6 +3742,7 @@ FUNCTION RANDOM |-->MathLib.random()
 FUNCTION RANDOM ( ) |-->MathLib.random()
 FUNCTION RANDOM ( _1 ) |-->MathLib.setSeeds(_1,_1,_1)
 FUNCTION RANGE ( _1 _* ) |-->(Set{_1_*`arguments}->max() - Set{_1_*`arguments}->min()) 
+FUNCTION REM ( _1 , _2 ) |-->((_1) mod (_2))
 FUNCTION REM ( _1 _2 ) |-->((_1) mod (_2))
 FUNCTION REVERSE ( _1 ) |-->(_1)->reverse()
 FUNCTION SIGN ( _1 ) |-->(_1)->compareTo(0)
@@ -3712,6 +3751,7 @@ FUNCTION SIN ( _1 ) |-->(_1)->sin()
 FUNCTION STANDARD_DEVIATION ( _1 _* ) |-->MathLib.standardDeviation(Sequence{_1_*`arguments})
 FUNCTION SUM ( _1 _* ) |-->Set{_1_*`arguments}->sum()
 FUNCTION TAN ( _1 ) |-->(_1)->tan()
+FUNCTION TRIM ( _1 ) |-->("" + _1)->trim()
 FUNCTION UPPER_CASE ( _1 ) |-->(_1)->toUpperCase()
 FUNCTION VARIANCE ( _1 _* ) |-->MathLib.variance(Sequence{_1_*`arguments})
 
@@ -3741,6 +3781,16 @@ _1 ( _2 _* ) |-->_1[_2][_*`arrayAccesses]
 _1 _2 |-->_1_2
 _1 ( _2 ) _3 |-->_1[_2]_3
 _1 ( _2 _* ) _4 |-->_1[_2][_*`arrayAccesses]_4
+
+
+getFractWidth::
+_1 |-->_1`getFractWidth<when> _1 tableCall
+_1 |-->_1`getFractWidth<when> _1 qualifiedDataNameFormat1
+_1 ( _2 ) |-->_1`fractionWidth
+_1 ( _* ) |-->_1`fractionWidth
+_1 _2 |-->_1`fractionWidth
+_1 |-->_1`fractionWidth
+
 
 
 arguments::
