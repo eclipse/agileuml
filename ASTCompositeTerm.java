@@ -39119,7 +39119,8 @@ public class ASTCompositeTerm extends ASTTerm
   { if ("methodCall".equals(tag))
     { 
       String called = terms.get(0) + "";
-      if (("add".equals(called) && t != null && t.isCollection()) || 
+      if (("add".equals(called) && t != null && 
+           t.isCollection()) || 
           "addAll".equals(called) || 
           "addFirst".equals(called) || 
           "addLast".equals(called) ||
@@ -39158,9 +39159,10 @@ public class ASTCompositeTerm extends ASTTerm
           "pollLast".equals(called) ||  
           "pollFirst".equals(called) ||  
           "retainAll".equals(called))
-      { System.out.println(">>> methodCall " + called + " updates the object it is applied to."); 
+      { System.out.println(">**>**> methodCall " + called + " updates the object it is applied to."); 
         return true; 
       } 
+      return false; 
     }
     else if ("expression".equals(tag))
     { if (terms.size() > 2 && ".".equals(terms.get(1) + ""))
@@ -39175,6 +39177,7 @@ public class ASTCompositeTerm extends ASTTerm
         return call.updatesObject(null); 
       } 
     } 
+
     return false; 
   } 
 
@@ -39300,7 +39303,7 @@ public class ASTCompositeTerm extends ASTTerm
     { for (int i = 0; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
         String se = tt.preSideEffect(); 
-        if (se != null) 
+        if (se != null && !se.equals("")) 
         { statement = tt.statement; 
           return se; 
         } 
@@ -39363,9 +39366,11 @@ public class ASTCompositeTerm extends ASTTerm
           { }
           else 
           { statement = null; 
-            return ""; 
+            return ""; // return null; 
           } 
         }  
+
+        // JOptionPane.showInputDialog(arg2 + " updates " + arg1); 
 
         SequenceStatement ssres = new SequenceStatement(); 
 
@@ -39374,10 +39379,10 @@ public class ASTCompositeTerm extends ASTTerm
         String se2 = arg2.preSideEffect();
         Statement stat2 = arg2.statement; 
 
-        if (se1 != null) 
+        if (se1 != null && !(se1.equals(""))) 
         { ssres.addStatement(stat1); } 
 
-        if (se2 != null) 
+        if (se2 != null && !(se2.equals(""))) 
         { ssres.addStatement(stat2); } 
 
         String qf1 = arg1.queryForm(); 
@@ -39397,7 +39402,7 @@ public class ASTCompositeTerm extends ASTTerm
           return qf1 + " := " + arg2.expression; 
         } // likewise for += etc
         
-        if (se1 == null && se2 == null) 
+        if (stat1 == null && stat2 == null) 
         { return null; }  
         
         if (se1 != null && se2 != null) 
@@ -39407,6 +39412,12 @@ public class ASTCompositeTerm extends ASTTerm
             stat.addStatement(stat2); 
             statement = stat; 
           }
+
+          if (se1.equals(""))
+          { return se2; } 
+          if (se2.equals(""))
+          { return se1; } 
+
           return se1 + " ; " + se2; 
         } 
 

@@ -5018,6 +5018,20 @@ public class BSystemTypes extends BComponent
                  "    return s.substring(i-1,j);\n" +
                  "  }\n\n";
 
+     res = res + "  public static String subrange(String s, long i, long j)\n" +
+       "  { long len = s.length();\n" +
+       "    if (len == 0) { return s; }\n" +
+       "    if (j > len) { j = len; }\n" +
+       "    if (j < i) { return \"\"; }\n" +
+       "    if (i > len) { return \"\"; }\n" +
+       "    if (i < 1) { i = 1; }\n" +
+       "    String res = \"\"; \n" +
+       "    for (long k = i-1; k < j; k++)\n" + 
+       "    { res = res + s.charAt((int) k); } \n" +
+       "    return res; \n" +
+       "  }\n\n"; 
+
+
     res = res + "  public static <T> ArrayList<T> subrange(ArrayList<T> l, int i, int j)\n";
     res = res + "  { ArrayList<T> tmp = new ArrayList<T>(); \n" + 
                 "    if (i < 0) { i = l.size() + i; }\n" + 

@@ -8048,7 +8048,10 @@ class BasicExpression extends Expression
           String indopt = evaluateString("-",ind,"1"); 
           if (se.elementType != null)
           { if (Type.isPrimitiveType(se.elementType))
-            { return se.unwrap(se.queryFormJava7(env,local) + ".get(" + indopt + ")"); }
+            { return se.unwrapJava7(
+                se.queryFormJava7(env,local) + 
+                ".get(" + indopt + ")"); 
+            }
             else 
             { String jtype = se.elementType.getJava7(se.elementType.getElementType()); 
               return "((" + jtype + ") " + se.queryFormJava7(env,local) + ".get(" + indopt + "))"; 
@@ -8098,14 +8101,14 @@ class BasicExpression extends Expression
           if (arrayIndex.type != null && 
               arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
-          { return unwrap(data + ".get(" + indopt + ")"); }
+          { return unwrapJava7(data + ".get(" + indopt + ")"); }
           else if (arrayIndex.type != null && 
                    arrayIndex.type.getName().equals("String"))
-          { return unwrap(data + ".get(\"\" + " + ind + ")"); }
+          { return unwrapJava7(data + ".get(\"\" + " + ind + ")"); }
           else if (arrayType != null && arrayType.isMap())
-          { return unwrap(data + ".get(" + ind + ")"); }
+          { return unwrapJava7(data + ".get(" + ind + ")"); }
           else if (Type.isPrimitiveType(type))
-          { return unwrap(data + ".get(" + indopt + ")"); } 
+          { return unwrapJava7(data + ".get(" + indopt + ")"); } 
           String jType = type.getJava7(elementType); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
         }         
@@ -8225,10 +8228,14 @@ class BasicExpression extends Expression
 	   
       if (data.equals("sqr"))
       { return "(" + pre + ") * (" + pre + ")"; } 
-      else if (data.equals("abs") || data.equals("sin") || data.equals("cos") ||
-          data.equals("sqrt") || data.equals("exp") || data.equals("log") || data.equals("log10") ||
-          data.equals("tan") || data.equals("asin") || data.equals("acos") || data.equals("cbrt") ||
-          data.equals("atan") || data.equals("sinh") || data.equals("cosh") || data.equals("tanh"))  
+      else if (data.equals("abs") || data.equals("sin") || 
+          data.equals("cos") ||
+          data.equals("sqrt") || data.equals("exp") || 
+          data.equals("log") || data.equals("log10") ||
+          data.equals("tan") || data.equals("asin") || 
+          data.equals("acos") || data.equals("cbrt") ||
+          data.equals("atan") || data.equals("sinh") || 
+          data.equals("cosh") || data.equals("tanh"))  
           // exp, floor can be applied to sets/sequences
       { return "Math." + data + "(" + pre + ")"; }
       else if (data.equals("round") || data.equals("ceil") || data.equals("floor"))
@@ -8271,7 +8278,8 @@ class BasicExpression extends Expression
         String wpar1 = par1.wrap(spar1); 
         return "(" + pre + ".indexOf(" + wpar1 + ") + 1)"; 
       }      
-      else if (data.equals("pow") && parameters != null && parameters.size() > 0)
+      else if (data.equals("pow") && parameters != null && 
+               parameters.size() > 0)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
         return "Math.pow(" + pre + ", " + par1 + ")"; 
       }      
@@ -8362,7 +8370,7 @@ class BasicExpression extends Expression
         { if ("String".equals("" + et) || et.isEntity())
           { return "((" + et + ") Ocl." + data + "(" + pre + "))"; }
           else 
-          { return unwrap("Ocl." + data + "(" + pre + ")"); } 
+          { return unwrapJava7("Ocl." + data + "(" + pre + ")"); } 
         } 
         else 
         { return "Ocl." + data + "(" + pre + ")"; }
@@ -8424,21 +8432,21 @@ class BasicExpression extends Expression
             String indopt = evaluateString("-",ind,"1"); // not for qualified ones
 
             if (arrayIndex.isString())
-            { return unwrap(data + ".get(\"\" + " + ind + ")"); }
+            { return unwrapJava7(data + ".get(\"\" + " + ind + ")"); }
             
             if (arrayType != null && arrayType.isMap())
-            { return unwrap(data + ".get(" + ind + ")"); }
+            { return unwrapJava7(data + ".get(" + ind + ")"); }
             
             if (arrayType != null && 
-                     arrayType.isSequence())
-            { return unwrap(data + ".get(" + indopt + ")"); }
+                arrayType.isSequence())
+            { return unwrapJava7(data + ".get(" + indopt + ")"); }
 
             if (type.getName().equals("String"))
             { return "(\"\" + " + 
                    data + ".charAt(" + indopt + "))";
             } 
             else if (Type.isPrimitiveType(type))
-            { return unwrap(data + ".get(" + indopt + ")"); } 
+            { return unwrapJava7(data + ".get(" + indopt + ")"); } 
             String jType = type.getJava7(elementType); 
             return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
           } 
@@ -8454,14 +8462,14 @@ class BasicExpression extends Expression
           { String ind = arrayIndex.queryFormJava7(env,local); 
             String indopt = evaluateString("-",ind,"1"); // not for qualified ones
             if (arrayIndex.isString())
-            { return unwrap(nme + "." + data + ".get(\"\" + " + ind + ")"); }
+            { return unwrapJava7(nme + "." + data + ".get(\"\" + " + ind + ")"); }
 
             if (type.getName().equals("String"))
             { return "(\"\" + " + 
                    nme + "." + data + ".charAt(" + indopt + "))";
             } 
             else if (Type.isPrimitiveType(type))
-            { return unwrap(nme + "." + data + ".get(" + indopt + ")"); } 
+            { return unwrapJava7(nme + "." + data + ".get(" + indopt + ")"); } 
             else 
             { String jtype = type.getJava7(elementType);
               return "((" + jtype + ") " + nme + "." + data + ".get(" + indopt + "))"; 
@@ -8485,17 +8493,17 @@ class BasicExpression extends Expression
           String indopt = evaluateString("-",ind,"1"); // not for qualified   
           
           if (arrayType != null && arrayType.isMap())
-          { return unwrap(var + ".get" + data + "().get(" + ind + ")"); }
+          { return unwrapJava7(var + ".get" + data + "().get(" + ind + ")"); }
           
           if (arrayType != null && arrayType.isSequence())
-          { return unwrap(var + ".get" + data + "().get(" + indopt + ")"); }
+          { return unwrapJava7(var + ".get" + data + "().get(" + indopt + ")"); }
 
           if (type.getName().equals("String"))
           { return "(\"\" + " + 
                    res + ".charAt(" + indopt + "))";
           } 
           else if (Type.isPrimitiveType(type))
-          { return unwrap(var + ".get" + data + "().get(" + indopt + ")"); } 
+          { return unwrapJava7(var + ".get" + data + "().get(" + indopt + ")"); } 
           String jType = type.getJava7(elementType); 
           return "((" + jType + ") " + var + ".get" + data + "().get(" + indopt + "))"; 
         } // not for strings; unwrap primitives 
@@ -8551,7 +8559,7 @@ class BasicExpression extends Expression
                  res + ".charAt(" + indopt + "))";
         } 
         else if (Type.isPrimitiveType(type))
-        { return unwrap(res + ".get(" + indopt + ")"); } 
+        { return unwrapJava7(res + ".get(" + indopt + ")"); } 
         String jType = type.getJava7(elementType); 
         return "((" + jType + ") " + res + ".get(" + indopt + "))"; 
       } 
@@ -10271,7 +10279,7 @@ public Statement generateDesignSubtract(Expression rhs)
     { String pre = objectRef.queryForm(env,local);
       Type otype = objectRef.type; 
       if (otype == null) 
-      { System.err.println("ERROR: no type for " + objectRef); 
+      { System.err.println("!! ERROR: no type for " + objectRef); 
         return ""; 
       } 
       String eename = otype.getName(); 
@@ -10603,7 +10611,7 @@ public Statement generateDesignSubtract(Expression rhs)
       return cont + ".kill" + all + eename + "(" + pre + ");"; 
     } 
     else 
-    { return "{} /* No update form for: " + this + " */"; } 
+    { return ""; } 
       // Controller.inst()." + data + pars + ";"; } 
       // no sensible update form?; 
   }
@@ -11757,7 +11765,9 @@ public Statement generateDesignSubtract(Expression rhs)
             BasicExpression.isMapAccess(this))
         { return data + ".put(" + wind + ", " + wval + ");"; }  // map[index] = val2 
         else 
-        { return data + ".set((" + indopt + " -1), " + wval + ");"; }  
+        { wval = Type.convertDataValueJava7(val2, type, var.type); 
+          return data + ".set((" + indopt + " -1), " + wval + ");"; 
+        }  
       }
 
       
@@ -11793,7 +11803,10 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (arrayIndex != null)
           { String ind = arrayIndex.queryFormJava7(env,local); 
             String wind = arrayIndex.wrap(ind); 
-            String wval = var.wrap(val2); 
+            String wval = 
+              Type.convertDataValueJava7(val2, 
+                                         type, var.type); 
+          
             if (isQualified() || 
                 "String".equals(arrayIndex.type + "") || 
                 BasicExpression.isMapAccess(this))
@@ -11825,7 +11838,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
         if (entity != null && entity.isClassScope(data))
         { String nme = entity.getName();
-		  if (arrayIndex != null) 
+          if (arrayIndex != null) 
           { String indopt = 
                arrayIndex.queryFormJava7(env,local); 
             // if ("String".equals(arrayIndex.type + "") || 
@@ -11847,13 +11860,17 @@ public Statement generateDesignSubtract(Expression rhs)
         
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava7(env,local); 
+          String wval = 
+              Type.convertDataValueJava7(val2, 
+                                         type, var.type); 
+
           if (isQualified() || 
               "String".equals(arrayIndex.type + "") || 
               BasicExpression.isMapAccess(this)
               )
-          { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
+          { return cont + ".set" + data + "(" + target + ind + ", " + wval + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
-          return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
+          return cont + ".set" + data + "(" + target + indopt + "," + wval + ");";
         }
 
         if (type != null && var.type == null)
@@ -11943,6 +11960,7 @@ public Statement generateDesignSubtract(Expression rhs)
             { return pre + ".set" + data + "(" + ind + ", " + 
                                 val2 + ");";
             } 
+
             String indopt = evaluateString("-",ind,"1"); 
             return pre + ".set" + data + "(" + indopt + ", " + val2 + ");";
           }

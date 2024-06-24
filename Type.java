@@ -2,6 +2,9 @@ import java.util.Vector;
 import java.io.*; 
 import java.util.StringTokenizer; 
 
+import javax.swing.JOptionPane; 
+
+
 /******************************
 * Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
@@ -5583,6 +5586,28 @@ public class Type extends ModelElement
       res.add(obj); 
     }
     return res;   
+  } 
+
+  public static String convertDataValueJava7(String val, Type targetType, Type sourceType) 
+  { // Convert a string to an int, etc
+
+    // JOptionPane.showInputDialog(">>> Conversion of " + val + " from " + sourceType + " to " + targetType); 
+
+    if (sourceType != null && targetType != null)
+    { if (Type.isSpecialisedOrEqualType(sourceType, targetType))
+      { return val; } 
+      if ("String".equals(targetType.getName())) 
+      { return "\"\" + (" + val + ")"; }
+      else if ("String".equals(sourceType.getName()) &&
+               targetType.isNumeric())
+      { String cname = Named.capitalise(targetType.getName()); 
+        return "Ocl.to" + cname + "(" + val + ")"; 
+      }
+
+      String cstype = targetType.getJava7(); 
+      return "(" + cstype + ") (" + val + ")"; 
+    }
+    return val; 
   } 
 
   public Vector operationTestValues()

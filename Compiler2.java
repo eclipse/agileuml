@@ -11092,7 +11092,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // c.nospacelexicalanalysis("(a[i][j]).f(1)");  
     // c.nospacelexicalanalysis("(!a).f(1)"); 
-    c.nospacelexicalanalysis("SortedMap{}"); 
+    c.nospacelexicalanalysis("(OclFile[\"SYSOUT\"]).println(x)"); 
     Expression zz = c.parseExpression(); 
 
     System.out.println(zz); 
