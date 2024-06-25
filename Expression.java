@@ -988,6 +988,9 @@ abstract class Expression
     return "(" + tname + ") " + se;   // for strings or objects
   }
 
+  public String unwrapJava7(String se)
+  { return se; } 
+
   public static String convertCSharp(String se, Type t)
   { if (t == null)
     { return se; }  // should never happen

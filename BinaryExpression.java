@@ -7467,7 +7467,7 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("|A") || operator.equals("->any"))   
     { String getany = anyQueryFormJava7(lqf,rqf,rprim,env,local); 
       if (Type.isPrimitiveType(type))
-      { return unwrap(getany); } 
+      { return unwrapJava7(getany); } 
       return "((" + typ + ") " + getany + ")"; 
     } 
 
@@ -7575,7 +7575,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { return getind; } 
 
       if (Type.isPrimitiveType(type))
-      { return unwrap(getind); } 
+      { return unwrapJava7(getind); } 
 
       return "((" + typ + ") " + getind + ")"; 
     } 
@@ -7757,7 +7757,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod") || operator.equals("div"))
+               operator.equals("mod") || 
+               operator.equals("div"))
       { res = composeMathOpQueryFormsJava7(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->count"))
       { res = "Ocl.count(" + lqf + "," + rw + ")"; } 
@@ -12857,16 +12858,16 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (lprim && rprim)
     { res = lqf + " " + op + " " + rqf; }
     else if (lprim)
-    { String rr = right.unwrap(rqf); 
+    { String rr = right.unwrapJava7(rqf); 
       res = lqf + " " + op + " " + rr;
     }
     else if (rprim)
-    { String ll = left.unwrap(lqf); 
+    { String ll = left.unwrapJava7(lqf); 
       res = ll + " " + op + " " + rqf;
     }
     else 
-    { String rr = right.unwrap(rqf);
-      String ll = left.unwrap(lqf); 
+    { String rr = right.unwrapJava7(rqf);
+      String ll = left.unwrapJava7(lqf); 
       res = ll + " " + op + " " + rr;
     }
 

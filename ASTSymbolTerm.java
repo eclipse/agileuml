@@ -1012,6 +1012,7 @@ public class ASTSymbolTerm extends ASTTerm
     if ("X".equals(symbol) || "9".equals(symbol) || 
         ",".equals(symbol) || "A".equals(symbol) ||
         "B".equals(symbol) || "0".equals(symbol) ||
+        "Z".equals(symbol) ||
         "/".equals(symbol) || "+".equals(symbol) ||
         "-".equals(symbol) || "$".equals(symbol) ||
         "£".equals(symbol) || ".".equals(symbol) ||
@@ -1027,6 +1028,7 @@ public class ASTSymbolTerm extends ASTTerm
   public int cobolIntegerWidth()
   { 
     if ("9".equals(symbol) || "0".equals(symbol) || 
+        "Z".equals(symbol) ||
         "P".equals(symbol))
     { return 1; } 
  
@@ -1044,7 +1046,7 @@ public class ASTSymbolTerm extends ASTTerm
 
 
   public Type cobolDataType()
-  { if ("9".equals(symbol) ||
+  { if ("9".equals(symbol) || "Z".equals(symbol) ||
         "S".equals(symbol))
     { return ASTCompositeTerm.intType; }
 
@@ -1054,10 +1056,11 @@ public class ASTSymbolTerm extends ASTTerm
         "/".equals(symbol) || "+".equals(symbol) ||
         "-".equals(symbol) || "$".equals(symbol) ||
         "£".equals(symbol) || ".".equals(symbol) ||
-        "Z".equals(symbol) || "*".equals(symbol))
+        "*".equals(symbol))
     { return ASTCompositeTerm.stringType; } 
 
-    if ("P".equals(symbol) || "V".equals(symbol))
+    if ("P".equals(symbol) ||
+        "V".equals(symbol))
     { return ASTCompositeTerm.doubleType; } 
  
     return null; 
