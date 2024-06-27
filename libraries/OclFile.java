@@ -970,7 +970,7 @@ class OclFile {
   { closeFile(); } 
 
  public static void main(String[] args)
-  { OclFile ff = OclFile.newOclFile("ff.txt"); 
+  { /* OclFile ff = OclFile.newOclFile("ff.txt"); 
     OclFile gg = OclFile.newOclFile_Read(ff); 
     ArrayList<Integer> ss = gg.readNbytes(4);
     System.out.println(ss); 
@@ -978,7 +978,11 @@ class OclFile {
     ArrayList<String> cc = gg.readN(4);
     cc = gg.readN(4); 
     System.out.println(cc); 
-    gg.closeFile(); 
+    gg.closeFile(); */  
+
+    OclFile infile = OclFile.getOclFileByPK("System.in"); 
+    ArrayList<String> inseq = infile.readAllLines(); 
+    System.out.println(inseq); 
   }  
 
 }

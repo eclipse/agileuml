@@ -1,0 +1,245 @@
+class StringLib{
+
+    static function string newString(object s){ 
+        return "" + s; 
+    }  
+    
+    static function string leftTrim(string s){
+        return s.TrimStart();
+    }
+    
+    static function string leftTrimWith(string str, string ch){
+        if (str == null || str.Length == 0) { 
+            return str; 
+        }
+        string trm = str; 
+        while (trm.Length > 0 && ch.Equals(trm.CharAt(0))){ 
+            trm = trm.Substring(1, trm.Length - 1); 
+        }
+        return trm;
+    }
+
+    static function string rightTrim(string s){
+        return s.TrimEnd();
+    }
+    
+    static function string sumStringsWithSeparator(Array[T] lst, string sep){
+        string res = "";
+        Collection col = lst.ToCollection();
+        for int i = 0; i < col.Length; i + 1 {
+            string xx = col.Get(i).ToString();
+            res = res + xx;
+            if (i < col.Length - 1){ 
+                res = res + sep; 
+            }
+        }
+        return res; 
+    } 
+
+    static function string nCopies(string s, int n){ 
+        String result = "";
+        for int i = 0; i < n; i + 1{
+            result = result + s;
+        }
+        return result;
+    }
+    
+    static function string pad(int n, string c){
+        string res = ""; 
+        for int i = 0; i < n; i + 1 {
+            res = res + c;
+        }
+        return res;
+    }
+    
+    static function string padLeftWithInto(string s, string c, int n){
+        string result = "";
+
+        result = Doomain.StringLib.pad(n - s.Length, c) + s;
+        return result;
+    }
+
+    static function string padRightWithInto(string s, string c, int n){
+        string result = "";
+
+        result = s + Domain.StringLib.pad(n - s.Length, c);
+        return result;
+    }
+    
+    static function string leftAlignInto(string s, int n){
+        string result = "";
+
+        if (n <= s.Length){
+                result = s.Substring(0, n);
+        } else{
+            result = s + Domain.StringLib.pad( n - (s).Length, " ");
+        }
+        return result;
+    }
+    
+    static function string rightAlignInto(string s, int n){
+        string result = "";
+
+        if (n <= s.Length){
+                result = s.Substring(0, n);
+        } else{
+            result = Domain.StringLib.pad( n - (s).Length, " ") + s;
+        }
+        return result;
+    }
+    
+    static function string capitalise(string str){
+        if (str.Length > 0){
+            String s1 = str.Substring(0, 1);
+            return s1.ToUpper() + str.Substring(1, str.Length - 1);
+        }
+        return str;
+    }
+    
+    static function string toTitleCase(string s){
+        return s.ToTitleCase();
+    }
+    
+    static function string swapCase(string s){
+        int ind = 1;
+        string res = "";
+
+        while (ind <= s.Length){
+            string chr = s.CharAt(ind - 1).ToString();
+            if (chr.Equals(chr.ToUpper())){ 
+                res = res + chr.ToLower(); 
+            } else{ 
+                res = res + chr.ToUpper(); 
+            }
+            ind = ind + 1;
+        }
+
+        return res;
+    }
+
+    static function string format(string f, Array[Object] sq) { /* For C-style formats f (May not correct)*/    
+        string formattedString = f;
+        Collection[Object] sqq = sq.ToCollection();
+        for int i = 0; i < sqq.Length; i + 1 {
+            formattedString = string.Format(formattedString, sqq.Get(i));
+        }
+        return formattedString; 
+    }
+
+    static function string formattedString(string f){ 
+        return f; 
+    } 
+    
+    static function Array[Object] scan(string s, string fmt){
+        Collection[Object] result;
+        int ind = 0; // s upto ind has been consumed
+
+        for int i = 0; i < fmt.Length; i + 1{
+            char c = fmt.CharAt(i);
+            if (c == '%' && i < fmt.Length - 1){
+                char d = fmt.CharAt(i + 1);
+                if (d == 's'){
+                    string schars = ""; 
+                    for int j = ind; j < s.Length; j + 1{ 
+                        if (string.IsNullOrWhiteSpace(s.ChatAt(j).ToString())){
+                            break; 
+                        } else { 
+                            schars = schars + s[j]; 
+                        }
+                    }
+                    result.Add(schars);
+                    ind = ind + schars.Length; 
+                    i++;
+                } else if (d == 'f'){
+                    String fchars = "";
+                    for int j = ind; j < s.Length; j + 1 {
+                        char x = s.CharAt(j);
+                        if (x == '.' || Domain.StringLib.IsDigit(x)){ 
+                            fchars = fchars + x; 
+                        } else { 
+                            break; 
+                        }
+                    }
+
+                    try{
+                        double v = double.Parse(fchars.ToString());
+                        ind = ind + fchars.Length;
+                        result.Add(v);
+                    } catch (Exception _ex){ 
+                       DebugLib.Logger.WriteInfoLine("!! Error in double format: " + fchars);  
+                    }
+                    i++;
+                } else if (d == 'd') {
+                    String inchars = "";
+                    for int j = ind; j < s.Length; j + 1 {
+                        Char x = s.CharAt(j);
+                        if (Domain.StringLib.IsDigit(x)){ 
+                            inchars = inchars + x; 
+                        } else { 
+                            break; 
+                        }
+                    }
+
+                    try {
+                        int v = int.Parse(inchars);
+                        ind = ind + inchars.Length;
+                        result.Add(v);
+                    } catch (Exception _ex){ 
+                        DebugLib.Logger.WriteInfoLine("!! Error in integer format: " + inchars); 
+                    }
+                    i++;
+                }
+                
+            } else if (s.CharAt(ind) == c){ 
+                ind++; 
+            } else { 
+                return result.ToArray(); 
+            }
+        }
+        return result.ToArray();
+    }
+
+    static function string interpolateStrings(string f, Array[Object] sq) { /* f must have {0} {1} etc with C# formats */
+        string formattedString = f
+        Collection[Object] sqq = sq.ToCollection();
+        for int i = 0; i < sqq.Length; i + 1 {
+            formattedString = string.Format(formattedString, sqq.Get(i));
+        }
+        return formattedString; 
+    }
+
+    static function string convertConversionFormat(string cstyle) {
+        String res = cstyle;
+        int argindex = 0;
+        int pind = res.IndexOf("%");
+
+        while (pind >= 0){
+            if (pind + 1 < res.Length && "s".Equals(res.Substring(pind + 1, 1))) { 
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%d", "{" + argindex + ":S}"); 
+            } else if (pind + 1 < res.Length && "d".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%e", "{" + argindex + ":D}"); 
+            } else if (pind + 1 < res.Length && "f".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%f", "{" + argindex + ":F}"); 
+            } else if (pind + 1 < res.Length && "e".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%s", "{" + argindex + ":E}"); 
+            } else if (pind + 1 < res.Length && "g".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%x", "{" + argindex + ":G}"); 
+            } else if (pind + 1 < res.Length && "x".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%g", "{" + argindex + ":X}"); 
+            }
+            argindex++;
+            pind = res.IndexOf("%");
+        }
+        return res;
+    }
+    
+    static function bool IsDigit(char x) {
+        if (x == '+' || x == '-' || x == '0' || x == '1' || x == '2' || x == '3' || x == '4' || 
+           x == '5' || x == '6' || x == '7' || x == '8' || x == '9' ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+}
