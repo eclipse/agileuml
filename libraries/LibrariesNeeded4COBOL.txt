@@ -1,0 +1,28 @@
+From MathLib: 
+
+isIntegerOverflow
+factorial
+mean
+median
+random()
+setSeeds
+standardDeviation
+variance
+
+
+From OclFile: 
+
+newOclFile(name : String)
+newOclFile_Read(f : OclFile)
+newOclFile_Write(f : OclFile)
+readAllLines()
+readLine()
+print(s : String)
+println(s : String)
+writeAllLines(...)
+flush()
+
+getOclFileByPK(s : String) : OclFile 
+(looks up the OclFile by name & returns it, or creates a new file with the name if there is no existing file of the name). 
+
+
