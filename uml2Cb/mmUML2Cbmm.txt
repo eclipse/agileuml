@@ -1,0 +1,4243 @@
+Type:
+UMLKind 789 996
+value attribute role variable constant function queryop operation classid  
+
+
+
+
+
+
+Entity:
+CExpression 469 389
+null  * abstract 
+needsBracket boolean 3 false false false kind String 3 false false false cexpId String 3 false true false isStatic boolean 3 false false false
+
+
+
+Operation:
+toString
+CExpression
+String
+
+ query abstract
+true
+true
+
+
+
+
+Operation:
+defineCOpRef
+CExpression
+CExpression
+op COperation
+ query static
+true
+CBasicExpression->exists( be | be.cexpId = op.name + "_ref" & be.data = op.name & be.type = op.returnType & be.elementType = op.elementType & result = be ) 
+
+
+
+
+Operation:
+newCBasicExpression
+CExpression
+CBasicExpression
+d String t CType
+ query static
+true
+CBasicExpression->exists( be | be.cexpId = d + "_ref" & be.data = d & be.type = t & result = be ) 
+
+
+
+
+
+
+
+Operation:
+defineCOpRefCast
+CExpression
+CExpression
+op COperation cst String
+ query static
+true
+CBasicExpression->exists( be | be.cexpId = op.name + "_ref" & be.data = op.name & be.type = op.returnType & result = Expression.cast(cst, be) ) 
+
+
+
+
+
+
+Operation:
+defineCOpReference
+CExpression
+CExpression
+op String typ String
+ query static
+true
+CBasicExpression->exists( be | be.cexpId = op + "_ref" & be.data = op & CPrimitiveType->exists( t | t.name = typ & t.ctypeId = op + "_" + typ & be.type = t & be.elementType = t & result = be ) ) 
+
+
+
+
+
+
+Entity:
+CBinaryExpression 255 543
+CExpression  * 
+operator String 3 false false false
+
+
+Operation:
+toString
+CBinaryExpression
+String
+
+ query
+true
+(needsBracket = true => result = "(" + left + " " + operator + " " + right + ")") & (true => result = left + " " + operator + " " + right)
+
+
+
+
+
+Entity:
+CConditionalExpression 500 500
+CExpression *
+
+
+
+Association:
+CConditionalExpression CExpression 0 500 500 300 450 1 test
+
+
+Association:
+CConditionalExpression CExpression 0 500 510 310 460 1 ifExpr
+
+
+Association:
+CConditionalExpression CExpression 0 500 520 320 470 1 elseExpr
+
+
+Generalisation:
+CExpression CConditionalExpression 500 500 350 450
+
+
+
+
+
+
+Operation:
+toString
+CConditionalExpression
+String
+
+query
+true
+(needsBracket = true => result = "((" + test + ")?" + ifExpr + ":" + elseExpr + ")") & (needsBracket = false => result = "(" + test + ")?" + ifExpr + ":" + elseExpr)
+
+
+
+
+
+Entity:
+CUnaryExpression 854 462
+CExpression  * 
+operator String 3 false false false
+
+
+
+
+
+
+
+Operation:
+toString
+CUnaryExpression
+String
+
+ query
+true
+result = operator + argument
+
+
+
+Entity:
+CType 53 437
+null  * abstract 
+ctypeId String 3 false true false name String 3 false false false
+
+
+
+
+Operation:
+isStringPointer
+CType
+boolean
+typ CType
+query static
+true
+(typ : CPointerType & typ.pointsTo : CPrimitiveType & typ.pointsTo.name = "char" => result = true)
+
+
+
+
+Operation:
+isNotStringPointer
+CType
+boolean
+typ CType
+query static
+true
+(typ : CPointerType & typ.pointsTo : CPrimitiveType & typ.pointsTo.name = "char" => result = false) & (true => result = true)
+
+
+
+
+Operation:
+isPrimitiveValueType
+CType
+boolean
+typ CType
+query static
+true
+(typ : CPrimitiveType & typ.name = "int" => result = true) & (typ : CPrimitiveType & typ.name = "unsigned char" => result = true) & (typ : CPrimitiveType & typ.name = "long" => result = true) & (typ : CPrimitiveType & typ.name = "double" => result = true)
+
+
+
+
+
+
+Operation:
+isNotPrimitiveValueType
+CType
+boolean
+typ CType
+query static
+true
+(typ : CPrimitiveType & typ.name = "int" => result = false) & (typ : CPrimitiveType & typ.name = "unsigned char" => result = false) & (typ : CPrimitiveType & typ.name = "long" => result = false) & (typ : CPrimitiveType & typ.name = "double" => result = false) & (true => result = true)
+
+
+
+
+
+Entity:
+CBasicExpression 485 655
+CExpression  * 
+data String 3 false false false
+
+
+
+
+Operation:
+parameterString
+CBasicExpression
+String
+p Sequence(CExpression)
+ query
+true
+( p.size = 0 => result = "" ) & ( p.size = 1 => result = "" + p[1] ) & ( p.size > 1 => result = p[1] + ", " + parameterString(p.tail) ) 
+
+
+
+
+
+
+
+Operation:
+parString
+CBasicExpression
+String
+
+ query
+true
+( parameters.size = 0 & kind = "operation" => result = "()" ) & ( parameters.size = 0 & kind /= "operation" => result = "") & ( parameters.size > 0 => result = "(" + parameterString(parameters) + ")" ) 
+
+
+
+
+
+
+
+
+Operation:
+toString
+CBasicExpression
+String
+
+ query
+true
+( arrayIndex.size = 0 & reference.size = 0 => result = data + parString() ) & ( arrayIndex.size > 0 & type : CPrimitiveType & arrayIndex.any.type : CPrimitiveType & reference.size = 0 => result = "*(" + data + "[" + arrayIndex.any + " -1])" ) & ( arrayIndex.size > 0 & CType.isStringPointer(type) & arrayIndex.any.type : CPrimitiveType & reference.size = 0 => result = "subStrings(" + data + "," + arrayIndex.any + "," + arrayIndex.any + ")" ) & ( arrayIndex.size > 0 & type /: CPrimitiveType & CType.isNotStringPointer(type) & arrayIndex.any.type : CPrimitiveType & reference.size = 0 => result = data + "[" + arrayIndex.any + "-1]" ) & ( arrayIndex.size > 0 & type : CPrimitiveType & arrayIndex.any.type /: CPrimitiveType & reference.size = 0 => result = "*((" + type + ") lookupInMap(" + data + "," + arrayIndex.any + "))" ) & ( arrayIndex.size > 0 & type /: CPrimitiveType & arrayIndex.any.type /: CPrimitiveType & reference.size = 0 => result = "(" + type + ") lookupInMap(" + data + "," + arrayIndex.any + ")" ) & ( arrayIndex.size = 0 & reference.size > 0 => result = reference.any + "->" + data ) & ( arrayIndex.size > 0 & arrayIndex.any.type : CPrimitiveType &  CType.isStringPointer(type) & reference.size > 0 => result = "subStrings(" + reference.any + "->" + data + "," + arrayIndex.any + "," + arrayIndex.any + ")" ) & ( arrayIndex.size > 0 & arrayIndex.any.type : CPrimitiveType & type /: CPrimitiveType & CType.isNotStringPointer(type) & reference.size > 0 => result = reference.any + "->" + data + "[" + arrayIndex.any + " -1]" ) & ( arrayIndex.size > 0 & arrayIndex.any.type /: CPrimitiveType & reference.size > 0 => result = "(" + type + ") lookupInMap(" + reference.any + "->" + data + "," + arrayIndex.any + ")" )
+
+
+
+
+
+Entity:
+Type 13 254
+null  * abstract 
+typeId String 3 false true false name String 3 false false false
+
+
+
+
+Operation:
+isValuePrimitiveType
+Type
+boolean
+
+ query
+true
+(name = "int" => result = true) & (name = "double" => result = true) & (name = "long" => result = true) & (name = "boolean" => result = true) & (true => result = false)
+
+
+
+Operation:
+isNotValuePrimitiveType
+Type
+boolean
+
+query
+true
+(name = "int" => result = false) & (name = "double" => result = false) & (name = "long" => result = false) & (name = "boolean" => result = false) & (true => result = true)
+
+
+
+
+
+
+Entity:
+Classifier 28 408
+Type  * abstract 
+
+
+Entity:
+DataType 15 496
+Classifier  * abstract 
+
+
+Entity:
+PrimitiveType 5 572
+DataType  * 
+
+
+Entity:
+Entity 138 464
+Classifier  * 
+isAbstract boolean 3 false false false isInterface boolean 3 false false false
+
+
+
+
+Operation:
+isApplicationClass
+Entity
+boolean
+
+ query
+true
+(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (name = "OclException" => result = false) & (name->hasSuffix("Exception") => result = false) & (true => result = true)
+
+
+
+
+
+Entity:
+CollectionType 139 547
+DataType  * 
+
+
+
+Association:
+Entity Operation 1 326 346 208 530 0 ownedOperation owner 
+ordered 
+
+
+
+
+Entity:
+Expression 268 40
+null  * abstract 
+needsBracket boolean 3 false false false umlKind UMLKind 3 false false false expId String 3 false true false isStatic boolean 3 false false false
+
+
+
+
+Operation:
+mapExpression
+Expression
+CExpression
+
+ abstract
+true
+true
+
+
+
+
+
+
+
+
+
+
+
+
+Operation:
+createCOpCall
+Expression
+CBasicExpression
+id String name String
+
+true
+CBasicExpression->exists( cbe | cbe.cexpId = id & cbe.data = name & cbe.kind = "operation" & cbe.type = CType[type.typeId] & cbe.elementType = CType[elementType.typeId] & result = cbe )
+
+
+
+
+Operation:
+callSuperclassOperation
+COperation
+CStatement
+sup String
+
+true
+(returnType.name = "void" => CBasicExpression->exists( cbe | cbe.cexpId = opId & cbe.data = name->before("_") + "_" + sup & cbe.kind = "operation" & cbe.type = returnType & CBasicExpression->exists( c | c.cexpId = opId + "_super" & c.kind = "attribute" & c.data = "super" & c.type = CType[sup] & c.elementType = CType[sup] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = opId + "_self" & s.type = CType[classname] & s.elementType = s.type ) & c : cbe.parameters ) & parameters->forAll( v | v.name /= "self" => newCBasicExpression(v.name,v.type) : cbe.parameters ) & OpCallStatement->exists( ca | ca.cstatId = opId + "_statement" & ca.callExp = cbe & result = ca ) ) ) & (returnType.name /= "void" => CBasicExpression->exists( cbe | cbe.cexpId = opId & cbe.data = name->before("_") + "_" + sup & cbe.kind = "operation" & cbe.type = returnType & CBasicExpression->exists( c | c.cexpId = opId + "_super" & c.kind = "attribute" & c.data = "super" & c.type = CType[sup] & c.elementType = CType[sup] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = opId + "_self" & s.type = CType[classname] & s.elementType = s.type ) & c : cbe.parameters ) & parameters->forAll( v | v.name /= "self" => newCBasicExpression(v.name,v.type) : cbe.parameters ) & CReturnStatement->exists( ca | ca.cstatId = opId + "_statement" & cbe : ca.returnValue & result = ca ) ) )
+
+
+
+
+
+
+Operation:
+createCUnaryOpCall
+Expression
+CBasicExpression
+id String name String arg CExpression
+
+true
+CBasicExpression->exists( cbe | cbe.cexpId = id & cbe.data = name & arg : cbe.parameters & cbe.kind = "operation" & cbe.type = CType[type.typeId] & cbe.elementType = CType[elementType.typeId] & result = cbe )
+
+
+
+
+
+
+
+
+
+Operation:
+createCBinOpCall
+Expression
+CBasicExpression
+id String name String le CExpression re CExpression
+
+true
+CBasicExpression->exists( cbe | cbe.cexpId = id & cbe.data = name & le : cbe.parameters & re : cbe.parameters & cbe.kind = "operation" & cbe.type = CType[type.typeId] & cbe.elementType = CType[elementType.typeId] & result = cbe )
+
+
+
+
+
+
+Operation:
+createCTernaryOpCall
+Expression
+CBasicExpression
+id String name String arg CExpression le CExpression re CExpression typ Type
+
+true
+(re.type : CPrimitiveType => CBasicExpression->exists( cbe | cbe.cexpId = id & cbe.data = name + typ.name & arg : cbe.parameters & le : cbe.parameters & re : cbe.parameters & cbe.kind = "operation" & cbe.type = CType[type.typeId] & cbe.elementType = CType[elementType.typeId] & result = cbe ) ) & (re.type /: CPrimitiveType => CBasicExpression->exists( cbe | cbe.cexpId = id & cbe.data = name & arg : cbe.parameters & le : cbe.parameters & re : cbe.parameters & cbe.kind = "operation" & cbe.type = CType[type.typeId] & cbe.elementType = CType[elementType.typeId] & result = cbe ) )
+
+
+
+
+Operation:
+createCNaryOpCall
+Expression
+CBasicExpression
+id String name String args Sequence(CExpression)
+
+true
+CBasicExpression->exists( cbe | cbe.cexpId = id & cbe.data = name & args <: cbe.parameters & cbe.kind = "operation" & cbe.type = CType[type.typeId] & cbe.elementType = CType[elementType.typeId] & result = cbe )
+
+
+
+
+
+
+
+
+
+Operation:
+cast
+Expression
+CUnaryExpression
+typ String e CExpression
+static 
+true
+CUnaryExpression->exists( ce | ce.cexpId = e.cexpId + "_cast" & ce.operator = "(" + typ + ") " & ce.argument = e & ce.type = e.type & ce.elementType = e.elementType & result = ce )
+
+
+
+
+
+
+
+
+
+Operation:
+clength
+Expression
+CExpression
+cexp CExpression
+query
+true
+result = createCUnaryOpCall(expId + "_len", "length", Expression.cast("void**", cexp))
+
+
+
+
+
+
+
+
+Operation:
+mapAssignment
+Expression
+CStatement
+stat Statement cexp CExpression expr Expression
+query
+true
+CAssignment->exists( ca | ca.cstatId = stat.statId & ca.left = mapExpression() & ca.right = cexp & result = ca )
+
+
+
+
+
+
+
+
+
+
+Operation:
+cop
+Expression
+String
+aop String
+static query
+true
+(aop = "not" => result = "!") & (aop = "&" => result = "&&") & (aop = "or" => result = "||") & (aop = "mod" => result = "%") & (aop = "div" => result = "/") & (aop = "=" => result = "==") & (aop = "/=" => result = "!=") & (aop = "<>=" => result = "==") & (aop = "!" => result = "*") & (aop = "?" => result = "&") & (true => result = aop)
+
+
+
+
+
+
+
+Operation:
+cfunctionName
+Expression
+String
+fname String
+static query
+true
+(fname = "round" => result = "oclRound") & (fname = "floor" => result = "oclFloor") & (fname = "ceil" => result = "oclCeil") & (fname = "abs" => result = "fabs") & (fname = "->toLowerCase" => result = "toLowerCase") & (fname = "->toUpperCase" => result = "toUpperCase") & (fname = "->hasPrefix" or fname = "hasPrefix" => result = "startsWith") & (fname = "->hasSuffix" or fname = "hasSuffix" => result = "endsWith") & (fname = "->characters" => result = "characters") & (fname = "->toInteger" => result = "toInteger") & (fname = "->toLong" => result = "toLong") & (fname = "->toReal" => result = "atof") & (fname = "->toBoolean" => result = "toBoolean") & (true => result = fname)
+
+
+
+
+
+
+Operation:
+isCFunction1
+Expression
+boolean
+fname String
+static query
+true
+(fname = "sqrt" or fname = "exp" or fname = "log" or fname = "sin"  or fname = "cos" or fname = "tan" or fname = "pow" or fname = "log10" or fname = "cbrt" or fname = "tanh" or fname = "cosh" or fname = "sinh" or fname = "asin" or fname = "acos" or fname = "atan" or fname = "ceil" or fname = "round" or fname = "floor" or fname = "abs" => result = true)
+
+
+
+
+
+
+Operation:
+isComparitor
+Expression
+boolean
+fname String
+static query
+true
+(fname = "=" or fname = "/=" or fname = "<" or fname = ">"  or fname = "<=" or fname = ">=" or fname = "<>=" => result = true)
+
+
+
+
+
+Operation:
+isInclusion
+Expression
+boolean
+fname String
+static query
+true
+(fname = ":" or fname = "->includes" or fname = "<:" or fname = "->includesAll" => result = true)
+
+
+
+
+
+Operation:
+isExclusion
+Expression
+boolean
+fname String
+static query
+true
+(fname = "/:" or fname = "/<:" or fname = "->excludes" or fname = "->excludesAll" => result = true)
+
+
+
+
+
+Operation:
+isStringOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->indexOf" or fname = "->count" or fname = "->hasPrefix" or fname = "->hasSuffix" or fname = "->equalsIgnoreCase" or fname = "->lastIndexOf" or fname = "->excludingAt" or fname = "->isMatch" or fname = "->hasMatch" or fname = "->allMatches" or fname = "->firstMatch" or fname = "->before" or fname = "->after" or fname = "->split" or fname = "->at" => result = true)
+
+
+
+
+
+
+
+
+Operation:
+isUnaryStringOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->size" or fname = "->first" or fname = "->last" or fname = "->front" or fname = "->tail" or fname = "->reverse" or fname = "->display" or fname = "->toUpperCase" or fname = "->toLowerCase" or fname = "->toInteger" or fname = "->toReal" or fname = "->toLong" or fname = "->toBoolean" or fname = "->trim" => result = true)
+
+
+
+
+
+
+
+
+
+Operation:
+isCollectionOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->including" or fname = "->excluding" or fname = "->append" or fname = "->prepend" or fname = "->count" or fname = "->indexOf" or fname = "->lastIndexOf" or fname = "->union" or fname = "->intersection" or fname = "^" or fname = "->concatenate" or fname = "->isUnique" or fname = "->sortedBy" or fname = "->at" or fname = "->excludingAt" or fname = "->excludingFirst") => result = true
+
+
+
+
+Operation:
+isMapOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->includingMap" or fname = "->union" or fname = "->intersection" or fname = "->at" or fname = "->restrict" or fname = "->antirestrict") => result = true
+
+
+
+
+
+Operation:
+isUnaryCollectionOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->size" or fname = "->any" or fname = "->reverse" or fname = "->front" or fname = "->tail" or fname = "->first" or fname = "->last" or fname = "->sort" or fname = "->asSet" or fname = "->asSequence" or fname = "->asOrderedSet" or fname = "->asBag" or fname = "->isEmpty" or fname = "->notEmpty") => result = true
+
+
+
+
+Operation:
+isUnaryMapOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->size" or fname = "->keys" or fname = "->values" or fname = "->any" or fname = "->reverse" or fname = "->front" or fname = "->tail") => result = true
+
+
+
+
+
+
+
+
+Operation:
+isIteratorOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->forAll" or fname = "->exists" or fname = "->exists1" or fname = "->select" or fname = "->reject") => result = true
+
+
+
+
+
+
+
+
+
+Operation:
+isReduceOp
+Expression
+boolean
+fname String
+static query
+true
+(fname = "->min" or fname = "->max" or fname = "->sum" or fname = "->prd") => result = true
+
+
+
+
+
+
+
+
+
+
+
+Entity:
+BinaryExpression 57 160
+Expression  * 
+operator String 3 false false false variable String 3 false false false
+
+
+
+
+
+
+
+Operation:
+mapIteratorExpression
+BinaryExpression
+CExpression
+op String le CExpression re CExpression
+
+true
+ result = createCBinOpCall(expId, op + left.elementType.name, le, CExpression.defineCOpRef(CProgram.allInstances.any.defineCOp(re, variable, le.elementType) ) ) 
+
+
+
+
+
+
+Operation:
+mapMapIteratorExpression
+BinaryExpression
+CExpression
+op String le CExpression re CExpression
+
+true
+(op = "select" => result = createCBinOpCall(expId, "oclSelectMap", le, CExpression.defineCOpRef(CProgram.allInstances.any.defineCOp(re, variable, le.elementType) ) ) ) & (op = "reject" => result = createCBinOpCall(expId, "oclRejectMap", le, CExpression.defineCOpRef(CProgram.allInstances.any.defineCOp(re, variable, le.elementType) ) ) ) 
+
+
+
+
+
+
+
+Operation:
+mapCollectExpression
+BinaryExpression
+CExpression
+op String le CExpression re CExpression
+
+true
+(left.elementType.isValuePrimitiveType() => result = createCBinOpCall(expId, op + left.elementType.name + right.type.name, le, CExpression.defineCOpRefCast(CProgram.allInstances.any.defineCOp(re, variable, le.elementType), re.type + " (*)(" + le.elementType + ")" ) ) ) & (left.elementType.isNotValuePrimitiveType() & right.type.isValuePrimitiveType() => result = createCBinOpCall(expId, op + left.elementType.name + right.type.name, le, CExpression.defineCOpRefCast(CProgram.allInstances.any.defineCOp(re, variable, le.elementType), re.type + " (*)(" + le.elementType + ")" ) ) ) & (left.elementType.isNotValuePrimitiveType() & right.type.isNotValuePrimitiveType() => result = createCBinOpCall(expId, op + left.elementType.name, le, CExpression.defineCOpRefCast(CProgram.allInstances.any.defineCOp(re, variable, le.elementType), "void* (*)(" + le.elementType + ")" ) ) )
+
+
+
+
+
+Operation:
+mapMapCollectExpression
+BinaryExpression
+CExpression
+op String le CExpression re CExpression
+
+true
+ result = createCBinOpCall(expId, "oclCollectMap", le, CExpression.defineCOpRefCast(CProgram.allInstances.any.defineCOp(re, variable, le.elementType), "void* (*)(" + le.elementType + ")" ) )
+
+
+
+
+
+Operation:
+mapAddExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(left.type.name = "String" & right.type.name = "String"  => result = createCBinOpCall(expId, "concatenateStrings", le, re)) & (left.type.name = "String" & right.type.name = "Sequence" => result = createCBinOpCall(expId, "concatenateStrings", le, createCUnaryOpCall(expId + "_convert", right.elementType.name + "CollectionToString", re) ) ) & (left.type.name = "String" & right.type.name /= "String" => result = createCBinOpCall(expId, "concatenateStrings", le, createCUnaryOpCall(expId + "_convert", right.type.name + "ToString", re) ) ) & (left.type.name = "Sequence" & right.type.name = "String"  => result = createCBinOpCall(expId, "concatenateStrings", createCUnaryOpCall(expId + "_convert", left.elementType.name + "CollectionToString", le), re ) ) & (left.type.name /= "String" & right.type.name = "String"  => result = createCBinOpCall(expId, "concatenateStrings", createCUnaryOpCall(expId + "_convert", left.type.name + "ToString", le), re ) ) & (true => CBinaryExpression->exists( ce | ce.cexpId = expId & ce.operator = "+" & ce.left = le & ce.right = re & ce.needsBracket = needsBracket & ce.type = CType[type.typeId] & ce.elementType = CType[elementType.typeId] & result = ce ) )
+
+
+
+
+
+
+
+Operation:
+mapSubtractExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true 
+(left.type.name = "String" & right.type.name = "String"  => result = createCBinOpCall(expId, "subtractStrings", le, re)) & (left.type.name = "Set" or left.type.name = "Sequence"  => result = createCBinOpCall(expId, "removeAll" + left.elementType.name, le, re)) & (left.type.name = "Map"  => result = createCBinOpCall(expId, "oclSubtractMap", le, re)) & (true => CBinaryExpression->exists( ce | ce.operator = "-" & ce.cexpId = expId & ce.left = le & ce.right = re & ce.needsBracket = needsBracket & ce.type = CType[type.typeId] & ce.elementType = CType[elementType.typeId] & result = ce ) )
+
+
+
+
+
+
+
+
+Operation:
+mapComparitorExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(left.type.name = "String" & right.type.name = "String" & operator = "=" => CBinaryExpression->exists( be | be.cexpId = expId & be.operator = Expression.cop(operator) & be.left = createCBinOpCall(expId + "_strcmp", "strcmp", le, re) & CBasicExpression->exists( zero | zero.data = "0" & zero.cexpId = expId + "_0" & be.right = zero ) & be.needsBracket = true & be.type = CType[type.typeId] & be.elementType = CType[elementType.typeId] & result = be ) ) & (left.type.name = "String" & right.type.name = "String" & operator = "<>=" => CBinaryExpression->exists( ce | ce.cexpId = expId & ce.operator = "==" & ce.left = le & ce.right = re & ce.needsBracket = needsBracket & ce.type = CType[type.typeId] & ce.elementType = CType[elementType.typeId] & result = ce ) ) &  (true => CBinaryExpression->exists( ce | ce.cexpId = expId & ce.operator = operator & ce.left = le & ce.right = re & ce.needsBracket = needsBracket & ce.type = CType[type.typeId] & ce.elementType = CType[elementType.typeId] & result = ce ) )
+
+
+
+
+
+
+
+Operation:
+mapEqualityExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(left.type.name = "String" & right.type.name = "String"  => result = mapComparitorExpression(le, re)) & (left.type.name = "Set" & operator = "=" => result = createCBinOpCall(expId, "equalsSet", Expression.cast("void**", le), Expression.cast("void**", re)) ) & (left.type.name = "Sequence" & operator = "=" => result = createCBinOpCall(expId, "equalsSequence", Expression.cast("void**", le), Expression.cast("void**", re)) ) & (true => CBinaryExpression->exists( ce | ce.cexpId = expId & ce.operator = "==" & ce.left = le & ce.right = re & ce.needsBracket = needsBracket & ce.type = CType[type.typeId] & ce.elementType = CType[elementType.typeId] & result = ce ) )
+
+
+
+
+
+
+
+
+Operation:
+mapInclusionExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(operator = ":" & left.type.isValuePrimitiveType() => result = createCBinOpCall(expId, "isIn" + left.type.name, le, re) ) & (operator = ":" & left.type.isNotValuePrimitiveType() => result = createCBinOpCall(expId, "isIn", Expression.cast("void*", le), Expression.cast("void**", re)) ) & (operator = "->includes" & right.type.isValuePrimitiveType() => result = createCBinOpCall(expId, "isIn" + right.type.name, re, le) ) & (operator = "->includes" & right.type.isNotValuePrimitiveType() => result = createCBinOpCall(expId, "isIn", Expression.cast("void*", re), Expression.cast("void**", le)) ) & (operator = "->includesAll"  => result = createCBinOpCall(expId, "containsAll", Expression.cast("void**",le), Expression.cast("void**",re)) ) & (operator = "<:" => result = createCBinOpCall(expId, "containsAll", Expression.cast("void**", re), Expression.cast("void**", le)) ) 
+
+
+
+
+
+
+
+
+
+
+Operation:
+mapExclusionExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(operator = "/:"  => CUnaryExpression->exists( nin | nin.cexpId = expId & nin.operator = "!" & nin.argument = createCBinOpCall(expId + "_isIn", "isIn", Expression.cast("void*", le), Expression.cast("void**", re)) & nin.type = CType[type.typeId] & nin.elementType = CType[elementType.typeId] & result = nin ) ) & (operator = "->excludes"  => CUnaryExpression->exists( nin | nin.cexpId = expId & nin.operator = "!" & nin.argument = createCBinOpCall(expId + "_isIn", "isIn", Expression.cast("void*", re), Expression.cast("void**", le)) & nin.type = CType[type.typeId] & nin.elementType = CType[elementType.typeId] & result = nin ) ) & (operator = "->excludesAll"  => result = createCBinOpCall(expId, "disjoint", Expression.cast("void**", le), Expression.cast("void**", re)) ) & (operator = "/<:" => CUnaryExpression->exists( nin | nin.cexpId = expId & nin.operator = "!" & nin.argument = createCBinOpCall(expId + "_containsAll", "containsAll", Expression.cast("void**", re), Expression.cast("void**", le)) & nin.type = CType[type.typeId] & nin.elementType = CType[elementType.typeId] & result = nin ) ) 
+
+
+
+
+
+Operation:
+mapIsTypeOfExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+result = createCBinOpCall(expId + "_isIn", "isIn", Expression.cast("void*", le), Expression.cast("void**", re))
+
+
+
+
+
+
+
+
+Operation:
+mapStringExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(operator = "->count" => result = createCBinOpCall(expId, "countStrings", le, re) ) & (operator = "->at" => result = createCBinOpCall(expId, "atStrings", le, re) ) & (operator = "->indexOf" => result = createCBinOpCall(expId, "indexOfStrings", le, re) ) & (operator = "->lastIndexOf" => result = createCBinOpCall(expId, "lastIndexOfStrings", le, re) ) & (operator = "->before" => result = createCBinOpCall(expId, "before", le, re) ) & (operator = "->after" => result = createCBinOpCall(expId, "after", le, re) ) & (operator = "->split" => result = createCBinOpCall(expId, "split", le, re) ) & (operator = "->isMatch" => result = createCBinOpCall(expId, "isMatch", le, re) ) & (operator = "->hasMatch" => result = createCBinOpCall(expId, "hasMatch", le, re) ) & (operator = "->allMatches" => result = createCBinOpCall(expId, "allMatches", le, re) ) & (operator = "->firstMatch" => result = createCBinOpCall(expId, "firstMatch", le, re) ) & (operator = "->equalsIgnoreCase" => result = createCBinOpCall(expId, "equalsIgnoreCase", le, re) ) & (operator = "->excludingAt" => result = createCBinOpCall(expId, "excludingAtStrings", le, re) ) & (true => CBasicExpression->exists( be | be.cexpId = expId & be.data = Expression.cfunctionName(operator) & le : be.parameters & re : be.parameters & be.type = CType[type.typeId] & be.elementType = CType[elementType.typeId] & result = be ) ) 
+
+
+
+
+
+
+Operation:
+mapCollectionExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(operator = "->including" & left.type.name = "Set"  => result = createCBinOpCall(expId, "insert" + left.elementType.name, le, re) ) & (operator = "->including" & left.type.name = "Sequence"  => result = createCBinOpCall(expId, "append" + left.elementType.name, le, re) ) & (operator = "->excluding"  => result = createCBinOpCall(expId, "remove" + left.elementType.name, le, re) ) & (operator = "->excludingAt"  => result = createCBinOpCall(expId, "excludingAt" + left.elementType.name, le, re) ) & (operator = "->excludingFirst"  => result = createCBinOpCall(expId, "excludingFirst" + left.elementType.name, le, re) ) & (operator = "->append"  => result = createCBinOpCall(expId, "append" + left.elementType.name, le, re) ) & (operator = "->prepend"  => result = createCBinOpCall(expId, "prepend" + left.elementType.name, le, re) ) & (operator = "->count"  => result = createCBinOpCall(expId, "count", Expression.cast("void*", re), Expression.cast("void**", le)) ) & (operator = "->at" & left.type.name = "Sequence" & left.elementType.isValuePrimitiveType() => result = createCBinOpCall(expId, "at" + left.elementType.name, le, re) ) & (operator = "->at" & left.type.name = "Sequence" => result = Expression.cast("" + le.elementType, createCBinOpCall(expId, "at", Expression.cast("void**", le), re) ) ) & (operator = "->indexOf" & right.type.name = "Sequence" => result = createCBinOpCall(expId, "indexOfSubSequence", Expression.cast("void**", le), Expression.cast("void**", re)) ) & (operator = "->indexOf" & right.type.name /= "Sequence" => result = createCBinOpCall(expId, "indexOfSequence", Expression.cast("void**", le), Expression.cast("void*", re)) ) & (operator = "->lastIndexOf" & right.type.name = "Sequence" => result = createCBinOpCall(expId, "lastIndexOfSubSequence", Expression.cast("void**", le), Expression.cast("void**", re)) ) & (operator = "->lastIndexOf" & right.type.name /= "Sequence" => result = createCBinOpCall(expId, "lastIndexOfSequence", Expression.cast("void**", le), Expression.cast("void*", re)) ) & (operator = "->union" & left.type.name = "Sequence" => result = createCBinOpCall(expId, "concatenate" + left.elementType.name, le, re) ) & (operator = "->union" & left.type.name /= "Sequence" => result = createCBinOpCall(expId, "union" + left.elementType.name, le, re) ) & (operator = "^"  => result = createCBinOpCall(expId, "concatenate" + left.elementType.name, le, re) ) & (operator = "->concatenate"  => result = createCBinOpCall(expId, "concatenate" + left.elementType.name, le, re) ) & (operator = "->intersection" => result = createCBinOpCall(expId, "intersection" + left.elementType.name, le, re) ) & (operator = "->isUnique"  => result = createCBinOpCall(expId, "isUnique" + left.elementType.name, le, re) )
+
+
+
+
+
+Operation:
+mapMapExpression
+BinaryExpression
+CExpression
+le CExpression re CExpression
+query
+true
+(operator = "->includingMap" & re : CBinaryExpression => result = createCTernaryOpCall(expId, "insertIntoMap", le, re.left, re.right, right.type) ) & (operator = "->at" => result = Expression.cast("" + le.elementType, createCBinOpCall(expId, "lookupInMap", Expression.cast("struct ocltnode*", le), re) ) ) & (operator = "->union" => result = createCBinOpCall(expId, "oclUnionMap", le, re) ) & (operator = "->intersection" => result = createCBinOpCall(expId, "oclIntersectionMap", le, re) ) & (operator = "->restrict" => result = createCBinOpCall(expId, "oclRestrictMap", le, re) ) & (operator = "->antirestrict" => result = createCBinOpCall(expId, "oclAntirestrictMap", le, re) ) 
+
+
+
+
+
+
+
+Operation:
+mapBinaryExpression
+BinaryExpression
+CExpression
+lexp CExpression rexp CExpression 
+query
+true
+(operator = "+"  => result = mapAddExpression(lexp, rexp)) & (operator = "-"  => result = mapSubtractExpression(lexp, rexp)) & (operator = "="  => result = mapEqualityExpression(lexp,rexp)) & (operator = "<>="  => result = mapEqualityExpression(lexp,rexp)) & (operator = "->pow" => result = createCBinOpCall(expId, "pow", lexp, rexp) ) & (operator = "->apply" => result = createCUnaryOpCall(expId, "(" + lexp + ")", rexp) ) & (operator = "->gcd" => result = createCBinOpCall(expId, "gcd", lexp, rexp) ) & (operator = "div" => CBinaryExpression->exists( cdiv | cdiv.cexpId = expId & cdiv.left = lexp & cdiv.right = rexp & cdiv.operator = "/" & cdiv.needsBracket = true & cdiv.type = CType[type.typeId] & cdiv.elementType = CType[elementType.typeId] & result = Expression.cast("int",cdiv) )  ) & (operator = "->compareTo" => result = createCBinOpCall(expId, "compareTo" + left.type.name, lexp, rexp) ) & (operator = "->oclAsType" => result = Expression.cast(CType[type.typeId] + "", lexp)) & (operator = "->oclIsTypeOf" => result = mapIsTypeOfExpression(lexp,rexp) ) & (operator = "->oclIsKindOf" => result = mapIsTypeOfExpression(lexp,rexp) ) & (Expression.isComparitor(operator) => result = mapComparitorExpression(lexp,rexp)) & (Expression.isInclusion(operator) => result = mapInclusionExpression(lexp,rexp)) & (Expression.isExclusion(operator) => result = mapExclusionExpression(lexp,rexp)) & (left.type.name = "Map" & Expression.isIteratorOp(operator) => result = mapMapIteratorExpression(operator.tail.tail, lexp, rexp)) & (left.type.name /= "Map" & Expression.isIteratorOp(operator) => result = mapIteratorExpression(operator.tail.tail, lexp, rexp)) & (left.type.name = "Map" & operator = "->collect"  => result = Expression.cast(rexp.type + "*", mapMapCollectExpression("collect", lexp, rexp))) & (left.type.name /= "Map" & operator = "->collect" & right.type.isValuePrimitiveType() => result = Expression.cast(rexp.type + "**", mapCollectExpression("collect", lexp, rexp))) & (left.type.name /= "Map" & operator = "->collect" & right.type.isNotValuePrimitiveType() => result = Expression.cast(rexp.type + "*", mapCollectExpression("collect", lexp, rexp))) & (left.type.name = "String" & Expression.isStringOp(operator) => result = mapStringExpression(lexp,rexp)) & ((left.type.name = "Set" or left.type.name = "Sequence") & Expression.isCollectionOp(operator) => result = mapCollectionExpression(lexp,rexp)) & (left.type.name = "Map" & Expression.isMapOp(operator) => result = mapMapExpression(lexp,rexp)) & (true => CBinaryExpression->exists( c | c.cexpId = expId & c.left = lexp & c.right = rexp & c.operator = Expression.cop(operator) & c.needsBracket = needsBracket & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c ) )
+
+
+
+
+
+
+
+Operation:
+mapExpression
+BinaryExpression
+CExpression
+
+
+true
+result = mapBinaryExpression(left.mapExpression(),right.mapExpression())
+
+
+
+
+
+
+
+Operation:
+clength
+BinaryExpression
+CExpression
+cexp CExpression
+query
+true
+(operator = "->collect" => result = createCUnaryOpCall(expId + "_len", "length", Expression.cast("void**", left.mapExpression() ))) & (true => result = createCUnaryOpCall(expId + "_len", "length", Expression.cast("void**", cexp)))
+
+
+
+
+
+
+Entity:
+ConditionalExpression 88 990
+Expression  *
+
+
+
+Association:
+ConditionalExpression Expression 0 150 999 339 800 1 test null
+
+
+Association:
+ConditionalExpression Expression 0 160 1000 340 810 1 ifExp null
+
+
+Association:
+ConditionalExpression Expression 0 155 995 345 805 1 elseExp
+
+
+
+Generalisation:
+Expression ConditionalExpression 650 940 390 900
+
+
+
+
+Operation:
+mapExpression
+ConditionalExpression
+CExpression
+
+
+true
+CConditionalExpression->exists( ce | ce.test = test.mapExpression() & ce.ifExpr = ifExp.mapExpression() & ce.elseExpr = elseExp.mapExpression() & ce.type = CType[type.typeId] & ce.elementType = CType[elementType.typeId] & result = ce)
+
+
+
+
+
+
+
+
+
+
+
+
+Entity:
+UnaryExpression 654 112
+Expression  * 
+operator String 3 false false false variable String 3 false false false
+
+
+
+
+
+
+
+
+Operation:
+mapReduceExpression
+UnaryExpression
+CExpression
+arg CExpression 
+query
+true
+(operator[1] = "-" & operator[2] = ">" => result = createCUnaryOpCall(expId, operator.tail.tail + "_" + argument.elementType.name, arg) ) & (true  => result = createCBinOpCall(expId, operator + argument.elementType.name, arg, argument.clength(arg)) )
+
+
+
+
+
+
+
+Operation:
+mapStringExpression
+UnaryExpression
+CExpression
+arg CExpression 
+query
+true
+(operator = "->size"  => result = createCUnaryOpCall(expId, "strlen", arg) ) & (operator = "->first"  => result = createCUnaryOpCall(expId, "firstStrings", arg) ) & (operator = "->last"  => result = createCUnaryOpCall(expId, "lastStrings", arg) ) & (operator = "->front"  => result = createCUnaryOpCall(expId, "frontStrings", arg) ) & (operator = "->tail" => result = createCUnaryOpCall(expId, "tailStrings", arg) ) & (operator = "->reverse"  => result = createCUnaryOpCall(expId, "reverseStrings", arg) ) & (operator = "->trim"  => result = createCUnaryOpCall(expId, "trim", arg) ) & (operator = "->toBoolean"  => result = createCUnaryOpCall(expId, "toBoolean", arg) ) & (operator = "->display"  => result = createCUnaryOpCall(expId, "displayString", arg) ) & (true => result = createCUnaryOpCall(expId, Expression.cfunctionName(operator), arg) )
+
+
+
+
+
+
+
+Operation:
+mapCollectionExpression
+UnaryExpression
+CExpression
+arg CExpression 
+query
+true
+(operator = "->size" => result = createCUnaryOpCall(expId, "length", Expression.cast("void**", arg)) ) & (operator = "->any"  => result = createCUnaryOpCall(expId, "any", Expression.cast("void**", arg)) ) & (operator = "->first"  => result = createCUnaryOpCall(expId, "first", Expression.cast("void**", arg)) ) & (operator = "->last"  => result = createCUnaryOpCall(expId, "last", Expression.cast("void**", arg)) ) & (operator = "->front"  => result = createCUnaryOpCall(expId, "front" + elementType.name, arg) ) & (operator = "->tail"  => result = createCUnaryOpCall(expId, "tail" + elementType.name, arg) ) & (operator = "->isEmpty"  => result = createCUnaryOpCall(expId, "isEmpty", Expression.cast("void**", arg)) ) & (operator = "->notEmpty"  => result = createCUnaryOpCall(expId, "notEmpty", Expression.cast("void**", arg)) ) & (operator = "->reverse"  => result = createCUnaryOpCall(expId, "reverse" + elementType.name, arg) ) & (operator = "->asSet"  => result = createCUnaryOpCall(expId, "asSet" + elementType.name, arg) ) & (operator = "->asOrderedSet"  => result = createCUnaryOpCall(expId, "asSet" + elementType.name, arg) ) & (operator = "->asSequence"  => result = arg ) & (true => result = createCUnaryOpCall(expId, Expression.cfunctionName(operator), arg) )
+
+
+
+
+Operation:
+mapMapExpression
+UnaryExpression
+CExpression
+arg CExpression 
+query
+true
+(operator = "->size" => result = createCUnaryOpCall(expId, "oclSize", arg) ) & (operator = "->keys"  => result = createCUnaryOpCall(expId, "oclKeyset", arg) ) & (operator = "->values"  => result = createCUnaryOpCall(expId, "oclValues", arg) ) & (operator = "->front"  => result = createCUnaryOpCall(expId, "oclFront", arg) ) & (operator = "->tail"  => result = createCUnaryOpCall(expId, "oclTail", arg) ) & (operator = "->reverse"  => result = createCUnaryOpCall(expId, "oclReverse", arg) ) 
+
+
+
+
+
+
+
+
+Operation:
+mapSortExpression
+UnaryExpression
+CExpression
+arg CExpression 
+query
+true
+ (elementType.name = "String"  => result = Expression.cast("char**", createCBinOpCall(expId, "treesort", Expression.cast("void**", arg), CExpression.defineCOpReference("compareTo_String", "int"))) ) & (elementType.name = "int"  => result = Expression.cast("int**", createCBinOpCall(expId, "treesort", Expression.cast("void**", arg), CExpression.defineCOpReference("compareTo_int", "int"))) ) & (elementType.name = "long"  => result = Expression.cast("long**", createCBinOpCall(expId, "treesort", Expression.cast("void**", arg), CExpression.defineCOpReference("compareTo_long", "int"))) ) & (elementType.name = "double"  => result = Expression.cast("double**", createCBinOpCall(expId, "treesort", Expression.cast("void**", arg), CExpression.defineCOpReference("compareTo_double", "int"))) ) & (true  => result = Expression.cast("struct " + elementType.name + "**", createCBinOpCall(expId, "treesort", Expression.cast("void**", arg), CExpression.defineCOpReference("compareTo_" + elementType.name, "int"))))
+
+
+
+
+
+Operation:
+mapLambdaExpression
+UnaryExpression
+CExpression
+arg CExpression v String t CType
+static query
+true
+op = CProgram.allInstances.any.defineCOp(arg, v, arg.type) & result = CExpression.newCBasicExpression(op.name,t)
+
+
+
+
+
+
+Operation:
+mapDisplayExpression
+UnaryExpression
+CExpression
+arg CExpression
+query
+true
+result = createCUnaryOpCall(expId, "display" + argument.type.name, arg)
+
+
+
+
+
+
+
+Operation:
+mapUnaryExpression
+UnaryExpression
+CExpression
+arg CExpression 
+query
+true
+(operator = "->sort" => result = mapSortExpression(arg)) & (operator = "->asBag" => result = mapSortExpression(arg)) & (operator = "->characters"  => result = createCUnaryOpCall(expId, "characters", arg) ) & (operator = "lambda" => result = UnaryExpression.mapLambdaExpression(arg,variable, CType[type.typeId]) ) & (operator = "->display"  => result = mapDisplayExpression(arg)) & (operator = "->oclIsUndefined" => result = createCUnaryOpCall(expId, "isnan", arg) ) & (operator = "->oclType" => result = createCUnaryOpCall(expId, "getOclTypeByPK", CExpression.newCBasicExpression("\"" + argument.type.name + "\"", arg.type)) ) & (operator = "->copy" => result = arg) & (operator = "->char2byte" => result = createCUnaryOpCall(expId, "char2byte", arg) ) & (operator = "->byte2char" => result = createCUnaryOpCall(expId, "byte2char", arg) ) & (operator = "->isDeleted" => result = createCUnaryOpCall(expId, "free", arg) ) & (Expression.isReduceOp(operator)  => result = mapReduceExpression(arg)) & (argument.type.name = "String" & Expression.isUnaryStringOp(operator) => result = mapStringExpression(arg))  & ((argument.type.name = "Set" or argument.type.name = "Sequence") & Expression.isUnaryCollectionOp(operator) => result = mapCollectionExpression(arg)) & (argument.type.name = "Map" & Expression.isUnaryMapOp(operator) => result = mapMapExpression(arg)) & (operator.size > 2 & Expression.isCFunction1(operator.tail.tail) => CBasicExpression->exists( c | c.cexpId = expId & c.data = Expression.cfunctionName(operator.tail.tail) & c.kind = "function" & c.parameters = Sequence{ arg } & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (true => CUnaryExpression->exists( c | c.cexpId = expId & c.operator = Expression.cop(operator) & c.argument = arg & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c ) )
+
+
+
+
+
+
+
+Operation:
+mapExpression
+UnaryExpression
+CExpression
+
+
+true
+result = mapUnaryExpression(argument.mapExpression())
+
+
+
+
+Entity:
+CollectionExpression 646 38
+Expression  * 
+isOrdered boolean 3 false false false
+
+
+
+
+
+
+Operation:
+mapCollectionMapExpression
+CollectionExpression
+CExpression
+id String elems Sequence(CExpression)
+query
+true
+(elems.size = 0  => result = CExpression.newCBasicExpression("NULL", CPrimitiveType.newCPrimitiveType(id + "_type", "void*")) ) & (elems.size > 0 & lst = elems.last & lst : CBinaryExpression => result = createCTernaryOpCall(id, "insertIntoMap", mapCollectionMapExpression(id + "_f", elems.front), lst.left, lst.right, elementType) )
+
+
+
+
+
+
+Operation:
+mapCollectionExpression
+CollectionExpression
+CExpression
+id String elems Sequence(CExpression)
+query
+true
+(elems.size = 0  => result = createCOpCall(id, "new" + elementType.name + "List") ) & (elems.size > 0 & type.name = "Set"  => result = createCBinOpCall(id, "insert" + elementType.name, mapCollectionExpression(id + "_f", elems.front), elems.last) ) & (elems.size > 0 & type.name = "Sequence"  => result = createCBinOpCall(id, "append" + elementType.name, mapCollectionExpression(id + "_f", elems.front), elems.last) )
+
+
+
+
+
+
+
+Operation:
+clength
+CollectionExpression
+CExpression
+cexp CExpression
+query
+true
+CBasicExpression->exists( b | b.cexpId = expId + "_len" & b.data = elements.size + "" & CPrimitiveType->exists( t | t.name = "int" & t.ctypeId = expId + "_len" & b.type = t & b.elementType = t) & result = b) 
+
+
+
+
+
+
+Operation:
+mapExpression
+CollectionExpression
+CExpression
+
+
+true
+(type.name = "Map" => result = mapCollectionMapExpression(expId, elements.mapExpression())) & (type.name /= "Map" => result = mapCollectionExpression(expId, elements.mapExpression()))
+
+
+
+
+
+
+
+
+
+
+
+
+Entity:
+BasicExpression 284 228
+Expression  * 
+data String 3 false false false prestate boolean 3 false false false
+
+
+
+
+
+Operation:
+clength
+BasicExpression
+CExpression
+cexp CExpression
+query
+true
+(umlKind = attribute & objectRef.size > 0 => result = createCUnaryOpCall(expId + "_len", "length", Expression.cast("void**", CExpression[objectRef.any.expId]))) & (true => result = createCUnaryOpCall(expId + "_len", "length", Expression.cast("void**", cexp)))
+
+
+
+
+
+
+Operation:
+mapValueExpression
+BasicExpression
+CExpression
+aind Set(CExpression) 
+
+umlKind = value
+CBasicExpression->exists( c | c.cexpId = expId & c.kind = "value" & ( data = "true" => c.data = "TRUE" ) & ( data = "false" => c.data = "FALSE" ) & ( data = "null" => c.data = "NULL" ) & ( data = "Math_NaN" => c.data = "NAN" ) & ( data = "Math_PINFINITY" => c.data = "HUGE_VAL" ) & ( data /= "true" & data /= "false" & data /= "null" & data /= "Math_NaN" & data /= "Math_PINFINITY" => c.data = data ) & c.arrayIndex = aind & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c )
+
+
+
+
+
+Operation:
+mapVariableExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) aind Set(CExpression) pars Sequence(CExpression)
+
+umlKind = variable
+(data = "super" & objectRef.size = 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = "super" & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = expId + "_self" & s.type = CType[context.any.typeId] & s.elementType = s.type ) & result = c ) ) & (data = "super" & objectRef.size > 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = "super" & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs.any : c.reference & result = c ) ) & (data /= "super" => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "variable" & c.data = data & c.arrayIndex = aind & c.parameters = pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c ))
+
+
+
+
+
+Operation:
+mapAttributeExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) aind Set(CExpression) pars Sequence(CExpression) 
+query
+umlKind = attribute
+(context.size = 0 & objectRef.size = 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & result = c) ) & (isStatic = true => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & result = c) ) & (objectRef.size = 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = "get" + context.any.name + "_" + data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.parameters & s.cexpId = expId + "_self" & s.type = CType[context.any.typeId] & s.elementType = s.type ) & result = c ) )  & (objectRef.size > 0 & objectRef.any.type : CollectionType => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = "getAll" + objectRef.any.elementType.name + "_" + data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs <: c.parameters & c.arrayIndex = aind & result = c ) ) & (objectRef.size > 0 & objectRef.any.type /: CollectionType => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "attribute" & c.data = "get" + objectRef.any.elementType.name + "_" + data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs <: c.parameters & c.arrayIndex = aind & result = c ) ) 
+
+
+
+
+
+Operation:
+mapRoleExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) aind Set(CExpression) pars Sequence(CExpression) 
+query
+umlKind = role
+(context.size = 0 & objectRef.size = 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "role" & c.data = data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & result = c) ) & (objectRef.size = 0 & context.size > 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "role" & c.data = "get" + context.any.name + "_" + data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.parameters & s.cexpId = expId + "_self" & s.type = CType[context.any.typeId] &  s.elementType = s.type ) & result = c ) )  &  (objectRef.size > 0 & objectRef.any.type : CollectionType => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "role" & c.data = "getAll" + objectRef.any.elementType.name + "_" + data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs <: c.parameters & c.arrayIndex = aind & result = c ) ) & (objectRef.size > 0 & objectRef.any.type /: CollectionType => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "role" & c.data = "get" + objectRef.any.elementType.name + "_" + data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs <: c.parameters & c.arrayIndex = aind & result = c ) ) 
+
+
+
+
+
+Operation:
+mapOperationExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) aind Set(CExpression) pars Sequence(CExpression) 
+query
+umlKind = operation
+((context->oclIsUndefined() or context.size = 0 or isStatic = true) => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "operation" & c.data = data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & c.parameters = pars & result = c)) & (objectRef.size = 0 & context.size > 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "operation" & c.data = data + "_" + context.any.name & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.parameters & s.cexpId = expId + "_self" & s.type = CType[context.any.typeId] & s.elementType = s.type ) & pars <: c.parameters & result = c ) ) & (objectRef.size > 0 & context.size > 0  => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "operation" & c.data = data + "_" + context.any.name & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs <: c.parameters & pars <: c.parameters & c.arrayIndex = aind & result = c ) ) & (objectRef.size = 0 & context.size = 0 => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "operation" & c.data = data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & c.arrayIndex = aind & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.parameters & s.cexpId = expId + "_self" & s.type = CType[context.any.typeId] & s.elementType = s.type ) & pars <: c.parameters & result = c ) ) & (objectRef.size > 0 & context.size = 0  => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "operation" & c.data = data & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & obs <: c.parameters & pars <: c.parameters & c.arrayIndex = aind & result = c ) ) 
+
+
+
+
+Operation:
+mapClassExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) aind Set(CExpression) pars Sequence(CExpression) 
+query
+umlKind = classid
+(arrayIndex.size > 0 & arrayIndex.any.type : CollectionType  => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "classid" & c.data = "get" + elementType.name + "ByPKs" & aind <: c.parameters & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (arrayIndex.size > 0 & arrayIndex.any.type /: CollectionType  => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "classid" & c.data = "get" + elementType.name + "ByPK" & aind <: c.parameters & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (arrayIndex.size = 0  => CBasicExpression->exists( c | c.cexpId = expId & c.kind = "classid" & c.data = data.toLowerCase() + "_instances" & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) )
+
+
+
+
+
+
+
+Operation:
+mapSubrangeExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) pars Sequence(CExpression) 
+query
+data = "subrange"
+ (objectRef.size > 0 & ("Integer" = objectRef.any + "") => CBasicExpression->exists( c | c.cexpId = expId & c.data = "integerSubrange" & c.kind = "function" & c.parameters = pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (obs.size > 0 & ("null" = obs.any + "") => CBasicExpression->exists( c | c.cexpId = expId & c.data = "integerSubrange" & c.kind = "function" & c.parameters = pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (type.name = "String" & pars.size = 2 => CBasicExpression->exists( c | c.cexpId = expId & c.data = "subStrings" & c.kind = "function" & c.parameters = obs^pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (type.name = "String" & pars.size = 1 => CBasicExpression->exists( c | c.cexpId = expId & c.data = "subStringToEnd" & c.kind = "function" & c.parameters = obs^pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (true  => CBasicExpression->exists( c | c.cexpId = expId & c.data = "subrange" + elementType.name & c.kind = "function" & c.parameters = obs^pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) )
+
+
+
+
+
+
+
+
+Operation:
+mapFunctionExpression
+BasicExpression
+CBasicExpression
+obs Set(CExpression) aind Set(CExpression) pars Sequence(CExpression) 
+query
+umlKind = function
+(data = "subrange"  =>  result = mapSubrangeExpression(obs, pars)) & (data = "size" & objectRef.any.type.name = "String" => result = createCUnaryOpCall(expId, "strlen", obs.any) ) & (data = "size" & objectRef.any.type.name /= "String" => result = createCUnaryOpCall(expId, "length", obs.any) ) & (data = "insertAt" & objectRef.any.type.name = "String" => result = createCNaryOpCall(expId, "insertAtStrings", obs^pars) ) & (data = "insertAt" & objectRef.any.type.name /= "String" => result = createCNaryOpCall(expId, "insertAt" + objectRef.any.elementType.name, obs^pars) ) & (data = "insertInto" & objectRef.any.type.name = "String" => result = createCNaryOpCall(expId, "insertAtStrings", obs^pars) ) & (data = "insertInto" & objectRef.any.type.name /= "String" => result = createCNaryOpCall(expId, "insertInto" + objectRef.any.elementType.name, obs^pars) ) & (Expression.isCFunction1(data) => CBasicExpression->exists( c | c.cexpId = expId & c.data = Expression.cfunctionName(data) & c.kind = "function" & c.parameters = obs^pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & (data = "reverse" & objectRef.any.type.name = "String" => result = createCUnaryOpCall(expId, "reverseStrings", obs.any) ) & (data = "reverse" & objectRef.any.type.name = "Sequence" => result = createCUnaryOpCall(expId, "reverseSequence", obs.any) )  & ( data = "allInstances"  =>  CBasicExpression->exists( c | c.cexpId = expId & c.kind = "function" & c.data = objectRef.any.data.toLowerCase() + "_instances" & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) ) & ( true =>  CBasicExpression->exists( c | c.cexpId = expId & c.kind = "function" & c.data = Expression.cfunctionName(data) & c.parameters = obs^pars & c.type = CType[type.typeId] & c.elementType = CType[elementType.typeId] & result = c) )
+
+
+
+
+
+Operation:
+mapIndexedAssignment
+BasicExpression
+CStatement
+stat Statement cexp CExpression expr Expression
+query
+true
+(arrayIndex.size > 0 & arrayIndex.any.type.name = "String" => CAssignment->exists( ca | ca.cstatId = stat.statId & ca.left = CExpression.newCBasicExpression(data,CPrimitiveType.newCPrimitiveType(expId + "_type", "ocltnode*")) & CBasicExpression->exists( s | s.data = data & s.kind = "variable" & s.cexpId = expId + "_self" & s.type = CPrimitiveType.newCPrimitiveType(expId + "_treetype", "ocltnode*") & ca.right = createCTernaryOpCall(stat.statId + "_call", "insertIntoMap", s, arrayIndex.any.mapExpression(), cexp, expr.type) & result = ca ))) & (arrayIndex.size > 0 & arrayIndex.any.type.name /= "String" => CAssignment->exists( ca | ca.cstatId = stat.statId & ca.left = CExpression.newCBasicExpression(data,CPrimitiveType.newCPrimitiveType(expId + "_type", "void**")) & CBasicExpression->exists( s | s.data = data & s.kind = "variable" & s.cexpId = expId + "_self" & s.type = CPrimitiveType.newCPrimitiveType(expId + "_sequencetype", "void**") & ca.right = createCTernaryOpCall(stat.statId + "_call", "setAtSequence", s, arrayIndex.any.mapExpression(), cexp, expr.type) & result = ca ) ) ) & (true => CAssignment->exists( ca | ca.cstatId = stat.statId & ca.left = mapExpression() & ca.right = cexp & result = ca ) )
+
+
+
+
+
+
+Operation:
+mapAssignment
+BasicExpression
+CStatement
+stat Statement cexp CExpression expr Expression
+query
+true
+(arrayIndex.size > 0 => result = mapIndexedAssignment(stat,cexp,expr)) & ((umlKind = attribute or umlKind = role) & isStatic = true => CAssignment->exists( ca | ca.cstatId = stat.statId & ca.left = mapExpression() & ca.right = cexp & result = ca ) ) & ((umlKind = attribute or umlKind = role) & arrayIndex.size = 0 & objectRef.size = 0 => OpCallStatement->exists( ca | ca.cstatId = stat.statId & CBasicExpression->exists( op | op.cexpId = stat.statId + "_call" & op.data = "set" + context.any.name + "_" + data & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : op.parameters & s.cexpId = expId + "_self" & s.type = CType[context.any.typeId] & s.elementType = s.type ) & cexp : op.parameters & ca.callExp = op & result = ca ))) & ((umlKind = attribute or umlKind = role) & arrayIndex.size = 0 & objectRef.size > 0 => OpCallStatement->exists( ca | ca.cstatId = stat.statId & CBasicExpression->exists( op | op.cexpId = stat.statId + "_call" & op.data = "set" + context.any.name + "_" + data & op.parameters = Sequence{ objectRef.any.mapExpression(), cexp } & ca.callExp = op & result = ca ))) & (true => CAssignment->exists( ca | ca.cstatId = stat.statId & ca.left = mapExpression() & ca.right = cexp & result = ca ) )
+
+
+
+
+
+
+
+
+
+
+
+
+
+Operation:
+mapBasicExpression
+BasicExpression
+CExpression
+ob Set(CExpression) aind Set(CExpression) pars Sequence(CExpression) 
+query
+true
+( umlKind = value => result = mapValueExpression(aind) ) & ( umlKind = variable => result = mapVariableExpression(ob,aind,pars) ) & ( umlKind = attribute => result = mapAttributeExpression(ob,aind,pars) ) & ( umlKind = role => result = mapRoleExpression(ob,aind,pars) ) & ( umlKind = operation  => result = mapOperationExpression(ob,aind,pars)) & ( umlKind = classid  => result = mapClassExpression(ob,aind,pars)) & ( umlKind = function => result = mapFunctionExpression(ob,aind,pars) ) 
+
+
+
+
+Operation:
+mapExpression
+BasicExpression
+CExpression
+
+
+true
+result = mapBasicExpression(objectRef.mapExpression(),arrayIndex.mapExpression(),parameters.mapExpression())
+
+
+Entity:
+Property 828 277
+null  * 
+name String 3 false false false lower int 3 false false false upper int 3 false false false isOrdered boolean 3 false false false isUnique boolean 3 false false false isDerived boolean 3 false false false isReadOnly boolean 3 false false false isStatic boolean 3 false false false
+
+
+
+
+Association:
+Property Type 0 830 280 42 260 1 type null 
+
+
+
+
+Association:
+CExpression CType 0 467 393 279 433 1 type null 
+
+
+Association:
+CExpression CType 0 467 426 314 453 1 elementType null 
+
+
+Association:
+CBinaryExpression CExpression 0 325 541 467 461 1 left null 325 478 
+
+
+Association:
+CBinaryExpression CExpression 0 407 543 491 477 1 right null 421 531 
+
+
+Association:
+CBasicExpression CExpression 0 589 657 696 478 0 parameters null 
+ordered 
+
+Association:
+CUnaryExpression CExpression -1 857 465 724 396 1 argument null 
+
+
+
+Association:
+CArrayType CType 0 740 820 901 851 1 componentType null 741 847 
+
+
+Association:
+CPointerType CType 0 1251 802 1164 858 1 pointsTo null 1181 857 
+
+
+Association:
+CMember CType 0 1140 672 1055 845 1 type null 
+
+
+Association:
+CBasicExpression CExpression -1 487 684 529 712 -1 arrayIndex null 427 683 427 746 507 747 
+
+
+Association:
+CBasicExpression CExpression -1 637 679 625 711 -1 reference null 752 703 751 752 643 753 
+
+
+Association:
+CollectionType Type 0 203 548 108 294 1 elementType null 
+
+
+Association:
+CollectionType Type 0 396 100 307 136 1 keyType null 
+
+
+
+Association:
+CFunctionPointerType CType 0 1351 802 1164 858 1 domainType null
+
+
+
+Association:
+CFunctionPointerType CType 0 1351 802 1164 858 1 rangeType null
+
+
+
+
+
+Association:
+Expression Type 0 270 66 27 255 1 type null 
+
+
+Association:
+Expression Type 0 268 90 108 257 1 elementType null 
+
+
+Association:
+CollectionExpression Expression 0 647 57 516 68 0 elements null 
+
+
+Association:
+BinaryExpression Expression 0 124 160 267 111 1 left null 125 128 
+
+
+Association:
+BinaryExpression Expression 0 208 172 293 115 1 right null 221 181 
+
+
+Association:
+BasicExpression Expression 0 427 233 471 115 0 parameters null 
+ordered 
+
+Association:
+UnaryExpression Expression -1 657 115 513 92 1 argument null 
+
+
+Association:
+BasicExpression Property 0 588 237 627 279 -1 referredProperty null 
+
+
+
+Association:
+BasicExpression Entity 0 588 237 627 279 0 context null 
+
+
+
+Association:
+BasicExpression Expression -1 287 334 339 358 -1 arrayIndex null 227 333 227 396 307 397 
+
+
+Association:
+Property Expression -1 664 278 485 116 1 initialValue null 665 226 514 222 
+
+
+Association:
+BasicExpression Expression -1 490 353 408 362 -1 objectRef null 552 353 551 402 443 403 
+
+
+Association:
+Property Entity 0 674 298 364 509 1 owner ownedAttribute 672 512 
+
+
+Generalisation:
+CExpression CUnaryExpression 855 489 726 440
+
+
+
+Generalisation:
+CExpression CBasicExpression 557 657 558 478
+
+
+
+Generalisation:
+CExpression CBinaryExpression 257 568 487 386
+223 569 224 368 488 366 
+
+
+Generalisation:
+Type Classifier 56 409 52 293
+
+
+
+Generalisation:
+DataType PrimitiveType 32 574 27 520
+
+
+
+Generalisation:
+Classifier Entity 37 503 36 431
+
+
+
+Generalisation:
+Classifier DataType 139 501 106 428
+
+
+
+Generalisation:
+DataType CollectionType 142 552 98 519
+
+
+
+Generalisation:
+CType CFunctionPointerType 1160 801 1353 846
+
+
+
+Generalisation:
+Expression UnaryExpression 655 139 511 110
+
+
+
+Generalisation:
+Expression BasicExpression 357 226 357 113
+
+
+
+Generalisation:
+Expression BinaryExpression 57 218 288 38
+23 219 24 18 288 16 
+
+
+Generalisation:
+Expression CollectionExpression 722 39 475 37
+722 23 474 22 
+
+
+
+
+GeneralUseCase:
+exp2C 
+
+
+
+false
+
+
+
+
+Constraint:
+null
+inheritedFrom.size > 0
+code = self.callSuperclassOperation(inheritedFrom)
+COperation exp2C
+false
+
+
+
+
+Constraint:
+null
+owner.isApplicationClass() & Set{ activity }->size() > 0
+COperation->exists( c | c.opId = name + "_" + owner.name & c.code = activity.mapStatement() )
+Operation exp2C
+false
+
+
+
+
+
+
+Constraint:
+null
+Set{ classifierBehaviour }->size() > 0
+COperation->exists( cop | cop.name = name & cop.scope = "application" & cop.isQuery = false & cop.isStatic = true & cop.code = classifierBehaviour.mapStatement() & parameters->forAll( x | CVariable->exists( y | y.name = x.name & y.kind = "parameter" & y.type = CType[x.type.typeId] & y : cop.parameters ) ) & cop.returnType = CType[resultType.typeId] )
+UseCase exp2C
+false
+
+
+
+
+
+
+
+Constraint:
+null
+scope = "auxiliary"
+self->display()
+COperation exp2C
+false
+
+
+
+
+
+
+Constraint:
+null
+scope = "entity"
+self->display()
+COperation exp2C
+false
+
+
+
+
+Constraint:
+null
+scope = "application"
+self.toUseCaseDefinition()->display()
+COperation exp2C
+false
+
+
+
+
+
+
+
+
+
+Constraint:
+null
+true
+"int main(int _argc, char* _argv[])\n{ return 0; }\n"->display()
+CProgram exp2C
+false
+
+
+
+
+
+
+
+
+
+Entity:
+CPrimitiveType 710 701
+CType  * 
+name String 3 false false false
+
+
+
+
+Operation:
+toString
+CPrimitiveType
+String
+
+ query
+true
+result = name
+
+
+
+
+Operation:
+newCPrimitiveType
+CPrimitiveType
+CPrimitiveType
+id String nme String
+static query
+true
+CPrimitiveType->exists( t | t.name = nme & t.ctypeId = id & result = t )
+
+
+
+
+
+
+Operation:
+isValueType
+CPrimitiveType
+boolean
+
+query
+true
+(name = "int" => result = true) & (name = "long" => result = true) & (name = "double" => result = true)
+
+
+
+
+Entity:
+CEnumeration 1000 1400
+CType *
+name String 3 false false false
+
+
+
+Operation:
+toString
+CEnumeration
+String
+
+query
+true
+result = "enum " + name
+
+
+
+Entity:
+CEnumerationLiteral 1200 1400
+ *
+name String 3 false false false
+
+
+
+
+
+
+Association:
+CEnumeration CEnumerationLiteral 1 1000 1400 1200 1400 0 ownedLiteral null
+ordered
+
+
+
+
+Generalisation:
+CType CEnumeration 840 805 1000 1400
+
+
+
+Entity:
+CArrayType 616 764
+CType  * 
+duplicates boolean 3 false false false
+
+Operation:
+toString
+CArrayType
+String
+
+ query
+true
+(componentType : CPrimitiveType & componentType.name = "void" => result = "void**") & (componentType : CPrimitiveType & componentType.isValueType() => result = componentType + "**") & (true => result = componentType + "*")
+
+
+Entity:
+CPointerType 1151 764
+CType  * 
+
+
+Operation:
+toString
+CPointerType
+String
+
+ query
+true
+result = pointsTo + "*"
+
+
+
+
+Generalisation:
+CType CStruct 962 663 962 847
+
+
+
+Generalisation:
+CType CPrimitiveType 865 753 939 845
+
+
+
+Generalisation:
+CType CPointerType 1160 801 1153 846
+
+
+
+Generalisation:
+CType CArrayType 840 802 903 845
+
+
+
+
+
+Entity:
+CStruct 829 809
+CType  * 
+name String 3 false true false
+
+
+
+Operation:
+toString
+CStruct
+String
+
+ query
+true
+result = "struct " + name
+
+
+Operation:
+isApplicationClass
+CStruct
+boolean
+
+ query
+true
+(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (name = "OclException" => result = false) & (name->hasSuffix("Exception") => result = false) & (true => result = true)
+
+
+
+
+
+
+Entity:
+CMember 1138 619
+null  * 
+name String 3 false false false isKey boolean 3 false false false
+
+
+
+
+
+Operation:
+inheritedCMembers
+CMember
+Set(CMember)
+
+ query
+type : CPointerType & type.pointsTo : CStruct
+anc = type.pointsTo & result = anc.allCMembers()
+
+
+
+
+
+
+Operation:
+allCMembers
+CStruct
+Set(CMember)
+
+ query
+true
+sups = members->select(name = "super") & (sups.size = 0  =>  result = members) & (sups.size > 0 => result = (members - sups)->union(sups.any.inheritedCMembers()))
+
+
+
+
+
+
+Operation:
+createOp
+CStruct
+String
+ent String
+ query
+true
+  einst = ent.toLowerCase + "_instances" & result = "struct " + ent + "* create" + ent + "(void)\n" + "{ struct " + ent + "* result = (struct " + ent + "*) malloc(sizeof(struct " + ent + "));\n" + members->collect( m | m.initialiser() )->sum() + "  " + einst + " = append" + ent + "(" + einst + ", result);\n" + "  " + ent.toLowerCase + "_size++;\n" + interfaces->collect( itf | ("  " + itf.name.toLowerCase + "_instances = append" + itf.name + "(" + itf.name.toLowerCase + "_instances, result);\n  " + itf.name.toLowerCase + "_size++;\n") )->sum() + "  return result;\n" + "}\n"
+
+
+
+
+
+Operation:
+createPKOp
+CStruct
+String
+ent String key String
+ query
+true
+ einst = ent.toLowerCase + "_instances" & result = "struct " + ent + "* create" + ent + "(char* _value)\n" + "{ struct " + ent + "* result = NULL;\n" + "  result = get" + ent + "ByPK(_value);\n" + "  if (result != NULL) { return result; }\n" + "  result = (struct " + ent + "*) malloc(sizeof(struct " + ent + "));\n" + members->collect( m | m.initialiser() )->sum() + "  set" + ent + "_" + key + "(result, _value);\n" + "  " + einst + " = append" + ent + "(" + einst + ", result);\n" + "  " + ent.toLowerCase + "_size++;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+Operation:
+getterOp
+CMember
+String
+ent String
+ query
+true
+(type : CFunctionPointerType & td = type.domainType & tr = type.rangeType => result = tr + " (*get" + ent + "_" + name + "(struct " + ent + "* self))(" + td + ")\n" + "{ return self->" + name + "; }\n\n") & (true => result = type + " get" + ent + "_" + name + "(struct " + ent + "* self)\n{ return self->" + name + "; }\n\n")
+
+
+
+
+
+
+Operation:
+inheritedGetterOp
+CMember
+String
+ent String sup String
+ query
+true
+(name /= "super" => result = type + " get" + ent + "_" + name + "(struct " + ent + "* self)\n{ return get" + sup + "_" + name + "(self->super); }\n\n") & (name = "super" => result = self.ancestorGetterOps(ent,sup) )
+
+
+
+
+Operation:
+ancestorGetterOps
+CMember
+String
+ent String sup String 
+ query
+type : CPointerType & type.pointsTo : CStruct
+ anc = type.pointsTo & result = anc.members->collect( m | m.inheritedGetterOp(ent, sup) )->sum()
+
+
+
+
+
+
+Operation:
+inheritedGetterOps
+CMember
+String
+ent String
+ query
+type : CPointerType & type.pointsTo : CStruct
+sup = type.pointsTo & result = sup.members->collect( m | m.inheritedGetterOp(ent, sup.name) )->sum()
+
+
+
+
+
+
+
+
+Operation:
+setterOp
+CMember
+String
+ent String
+ query
+true
+(type : CFunctionPointerType & td = type.domainType & tr = type.rangeType => result = "void set" + ent + "_" + name + "(struct " + ent + "* self, " + tr + " (*_value)(" + td + ")\n{ self->" + name + " = _value; }\n") & (true => result = "void set" + ent + "_" + name + "(struct " + ent + "* self, " + type + " _value)\n{ self->" + name + " = _value; }\n\n")
+
+
+
+
+
+
+
+Operation:
+inheritedSetterOp
+CMember
+String
+ent String sup String
+ query
+true
+(name /= "super" => result = "void set" + ent + "_" + name + "(struct " + ent + "* self, " + type + " _value)\n{ set" + sup + "_" + name + "(self->super, _value); }\n\n") & (name = "super" => result = self.ancestorSetterOps(ent,sup) )
+
+
+
+
+
+Operation:
+ancestorSetterOps
+CMember
+String
+ent String sup String 
+ query
+type : CPointerType & type.pointsTo : CStruct
+ anc = type.pointsTo & result = anc.members->collect( m | m.inheritedSetterOp(ent, sup) )->sum()
+
+
+
+
+
+
+Operation:
+inheritedSetterOps
+CMember
+String
+ent String
+ query
+type : CPointerType & type.pointsTo : CStruct
+ sup = type.pointsTo & result = sup.members->collect( m | m.inheritedSetterOp(ent, sup.name) )->sum()
+
+
+
+
+
+
+Operation:
+getAllOp
+CMember
+String
+ent String
+ query
+true
+result = type + "** getAll" + ent + "_" + name + "(struct " + ent + "* _col[])\n" + "{ int n = length((void**) _col);\n" + "  " + type + "** result = (" + type + "**) calloc(n, sizeof(" + type + "*));\n" + "  int i = 0;\n" + "  for ( ; i < n; i++)\n" + "  { " + type + "* ptr = malloc(sizeof(" + type + "));\n    *ptr = get" + ent + "_" + name + "(_col[i]);\n    result[i] = ptr;\n  }\n" + "  result[n] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+Operation:
+getAllOp1
+CMember
+String
+ent String
+ query
+true
+result = type + "* getAll" + ent + "_" + name + "(struct " + ent + "* _col[])\n" + "{ int n = length((void**) _col);\n" + "  " + type + "* result = (" + type + "*) calloc(n+1, sizeof(" + type + "));\n" + "  int i = 0;\n" + "  for ( ; i < n; i++)\n" + "  { result[i] = get" + ent + "_" + name + "(_col[i]); }\n" + "  result[n] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+Operation:
+inheritedAllOp
+CMember
+String
+ent String sup String
+ query
+true
+(name /= "super" & CType.isPrimitiveValueType(type) => result = getAllOp(ent)) & (name /= "super" & CType.isNotPrimitiveValueType(type) => result = getAllOp1(ent)) & (name = "super" => result = self.ancestorAllOps(ent,sup) )
+
+
+
+
+
+
+
+Operation:
+ancestorAllOps
+CMember
+String
+ent String sup String
+ query
+type : CPointerType
+anc = type.pointsTo & result = anc.members->collect( m | m.inheritedAllOp(ent, sup) )->sum()
+
+
+
+
+
+
+
+Operation:
+inheritedAllOps
+CMember
+String
+ent String
+ query
+type : CPointerType
+sup = type.pointsTo & result = sup.members->collect( m | m.inheritedAllOp(ent, sup.name) )->sum()
+
+
+
+
+
+
+
+
+Operation:
+getPKOp
+CMember
+String
+ent String
+ query
+true
+ e = ent.toLowerCase & result = "struct " + ent + "* get" + ent + "ByPK(char* _ex)\n" + "{ int n = length((void**) " + e + "_instances);\n" + "  int i = 0;\n" + "  for ( ; i < n; i++)\n" + "  { char* _v = get" + ent + "_" + name + "(" + e + "_instances[i]);\n" +   "    if (_v != NULL && strcmp(_v,_ex) == 0)\n" + "    { return " + e + "_instances[i]; }\n" +  "  }\n" + "  return NULL;\n" + "}\n"
+
+
+
+
+
+
+Operation:
+getPKsOp
+CMember
+String
+ent String
+ query
+true
+ e = ent.toLowerCase & result = "struct " + ent + "** get" + ent + "ByPKs(char* _col[])\n" + "{ int n = length((void**) _col);\n" + "  struct " + ent + "** result = (struct " + ent + "**) calloc(n+1, sizeof(struct " + ent + "*));\n" + "  int i = 0; int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { char* _v = _col[i];\n" +   "    struct " + ent + "* _ex = get" + ent + "ByPK(_v);\n" + "    if (_ex != NULL)\n" + "    { result[j] = _ex; j++; }\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result; }\n"
+
+
+
+
+
+
+
+Operation:
+initialiser
+CMember
+String
+
+ query
+true
+(isKey = true  =>  result = "") & (name = "super"  => result = "  result->super = create" + type.pointsTo.name + "();\n") & (type : CPointerType or type : CArrayType  => result = "  result->" + name + " = NULL;\n") & (type : CPrimitiveType  => result = "  result->" + name + " = 0;\n")
+
+
+
+
+
+
+
+
+
+
+
+Operation:
+concatenateOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** concatenate" + name + "(struct " + name + "* _col1[], struct " + name + "* _col2[])\n" + "{ int n = length((void**) _col1);\n" + "  int m = length((void**) _col2);\n" + "  struct " + name + "** result = (struct " + name + "**) calloc(n + m + 1, sizeof(struct " + name + "*));\n" + "  int i = 0;\n" + "  int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { result[j] = _col1[i];\n" + "    j++;\n" + "  }\n" + "  i = 0;\n" + "  for ( ; i < m; i++)\n" + "  { result[j] = _col2[i];\n" + "    j++;\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+Operation:
+concatenateOp
+CPrimitiveType
+String
+
+ query
+true
+result = name + "** concatenate" + name + "(" + name + "* _col1[], " + name + "* _col2[])\n" + "{ int n = length((void**) _col1);\n" + "  int m = length((void**) _col2);\n" + "  " + name + "** result = (" + name + "**) calloc(n + m + 1, sizeof(" + name + "*));\n" + "  int i = 0;\n" + "  int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { result[j] = _col1[i];\n" + "    j++;\n" + "  }\n" + "  i = 0;\n" + "  for ( ; i < m; i++)\n" + "  { result[j] = _col2[i];\n" + "    j++;\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+Operation:
+intersectionOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** intersection" + name + "(struct " + name + "* _col1[], struct " + name + "* _col2[])\n" + "{ int n = length((void**) _col1);\n" + "  int m = length((void**) _col2);\n" + "  struct " + name + "** result = (struct " + name + "**) calloc(n + 1, sizeof(struct " + name + "*));\n" + "  int i = 0;\n" + "  int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { struct " + name + "* _ex = _col1[i];\n" + "    if (isIn((void*) _ex, (void**) _col2))\n" + "    { result[j] = _ex; j++; }\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+Operation:
+intersectionOp
+CPrimitiveType
+String
+
+ query
+true
+result = name + "** intersection" + name + "(" + name + "* _col1[], " + name + "* _col2[])\n" + "{ int n = length((void**) _col1);\n" + "  int m = length((void**) _col2);\n" + "" + name + "** result = (" + name + "**) calloc(n + 1, sizeof(" + name + "*));\n" + "  int i = 0;\n" + "  int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { " + name + "* _ex = _col1[i];\n" + "    if (isIn" + name + "(*_ex, _col2))\n" + "    { result[j] = _ex; j++; }\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+Operation:
+insertAtOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** insertAt" + name + "(struct " + name + "* col1[], int ind, struct " + name + "* col2[])\n" + "{ if (ind <= 0) { return col1; }\n" + "  int n = length((void**) col1);\n" + "  int m = length((void**) col2);\n" + "  if (m == 0) { return col1; }\n" + "  struct " + name + "** result = (struct " + name + "**) calloc(n + m + 1, sizeof(struct " + name + "*));\n" + "  int i = 0; int j = 0;\n" + "  for ( ; i < ind - 1 && i < n; i++)\n" + "  { result[i] = col1[i]; }\n" + "  if (i == ind - 1)\n" + "  { for ( ; j < m; j++, i++)\n" + "    { result[i] = col2[j]; }\n" + "    for ( ; i < n + m; i++)\n" + "    { result[i] = col1[i - m]; }\n" + "  }\n" + "  else \n" + "  { for ( ; j < m; j++, i++)\n" + "    { result[i] = col2[j]; }\n" + "  }\n" + "  result[n+m] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+Operation:
+insertAtOp
+CPrimitiveType
+String
+
+ query
+true
+result = name + "** insertAt" + name + "(" + name + "* col1[], int ind, " + name + "* col2[])\n" + "{ if (ind <= 0) { return col1; }\n" + "  int n = length((void**) col1);\n" + "  int m = length((void**) col2);\n" + "  if (m == 0) { return col1; }\n" + "  " + name + "** result = (" + name + "**) calloc(n + m + 1, sizeof(" + name + "*));\n" + "  int i = 0; int j = 0;\n" + "  for ( ; i < ind - 1 && i < n; i++)\n" + "  { result[i] = col1[i]; }\n" + "  if (i == ind - 1)\n" + "  { for ( ; j < m; j++, i++)\n" + "    { result[i] = col2[j]; }\n" + "    for ( ; i < n + m; i++)\n" + "    { result[i] = col1[i - m]; }\n" + "  }\n" + "  else \n" + "  { for ( ; j < m; j++, i++)\n" + "    { result[i] = col2[j]; }\n" + "  }\n" + "  result[n+m] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+
+
+
+
+Operation:
+exists1Op
+CStruct
+String
+
+ query
+true
+result = "unsigned char exists1" + name + "(struct " + name + "* col[], unsigned char (*test)(struct " + name + "* ex))\n" + "{ int n = length((void**) col);\n" + "  unsigned char result = FALSE; \n" + "  unsigned char found = FALSE;\n" + "  int i = 0;  \n" + "  for ( ; i < n; i++)\n" + "  { struct " + name + "* ex = col[i];\n" + "    if (ex == NULL) { return result; }\n" + "    if ((*test)(ex))\n" + "    { if (found) { return FALSE; }\n" + "      else { found = TRUE; }\n" + "    }\n" + "  }\n" + "  if (found) { return TRUE; }\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+Operation:
+isUniqueOp
+CStruct
+String
+
+ query
+true
+result = "unsigned char isUnique" + name + "(struct " + name + "* col[], void* (*fe)(struct " + name + "* ex))\n" + "{ unsigned char result = TRUE; \n" + "  void** values = collect" + name + "(col, fe);\n" + "  int n = length((void**) values);\n" + "  int i = 0;  \n" + "  for ( ; i < n; i++)\n" + "  { void* ex = values[i];\n" + "    if (i < n - 1 && isIn(ex, values + (i + 1)))\n" + "    { return FALSE; }\n" + "  }\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+
+Operation:
+frontOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** front" + name + "(struct " + name + "* col[])\n" + "{ int n = length((void**) col);\n" + "  return subrange" + name + "(col, 1, n-1);\n}\n"
+
+
+
+
+
+
+Operation:
+frontOp
+CPrimitiveType
+String
+
+ query
+true
+result = name + "** front" + name + "(" + name + "* col[])\n" + "{ int n = length((void**) col);\n" + "  return subrange" + name + "(col, 1, n-1);\n}\n"
+
+
+
+
+
+
+
+
+
+Operation:
+tailOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** tail" + name + "(struct " + name + "* col[])\n" + "{ int n = length((void**) col);\n" + "  return subrange" + name + "(col, 2, n);\n}\n"
+
+
+
+
+
+
+Operation:
+tailOp
+CPrimitiveType
+String
+
+ query
+true
+result = name + "** tail" + name + "(" + name + "* col[])\n" + "{ int n = length((void**) col);\n" + "  return subrange" + name + "(col, 2, n);\n}\n"
+
+
+
+
+
+
+
+
+Operation:
+removeAllOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** removeAll" + name + "(struct " + name + "* col1[], struct " + name + "* col2[])\n" + "{ int n = length((void**) col1);\n" + "  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));\n" + "  int i = 0; int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { struct " + name + "* ex = col1[i];\n" + "    if (isIn((void*) ex, (void**) col2)) {}\n" + "    else \n" + "    { result[j] = ex; j++; }\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+Operation:
+removeAllOp
+CPrimitiveType
+String
+
+ query
+true
+result = name + "** removeAll" + name + "(" + name + "* col1[], " + name + "* col2[])\n" + "{ int n = length((void**) col1);\n" + "  " + name + "** result = (" + name + "**) calloc(n+1, sizeof(" + name + "*));\n" + "  int i = 0; int j = 0;\n" + "  for ( ; i < n; i++)\n" + "  { " + name + "* ex = col1[i];\n" + "    if (isIn" + name + "(*ex, col2)) {}\n" + "    else \n" + "    { result[j] = ex; j++; }\n" + "  }\n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+
+
+
+
+Operation:
+asSetOp
+CStruct
+String
+
+ query
+true
+result = "struct " + name + "** asSet" + name + "(struct " + name + "* col[])\n" + "{ int n = length((void**) col);\n" + "  if (n == 0) { return col; }\n" + "  struct " + name + "** result = (struct " + name + "**) calloc(n + 1, sizeof(struct " + name + "*));\n" + "  int i = 0; int j = 0;\n" + "  result[j] = NULL;\n" + "  for ( ; i < n; i++)\n" + "  { struct " + name + "* ex = col[i];\n" + "    if (isIn((void*) ex, (void**) result)) {}\n" + "    else  \n" + "    { result[j] = col[i]; j++;\n" + "      result[j] = NULL; }\n" + "  }    \n" + "  result[j] = NULL;\n" + "  return result;\n" + "}\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+Entity:
+CVariable 1117 991
+null  * 
+name String 3 false false false kind String 3 false false false initialisation String 3 false false false
+
+
+
+
+
+
+
+Operation:
+parameterDeclaration
+CVariable
+String
+ 
+ query
+true
+( type : CFunctionPointerType => result = type.rangeType + " (*" + name + ")(" + type.domainType + ")" ) & ( type /: CFunctionPointerType => result = type + " " + name )
+
+
+
+
+
+Operation:
+toString
+CVariable
+String
+
+query
+true
+result = self.parameterDeclaration() + ";\n"
+
+
+
+
+
+Entity:
+CProgram 1058 1049
+null  * 
+
+
+
+
+
+Operation:
+defineCOp
+CProgram
+COperation
+b CExpression par String pt CType
+ query
+true
+COperation->exists( op | op.name = "op_" + operations@pre.size & op.scope = "auxiliary" & op.isStatic = false & b.needsBracket = true & op.returnType = b.type & op.isQuery = true & CReturnStatement->exists( rt | rt.cstatId = "return_" + b.cexpId & b : rt.returnValue & op.code = rt ) & CVariable->exists( v | v.name = par & v.type = pt & v : op.parameters ) &  op : operations & result = op ) 
+
+
+
+
+Operation:
+defineCOpWithCode
+CProgram
+COperation
+cde CStatement par String pt CType
+query
+true
+COperation->exists( op | op.name = "op_" + operations@pre.size & op.scope = "auxiliary" & op.isStatic = false &  CPrimitiveType->exists( vt | vt.name = "void" & vt.ctypeId = "void_type" & op.returnType = vt ) & op.isQuery = true & op.code = cde & CVariable->exists( v | v.name = par & v.type = pt & v : op.parameters ) &  op : operations & result = op )
+
+
+
+
+
+Operation:
+printOperations
+CProgram
+void
+
+
+true
+operations->forAll( op | op->display() )
+
+
+
+
+Operation:
+printGlobalVariables
+CProgram
+void
+
+
+true
+variables->forAll( var | var->display() )
+
+
+
+
+Operation:
+printProgramHeader
+CProgram
+void
+
+
+true
+"#include <ctype.h>"->display() & "#include <stdio.h>"->display() & "#include <string.h>"->display() & "#include <stdlib.h>"->display() & "#include <time.h>"->display() & "#include <math.h>"->display() & "#include <regexp.h>"->display() & "#include <errno.h>"->display() & "\n"->display() & "#define TRUE 1"->display() & "#define FALSE 0\n"->display() & "#include \"ocl.h\"\n"->display() & "#include \"mathlib.h\"\n"->display() & "#include \"ocltype.h\"\n"->display() & "#include \"oclfile.h\"\n#include \"ocldate.h\"\n#include \"oclprocess.h\"\n#include \"oclrandom.h\"\n#include \"oclexception.h\"\n"->display() & "#include \"app.h\"\n"->display()
+
+
+
+
+Entity:
+CFunctionPointerType 1251 764
+CType  * 
+
+
+
+Operation:
+toString
+CFunctionPointerType
+String
+
+ query
+true
+result = rangeType + " (*)(" + domainType + ")"
+
+
+
+Operation:
+declarationString
+CFunctionPointerType
+String
+t CType var String
+static query
+true
+(t : CFunctionPointerType => result = t.rangeType + " (*" + var + ")(" + t.domainType + ")") & (true => result = t + " " + var)
+
+
+
+
+
+Entity:
+COperation 1256 917
+null  * 
+name String 3 false false false opId String 3 false true false isStatic boolean 3 false false false scope String 3 false false false isQuery boolean 3 false false false inheritedFrom String 3 false false false isAbstract boolean 3 false false false classname String 3 false false false
+
+
+
+
+
+
+
+Operation:
+parameterDeclaration
+COperation
+String
+s Sequence(CVariable) 
+static query
+true
+( s.size = 0 => result = "void" ) & ( s.size = 1 & p = s->at(1) => result = p.parameterDeclaration() ) & ( s.size > 1 & p = s->at(1) => result = p.parameterDeclaration() + ", " + COperation.parameterDeclaration(s.tail) )
+
+
+
+
+
+
+Operation:
+toString
+COperation
+String
+
+ query
+true
+(code->oclIsUndefined() => result = "") & (true => result = returnType + " " + name + "(" + parameterDeclaration(parameters) + ")\n" + "{" + code + "}\n")
+
+
+
+
+Operation:
+toUseCaseDefinition
+COperation
+String
+
+ query
+true
+(returnType.name = "void" => result = returnType + " " + name + "(" + parameterDeclaration(parameters) + ")\n" + "{" + code + "}\n") & (returnType.name /= "void" => result = returnType + " " + name + "(" + parameterDeclaration(parameters) + ")\n" + "{ " + returnType + " result;\n" + code + "  return result;\n}\n") 
+
+
+
+
+
+Operation:
+getDeclaration
+COperation
+String
+
+ query
+true
+result = returnType + " " + name + "(" + parameterDeclaration(parameters) + ");\n"
+
+
+
+
+
+
+
+Association:
+CProgram COperation 1 1143 1051 1253 1005 0 operations null 
+
+
+
+Association:
+CProgram CVariable 1 1139 1098 1199 1057 0 variables null 
+
+
+
+Association:
+CProgram CStruct -1 1160 1058 831 835 0 structs null 1120 955 1121 837 
+
+
+
+
+
+
+
+
+Association:
+COperation CVariable -1 1316 914 1120 1008 0 parameters null 
+ordered 
+
+
+
+Association:
+CVariable CType 0 1047 993 937 900 1 type null 
+
+
+
+Association:
+COperation CType 0 1326 917 901 899 1 returnType null 
+
+
+
+Association:
+COperation CType 0 1326 917 901 899 1 elementType null
+
+
+
+
+Entity:
+Statement 366 1118
+null  * abstract 
+statId String 3 false true false
+
+
+
+Operation:
+mapStatement
+Statement
+CStatement
+ 
+abstract
+true
+true
+
+
+
+
+Entity:
+ReturnStatement 272 1175
+Statement  * 
+
+
+
+
+Operation:
+mapStatement
+ReturnStatement
+CStatement
+ 
+ 
+true
+CReturnStatement->exists( r | r.cstatId = statId & r.returnValue = returnValue.mapExpression() & result = r)
+
+
+
+
+Entity:
+BehaviouralFeature 310 9
+null  * abstract 
+name String 3 false false false isStatic boolean 3 false false false
+
+
+
+Entity:
+Operation 388 527
+BehaviouralFeature  * 
+isQuery boolean 3 false false false isCached boolean 3 false false false isStatic boolean 3 false false false
+
+
+
+
+Generalisation:
+BehaviouralFeature Operation 385 528 335 23
+
+
+
+
+Entity:
+UseCase 539 1007
+null  * 
+name String 3 false false false
+
+
+
+
+
+Association:
+UseCase Property -1 664 1050 246 421 0 parameters null 
+ordered 
+
+
+
+
+
+Association:
+UseCase Type 0 545 28 148 222 1 resultType null 
+
+
+
+
+Entity:
+BreakStatement 289 1209
+Statement  * 
+
+
+
+
+
+Operation:
+mapStatement
+BreakStatement
+CStatement
+ 
+ 
+true
+CBreakStatement->exists( r | r.cstatId = statId & result = r)
+
+
+
+
+
+
+Entity:
+OperationCallStatement 248 1366
+Statement  * 
+assignsTo String 3 false false false
+
+
+
+
+Operation:
+mapStatement
+OperationCallStatement
+CStatement
+ 
+ 
+true
+if callExp->oclIsUndefined() then CSequenceStatement->exists( cs | cs.cstatId = statId & result = cs ) else OpCallStatement->exists( ca | ca.cstatId = statId & ca.callExp = callExp.mapExpression() & ca.assignsTo = assignsTo & result = ca ) endif
+
+
+
+
+
+
+
+Entity:
+ImplicitCallStatement 305 1413
+Statement  * 
+assignsTo String 3 false false false
+
+
+
+
+
+
+
+Operation:
+mapStatement
+ImplicitCallStatement
+CStatement
+ 
+ 
+true
+if callExp->oclIsUndefined() then CSequenceStatement->exists( cs | cs.cstatId = statId & result = cs ) else OpCallStatement->exists( ca | ca.cstatId = statId & ca.callExp = callExp.mapExpression() & ca.assignsTo = assignsTo & result = ca ) endif
+
+
+
+
+
+
+
+
+Entity:
+LoopStatement 509 1304
+Statement  * abstract 
+
+
+
+Entity:
+BoundedLoopStatement 501 1400
+LoopStatement  * 
+
+
+
+
+
+Operation:
+mapBoundedLoopStatement
+BoundedLoopStatement
+CStatement
+bdy CStatement 
+ 
+true
+ForLoop->exists( lp | lp.cstatId = statId & lp.body = bdy & lp.test = test.mapExpression() & lp.loopVar = loopVar.mapExpression() & lp.loopRange = loopRange.mapExpression() & result = lp )
+
+
+
+
+
+
+
+
+
+
+Operation:
+mapStatement
+BoundedLoopStatement
+CStatement
+ 
+ 
+true
+result = mapBoundedLoopStatement(body.mapStatement())
+
+
+
+
+
+
+
+
+Entity:
+UnboundedLoopStatement 543 1354
+LoopStatement  * 
+
+
+
+
+
+
+
+Operation:
+mapUnboundedLoopStatement
+UnboundedLoopStatement
+CStatement
+bdy CStatement 
+ 
+true
+WhileLoop->exists( lp | lp.cstatId = statId & lp.body = bdy & lp.test = test.mapExpression() & result = lp )
+
+
+
+
+
+
+
+Operation:
+mapStatement
+UnboundedLoopStatement
+CStatement
+ 
+ 
+true
+result = mapUnboundedLoopStatement(body.mapStatement())
+
+
+
+
+
+
+
+
+Entity:
+AssignStatement 28 1022
+Statement  * 
+
+
+
+
+Operation:
+mapStatement
+AssignStatement
+CStatement
+ 
+ 
+true
+(type.size = 0 => result = left.mapAssignment(self, right.mapExpression(),right)) & (type.size > 0 => CAssignment->exists( ca | ca.cstatId = statId & ca.left = left.mapExpression() & ca.right = right.mapExpression() & ca.type = CType[type.typeId] & result = ca))
+
+
+
+
+
+
+Association:
+AssignStatement Type 0 27 1066 27 255 -1 type null 
+
+
+
+
+
+
+Entity:
+SequenceStatement 683 1123
+Statement  * 
+kind int 3 false false false
+
+
+
+
+
+Operation:
+mapSequenceStatement
+SequenceStatement
+CStatement
+css Sequence(CStatement) 
+ 
+true
+CSequenceStatement->exists( cs | cs.cstatId = statId & cs.kind = kind & cs.statements = css & result = cs )
+
+
+
+
+
+
+
+
+Operation:
+mapStatement
+SequenceStatement
+CStatement
+ 
+ 
+true
+result = mapSequenceStatement(statements.mapStatement())
+
+
+
+
+
+
+Entity:
+ConditionalStatement 135 1063
+Statement  * 
+
+
+
+
+
+
+Operation:
+mapConditionalStatement
+ConditionalStatement
+CStatement
+ifP CStatement elseP Sequence(CStatement) 
+ 
+true
+IfStatement->exists( istat | istat.cstatId = statId & istat.ifPart = ifP & istat.elsePart = elseP & istat.test = test.mapExpression() & result = istat )
+
+
+
+
+
+
+Operation:
+mapStatement
+ConditionalStatement
+CStatement
+ 
+ 
+true
+result = mapConditionalStatement(ifPart.mapStatement(), elsePart.mapStatement())
+
+
+
+
+
+
+
+
+
+Entity:
+CreationStatement 286 1245
+Statement  * 
+createsInstanceOf String 3 false false false assignsTo String 3 false false false
+
+
+
+
+
+Association:
+CreationStatement Expression 0 269 1270 500 500 -1 initialExpression null
+
+
+
+
+
+Operation:
+mapStatement
+CreationStatement
+CStatement
+ 
+ 
+true
+DeclarationStatement->exists( ds | ds.cstatId = statId & ds.createsInstanceOf = createsInstanceOf & ds.assignsTo = assignsTo & ds.initialExp = initialExpression.mapExpression() & ds.type = CType[type.typeId] & ds.elementType = CType[elementType.typeId] & result = ds)
+
+
+
+
+
+
+Association:
+CreationStatement Type 0 270 1266 27 255 1 type null 
+
+
+
+Association:
+CreationStatement Type 0 268 1279 108 257 1 elementType null 
+
+
+
+Association:
+BehaviouralFeature Statement -1 424 32 430 1116 1 activity null 
+
+
+
+Association:
+ReturnStatement Expression -1 275 1178 200 185 -1 returnValue null 
+
+
+Association:
+UseCase Statement -1 545 1028 448 1122 1 classifierBehaviour null 
+
+
+Association:
+OperationCallStatement Expression -1 254 1368 175 209 1 callExp null 201 1309 
+
+
+Association:
+ImplicitCallStatement Expression -1 309 1434 110 206 1 callExp null 180 1400 
+
+
+Association:
+LoopStatement Expression -1 510 1315 201 198 1 test null 267 1309 
+
+
+Association:
+AssignStatement Expression -1 32 1043 106 198 1 left null 
+
+
+Association:
+AssignStatement Expression -1 118 1044 124 180 1 right null 
+
+
+Association:
+ConditionalStatement Expression -1 179 1087 179 177 1 test null 
+
+
+Association:
+ConditionalStatement Statement -1 302 1084 367 1122 1 ifPart null 303 120 
+
+
+Association:
+ConditionalStatement Statement -1 218 1085 367 1139 -1 elsePart null 217 1139 
+
+
+Association:
+SequenceStatement Statement -1 687 1159 453 1130 0 statements null 
+ordered 
+
+
+Association:
+LoopStatement Statement -1 627 1305 451 1141 1 body null 625 1175 
+
+
+Generalisation:
+Statement ReturnStatement 383 1179 380 1140
+
+
+
+Generalisation:
+Statement BreakStatement 417 1213 414 1143
+
+
+
+Generalisation:
+Statement OperationCallStatement 439 1365 429 1143
+
+
+
+Generalisation:
+Statement ImplicitCallStatement 467 1416 439 1144
+
+
+
+Generalisation:
+Statement LoopStatement 515 1307 447 1144
+
+
+
+Generalisation:
+LoopStatement BoundedLoopStatement 522 1404 519 1328
+
+
+
+Association:
+BoundedLoopStatement Expression -1 515 1315 211 198 1 loopRange null 
+
+
+
+Association:
+BoundedLoopStatement Expression -1 520 1315 221 198 1 loopVar null  
+
+
+
+
+Generalisation:
+LoopStatement UnboundedLoopStatement 635 1356 634 1327
+
+
+
+Generalisation:
+Statement SequenceStatement 686 1128 451 1124
+
+
+
+Generalisation:
+Statement ConditionalStatement 312 1068 385 1119
+383 1067 
+
+
+Generalisation:
+Statement AssignStatement 164 1034 408 1120
+403 1047 
+
+
+Generalisation:
+Statement CreationStatement 427 1244 422 1142
+
+
+
+
+
+Entity:
+CStatement 1216 668
+null  * abstract 
+cstatId String 3 false true false
+
+
+
+Operation:
+toString
+CStatement
+String
+
+ query
+true
+result = ""
+
+
+
+Entity:
+CReturnStatement 1132 731
+CStatement  * 
+
+
+
+Operation:
+toString
+CReturnStatement
+String
+
+ query
+true
+(returnValue.size = 1  => result = "  return " + returnValue.any + ";\n") & (returnValue.size = 0  => result = "  return;\n")
+
+
+
+
+
+Operation:
+toString
+CExpression
+String
+
+ query
+true
+result = " "
+
+
+Entity:
+CBreakStatement 913 893
+CStatement  * 
+
+
+Operation:
+toString
+CBreakStatement
+String
+
+ query
+true
+result = "  break;\n"
+
+
+Entity:
+OpCallStatement 1098 916
+CStatement  * 
+assignsTo String 3 false false false
+
+
+Operation:
+toString
+OpCallStatement
+String
+
+ query
+true
+("skip" = (callExp + "") => result = "") & (true => result = "  " + callExp + ";\n")
+
+
+
+
+Entity:
+CLoopStatement 1359 854
+CStatement  * abstract 
+
+
+Entity:
+ForLoop 1325 975
+CLoopStatement  *
+
+
+
+
+Operation:
+accessForRangeElement
+ForLoop
+String
+ind String rng String
+query
+true
+(CType.isPrimitiveValueType(loopRange.elementType) => result = "*(" + rng + "[" + ind + "])") & (true => result = rng + "[" + ind + "]")
+
+ 
+
+
+Operation:
+toString
+ForLoop
+String
+
+ query
+true
+ind = "ind_" + cstatId & rng = "range_" + cstatId => result = "  int " + ind + " = 0;\n" + "  " + loopRange.type + " " + rng + " = " + loopRange + ";\n" + "  for ( ; " + ind + " < length((void**) " + rng + "); " + ind + "++)\n" + "  { " + loopRange.elementType + " " + loopVar + " = " + accessForRangeElement(ind,rng) + ";\n" + "    " + body + "\n" + "  }\n"
+
+  
+
+
+
+
+Entity:
+WhileLoop 1393 904
+CLoopStatement  * 
+
+
+Operation:
+toString
+WhileLoop
+String
+
+ query
+true
+result = "  while (" + test + ")\n" + "  { " + body + "  }\n"
+
+
+Entity:
+CAssignment 878 572
+CStatement  * 
+
+
+
+Operation:
+toString
+CAssignment
+String
+
+ query
+true
+(type.size = 0 => result = "  " + left + " = " + right + ";\n") & (type.size > 0 => result = "  " + type.any + " " + left + " = " + right + ";\n")
+
+
+
+
+Association:
+CAssignment CType 0 870 576 27 255 -1 type null 
+
+
+
+
+Entity:
+CSequenceStatement 1542 655
+CStatement  * 
+kind int 3 false false false
+
+
+Operation:
+toString
+CSequenceStatement
+String
+
+ query
+true
+result = statements->collect( s | s.toString() )->sum()
+
+
+Entity:
+IfStatement 985 613
+CStatement  * 
+
+
+Operation:
+toString
+IfStatement
+String
+
+ query
+true
+(elsePart.size = 0  =>  result = "  if (" + test + ")\n" + "  {" + ifPart + "  }\n") & (elsePart.size > 0  =>  result = "  if (" + test + ")\n" + "  {" + ifPart + "  }\n" + "  else \n" + "  {" + elsePart.any + "  }\n")
+
+
+
+
+Entity:
+DeclarationStatement 1133 781
+CStatement  * 
+createsInstanceOf String 3 false false false assignsTo String 3 false false false
+
+
+
+
+Association:
+DeclarationStatement CExpression 0 1133 781 500 500 -1 initialExp null
+
+
+
+
+
+Operation:
+toString
+DeclarationStatement
+String
+
+ query
+true
+(type : CFunctionPointerType & td = type.domainType & tr = type.rangeType => result = "  " + tr + " (*" + assignsTo + ")(" + td + ");\n") & (initialExp.size > 0 => result = "  " + type + " " + assignsTo + " = " + initialExp.any + ";\n") & (createsInstanceOf = "String"  => result = "  " + type + " " + assignsTo + " = \"\";\n") & (type : CPrimitiveType  => result = "  " + type + " " + assignsTo + " = 0;\n") & (type : CEnumeration  => result = "  " + type + " " + assignsTo + " = 0;\n") & (true => result = "  " + type + " " + assignsTo + " = NULL;\n")
+
+
+
+
+
+
+Association:
+DeclarationStatement CType 0 1141 783 1280 1666 1 type null 
+
+
+Association:
+DeclarationStatement CType 0 1141 783 1280 1666 1 elementType null 
+
+
+
+Association:
+COperation CStatement -1 1411 583 1280 666 1 code null 
+
+
+Association:
+CReturnStatement CExpression -1 1125 728 1050 735 -1 returnValue null 
+
+
+Association:
+OpCallStatement CExpression -1 1104 918 978 780 1 callExp null 1051 859 
+
+
+Association:
+CLoopStatement CExpression -1 1360 865 1076 778 1 test null 1117 859 
+
+
+Association:
+CAssignment CExpression -1 885 617 956 748 1 left null 
+
+
+Association:
+CAssignment CExpression -1 939 615 974 730 1 right null 
+
+
+Association:
+IfStatement CExpression -1 1016 658 1029 727 1 test null 
+
+
+Association:
+IfStatement CStatement -1 1124 653 1217 672 1 ifPart null 1153 670 
+
+
+Association:
+IfStatement CStatement -1 1068 656 1217 689 -1 elsePart null 1067 689 
+
+
+Association:
+CSequenceStatement CStatement -1 1537 709 1363 688 0 statements null 
+ordered 
+
+
+Association:
+CLoopStatement CStatement -1 1477 855 1349 713 1 body null 1475 725 
+
+
+Association:
+ForLoop CSequenceStatement -1 1469 982 1614 711 1 increment null 1629 965 
+
+
+Generalisation:
+CStatement CReturnStatement 1233 729 1234 707
+
+
+
+Generalisation:
+CStatement CBreakStatement 1061 897 1278 713
+
+
+
+Generalisation:
+CStatement OpCallStatement 1289 915 1296 708
+
+
+
+Generalisation:
+CStatement CLoopStatement 1414 856 1332 710
+
+
+
+Generalisation:
+CLoopStatement ForLoop 1371 978 1369 878
+
+
+
+Generalisation:
+CLoopStatement WhileLoop 1485 906 1484 877
+
+
+
+Generalisation:
+CStatement CSequenceStatement 1536 678 1360 675
+
+
+
+Generalisation:
+CStatement IfStatement 1127 620 1237 668
+1233 617 
+
+
+Generalisation:
+CStatement CAssignment 1021 578 1258 670
+1253 597 
+
+
+Generalisation:
+CStatement DeclarationStatement 1318 778 1319 710
+
+
+
+Association:
+ForLoop CExpression 0 1327 984 958 768 1 loopVar null 850 981 
+
+
+Association:
+ForLoop CExpression 0 1328 1010 960 752 1 loopRange null 740 1005 
+
+
+
+
+GeneralUseCase:
+printcode 
+
+
+
+false
+
+
+
+
+
+
+Constraint:
+null
+true
+printProgramHeader()
+CProgram printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+true
+allMembers = allCMembers()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+true
+self.printGlobalVariables()
+CProgram printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+( "struct " + name + "** " + name.toLowerCase + "_instances = NULL;" )->display() & ( "int " + name.toLowerCase + "_size = 0;\n" )->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+( "struct " + name + "** new" + name + "List(void)" )->display() & ( "{ return (struct " + name + "**) calloc(ALLOCATIONSIZE, sizeof(struct " + name + "*)); }\n" )->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & f : members & f.name /= "super"
+f.getterOp(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & f : members & f.name = "super"
+f.inheritedGetterOps(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & f : members & f.name /= "super"
+f.setterOp(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & f : members & f.name = "super"
+f.inheritedSetterOps(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & f : allMembers & CType.isPrimitiveValueType(f.type)
+f.getAllOp(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & f : allMembers & f.name /= "super" & CType.isNotPrimitiveValueType(f.type)
+f.getAllOp1(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+true
+self.isApplicationClass() & allMembers->exists( k | k.isKey ) & key = allMembers->select( isKey )->any()
+key.getPKOp(name)->display() & key.getPKsOp(name)->display() 
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+( "struct " + name + "** append" + name + "(struct " + name + "* col[], struct " + name + "* ex)" )->display() & ( "   { struct " + name + "** result;" )->display() & "     int len = length((void**) col);"->display() & "     if (len % ALLOCATIONSIZE == 0)"->display() & ( "     { result = (struct " + name + "**) calloc(len + ALLOCATIONSIZE + 1, sizeof(struct " + name + "*));" )->display() & "       int i = 0;"->display() & "       for ( ; i < len; i++) { result[i] = col[i]; }"->display() & "     }"->display() & "    else { result = col; }"->display() & "    result[len] = ex;"->display() & "    result[len+1] = NULL;"->display() & "    return result;"->display() & "  }\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & allMembers->exists( k | k.isKey ) & key = allMembers->select( isKey )->any()
+self.createPKOp(name, key.name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+self.createOp(name)->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+( "struct " + name + "** insert" + name + "(struct " + name + "* col[], struct " + name + "* self)" )->display() & "  { if (isIn((void*) self, (void**) col))"->display() & "    { return col; }"->display() & ( "    return append" + name + "(col,self);" )->display() & "  }\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->select" & be.left.elementType.name = name )
+( "struct " + name + "** select" + name + "(struct " + name + "* col[], unsigned char (*test)(struct " + name + "* self))" )->display() & ( "{ struct " + name + "** result;" )->display() & "  int len = length((void**) col);"->display() & ( "  result = (struct " + name + "**) calloc(len + 1, sizeof(struct " + name + "*));" )->display() & "  int j = 0;"->display() & "  int i = 0;"->display() & "  for ( ; i < len; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & "    if (self == NULL)"->display() & "	{ result[j] = NULL;"->display() & "	  return result;"->display() & "	}"->display() & "	if ((*test)(self))"->display() & "    { result[j] = self;"->display() & "	  j++;"->display() & "	}"->display() & "  }"->display() & "  result[j] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->reject" & be.left.elementType.name = name )
+( "struct " + name + "** reject" + name + "(struct " + name + "* col[], unsigned char (*test)(struct " + name + "* self))" )->display() & ( "{ struct " + name + "** result;" )->display() & "  int len = length((void**) col);"->display() & ( "  result = (struct " + name + "**) calloc(len + 1, sizeof(struct " + name + "*));" )->display() & "  int j = 0;"->display() & "  int i = 0;"->display() & "  for ( ; i < len; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & "    if (self == NULL)"->display() & "	{ result[j] = NULL;"->display() & "	  return result;"->display() & "	}"->display() & "	if ((*test)(self)) {}"->display() & "    else { result[j] = self;"->display() & "	  j++;"->display() & "	}"->display() & "  }"->display() & "  result[j] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->collect" & be.left.elementType.name = name )
+( "   void** collect" + name + "(struct " + name + "* col[], void* (*fe)(struct " + name + "*))" )->display() & "   { int n = length((void**) col);"->display() & "    void** result = (void**) calloc(n+1, sizeof(void*));"->display() & "    int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "    { struct " + name + "* self = col[i];" )->display() & "      result[i] = (*fe)(self);"->display() & "    }"->display() & "    result[n] = NULL;"->display() & "    return result;"->display() & "  }\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->collect" & be.left.elementType.isValuePrimitiveType() & be.right.type.name = name )
+( "struct " + name + "** collectint" + name + "(int* col[], struct " + name + "* (*fe)(int))" )->display() & ("{ int n = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "  int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "  { int* self = col[i];" )->display() & ("    result[i] = (*fe)(*self);")->display() & "  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display() & ( "struct " + name + "** collectString" + name + "(char* col[], struct " + name + "* (*fe)(char*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "  int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "  { char* self = col[i];" )->display() & ("    result[i] = (*fe)(self);")->display() & "  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display() & ( "struct " + name + "** collectdouble" + name + "(double* col[], struct " + name + "* (*fe)(double))" )->display() & ("{ int n = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "  int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "  { double* self = col[i];" )->display() & ("    result[i] = (*fe)(*self);")->display() & "  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->collect" & be.left.elementType.name = name & be.right.type.isValuePrimitiveType() )
+( "struct int** collect" + name + "int(struct " + name + "* col[], int (*fe)(struct " + name + "*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  int** result = (int**) calloc(n+1, sizeof(int*));")->display() & "  int i = 0;"->display() & "  for ( ; i < n; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & ( "    int* ptr = (int*) malloc(sizeof(int));" )->display() & ("    *ptr = (*fe)(self);")->display() & "    result[i] = ptr;\n  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display() & ( "struct double** collect" + name + "double(struct " + name + "* col[], double (*fe)(struct " + name + "*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  double** result = (double**) calloc(n+1, sizeof(double*));")->display() & "  int i = 0;"->display() & "  for ( ; i < n; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & ( "    double* ptr = (double*) malloc(sizeof(double));" )->display() & ("    *ptr = (*fe)(self);")->display() & "    result[i] = ptr;\n  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->exists" & be.left.elementType.name = name )
+( " unsigned char exists" + name + "(struct " + name + "* col[], unsigned char (*test)(struct " + name + "* ex))" )->display() & " { int n = length((void**) col);"->display() & "   unsigned char result = FALSE;"->display() & "   int i = 0;"->display() & "   for ( ; i < n; i++)"->display() & ( "   { struct " + name + "* ex = col[i];" )->display() & "     if (ex == NULL) { return result; }"->display() & "     if ((*test)(ex))"->display() & "     { return TRUE; }"->display() & "   }"->display() & "   return result;"->display() & " }\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->forAll" & be.left.elementType.name = name )
+( " unsigned char forAll" + name + "(struct " + name + "* col[], unsigned char (*test)(struct " + name + "* ex))" )->display() & " { int n = length((void**) col);"->display() & "   unsigned char result = TRUE;"->display() & "   int i = 0;"->display() & "   for ( ; i < n; i++)"->display() & ( "   { struct " + name + "* ex = col[i];" )->display() & "     if (ex == NULL) { return result; }"->display() & "     if ((*test)(ex)) {}"->display() & "     else { return FALSE; }"->display() & "   }"->display() & "   return result;"->display() & " }\n"->display()
+CStruct printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+("  struct " + name + "** subrange" + name + "(struct " + name + "** col, int i, int j)")->display() & ("  { int len = length((void**) col);")->display() & ("    if (i > j || j > len) { return NULL; }")->display() & ("    struct " + name + "** result = (struct " + name + "**) calloc(j - i + 2, sizeof(struct " + name + "*));")->display() & ("     int k = i-1;")->display() & ("     int l = 0;")->display() & ("     for ( ; k < j; k++, l++)")->display() & ("     { result[l] = col[k]; }")->display() & ("    result[l] = NULL;")->display() & ("    return result;")->display() & ("  }\n")->display() 
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+("  struct " + name + "** reverse" + name + "(struct " + name + "** col)")->display() & ("  { int n = length((void**) col);")->display() & ("    struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & ("    int i = 0;")->display() & ("    int x = n-1;")->display() & ("    for ( ; i < n; i++, x--)")->display() & ("    { result[i] = col[x]; }")->display() & ("    result[n] = NULL;")->display() & ("    return result;")->display() & ("  }\n")->display() 
+CStruct printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+("struct " + name + "** remove" + name + "(struct " + name + "* col[], struct " + name + "* ex)")->display() & ("{ int len = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(len+1, sizeof(struct " + name + "*));")->display() & ("  int j = 0;")->display() & ("  int i = 0;")->display() & ("  for ( ; i < len; i++)")->display() & ("  { struct " + name + "* eobj = col[i];")->display() & ("    if (eobj == NULL)")->display() & ("    { result[j] = NULL;")->display() & ("      return result; ")->display() & ("    }")->display() & ("    if (eobj == ex) { }")->display() & ("    else")->display() & ("    { result[j] = eobj; j++; }")->display() & ("  }")->display() & ("  result[j] = NULL;")->display() & ("  return result;")->display() & ("}\n")->display() 
+CStruct printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->union" & be.left.elementType.name = name )
+("struct " + name + "** union" + name + "(struct " + name + "* col1[], struct " + name + "* col2[])")->display() & ("  { int n = length((void**) col1);")->display() & ("    int m = length((void**) col2);")->display() & ("    struct " + name + "** result = (struct " + name + "**) calloc(n + m + 1, sizeof(struct " + name + "*));")->display() & ("    int i = 0;")->display() & ("    int j = 0;")->display() & ("    for ( ; i < n; i++)")->display() & ("    { struct " + name + "* ex = col1[i];")->display() & ("      if (isIn((void*) ex, (void**) result)) { }")->display() & ("      else   ")->display() & ("      { result[j] = ex; j++; }")->display() & ("    }    ")->display() & ("    i = 0;")->display() & ("    for ( ; i < m; i++)")->display() & ("    { struct " + name + "* ex = col2[i];")->display() & ("      if (isIn((void*) ex, (void**) result)) { }")->display() & ("      else   ")->display() & ("      { result[j] = ex; j++; }")->display() & ("    }")->display() & ("    result[j] = NULL;")->display() & ("    return result;")->display() & ("  }\n")->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isValueType() & BinaryExpression->exists( be | be.operator = "->union" & be.left.elementType.name = name )
+(name + "** union" + name + "(" + name + "* col1[], " + name + "* col2[])")->display() & ("  { int n = length((void**) col1);")->display() & ("    int m = length((void**) col2);")->display() & ("    " + name + "** result = (" + name + "**) calloc(n + m + 1, sizeof(" + name + "*));")->display() & ("    int i = 0;")->display() & ("    int j = 0;")->display() & ("    for ( ; i < n; i++)")->display() & ("    { " + name + "* ex = col1[i];")->display() & ("      if (isIn" + name + "(*ex, result)) { }")->display() & ("      else   ")->display() & ("      { result[j] = ex; j++; }")->display() & ("    }    ")->display() & ("    i = 0;")->display() & ("    for ( ; i < m; i++)")->display() & ("    { " + name + "* ex = col2[i];")->display() & ("      if (isIn" + name + "(*ex, result)) { }")->display() & ("      else   ")->display() & ("      { result[j] = ex; j++; }")->display() & ("    }")->display() & ("    result[j] = NULL;")->display() & ("    return result;")->display() & ("  }\n")->display()
+CPrimitiveType printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+self.removeAllOp()->display()
+CStruct printcode
+false
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+self.frontOp()->display()
+CStruct printcode
+false
+
+
+
+
+Constraint:
+null
+self.isApplicationClass()
+self.tailOp()->display()
+CStruct printcode
+false
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "^" & be.left.elementType.name = name )
+self.concatenateOp()->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isValueType() & BinaryExpression->exists( be | be.operator = "^" & be.left.elementType.name = name )
+self.concatenateOp()->display()
+CPrimitiveType printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->intersection" & be.left.elementType.name = name )
+self.intersectionOp()->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isValueType() & BinaryExpression->exists( be | be.operator = "->intersection" & be.left.elementType.name = name )
+self.intersectionOp()->display()
+CPrimitiveType printcode
+false
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BasicExpression->exists( b | b.data = "insertAt" )
+self.insertAtOp()->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->exists1" & be.left.elementType.name = name )
+self.exists1Op()->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & UnaryExpression->exists( be | be.operator = "->isUnique" & be.argument.elementType.name = name )
+self.isUniqueOp()->display()
+CStruct printcode
+false
+
+
+
+
+
+Constraint:
+null
+self.isApplicationClass() & UnaryExpression->exists( be | (be.operator = "->asSet" or be.operator = "->asOrderedSet") & be.argument.elementType.name = name )
+self.asSetOp()->display()
+CStruct printcode
+false
+
+
+
+
+
+
+
+
+
+Association:
+CStruct CMember 1 975 646 1137 632 0 members null 
+ordered 
+
+
+
+
+Association:
+CStruct CMember 0 985 656 1147 642 0 allMembers null 
+ 
+
+
+
+Association:
+CStruct CStruct 0 980 650 990 690 0 interfaces null
+
+
+
+
+
+
+
+Entity:
+CatchStatement 672 1025
+Statement  *
+
+
+
+
+
+Operation:
+mapStatement
+CatchStatement
+CStatement
+
+
+true
+OpCallStatement->exists( ca | ca.cstatId = statId + "_statement" & CBasicExpression->exists( sigint | sigint.cexpId = "sigint_" + statId & sigint.data = "SIGINT" & ca.callExp = caughtObject.createCBinOpCall(statId + "_call", "signal", sigint, CExpression.defineCOpRef(CProgram.allInstances.any.defineCOpWithCode(action.mapStatement(), "x", CType["-5"]) ) ) ) & result = ca )
+
+
+
+
+
+
+
+
+Entity:
+FinalStatement 872 1025
+Statement  *
+
+
+
+
+
+Operation:
+mapStatement
+FinalStatement
+CStatement
+
+
+true
+result = body.mapStatement()
+
+
+
+
+
+Entity:
+TryStatement 1683 973
+Statement  *
+
+
+
+
+
+Operation:
+mapStatement
+TryStatement
+CStatement
+
+
+true
+CSequenceStatement->exists( ss | ss.cstatId = statId & catchClauses.mapStatement() <: ss.statements & body.mapStatement() : ss.statements & endStatement.mapStatement() <: ss.statements & result = ss )
+
+
+
+
+
+Entity:
+AssertStatement 372 1025
+Statement  *
+
+
+
+
+
+Operation:
+mapStatement
+AssertStatement
+CStatement
+
+
+true
+OpCallStatement->exists( ca | ca.cstatId = statId + "_statement" & ca.callExp = condition.createCUnaryOpCall(statId, "assert", condition.mapExpression()) & result = ca ) 
+
+
+
+
+
+
+
+Entity:
+ErrorStatement 572 1025
+Statement  *
+
+
+
+
+Operation:
+mapStatement
+ErrorStatement
+CStatement
+
+
+true
+CSequenceStatement->exists( ss | ss.cstatId = statId & OpCallStatement->exists( ca0 | ca0.cstatId = statId + "_except" & CBasicExpression->exists( except | except.data = "\"OclException\"" & except.cexpId = thrownObject.expId + "_exception" & except.type = CType[thrownObject.type.typeId] & ca0.callExp = thrownObject.createCUnaryOpCall(statId + "_createOclException", "raiseOclException", except) ) & ca0 : ss.statements ) & OpCallStatement->exists( ca | ca.cstatId = statId + "_statement" & CBasicExpression->exists( sigint | sigint.data = "SIGINT" & sigint.cexpId = thrownObject.expId + "_SIGINT" & sigint.type = CType[thrownObject.type.typeId] & ca.callExp = thrownObject.createCUnaryOpCall(statId + "_raise", "raise", sigint) ) & ca : ss.statements ) & result = ss )
+
+
+
+
+
+
+
+
+
+
+
+Generalisation:
+Statement CatchStatement 427 1244 422 1142
+
+
+
+Generalisation:
+Statement FinalStatement 427 1244 422 1142
+
+
+Generalisation:
+Statement TryStatement 500 600 1688 970
+
+
+
+
+Generalisation:
+Statement AssertStatement 483 1029 380 990
+
+
+
+Generalisation:
+Statement ErrorStatement 583 1029 380 990
+
+
+
+
+Association:
+TryStatement Statement -1 1687 1009 453 980 0 catchClauses null
+ordered
+
+
+
+Association:
+TryStatement Statement -1 1689 1009 455 982 1 body null
+
+
+
+Association:
+TryStatement Statement -1 1718 935 367 989 -1 endStatement null
+
+
+
+
+
+Association:
+CatchStatement Expression 0 675 1028 200 35 1 caughtObject null
+
+
+
+
+Association:
+CatchStatement Statement 0 675 1028 300 1000 1 action null 
+
+
+
+Association:
+FinalStatement Statement 0 875 1028 300 1000 1 body null
+
+
+
+Association:
+AssertStatement Expression 0 375 1028 200 35 1 condition null 
+
+
+
+Association:
+AssertStatement Expression 0 375 1028 200 35 -1 message null 
+
+
+
+Association:
+ErrorStatement Expression 0 575 1028 200 35 1 thrownObject null 
+
+
+
+
+
+
+
+
+
+
