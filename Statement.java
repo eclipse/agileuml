@@ -5886,12 +5886,17 @@ class WhileStatement extends Statement
 
   public Vector writeFrame() 
   { Vector res = body.writeFrame();
+
     // remove the loopVar if it exists
     if (loopVar != null) 
     { Vector res1 = new Vector(); 
-      res1.add(loopVar); 
-      res.removeAll(res1); 
-    } 
+
+      if (res.contains("" + loopVar))
+      { System.err.println("!! Error: iteration variable " + 
+           loopVar + " cannot be written in loop body " + body); 
+      } 
+    }
+ 
     return res; 
   } 
 

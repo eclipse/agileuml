@@ -3479,7 +3479,11 @@ public class BehaviouralFeature extends ModelElement
   { Vector unused = new Vector(); 
   
     if (activity != null)
-    { Vector actuses = activity.getVariableUses(unused);
+    { Vector wrf = activity.writeFrame(); 
+
+      System.out.println(">>> Parameters or variables " + wrf + " are written in " + getName() + " activity."); 
+
+      Vector actuses = activity.getVariableUses(unused);
       actuses = ModelElement.removeExpressionByName("skip", actuses); 
  
       System.out.println(">>> Parameters or non-local variables " + actuses + " are used in " + getName() + " activity."); 

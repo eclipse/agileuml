@@ -924,9 +924,16 @@ public void findPlugins()
     JMenuItem extractOper = 
       new JMenuItem("Extract Operation"); 
     extractOper.setToolTipText(
-      "Defines new operation for cloned expressions/statements");
+      "Defines new operation for cloned statements");
     extractOper.addActionListener(this);
     qualityMenu.add(extractOper);
+
+    JMenuItem extractLocalVar = 
+      new JMenuItem("Extract Local Variable"); 
+    extractLocalVar.setToolTipText(
+      "Defines new local variable for cloned expressions");
+    extractLocalVar.addActionListener(this);
+    qualityMenu.add(extractLocalVar);
 
     JMenuItem extractComponent = 
       new JMenuItem("Split class"); 
@@ -2764,6 +2771,10 @@ public void findPlugins()
       }
       else if (label.equals("Extract Operation"))
       { ucdArea.extractOperation(); 
+        repaint(); 
+      }
+      else if (label.equals("Extract Local Variable"))
+      { ucdArea.extractLocalVariable(); 
         repaint(); 
       }
       else if (label.equals("Split class"))

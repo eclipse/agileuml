@@ -1487,7 +1487,37 @@ public class UCDArea extends JPanel
     } 
     
     ent1.extractOperations(); 
-  } // may lead to a new operation activity. 
+  } // may lead to updated operation activity. 
+
+  public void extractLocalVariable()
+  { ListShowDialog listShowDialog = new ListShowDialog(parent);
+    listShowDialog.pack();
+    listShowDialog.setLocationRelativeTo(parent); 
+    listShowDialog.setOldFields(entities);
+    System.out.println(">>> Select class to extract local variable in");
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    
+    if (vals == null) { return; } 
+    Entity ent1 = null; 
+    
+    if (vals != null && vals.length > 0)
+    { ent1 = (Entity) vals[0];
+        
+      if (ent1 == null) { return; } 
+    } 
+    
+    String cloneLimit = 
+      JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+    if (cloneLimit != null) 
+    { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
+      catch (Exception _ex) 
+      { CLONE_LIMIT = 10; } 
+    } 
+    
+    ent1.extractLocalVariables(); 
+  } // may lead to updated operation activity. 
   
   public void extractComponent()
   { ListShowDialog listShowDialog = new ListShowDialog(parent);

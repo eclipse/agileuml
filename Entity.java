@@ -5234,6 +5234,84 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void extractLocalVariables()
+  { // Looks for clones within operations, replaces these 
+    // by calls to new operations, or new local declarations. 
+
+    java.util.Map clones = new java.util.HashMap(); 
+    java.util.Map cdefs = new java.util.HashMap(); 
+
+    String opname = 
+      JOptionPane.showInputDialog("Enter operation name to extract variable in: "); 
+    BehaviouralFeature op = 
+      (BehaviouralFeature) 
+         ModelElement.lookupByName(opname,operations);
+      
+    if (op == null) 
+    { System.err.println("!! No operation called " + opname); 
+      return; 
+    } 
+
+    op.findClones(clones,cdefs); 
+     
+
+    // System.out.println(">> Potential clones " + clones); 
+    // System.out.println(">> Potential clone definitions " + cdefs); 
+
+
+    Vector vkeys = new Vector(); 
+    vkeys.addAll(clones.keySet());
+ 
+    for (int i = 0; i < vkeys.size(); i++) 
+    { String clne = (String) vkeys.get(i); 
+      Vector copies = (Vector) clones.get(clne); 
+      if (copies != null && copies.size() > 1)
+      { Object obj = cdefs.get(clne); 
+ 
+        if (obj instanceof Expression)
+        { Expression expr = (Expression) obj;
+
+          // If clones all in same op, then try to refactor
+          // using a new local variable of the op - at first
+          // location where read frame is not subsequently 
+          // written. 
+ 
+          Type etype = expr.getType(); 
+          Type elemtype = expr.getElementType(); 
+          System.out.println(">> Clone expression type: " + etype + " (" + elemtype + ")"); 
+
+          System.out.println(">>> Extracting local variable for clone: " + clne + " with copies " + copies);
+          
+          String opername = (String) copies.get(0); 
+
+          int colonIndex = opername.indexOf("::"); 
+          opername = 
+              opername.substring(colonIndex+2,opername.length()); 
+          BehaviouralFeature oper = 
+              getOperation(opername); 
+
+          if (VectorUtil.allElementsEqual(copies) && 
+              oper != null)
+          { System.out.println(">>> Copies in same operation " + opername); 
+            Statement bfactivity = oper.getActivity(); 
+            Statement newcode = 
+              Statement.tryInsertCloneDeclaration(
+                          bfactivity, expr, etype, elemtype);
+    
+            if (newcode != null) 
+            { System.out.println(">>> New code for " + opername + " is " + newcode); 
+              oper.setActivity(newcode); 
+              return; 
+            }
+            else 
+            { System.out.println(">>> Unable to extract variable in " + opername); 
+            }   
+          } 
+        }
+      } 
+    } 
+  } 
+
   public Statement replaceCallsByDefinitions(String op, String bf)
   { // Replaces self.bf() by code of bf, in the code of op
 

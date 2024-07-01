@@ -13581,7 +13581,7 @@ public boolean conflictsWithIn(String op, Expression el,
     }
     else
     { String qf = queryForm(env,local); 
-      return "if (" + qf + ") { } else { System.err.println(\"Assertion fails:\"); System.err.println(this); }\n";  
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + qf + " fails:\"); System.err.println(this); }\n";  
 	}
   }
 
@@ -13655,7 +13655,7 @@ public String updateFormIn(String language, java.util.Map env, Expression var, b
   }
   else
   { String qf = queryForm(env,local); 
-    return "if (" + qf + ") { } else { System.err.println(\"Assertion fails:\"); System.err.println(this); }\n";  
+    return "if (" + qf + ") { } else { System.err.println(\"Assertion " + qf + " fails:\"); System.err.println(this); }\n";  
   }
 }
 
@@ -14845,7 +14845,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else
     { String qf = queryFormJava6(env,local); 
-      return "if (" + qf + ") { } else { System.err.println(\"Assertion fails:\");  System.err.println(this); }\n";  
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + qf + " fails:\");  System.err.println(this); }\n";  
     }
 
     // else
@@ -15041,7 +15041,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else
     { String qf = queryFormJava7(env,local); 
-      return "if (" + qf + ") { } else { System.err.println(\"Assertion fails: \"); System.err.println(this); }\n";  
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + qf + " fails: \"); System.err.println(this); }\n";  
     }
 
     // else
