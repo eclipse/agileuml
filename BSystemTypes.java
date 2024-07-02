@@ -5050,7 +5050,7 @@ public class BSystemTypes extends BComponent
                  "    { tmp.Add(k); } \n" + 
                  "    return tmp;\n" + 
                  "  }\n\n" + 
-                 "  public static string subrange(string s, int i, int j)\n";
+                 "  public static string subrange(string s, long i, long j)\n";
 
     res = res + "  { if (i < 1)\n" + 
                 "    { i = 1; }\n" + 
@@ -5058,7 +5058,7 @@ public class BSystemTypes extends BComponent
                 "    { j = s.Length; }\n" + 
                 "    if (i > s.Length || i > j)\n" + 
                 "    { return \"\";  }\n" + 
-                "    return s.Substring(i-1, j-i+1);\n" + 
+                "    return s.Substring((int) (i-1), (int) (j-i+1));\n" + 
                 "  }\n\n";
 
     res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";

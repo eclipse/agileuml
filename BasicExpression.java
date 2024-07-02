@@ -12109,7 +12109,8 @@ public Statement generateDesignSubtract(Expression rhs)
       if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormCSharp(env,local); 
         String wind = arrayIndex.wrapCSharp(indopt); 
-        String wval = var.wrapCSharp(val2); 
+        String wval = // var.wrapCSharp(val2);
+            Type.convertDataValueCSharp(val2, type, var.type);  
         if ("String".equals(arrayIndex.type + "") ||
             BasicExpression.isMapAccess(this))
         { return datax + "[" + wind + "] = " + wval + ";"; }  // map[index] = val2 
@@ -12143,7 +12144,7 @@ public Statement generateDesignSubtract(Expression rhs)
     if (entity.isBidirectionalRole(data))
     { local = false; }
 
-    System.out.println(">>%%%%%%%%%%%%>> " + this + " objectref = " + objectRef + " " + data + " " + var + " " + val2);  
+    // System.out.println(">>%%%%%%%%%%%%>> " + this + " objectref = " + objectRef + " " + data + " " + var + " " + val2);  
     
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
@@ -12151,7 +12152,8 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (arrayIndex != null)
           { String ind = arrayIndex.queryFormCSharp(env,local); 
             String wind = arrayIndex.wrapCSharp(ind); 
-            String wval = var.wrapCSharp(val2); 
+            String wval = // var.wrapCSharp(val2);
+               Type.convertDataValueCSharp(val2, type, var.type);  
             if (isQualified() || 
                 "String".equals(arrayIndex.type + "") ||
                 BasicExpression.isMapAccess(this))
@@ -12199,16 +12201,18 @@ public Statement generateDesignSubtract(Expression rhs)
         { target = varx + ","; } 
         
         if (arrayIndex != null) 
-        { String ind = arrayIndex.queryFormCSharp(env,local); 
+        { String ind = arrayIndex.queryFormCSharp(env,local);
+          String wval = 
+             Type.convertDataValueCSharp(val2, type, var.type);  
           if (isQualified() ||
               "String".equals(arrayIndex.type + "") ||
               BasicExpression.isMapAccess(this))
           { return 
             // cont + ".set" + data + "(" + target + ind + ", " + val2 + ");";
-              varx + ".set" + data + "(" + ind + ", " + val2 + ");";  
+              varx + ".set" + data + "(" + ind + ", " + wval + ");";  
           } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
-          return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
+          return cont + ".set" + data + "(" + target + indopt + "," + wval + ");";
         }
 
         if (type != null && var.type == null)
@@ -12288,15 +12292,17 @@ public Statement generateDesignSubtract(Expression rhs)
       else
       { if (local)
         { if (arrayIndex != null) 
-          { String ind = arrayIndex.queryFormCSharp(env,local); 
+          { String ind = arrayIndex.queryFormCSharp(env,local);
+            String wval = 
+              Type.convertDataValueCSharp(val2, type, var.type);  
             if (isQualified() ||
                 "String".equals(arrayIndex.type + "") ||
                 BasicExpression.isMapAccess(this))
             { return pre + ".set" + data + "(" + ind + "," + 
-                                val2 + ");";
+                                wval + ");";
             } 
             String indopt = evaluateString("-",ind,"1"); 
-            return pre + ".set" + data + "(" + indopt + "," + val2 + ");";
+            return pre + ".set" + data + "(" + indopt + "," + wval + ");";
           }
           return pre + ".set" + data + "(" + val2 + ");"; 
         }

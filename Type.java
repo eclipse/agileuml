@@ -5610,6 +5610,28 @@ public class Type extends ModelElement
     return val; 
   } 
 
+  public static String convertDataValueCSharp(String val, Type targetType, Type sourceType) 
+  { // Convert a string to an int, etc
+
+    // JOptionPane.showInputDialog(">>> Conversion of " + val + " from " + sourceType + " to " + targetType); 
+
+    if (sourceType != null && targetType != null)
+    { if (Type.isSpecialisedOrEqualType(sourceType, targetType))
+      { return val; } 
+      if ("String".equals(targetType.getName())) 
+      { return "\"\" + (" + val + ")"; }
+      else if ("String".equals(sourceType.getName()) &&
+               targetType.isNumeric())
+      { String cname = Named.capitalise(targetType.getName()); 
+        return "SystemTypes.to" + cname + "(" + val + ")"; 
+      }
+
+      String cstype = targetType.getCSharp(); 
+      return "(" + cstype + ") (" + val + ")"; 
+    }
+    return val; 
+  } 
+
   public Vector operationTestValues()
   { Vector res = new Vector(); 
   
