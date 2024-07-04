@@ -1,0 +1,301 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OclUnaryExpression::
+lambda _2 : _4 in _6  |-->_2->(_6)
+_1 _2 ( )  |-->Ocl._2`func2(_1)
+_1 _2  |-->_1`func0 _2
+
+OclOperation::
+static operation _3 ( _* ) : _8 pre: true  post: true  activity: _14  |-->static _8 _3(_*`ruleset17){_14}
+static operation _3 ( ) : _7 pre: true  post: true  activity: _13  |-->static _7 _3(){_13}
+operation _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset16){_13}
+query _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset15){_13}
+operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(){_12}
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(){_12}
+
+OclType::
+Map ( _3 , _5 )  |-->HashMap<_3,_5>
+Function ( _3 , _5 )  |-->Function<_3,_5>
+_1 ( _3 )  |-->_1`func11<_3>
+OclProcess |-->OclProcess
+OclAny |-->Object
+OclType |-->OclType
+OclDate |-->OclDate
+String |-->String
+void  |-->void
+_1  |-->_1
+
+ruleset27::
+; |-->,
+literal _2  |-->_2
+_* |-->_*`ruleset27
+
+ruleset26::
+; |--> 
+_1 |-->_1
+_0 |-->_0
+
+func10::
+String |-->String
+OclDate |-->OclDate
+OclType |-->OclType
+OclAny |-->Object
+OclProcess |-->OclProcess
+
+OclClass::
+class _2 { }  |-->class _2{}
+class _2 _*  |-->class _2 _*`ruleset26
+
+func13::
+- |-->x
+1 |-->x
+Set |-->sq
+
+OclCollectionExpression::
+Sequence { _* }  |-->Ocl.initialiseSequence(_*)
+Set { _* }  |-->Ocl.initialiseSet(_*)
+_1 { }  |-->Ocl._1`func12()
+
+func11::
+Sequence |-->ArrayList
+Set |-->HashSet
+
+func12::
+Set |-->initialiseSet
+Sequence |-->initialiseSequence
+
+func18::
+long |-->%
+String |-->=
+
+func19::
+long |-->%
+String |-->=
+
+OclBasicExpression::
+_1 . _3 ( _5 )  |-->_1._3(_5)
+_1 . _3 ( )  |-->_1._3()
+_1 [ _3 ]  |-->_1[_3-1]
+_1 . _3  |-->_1._3
+null  |-->null<when> _1 Object
+_1  |-->_1<when> _1 Integer
+_1  |-->_1<when> _1 Real
+_1  |-->_1<when> _1 Boolean
+_1  |-->_1<when> _1 String
+_1  |-->_1
+
+func8::
+->select |-->select
+->reject |-->reject
+->collect |-->collect
+->forAll |-->forAll
+->exists |-->exists
+->exists1 |-->exists1
+->any |-->any
+
+func9::
+->select |-->select
+->reject |-->reject
+->collect |-->collect
+->forAll |-->forAll
+->exists |-->exists
+->exists1 |-->exists1
+->any |-->any
+
+func4::
+->including |-->including
+->union |-->union
+->intersection |-->intersection
+->excludes |-->excludes
+->excludesAll |-->excludesAll
+->includesAll |-->includesAll
+->indexOf |-->indexOf
+->lastIndexOf |-->lastIndexOf
+->append |-->append
+->prepend |-->prepend
+->pow |-->pow
+
+OclBinaryExpression::
+_1 _2 ( _4 | _6 )  |-->Ocl._2`func9(_1,_4->(_6))
+_1 _2 ( _4 )  |-->Ocl._2`func6(_1,_4)
+_1 _2 _3  |-->_1 _2`func3 _3
+
+func5::
+->including |-->sq
+->union |-->arr
+->intersection |-->p
+->excludes |-->arr
+->excludesAll |-->sq
+->includesAll |-->arr
+->indexOf |-->q
+->lastIndexOf |-->arr
+->append |-->sq
+->prepend |-->arr
+->pow |-->x
+
+func6::
+->including |-->including
+->union |-->union
+->intersection |-->intersection
+->excludes |-->excludes
+->excludesAll |-->excludesAll
+->includesAll |-->includesAll
+->indexOf |-->indexOf
+->lastIndexOf |-->lastIndexOf
+->append |-->append
+->prepend |-->prepend
+->pow |-->pow
+
+func7::
+->including |-->sq
+->union |-->arr
+->intersection |-->p
+->excludes |-->arr
+->excludesAll |-->sq
+->includesAll |-->arr
+->indexOf |-->q
+->lastIndexOf |-->arr
+->append |-->sq
+->prepend |-->arr
+->pow |-->x
+
+ruleset14::
+( |-->{
+) |-->}
+; |--> 
+_1 |-->_1
+_0 |-->_0
+
+ruleset16::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset16
+
+ruleset15::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset15
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->(_2)?_4:_6
+
+ruleset17::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset17
+
+func20::
+long |-->%
+String |-->=
+
+func21::
+long |-->%
+String |-->=
+
+func24::
+long |-->%
+String |-->=
+
+func25::
+long |-->%
+String |-->=
+
+func22::
+long |-->%
+String |-->=
+
+func23::
+long |-->%
+String |-->=
+
+func0::
+- |-->-
+not |-->!
+
+func1::
+->size |-->size
+->oclType |-->oclType
+->toLowerCase |-->toLowerCase
+->toUpperCase |-->toUpperCase
+->front |-->front
+->tail |-->tail
+->first |-->first
+->last |-->last
+->reverse |-->reverse
+->sum |-->sum
+->floor |-->floor
+->abs |-->abs
+->ceil |-->ceil
+->oclIsUndefined |-->oclIsUndefined
+->oclIsInvalid |-->oclIsInvalid
+
+func2::
+->size |-->size
+->oclType |-->oclType
+->toLowerCase |-->toLowerCase
+->toUpperCase |-->toUpperCase
+->front |-->front
+->tail |-->tail
+->first |-->first
+->last |-->last
+->reverse |-->reverse
+->sum |-->sum
+->floor |-->floor
+->abs |-->abs
+->ceil |-->ceil
+->oclIsUndefined |-->oclIsUndefined
+->oclIsInvalid |-->oclIsInvalid
+
+func3::
++ |-->+
+* |-->*
+mod |-->%
+/ |-->/
+div |-->/
+- |-->-
+& |-->&&
+or |-->||
+xor |-->^
+> |-->>
+< |--><
+/= |-->!=
+= |-->==
+>= |-->>=
+<= |--><=
+
+OclAttribute::
+static attribute _3 : _5  |-->static _5 _3;
+attribute _2 : _4  |-->_4 _2;
+
+OclEnumeration::
+enumeration _2 { _* }  |-->enum _2{_*`ruleset27}
+
+OclStatement::
+while _2 do _4  |-->while(_2){_4}
+for _2 : _4 do _6  |-->for(Object _2:_4){_6}
+var _2 : _4  |-->_4 _2
+( _2 )  |-->{_2}
+if _2 then _4 else _6  |-->if(_2){_4}else{_6}
+_1 := _3  |-->_1=_3;
+call skip   |-->;
+execute _2  |-->_2;
+call _2  |-->_2;
+return _2  |-->return _2;
+error _2  |-->throw _2;
+_1  |-->_1;
+_* |-->_*`ruleset14
+
+
+

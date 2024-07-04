@@ -1,0 +1,779 @@
+Metamodel:
+app
+
+Entity:
+OclBasicExpression 33 28
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+ProgramExpression 1346 32
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+OclUnaryExpression 16 511
+null  * abstract source 
+ast OclAny 3 false false false
+
+
+Entity:
+OclIdentifier 11 171
+OclBasicExpression  * source 
+
+
+
+Entity:
+OclValue 115 232
+OclBasicExpression  * source 
+type TypeType 3 false false false
+
+
+Entity:
+OclFieldAccess 201 308
+OclBasicExpression  * source 
+
+
+
+Entity:
+OclArrayAccess 323 42
+OclBasicExpression  * source 
+
+
+
+Entity:
+OclOperationCall0 350 113
+OclBasicExpression  * source 
+
+
+
+Entity:
+OclOperationCallN 330 211
+OclBasicExpression  * source 
+
+
+
+Entity:
+OclConditionalExpression 15 402
+null  * source 
+ast OclAny 3 false false false
+
+
+Entity:
+OclUnaryPrefix 27 661
+OclUnaryExpression  * source 
+
+
+
+Entity:
+OclUnaryPostfix 266 700
+OclUnaryExpression  * source 
+
+
+
+Entity:
+OclBinaryExpression 58 795
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+OclInfixBinaryExpr 27 987
+OclBinaryExpression  * source 
+
+
+
+Entity:
+OclArrowOpBinExpr 153 907
+OclBinaryExpression  * source 
+
+
+
+Entity:
+OclLambdaExpr 105 698
+OclUnaryExpression  * source 
+
+
+
+Entity:
+OclBasicType 641 42
+OclType  * source 
+
+
+
+Entity:
+OclClassifierType 754 199
+OclType  * source 
+
+
+
+Entity:
+OclType 819 36
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+ProgramType 1345 102
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+OclCollectionExpression 355 500
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+EmptyCollectionExpr 334 604
+OclCollectionExpression  * source 
+
+
+
+Entity:
+NonEmptySetExpr 495 572
+OclCollectionExpression  * source 
+
+
+
+Entity:
+OclCollectionType 641 133
+OclType  * source abstract 
+
+
+
+Entity:
+OclFunctionType 840 144
+OclType  * source 
+
+
+
+Entity:
+OclMapType 899 112
+OclType  * source 
+
+
+
+Entity:
+OclStatement 376 782
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+ProgramStatement 1346 174
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+ProgramParameter 1499 174
+null  * target
+ast OclAny 3 false false false
+
+
+
+Entity:
+OclBasicStatement 340 869
+OclStatement  * source 
+
+
+
+Entity:
+OclCallStatement 498 923
+OclStatement  * source 
+
+
+
+Entity:
+OclErrorStatement 628 873
+OclStatement  * source 
+
+
+
+Entity:
+OclSkipStatement 503 728
+OclStatement  * source 
+
+
+
+Type:
+TypeType 499 13
+Real Integer Boolean String Sequence Set Map Function Object 
+
+
+
+Entity:
+OclAssignStatement 461 690
+OclStatement  * source 
+
+
+
+Entity:
+OclConditionalStatement 741 732
+OclStatement  * source 
+
+
+
+Entity:
+OclCreationStatement 791 777
+OclStatement  * source 
+type TypeType 3 false false false
+
+
+Entity:
+OclSequenceStatement 845 823
+OclStatement  * source 
+
+
+
+Entity:
+OclLoopStatement 819 874
+OclStatement  * source abstract 
+
+
+
+Entity:
+OclImplicitCallStatement 626 966
+OclStatement  * source 
+
+
+
+Entity:
+OclReturnStatement 263 746
+OclStatement  * source 
+
+
+
+Entity:
+OclBlock 280 810
+OclStatement  * source abstract 
+
+
+
+Entity:
+OclForStatement 764 926
+OclLoopStatement  * source 
+
+
+
+Entity:
+OclWhileStatement 919 993
+OclLoopStatement  * source 
+
+
+
+Entity:
+OclBlock0 191 857
+OclBlock  * source 
+
+
+
+Entity:
+OclBlockN 183 759
+OclBlock  * source 
+
+
+
+Entity:
+OclOperation 609 350
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+ProgramOperation 1348 249
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+OclQuery0 541 421
+OclOperation  * source 
+
+
+
+Entity:
+OclQueryN 622 479
+OclOperation  * source 
+
+
+
+Entity:
+OclAttribute 808 431
+null  * source abstract 
+ast OclAny 3 false false false type TypeType 3 false false false
+
+
+
+Entity:
+ProgramAttribute 1353 325
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+OclClass 850 544
+null  * source abstract 
+ast OclAny 3 false false false
+
+
+Entity:
+ProgramClass 1358 394
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+OclVoidType 661 83
+OclType  * source 
+
+
+
+Entity:
+NonEmptySequenceExpr 637 619
+OclCollectionExpression  * source 
+
+
+
+Entity:
+OclUpdate0 464 365
+OclOperation  * source 
+
+
+
+Entity:
+OclUpdateN 696 425
+OclOperation  * source 
+
+
+
+Entity:
+OclEmptyClass 849 672
+OclClass  * source 
+
+
+
+Entity:
+OclNonEmptyClass 913 627
+OclClass  * source 
+
+
+
+Entity:
+OclIteratorExpression 246 980
+OclBinaryExpression  * source 
+
+
+
+Entity:
+StaticAttribute 779 502
+OclAttribute  * source 
+
+
+
+Entity:
+InstanceAttribute 936 503
+OclAttribute  * source 
+
+
+Entity:
+OclParameter 1116 503
+null * source
+ast OclAny 3 false false false type TypeType 3 false false false
+
+
+
+Entity:
+OclStaticOp0 486 307
+OclOperation  * source 
+
+
+
+Entity:
+OclStaticOpN 675 295
+OclOperation  * source 
+
+
+
+Entity:
+ProgramEnumeration 1362 477
+null  * target 
+ast OclAny 3 false false false
+
+
+Entity:
+OclEnumeration 890 288
+null  * source 
+ast OclAny 3 false false false
+
+
+Entity:
+OclAnyType 1059 26
+OclType  * source 
+
+
+
+Entity:
+OclStringType 1041 86
+OclType  * source 
+
+
+
+Entity:
+OclEmptyInterface 1139 550
+OclClass  * 
+
+
+
+Entity:
+OclNonEmptyInterface 1139 620
+OclClass  * source 
+
+
+
+Entity:
+OclSetType 577 196
+OclCollectionType  * source 
+
+
+
+Entity:
+OclSequenceType 657 237
+OclCollectionType  * source 
+
+
+
+Generalisation:
+OclBasicExpression OclIdentifier 19 173 37 64
+
+
+
+
+Generalisation:
+OclBasicExpression OclValue 135 234 102 65
+
+
+
+
+Generalisation:
+OclBasicExpression OclFieldAccess 223 311 175 64
+
+
+
+
+Generalisation:
+OclBasicExpression OclArrayAccess 324 45 190 35
+
+
+
+
+Generalisation:
+OclBasicExpression OclOperationCall0 353 114 192 50
+
+
+
+
+Generalisation:
+OclBasicExpression OclOperationCallN 334 215 190 65
+
+
+
+
+Generalisation:
+OclUnaryExpression OclUnaryPrefix 31 664 30 548
+
+
+
+
+Generalisation:
+OclUnaryExpression OclUnaryPostfix 270 702 174 548
+
+
+
+
+Generalisation:
+OclBinaryExpression OclInfixBinaryExpr 49 989 64 830
+
+
+
+
+Generalisation:
+OclBinaryExpression OclArrowOpBinExpr 157 907 147 833
+
+
+
+
+Generalisation:
+OclUnaryExpression OclLambdaExpr 182 700 146 548
+
+
+
+
+Generalisation:
+OclType OclBasicType 727 47 820 41
+
+
+
+
+Generalisation:
+OclType OclClassifierType 759 202 822 73
+
+
+
+
+Generalisation:
+OclCollectionExpression EmptyCollectionExpr 363 609 360 537
+
+
+
+
+Generalisation:
+OclCollectionExpression NonEmptySetExpr 575 575 511 535
+
+
+
+
+Generalisation:
+OclType OclCollectionType 759 136 820 61
+
+
+
+
+Generalisation:
+OclType OclFunctionType 868 147 868 74
+
+
+
+
+Generalisation:
+OclType OclMapType 937 115 938 72
+
+
+
+
+Generalisation:
+OclStatement OclBasicStatement 365 872 380 820
+
+
+
+
+Generalisation:
+OclStatement OclCallStatement 512 924 487 818
+487 821 
+
+
+
+Generalisation:
+OclStatement OclErrorStatement 632 878 534 819
+
+
+
+
+Generalisation:
+OclStatement OclSkipStatement 506 750 488 786
+
+
+
+
+Generalisation:
+OclStatement OclAssignStatement 468 712 463 783
+
+
+
+
+Generalisation:
+OclStatement OclConditionalStatement 743 753 534 784
+
+
+
+
+Generalisation:
+OclStatement OclCreationStatement 793 784 534 794
+
+
+
+
+Generalisation:
+OclStatement OclSequenceStatement 848 829 534 804
+
+
+
+
+Generalisation:
+OclStatement OclLoopStatement 871 879 533 812
+
+
+
+
+Generalisation:
+OclStatement OclImplicitCallStatement 741 967 499 819
+
+
+
+
+Generalisation:
+OclStatement OclReturnStatement 328 768 377 787
+
+
+
+
+Generalisation:
+OclStatement OclBlock 308 810 378 802
+
+
+
+
+Generalisation:
+OclLoopStatement OclWhileStatement 953 995 950 896
+
+
+
+
+Generalisation:
+OclLoopStatement OclForStatement 859 929 872 896
+
+
+
+
+Generalisation:
+OclBlock OclBlockN 270 781 284 812
+
+
+
+
+Generalisation:
+OclBlock OclBlock0 250 861 284 832
+
+
+
+
+Generalisation:
+OclOperation OclQuery0 593 424 614 386
+
+
+
+
+Generalisation:
+OclOperation OclQueryN 668 482 662 385
+
+
+
+
+Generalisation:
+OclType OclVoidType 771 87 821 48
+
+
+
+
+Generalisation:
+OclCollectionExpression NonEmptySequenceExpr 723 623 515 525
+
+
+
+
+Generalisation:
+OclOperation OclUpdate0 564 368 611 357
+
+
+
+
+Generalisation:
+OclOperation OclUpdateN 718 427 718 387
+
+
+
+
+Generalisation:
+OclClass OclEmptyClass 855 674 857 581
+
+
+
+
+Generalisation:
+OclClass OclNonEmptyClass 920 629 922 578
+
+
+
+
+Generalisation:
+OclBinaryExpression OclIteratorExpression 248 983 106 832
+111 942 
+
+
+
+Generalisation:
+OclAttribute StaticAttribute 825 504 833 467
+
+
+
+
+Generalisation:
+OclAttribute InstanceAttribute 975 505 959 469
+
+
+
+
+Generalisation:
+OclOperation OclStaticOp0 597 328 616 352
+
+
+
+
+Generalisation:
+OclOperation OclStaticOpN 683 316 673 352
+
+
+
+
+Generalisation:
+OclType OclAnyType 1061 31 976 41
+
+
+
+
+Generalisation:
+OclType OclStringType 1043 90 976 71
+
+
+
+
+Generalisation:
+OclClass OclEmptyInterface 1141 555 1007 549
+
+
+
+
+Generalisation:
+OclClass OclNonEmptyInterface 1141 622 1006 580
+
+
+
+
+Generalisation:
+OclCollectionType OclSetType 657 198 661 155
+
+
+
+
+Generalisation:
+OclCollectionType OclSequenceType 707 240 706 156
+
+
+
+
+Entity:
+OclAssertStatement 401 658
+OclStatement  * source 
+
+
+
+Generalisation:
+OclStatement OclAssertStatement 421 681 445 784
+
+
+
+
