@@ -239,7 +239,7 @@ ord _1 |-->_1->char2byte()
 pow _1 |-->(_1`firstArg)->pow(_1`secondArg)
 repr _1 |-->("" + (_1))
 reversed _1 |-->_1->reverse()
-sorted _1 |-->_1->sort()
+sorted _1 |-->_1`sortedTrailer
 
 tuple _1 |-->_1
 range _1 |-->_1`rangeTrailer
@@ -1303,6 +1303,10 @@ rangeTrailer::
 _1 |-->_1`rangeArguments
 
 
+sortedTrailer::
+_1 |-->_1`sortedArguments
+
+
 
 justificationArguments::
 . ljust _1 |-->_1`justificationArguments
@@ -1429,6 +1433,23 @@ rangeArguments::
 _1 |-->Integer.subrange(0, _1-1)
 _1 , _2 |-->Integer.subrange(_1, _2-1)
 _1 , _2 , _3 |-->Integer.subrange(_1, _2-1)->select( $x | ($x - _1) mod _3 = 0 )
+
+sortedArguments::
+( _1 ) |-->_1`sortedArguments
+_1 |-->_1->keys()->sort()<when> _1 Map
+_1 |-->_1->sort()
+
+_1 , _2 |-->_1->sortedBy($x | _2`sortedKeySpecification)
+_1 , _2 , _3 |-->_1->sortedBy($x | _2`sortedKeySpecification)
+
+
+sortedKeySpecification::
+key = _1 |-->(_1)->apply($x)
+_1 |-->_1`sortedKeySpecification<when> _1 test
+_1 |-->_1`sortedKeySpecification<when> _1 logical_test
+_1 |-->$x
+
+
  
 
 subscriptlist::
