@@ -8543,10 +8543,20 @@ public class BSystemTypes extends BComponent
   public static String generateSortByOpCSharp()
   { String res = "  public static ArrayList sortedBy(ArrayList a, ArrayList f)\n" + 
       "  { int i = a.Count - 1;\n" + 
-      "    Hashtable f_map = new Hashtable();\n" + 
-      "    for (int j = 0; j < a.Count; j++)\n" + 
-      "    { f_map[a[j]] = f[j]; }\n" + 
-      "    return mergeSort(a,f_map,0,i);\n" +  
+      "    if (i < 0) { return a; }\n" +
+      "    if (f[i] is IComparable)\n" +
+      "    { Hashtable f_map = new Hashtable();\n" +
+      "      for (int j = 0; j < a.Count; j++)\n" +
+      "      { f_map[a[j]] = f[j]; }\n" +
+      "      return mergeSort(a, f_map, 0, i);\n" +
+      "    } \n" +
+      "    else if (f[i] is ArrayList)\n" +
+      "    { Hashtable f_map = new Hashtable();\n" +
+      "      for (int j = 0; j < a.Count; j++)\n" +
+      "      { f_map[a[j]] = f[j]; }\n" +
+      "      return mergeSortSequence(a, f_map, 0, i);\n" +
+      "    } \n" +
+      "    return a;\n" +  
       "  }\n\n" +  
       "  static ArrayList mergeSort(ArrayList a, Hashtable f, int ind1, int ind2)\n" + 
       "  { ArrayList res = new ArrayList();\n" +  
@@ -8599,7 +8609,72 @@ public class BSystemTypes extends BComponent
       "      { res.Add(a1[k]); } \n" + 
       "    } \n" + 
       "    return res;\n" +  
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  static ArrayList mergeSortSequence(ArrayList a, Hashtable f, int ind1, int ind2)\n" +
+      "  {\n" +
+      "      ArrayList res = new ArrayList();\n" +
+      "      if (ind1 > ind2)\n" +
+      "      { return res; }\n" +
+      "      if (ind1 == ind2)\n" +
+      "      {\n" +
+      "          res.Add(a[ind1]);\n" +
+      "          return res;\n" +
+      "      }\n" +
+      "      if (ind2 == ind1 + 1)\n" +
+      "      {\n" +
+      "          ArrayList e1 = (ArrayList) f[a[ind1]];\n" +
+      "          ArrayList e2 = (ArrayList) f[a[ind2]];\n" +
+      "          if (SystemTypes.sequenceCompare(e1, e2) < 0) // e1 < e2\n" +
+      "          { res.Add(a[ind1]); res.Add(a[ind2]); return res; }\n" +
+      "          else\n" +
+      "          { res.Add(a[ind2]); res.Add(a[ind1]); return res; }\n" +
+      "      }\n" +
+      "      int mid = (ind1 + ind2) / 2;\n" +
+      "      ArrayList a1;\n" +
+      "      ArrayList a2;\n" +
+      "      if (mid == ind1)\n" +
+      "      {\n" +
+      "          a1 = new ArrayList();\n" +
+      "          a1.Add(a[ind1]);\n" +
+      "          a2 = mergeSortSequence(a, f, mid + 1, ind2);\n" +
+      "      }\n" +
+      "      else\n" +
+      "      {\n" +
+      "          a1 = mergeSortSequence(a, f, ind1, mid - 1);\n" +
+      "          a2 = mergeSortSequence(a, f, mid, ind2);\n" +
+      "      }\n" +
+      "      int i = 0;\n" +
+      "      int j = 0;\n" +
+      "      while (i < a1.Count && j < a2.Count)\n" +
+      "      {\n" +
+      "          ArrayList e1 = (ArrayList) f[a1[i]];\n" +
+      "          ArrayList e2 = (ArrayList) f[a2[j]];\n" +
+      "          if (SystemTypes.sequenceCompare(e1, e2) < 0) // e1 < e2\n" +
+      "          {\n" +
+      "              res.Add(a1[i]);\n" +
+      "              i++; // get next e1\n" +
+      "          }\n" +
+      "          else\n" +
+      "          {\n" +
+      "              res.Add(a2[j]);\n" +
+      "              j++;\n" +
+      "          }\n" +
+      "      }\n" +
+      "      if (i == a1.Count)\n" +
+      "      {\n" +
+      "          for (int k = j; k < a2.Count; k++)\n" +
+      "          { res.Add(a2[k]); }\n" +
+      "      }\n" +
+      "      else\n" +
+      "      {\n" +
+      "          for (int k = i; k < a1.Count; k++)\n" +
+      "          { res.Add(a1[k]); }\n" +
+      "      }\n" +
+      "      return res;\n" +
+      "  }\n\n"; 
+ 
     return res; 
   }
 
