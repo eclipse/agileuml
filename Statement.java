@@ -1764,6 +1764,9 @@ abstract class Statement implements Cloneable
   /* as text model */
   abstract String saveModelData(PrintWriter out); 
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); }  
+
   abstract boolean typeCheck(Vector types, Vector entities, 
                              Vector contexts, Vector env); 
 
@@ -2350,6 +2353,9 @@ class ReturnStatement extends Statement
     return res; 
   } 
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); }
+
   public String bupdateForm()
   { return " "; } 
 
@@ -2657,6 +2663,9 @@ class BreakStatement extends Statement
     return res; 
   } 
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); }
+
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { return true; }  
  
@@ -2839,6 +2848,9 @@ class ContinueStatement extends Statement
     out.println(res + ".statId = \"" + res + "\""); 
     return res; 
   } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); }
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { return true; }  
@@ -3366,6 +3378,9 @@ class InvocationStatement extends Statement
 
     return res; 
   } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); }
 
   public String bupdateForm()
   { return toString(); } 
@@ -4031,6 +4046,10 @@ class ImplicitInvocationStatement extends Statement
 
     return res; 
   } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); }
+
 
   public String bupdateForm()
   { return " " + callExp; }   // ANY vars' WHERE callExp[vars'/vars] THEN vars := vars' 
@@ -4902,6 +4921,58 @@ class WhileStatement extends Statement
 
     String testid = actualTest.saveModelData(out); 
     String bodyid = actualBody.saveModelData(out); 
+    out.println(res + ".test = " + testid); 
+    out.println(res + ".body = " + bodyid);  
+
+    if (loopVar != null) 
+    { String lvid = loopVar.saveModelData(out); 
+      out.println(res + ".loopVar = " + lvid);
+    } 
+
+    if (loopRange != null) 
+    { String lrid = loopRange.saveModelData(out); 
+      out.println(res + ".loopRange = " + lrid);
+    } 
+ 
+    
+    return res; 
+  } // Distinguish while, repeat
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = ""; 
+
+    if (loopKind == FOR)
+    { res = Identifier.nextIdentifier("boundedloopstatement_"); 
+      out.println(res + " : BoundedLoopStatement");
+    } 
+    else 
+    { res = Identifier.nextIdentifier("unboundedloopstatement_"); 
+      out.println(res + " : UnboundedLoopStatement");
+    } 
+    out.println(res + ".statId = \"" + res + "\""); 
+
+    Statement actualBody = body; 
+    Expression actualTest = loopTest; 
+
+    if (loopKind == REPEAT)
+    { // same as 
+      // while true do (body; if loopTest then break else skip)
+
+      actualTest = new BasicExpression(true); 
+      Statement breakOut = new BreakStatement(); 
+      Statement skipStatement = new InvocationStatement("skip"); 
+
+      ConditionalStatement newif = 
+        new ConditionalStatement(loopTest, 
+                                 breakOut, skipStatement); 
+      actualBody = new SequenceStatement(); 
+      ((SequenceStatement) actualBody).addStatement(body); 
+      ((SequenceStatement) actualBody).addStatement(newif); 
+      actualBody.setBrackets(true); 
+    } 
+
+    String testid = actualTest.saveModelData(out); 
+    String bodyid = actualBody.saveModelData(out, ent); 
     out.println(res + ".test = " + testid); 
     out.println(res + ".body = " + bodyid);  
 
@@ -7841,6 +7912,19 @@ class SequenceStatement extends Statement
     return res; 
   } 
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = Identifier.nextIdentifier("sequencestatement_"); 
+    out.println(res + " : SequenceStatement");
+    out.println(res + ".statId = \"" + res + "\"");  
+    // out.println(res + ".kind = sequence");
+    for (int i = 0; i < statements.size(); i++)
+    { Statement ss = (Statement) statements.elementAt(i);
+      String ssid = ss.saveModelData(out, ent); 
+      out.println(ssid + " : " + res + ".statements"); 
+    } 
+    return res; 
+  } 
+
   public String bupdateForm()
   { String res = ""; 
     for (int i = 0; i < statements.size(); i++)
@@ -8662,6 +8746,20 @@ class CaseStatement extends Statement
     return res; 
   } // and the labels? 
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = Identifier.nextIdentifier("sequencestatement_"); 
+    out.println(res + " : SequenceStatement");
+    out.println(res + ".statId = \"" + res + "\"");  
+    out.println(res + ".kind = choice");
+    for (int i = 0; i < cases.elements.size(); i++)
+    { Maplet mm = (Maplet) cases.elements.elementAt(i);
+      Statement ss = (Statement) mm.dest; 
+      String ssid = ss.saveModelData(out, ent); 
+      out.println(ssid + " : " + res + ".statements"); 
+    } 
+    return res; 
+  } // and the labels? 
+
   public String bupdateForm()  /* Unused. */ 
   { int n = cases.elements.size();
     String res = ""; 
@@ -9115,6 +9213,9 @@ class ErrorStatement extends Statement
     return res; 
   } 
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); } 
+
   public String toStringJava()
   { if (thrownObject == null) 
     { return "  throw null;"; } 
@@ -9475,6 +9576,9 @@ class AssertStatement extends Statement
     } 
     return res; 
   } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { return saveModelData(out); } 
 
   public String toStringJava()
   { java.util.Map env = new java.util.HashMap(); 
@@ -9855,6 +9959,28 @@ class CatchStatement extends Statement
     { out.println(res + ".action = null"); } 
     else 
     { String sId = action.saveModelData(out);
+      out.println(res + ".action = " + sId);
+    } 
+
+    return res; 
+  } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = Identifier.nextIdentifier("catchstatement_"); 
+    out.println(res + " : CatchStatement"); 
+    out.println(res + ".statId = \"" + res + "\"");  
+    
+    if (caughtObject == null) 
+    { out.println(res + ".caughtObject = null"); } 
+    else 
+    { String expId = caughtObject.saveModelData(out);
+      out.println(res + ".caughtObject = " + expId);
+    } 
+
+    if (action == null) 
+    { out.println(res + ".action = null"); } 
+    else 
+    { String sId = action.saveModelData(out, ent);
       out.println(res + ".action = " + sId);
     } 
 
@@ -10426,6 +10552,30 @@ class TryStatement extends Statement
 
     if (endStatement != null) 
     { String endId = endStatement.saveModelData(out); 
+      out.println(endId + " : " + res + ".endStatement");  
+    } 
+
+    return res;
+  } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = Identifier.nextIdentifier("trystatement_"); 
+    out.println(res + " : TryStatement"); 
+    out.println(res + ".statId = \"" + res + "\"");  
+    
+    if (body != null) 
+    { String s1 = body.saveModelData(out, ent); 
+      out.println(res + ".body = " + s1); 
+    }
+  
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      String ccid = cc.saveModelData(out, ent); 
+      out.println(ccid + " : " + res + ".catchClauses");  
+    } 
+
+    if (endStatement != null) 
+    { String endId = endStatement.saveModelData(out, ent); 
       out.println(endId + " : " + res + ".endStatement");  
     } 
 
@@ -11232,6 +11382,11 @@ class IfStatement extends Statement
   public String saveModelData(PrintWriter out)
   { Statement cs = convertToConditionalStatement(); 
     return cs.saveModelData(out); 
+  } 
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { Statement cs = convertToConditionalStatement(); 
+    return cs.saveModelData(out, ent); 
   } 
 
   /* String res = Identifier.nextIdentifier("conditionalstatement_"); 
@@ -12114,9 +12269,9 @@ class AssignStatement extends Statement
       res.add(new AssignStatement(lhs,mut)); 
     } 
     return res; 
-  } // also lhs? 
+  } // also lhs?
 
-  public String saveModelData(PrintWriter out) 
+  public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("assignstatement_"); 
     out.println(res + " : AssignStatement"); 
     out.println(res + ".statId = \"" + res + "\""); 
@@ -12127,8 +12282,41 @@ class AssignStatement extends Statement
     if (type != null) 
     { String typeid = type.getUMLModelName(out); 
       out.println(typeid + " : " + res + ".type"); 
-    } 
+    }
     return res; 
+  }  
+
+  public String saveModelData(PrintWriter out, Entity ent) 
+  { java.util.Map env = new java.util.HashMap(); 
+
+    Vector cons = ent.getInvariants(); 
+    String ename = ent.getName(); 
+    SequenceStatement ss = new SequenceStatement(); 
+    ss.addStatement(this); 
+
+    System.out.println(">>> " + ename + " invariants are: " + cons); 
+
+    // Plus: cc.generateDesign(env,true) for any 
+    // constraint of current class E, for which
+    // cc.isBehavioural() && cc.dependsUpon(ename,lhs+"")
+
+    for (int i = 0; i < cons.size(); i++) 
+    { Constraint cc = (Constraint) cons.get(i); 
+      if (cc.dependsUpon(ename,lhs+""))
+      { System.out.println(">>> Invariant " + cc + " affected by update to " + lhs); 
+
+        Statement act = cc.generateDesign(env,true); 
+        if (act != null) 
+        { ss.addStatement(act); 
+          System.out.println(">>> Additional action " + act + " for " + this + " due to invariant " + cc); 
+        } 
+      } 
+    } 
+
+    if (ss.size() == 1)  
+    { return saveModelData(out); }
+    else 
+    { return ss.saveModelData(out); } 
   } 
 
   public void display()
@@ -13355,6 +13543,21 @@ class ConditionalStatement extends Statement
     return res;
   }
 
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = Identifier.nextIdentifier("conditionalstatement_");
+    out.println(res + " : ConditionalStatement");
+    out.println(res + ".statId = \"" + res + "\"");
+    String testid = test.saveModelData(out);
+    out.println(res + ".test = " + testid);
+    String ifpartid = ifPart.saveModelData(out, ent);
+    out.println(res + ".ifPart = " + ifpartid);
+    if (elsePart != null)
+    { String elsepartid = elsePart.saveModelData(out, ent);
+      out.println(elsepartid + " : " + res + ".elsePart");
+    }
+    return res;
+  }
+
   public Statement dereference(BasicExpression v)
   { Expression testc = test.dereference(v); 
     Statement ifc = ifPart.dereference(v); 
@@ -13839,6 +14042,15 @@ class FinalStatement extends Statement
     out.println(res + " : FinalStatement");
     out.println(res + ".statId = \"" + res + "\"");
     String bodyid = body.saveModelData(out);
+    out.println(res + ".body = " + bodyid);
+    return res;
+  }
+
+  public String saveModelData(PrintWriter out, Entity ent)
+  { String res = Identifier.nextIdentifier("finalstatement_");
+    out.println(res + " : FinalStatement");
+    out.println(res + ".statId = \"" + res + "\"");
+    String bodyid = body.saveModelData(out, ent);
     out.println(res + ".body = " + bodyid);
     return res;
   }

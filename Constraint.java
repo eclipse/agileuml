@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1298,8 +1298,14 @@ public class Constraint extends ConstraintOrGroup
     
     if (condExpr == null) 
     { return rhs; } 
-    else 
-    { return new ConditionalStatement(condExpr, rhs); } 
+
+    if ("true".equals(condExpr + "")) 
+    { return rhs; } 
+
+    if ("false".equals(condExpr + "")) 
+    { return new InvocationStatement("skip"); } 
+
+    return new ConditionalStatement(condExpr, rhs);  
   } 
 
   public String updateForm(java.util.Map env, boolean local)

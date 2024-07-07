@@ -5229,7 +5229,7 @@ public class BehaviouralFeature extends ModelElement
           rtname.equals("Ref") || 
           rtname.equals("Map") || rtname.equals("Function") )
       { if (elementType == null) 
-        { System.err.println("Warning!: No element type for " + this); 
+        { System.err.println("! Warning!: No element type for " + this); 
           out.println(opid + ".elementType = void"); 
         } 
         else 
@@ -5266,7 +5266,7 @@ public class BehaviouralFeature extends ModelElement
     out.println(opid + ".precondition = " + preid);
     out.println(opid + ".postcondition = " + postid);
 
-    System.out.println(">> Operation " + getName() + " activity is: " + activity); 
+    // System.out.println(">> Operation " + getName() + " activity is: " + activity); 
 
     Vector localentities = new Vector(); 
     if (typeParameters != null && typeParameters.size() > 0)
@@ -5281,9 +5281,9 @@ public class BehaviouralFeature extends ModelElement
     if (activity == null) 
     { Statement des = generateDesign(ent, localentities, types); 
       des.typeCheck(types,localentities,cntxt,env); 
-      String desid = des.saveModelData(out); 
+      String desid = des.saveModelData(out, ent); 
       out.println(opid + ".activity = " + desid); 
-      System.out.println(">> Operation " + getName() + " activity is: " + des); 
+      System.out.println(">> Operation " + getName() + " derived activity is: " + des); 
     } 
     else // if (activity != null) 
     { Statement newstat = activity; 
@@ -5299,7 +5299,7 @@ public class BehaviouralFeature extends ModelElement
         ((SequenceStatement) newstat).addStatement(cres);
         ((SequenceStatement) newstat).addStatement(activity); 
       } 
-      String actid = newstat.saveModelData(out); 
+      String actid = newstat.saveModelData(out, ent); 
       out.println(opid + ".activity = " + actid); 
     }  
    
@@ -5769,13 +5769,13 @@ public class BehaviouralFeature extends ModelElement
     if (query && isNoRecursion())
     { Vector cases = Expression.caselist(post); 
 	
-      System.out.println(">>> Caselist = " + cases); 
+      // System.out.println(">>> Caselist = " + cases); 
 	  
       Statement qstat = 
         designQueryList(cases, resT, env0, 
                         types, localEntities, atts);
       
-      System.out.println(">>> qstat for no recursion = " + qstat); 
+      // System.out.println(">>> qstat for no recursion = " + qstat); 
 	  
       qstat.setBrackets(true); 
       WhileStatement ws = 
@@ -5785,13 +5785,13 @@ public class BehaviouralFeature extends ModelElement
     else if (query)
     { Vector cases = Expression.caselist(post); 
 	
-      System.out.println(">>> Caselist = " + cases); 
+      // System.out.println(">>> Caselist = " + cases); 
 	  
       Statement qstat = 
         designQueryList(cases, resT, env0, 
                         types, localEntities, atts);
       
-      System.out.println(">>> qstat = " + qstat); 
+      // System.out.println(">>> qstat = " + qstat); 
 	  
       ((SequenceStatement) res).addStatement(qstat); 
       ((SequenceStatement) res).addStatement(rets); 
