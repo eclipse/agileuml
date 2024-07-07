@@ -498,6 +498,14 @@ true
 ( s.size = 0 => result = "" ) & ( s.size = 1 => result = s->first() ) & ( s.size > 1 => result = s->first() + "," + Expression.tolist(s->tail()) )
 
 
+Operation:
+toLambdaList
+Expression
+String
+vbl String s Sequence(String)
+query static
+true
+( s.size = 0 => result = "") & ( s.size = 1 => result = "lambda " + vbl + " : " + s->first()) & (s.size > 1 => result = "lambda " + vbl + " : " + s->first() + ", " + Expression.toLambdaList(vbl, s->tail()) )
 
 
 Operation:
@@ -930,7 +938,7 @@ String
 ls String rs String rexp Expression 
  query
 true
-( operator = "->sortedBy" => result = "sorted(" + ls + ", key = lambda " + variable + " : " + rs + ")" ) & ( operator = "->concatenateAll" => result = "ocl.concatenateAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Sequence" => result = "ocl.concatenateAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Set" => result = "ocl.unionAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Map" => result = "ocl.unionAllMap([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->intersectAll" => result = "ocl.intersectAll" + type.name + "([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->selectMaximals" => result = "ocl.selectMaximals" + left.type.name + "(" + ls + ", lambda " + expId + " : " + rexp.toPython() + ")" ) & ( operator = "->selectMinimals" => result = "ocl.selectMinimals" + left.type.name + "(" + ls + ", lambda " + expId + " : " + rexp.toPython() + ")" )
+( operator = "->sortedBy" & rexp : CollectionExpression => result = "ocl.sortedBy(" + ls + ", [" + rexp.toLambdaList(variable) + "])" ) & ( operator = "->sortedBy" => result = "sorted(" + ls + ", key = lambda " + variable + " : " + rs + ")" ) & ( operator = "->concatenateAll" => result = "ocl.concatenateAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Sequence" => result = "ocl.concatenateAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Set" => result = "ocl.unionAll([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->unionAll" & type.name = "Map" => result = "ocl.unionAllMap([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->intersectAll" => result = "ocl.intersectAll" + type.name + "([" + rexp.toPython() + " for " + expId + " in " + ls + "])" ) & ( operator = "->selectMaximals" => result = "ocl.selectMaximals" + left.type.name + "(" + ls + ", lambda " + expId + " : " + rexp.toPython() + ")" ) & ( operator = "->selectMinimals" => result = "ocl.selectMinimals" + left.type.name + "(" + ls + ", lambda " + expId + " : " + rexp.toPython() + ")" )
 
 
 
@@ -1321,6 +1329,15 @@ x BasicExpression
 true
 CollectionExpression->exists( e | e.expId = expId + "_" + x.data & e.isOrdered = isOrdered & e.umlKind = umlKind & e.elements = elements.addReference(x) & result = e )
 
+
+Operation:
+toLambdaList
+CollectionExpression
+String
+vbl String
+query
+true
+result = Expression.toLambdaList(vbl, elements.toPython())
 
 
 
@@ -2053,7 +2070,7 @@ String
 indent int 
  query
 true
-(left.type.name = "int" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (left.type.name = "long" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (left.type.name = "String" & right.type.name /= "String" => result = Statement.tab(indent) + left.toPython() + " = str(" + right.toPython() + ")\n") & (true => result = Statement.tab(indent) + left.toPython() + " = " + right.toPython() + "\n")
+(left.type.name = "int" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (left.type.name = "long" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (true => result = Statement.tab(indent) + left.toPython() + " = " + right.toPython() + "\n")
 
 
 

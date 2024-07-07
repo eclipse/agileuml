@@ -71,6 +71,8 @@ def isReal(sx) :
 
 def toInteger(sx) :
   ss = str(sx)
+  if len(ss) == 0 : 
+    return 0
   ind = ss.find(".")
   if ind >= 0 : 
     ss = ss[0:ind] 
@@ -717,6 +719,14 @@ def sortMap(s) :
   return m
 
 
+def sortedBy(s, fields) : 
+  n = len(fields)
+  p = s.copy()
+  for i in range(1,n+1) : 
+    p = sorted(p, key = fields[n-i])
+  return p
+
+
 def selectSet(s,f) : 
   return set({x for x in s if f(x)})
 
@@ -1059,5 +1069,10 @@ def values(m) :
     res.add(m[x])
   return res
 
+
+# sortedBy is used like this: 
+# data = ["1111234", "1000234", "1000421", "1111012"]
+# sdata = sortedBy(data, [lambda s : s[0:5], lambda s : s[5:8]])
+# print(sdata)
 
 
