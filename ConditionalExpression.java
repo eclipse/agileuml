@@ -175,6 +175,15 @@ public class ConditionalExpression extends Expression
     return res; 
   } 
 
+  public java.util.Map collectionOperatorUses(int level, 
+                             java.util.Map res)
+  { test.collectionOperatorUses(level,res); 
+    ifExp.collectionOperatorUses(level,res); 
+    java.util.Map result = 
+            elseExp.collectionOperatorUses(level,res); 
+    return result; 
+  } 
+
   public int syntacticComplexity()
   { int res = test.syntacticComplexity(); 
     res = res + ifExp.syntacticComplexity(); 

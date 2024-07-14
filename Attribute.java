@@ -682,6 +682,9 @@ public class Attribute extends ModelElement
   public boolean isSequence()
   { return type != null && type.isSequenceType(); } 
 
+  public boolean hasSequenceType()
+  { return type != null && type.isSequenceType(); } 
+
   public boolean isMap()
   { return type != null && type.isMapType(); } 
 
@@ -698,6 +701,25 @@ public class Attribute extends ModelElement
     { return true; } 
     return false; 
   } 
+
+  public boolean hasIndexingOperation(java.util.Map collOps)
+  { // there is some indexing operator on this attribute
+
+    String aname = getName(); 
+    java.util.Set keys = collOps.keySet(); 
+
+    for (Object k : keys)
+    { Vector maxops = (Vector) collOps.get(k);
+
+      for (int i = 0; i < maxops.size(); i++)  
+      { Expression expr = (Expression) maxops.get(i); 
+        if (Expression.isOclIndexOperation(aname, expr))
+        { return true; } 
+      } 
+    } 
+
+    return false; 
+  }
 
   public boolean equalToReverseDirection(Attribute att) 
   { if (att.getName().equals(role1 + "") && 

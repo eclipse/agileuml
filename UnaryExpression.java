@@ -724,14 +724,49 @@ public void findClones(java.util.Map clones,
             "\n>>> It may be more efficient to use a SortedSet type.");
       }
       else 
-      { aUses.add("! n*log(n) sorting algorithm used for " + operator); } 
+      { aUses.add("! n*log(n) sorting algorithm used for " + this); } 
 
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 
-    
+    else if (operator.equals("->unionAll") || 
+        operator.equals("->intersectAll") || 
+        operator.equals("->concatenateAll"))
+    { aUses.add("! High-cost operation: " + this);
+
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1); 
+    }
+
     return res; 
   } 
+
+  public java.util.Map collectionOperatorUses(int level, 
+                                      java.util.Map res)
+  { //  level |-> [x.setAt(i,y), etc]
+
+    argument.collectionOperatorUses(level, res); 
+
+    if (operator.equals("->sort") || 
+        operator.equals("->unionAll") || 
+        operator.equals("->intersectAll") || 
+        operator.equals("->concatenateAll") ||
+        operator.equals("->any") ||
+        operator.equals("->first") ||
+        operator.equals("->last") ||
+        operator.equals("->max") ||
+        operator.equals("->min"))
+    { Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(this); 
+      res.put(level, opers); 
+      return res; 
+    } 
+
+    return res; 
+  } // also any in the argument. 
+
 
   public int syntacticComplexity() 
   { int res = argument.syntacticComplexity(); 

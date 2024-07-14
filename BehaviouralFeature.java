@@ -3306,6 +3306,10 @@ public class BehaviouralFeature extends ModelElement
       else 
       { System.err.println("! Warning: parameter names should be alphanumeric: " + pname); } 
 
+      if (pname.length() > 40)
+      { System.err.println("! Warning: parameter names should not be longer than 40 characters: " + pname); } 
+
+
       if (activity == null && post != null)
       { Vector puses = post.getUses(pname); 
         if (puses.size() == 0) 
@@ -4294,6 +4298,18 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public void collectionOperatorUses(int level, 
+                                     java.util.Map res)
+  { // Scan the postcondition/activity for energy expensive
+    // expressions/code
+
+    if (post != null) 
+    { post.collectionOperatorUses(level, res); } 
+
+    if (activity != null) 
+    { activity.collectionOperatorUses(level, res); } 
+
+  } // and activity
 
   public int displayMeasures(PrintWriter out)   
   { String res = ""; 

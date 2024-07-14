@@ -265,6 +265,12 @@ abstract class Statement implements Cloneable
   public abstract Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses);
 
+  public abstract java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel);
+  // collection operation uses at each nesting level
+  // level |-> [expr1, expr2, ...] 
+
   public static boolean endsWithSelfCall(
             BehaviouralFeature bf, String nme, Statement st)
   { if (st == null) 
@@ -2243,6 +2249,16 @@ class ReturnStatement extends Statement
     return uses; 
   }  
 
+  public java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel)
+  { if (value == null) 
+    { return operatorsAtLevel; } 
+    value.collectionOperatorUses(nestingLevel, operatorsAtLevel); 
+    return operatorsAtLevel; 
+  }  
+
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { if (value == null) 
     { return; }
@@ -2771,6 +2787,11 @@ class BreakStatement extends Statement
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
   { return uses; }  
+
+  public java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel)
+  { return operatorsAtLevel; }  
 }
 
 class ContinueStatement extends Statement
@@ -2958,6 +2979,10 @@ class ContinueStatement extends Statement
                                 Vector rUses, Vector oUses)
   { return uses; }  
 
+  public java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel)
+  { return operatorsAtLevel; }  
 }
 
 
@@ -3233,6 +3258,14 @@ class InvocationStatement extends Statement
   { callExp.energyUse(uses, rUses, oUses);  
     return uses; 
   }  
+
+  public java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel)
+  { callExp.collectionOperatorUses(nestingLevel, operatorsAtLevel); 
+    return operatorsAtLevel; 
+  }  
+
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { String val = callExp + ""; 
@@ -3977,6 +4010,14 @@ class ImplicitInvocationStatement extends Statement
     return uses; 
   }  
 
+  public java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel)
+  { callExp.collectionOperatorUses(nestingLevel, 
+                                   operatorsAtLevel); 
+    return operatorsAtLevel; 
+  }  
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { callExp.findMagicNumbers(mgns, this + "", op); } 
 
@@ -4612,6 +4653,19 @@ class WhileStatement extends Statement
 
     return uses; 
   } // red if nested loops. Amber for a while loop.
+
+  public java.util.Map collectionOperatorUses(
+                             int nestingLevel, 
+                             java.util.Map operatorsAtLevel)
+  { if (loopRange != null) 
+    { loopRange.collectionOperatorUses(nestingLevel, 
+                                       operatorsAtLevel); 
+    }
+  
+    body.collectionOperatorUses(nestingLevel + 1,
+                                operatorsAtLevel);
+    return operatorsAtLevel; 
+  }  
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { if (loopRange != null) 
@@ -6317,6 +6371,12 @@ class CreationStatement extends Statement
     return uses; 
   } 
 
+  public java.util.Map collectionOperatorUses(int lev, 
+                                              java.util.Map uses)
+  { if (initialExpression != null) 
+    { initialExpression.collectionOperatorUses(lev, uses); } 
+    return uses; 
+  } 
 
   /* public CreationStatement(Attribute vbl, Type typ)
   { createsInstanceOf = typ.getName();
@@ -7689,7 +7749,17 @@ class SequenceStatement extends Statement
 
     return uses; 
   } 
-    
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                                              java.util.Map uses)
+  { for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      stat.collectionOperatorUses(lev, uses); 
+    }
+
+    return uses; 
+  } 
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { for (int i = 0; i < statements.size(); i++) 
     { Statement stat = (Statement) statements.get(i); 
@@ -9028,6 +9098,20 @@ class CaseStatement extends Statement
     return uses; 
   }
 
+  public java.util.Map collectionOperatorUses(int lev, 
+                                              java.util.Map uses) 
+  { 
+    int n = cases.elements.size();
+
+    for (int i = 0; i < n; i++)
+    { Maplet mm = (Maplet) cases.elements.elementAt(i);
+      Statement cse = (Statement) mm.dest;
+      cse.collectionOperatorUses(lev, uses); 
+    }
+
+    return uses; 
+  }
+
   public int epl() 
   { int res = 0; 
     int n = cases.elements.size();
@@ -9132,6 +9216,13 @@ class ErrorStatement extends Statement
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { if (thrownObject != null) 
     { thrownObject.energyUse(uses, rUses, aUses); } 
+    return uses; 
+  } 
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                                    java.util.Map uses)
+  { if (thrownObject != null) 
+    { thrownObject.collectionOperatorUses(lev, uses); } 
     return uses; 
   } 
 
@@ -9456,6 +9547,16 @@ class AssertStatement extends Statement
     { message.energyUse(uses, rUses, aUses); } 
     return uses; 
   } 
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                                    java.util.Map uses)
+  { if (condition != null) 
+    { condition.collectionOperatorUses(lev, uses); } 
+    if (message != null) 
+    { message.collectionOperatorUses(lev, uses); } 
+    return uses; 
+  } 
+
 
   public Statement dereference(BasicExpression var) 
   { Expression newcond = condition; 
@@ -9892,6 +9993,13 @@ class CatchStatement extends Statement
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { if (action != null) 
     { action.energyUse(uses, rUses, aUses); } 
+    return uses; 
+  } 
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                                    java.util.Map uses)
+  { if (action != null) 
+    { action.collectionOperatorUses(lev, uses); } 
     return uses; 
   } 
 
@@ -10352,6 +10460,22 @@ class TryStatement extends Statement
 
     if (endStatement != null)
     { endStatement.energyUse(uses, rUses, aUses); } 
+
+    return uses; 
+  } 
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                                    java.util.Map uses)
+  { if (body != null) 
+    { body.collectionOperatorUses(lev, uses); } 
+    
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement stat = (Statement) catchClauses.get(i); 
+      stat.collectionOperatorUses(lev, uses); 
+    }
+
+    if (endStatement != null)
+    { endStatement.collectionOperatorUses(lev, uses); } 
 
     return uses; 
   } 
@@ -11174,6 +11298,17 @@ class IfStatement extends Statement
 
     return uses; 
   }
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                          java.util.Map uses)
+  { for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      cse.collectionOperatorUses(lev, uses); 
+    } 
+
+    return uses; 
+  }
+
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { for (int i = 0; i < cases.size(); i++) 
@@ -12197,6 +12332,12 @@ class AssignStatement extends Statement
     return uses; 
   }  
 
+  public java.util.Map collectionOperatorUses(int lev, 
+                          java.util.Map uses)
+  { rhs.collectionOperatorUses(lev, uses); 
+    lhs.collectionOperatorUses(lev, uses); 
+    return uses; 
+  } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { lhs.findMagicNumbers(mgns, "" + this, op);
@@ -12893,6 +13034,14 @@ class IfCase
     return uses; 
   }
 
+  public java.util.Map collectionOperatorUses(int lev, 
+                          java.util.Map uses)
+  { test.collectionOperatorUses(lev, uses); 
+    ifPart.collectionOperatorUses(lev, uses);
+    return uses; 
+  }
+
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { test.findMagicNumbers(mgns,this + "",op); 
     ifPart.findMagicNumbers(mgns,rule,op);
@@ -13334,6 +13483,15 @@ class ConditionalStatement extends Statement
     { elsec = (Statement) elsePart.clone(); }
     return new ConditionalStatement(testc, ifc, elsec); 
   }  
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                          java.util.Map uses)
+
+  { test.collectionOperatorUses(lev, uses); 
+    ifPart.collectionOperatorUses(lev, uses);
+    elsePart.collectionOperatorUses(lev, uses);
+    return uses; 
+  } 
 
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
@@ -13979,6 +14137,12 @@ class FinalStatement extends Statement
 
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { body.energyUse(uses, rUses, aUses);  
+    return uses; 
+  } 
+
+  public java.util.Map collectionOperatorUses(int lev, 
+                                    java.util.Map uses)
+  { body.collectionOperatorUses(lev, uses); 
     return uses; 
   } 
 

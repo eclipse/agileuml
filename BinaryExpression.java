@@ -200,11 +200,18 @@ class BinaryExpression extends Expression
         "->existsLC".equals(operator) || 
         "->forAll".equals(operator) || "->exists1".equals(operator) ||
         "->select".equals(operator) || "->reject".equals(operator) ||
-        "->collect".equals(operator) || "=>".equals(operator) || "->closure".equals(operator) || 
-        "->isUnique".equals(operator) || "->unionAll".equals(operator) ||
-        "->intersectAll".equals(operator) || "->symmetricDifference".equals(operator) ||
-        "->selectMaximals".equals(operator) || "->sortedBy".equals(operator) ||
-        "->selectMinimals".equals(operator) || "->at".equals(operator) || 
+        "->collect".equals(operator) || 
+        "=>".equals(operator) || 
+        "->closure".equals(operator) || 
+        "->isUnique".equals(operator) || 
+        "->unionAll".equals(operator) ||
+        "->concatenateAll".equals(operator) ||
+        "->intersectAll".equals(operator) || 
+        "->symmetricDifference".equals(operator) ||
+        "->selectMaximals".equals(operator) || 
+        "->sortedBy".equals(operator) ||
+        "->selectMinimals".equals(operator) || 
+        "->at".equals(operator) || 
         "->iterate".equals(operator) || 
         "->apply".equals(operator))
     { Expression leftdet = left.determinate(); 
@@ -20091,13 +20098,98 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "|concatenateAll".equals(operator) ||
              "->intersectAll".equals(operator) || 
              "|intersectAll".equals(operator))
-    { aUses.add("! Expensive operator in: " + this);
+    { aUses.add("! High-cost operator in: " + this);
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 
 
     return res; 
   } 
+
+  public java.util.Map collectionOperatorUses(int level, 
+                                      java.util.Map res)
+  { //  level |-> [x.setAt(i,y), etc]
+
+    left.collectionOperatorUses(level,res); 
+
+    if (operator.equals("->including") ||
+        operator.equals("->prepend") ||
+        operator.equals("->append") ||
+        operator.equals("->excluding") ||
+        operator.equals("->excludingFirst") ||
+        operator.equals("->includes") ||
+        operator.equals("->excludes") ||
+        operator.equals("->includesAll") ||
+        operator.equals("->excludesAll") ||
+        operator.equals("<:") ||
+        operator.equals(":") ||
+        operator.equals("/:") ||
+        operator.equals("->intersection") ||
+        operator.equals("->union") ||
+        operator.equals("->restrict") ||
+        operator.equals("->antirestrict"))
+    { Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(this); 
+      res.put(level, opers); 
+      return res; 
+    } 
+
+    if (operator.equals("->count") ||
+        operator.equals("->at"))
+    { Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(this); 
+      res.put(level, opers); 
+      return res; 
+    } 
+
+    if (operator.equals("->select") ||
+        operator.equals("->reject") ||
+        operator.equals("->collect") ||
+        operator.equals("->forall") ||
+        operator.equals("->exists") ||
+        operator.equals("->exists1") ||
+        operator.equals("->isUnique") ||
+        operator.equals("->iterate") ||  
+        operator.equals("->sortedBy"))
+    { Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(this); 
+      res.put(level, opers); 
+      
+      right.collectionOperatorUses(level+1, res); 
+      return res; 
+    } 
+
+    if (operator.equals("|") ||
+        operator.equals("|R") ||
+        operator.equals("|C") ||
+        operator.equals("!") ||
+        operator.equals("#") ||
+        operator.equals("#1") || 
+        operator.equals("|unionAll") || 
+        operator.equals("|intersectAll") || 
+        operator.equals("|concatenateAll") || 
+        operator.equals("|sortedBy"))
+    { Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(this); 
+      res.put(level, opers); 
+      
+      right.collectionOperatorUses(level+1, res); 
+      return res; 
+    } 
+
+    right.collectionOperatorUses(level,res); 
+
+    return res; 
+  } // and the left and right. 
+
 
   public int syntacticComplexity() 
   { int res = left.syntacticComplexity();

@@ -1413,6 +1413,17 @@ public class SetExpression extends Expression
     return res; 
   }  
 
+  public java.util.Map collectionOperatorUses(int level, 
+                             java.util.Map res)
+  { for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i);  
+      elem.collectionOperatorUses(level, res);
+    } 
+
+    return res; 
+  }  
+
+
   public int syntacticComplexity() 
   { int res = 0;
     for (int i = 0; i < elements.size(); i++) 

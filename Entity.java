@@ -2083,7 +2083,10 @@ public class Entity extends ModelElement implements Comparable
       { System.err.println("! Warning: underscore is not a valid name by itself"); } 
 
       if (Compiler2.isAnyKeyword(aname))
-      { System.err.println("!! ERROR: keyword " + aname + " is not a valid feature name"); } 
+      { System.err.println("!! ERROR: keyword " + aname + " is not a valid feature name"); }
+
+      if (aname.length() > 40)
+      { System.err.println("! Warning: attribute names should not be longer than 40 characters: " + aname); } 
     } 
   } 
 
@@ -2118,6 +2121,9 @@ public class Entity extends ModelElement implements Comparable
       else 
       { System.err.println("! Warning: operation names should be alphanumeric: " + opname); } 
  
+      if (opname.length() > 40)
+      { System.err.println("! Warning: operation names should not be longer than 40 characters: " + opname); } 
+
       op.checkParameterNames(); 
 
       if (opnames.contains(opname))
@@ -5514,6 +5520,8 @@ public class Entity extends ModelElement implements Comparable
 
     String ename = getName(); 
 
+    java.util.Map collOps = new java.util.HashMap(); 
+
     System.out.println(); 
     System.out.println("++++++++ Energy analysis of class " + ename + " ++++++++++++"); 
     System.out.println(); 
@@ -5528,6 +5536,8 @@ public class Entity extends ModelElement implements Comparable
       Vector amberDetails = new Vector(); 
 
       Map res1 = op.energyAnalysis(redDetails, amberDetails);
+
+      op.collectionOperatorUses(1, collOps); 
  
       int redop = (int) res1.get("red"); 
       int amberop = (int) res1.get("amber"); 
@@ -5558,10 +5568,122 @@ public class Entity extends ModelElement implements Comparable
         int amberscore = (int) res.get("amber"); 
         res.set("amber", amberscore + amberop); 
       } 
+
     } 
 
+    // System.out.println(">> Collection operator uses in " + 
+    //                    ename + ": " + collOps);
+    java.util.Set keys = collOps.keySet(); 
+
+    for (Object k : keys)
+    { if (k instanceof Integer)
+      { int lev = ((Integer) k).intValue(); 
+        if (lev > 1) 
+        { 
+         // For each level > 1, look at the operations used and 
+         // provide advice on what collections to use or not use. 
+         // If no use of indexing operations, advise to use
+         // set or bag.  
+
+          Vector maxops = (Vector) collOps.get(lev); 
+          System.out.println(">>> Level " + lev + 
+                             " operators are: " + 
+                             maxops + "\n");
+
+          for (int i = 0; i < maxops.size(); i++) 
+          { Expression maxop = (Expression) maxops.get(i); 
+
+            if (maxop instanceof UnaryExpression)
+            { UnaryExpression ue = (UnaryExpression) maxop; 
+              String oper = ue.getOperator(); 
+              Expression arg = ue.getArgument(); 
+
+              if (Expression.isOclDistributedIteratorOperator(oper))
+              { System.err.println("! Warning: " + maxop + " is a >= O(S) operation\n" + 
+                  " in the sum S of sizes of the argument elements. \n"); 
+              }
+              else if ("->max".equals(oper) || 
+                       "->min".equals(oper))
+              { if (arg.isSequence())
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(n) operation on Sequence " + arg + "\n" + 
+                    " SortedSet or SortedBag can be more efficient if no indexing is needed\n"); 
+                }
+              }
+
+              continue;   
+            }
+
+            if (maxop instanceof BinaryExpression)
+            { BinaryExpression be = (BinaryExpression) maxop;
+              String oper = be.getOperator(); 
+
+              if (Expression.isOclDistributedIteratorOperator(oper))
+              { System.err.println("! Warning: " + maxop + " is a >= O(S) operation\n" + 
+                  " in the sum S of sizes of the argument elements. \n"); 
+              }  
+              else if (
+                  Expression.isOclIteratorOperator(oper) ||
+                  "->intersection".equals(oper) || 
+                  "->restrict".equals(oper) || 
+                  "->includesAll".equals(oper) ||
+                  "->excludesAll".equals(oper) ||
+                  "<:".equals(oper) ||  
+                  "->antirestrict".equals(oper) ||
+                  "->iterate".equals(oper))
+              { System.err.println("! Warning: " + maxop + " is a >= O(n) operation in the size of the LHS collection/map. \n"); }  
+
+              if ("->union".equals(oper) || 
+                  "->symmetricDifference".equals(oper))
+              { System.err.println("! Warning: " + maxop + " is an O(n) operation in the sum of sizes of the arguments. \n"); }  
+
+              if ("->sortedBy".equals(oper) || 
+                  "|sortedBy".equals(oper))
+              { System.err.println("! Warning: " + maxop + " is an O(n*log(n)) operation in the size of the LHS. \n"); }  
+
+              if (be.getLeft().isSequence())
+              { if ("->includes".equals(oper) ||
+                    "->excludingFirst".equals(oper)) 
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(n) operation on Sequence " + be.getLeft() + "\n" + 
+                    " Set, Bag, SortedSet or SortedBag can be more efficient if no indexing is needed\n"); 
+                } 
+                else if ("->including".equals(oper))
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(log n) operation on Sequence " + be.getLeft() + "\n" + 
+                    " Set or Bag can be more efficient if no indexing is needed\n"); 
+                } 
+                else if ("->excluding".equals(oper) ||
+                         "->count".equals(oper))
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(n) operation on Sequence " + be.getLeft() + "\n" + 
+                    " Set or SortedSet can be more efficient if no indexing or duplicates are needed\n"); 
+                } 
+                 
+              }
+            } 
+          } 
+        }
+      }
+    }
+
+    // Also, check each attribute, if sequence-typed but no 
+    // indexing operations, suggest a bag/set is used instead.
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute attr = (Attribute) attributes.get(i); 
+      if (attr.hasSequenceType())
+      { boolean indexUse = 
+          attr.hasIndexingOperation(collOps); 
+
+        if (indexUse == false)
+        { System.err.println("! No use of indexes with sequence-valued attribute " + attr + "\n! It may be more efficient to use a SortedSet or Bag\n"); } 
+      } 
+    }       
+
     System.out.println(); 
-    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++"); 
+      
+System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++"); 
     System.out.println(); 
 
     return res; 

@@ -2219,6 +2219,97 @@ abstract class Expression
     return false; 
   } 
 
+  public static boolean isOclIteratorOperator(String op)
+  { if (op.startsWith("|") || op.startsWith("#") || 
+          op.equals("!") )
+    { return true; }
+    
+    if ("->collect".equals(op) || 
+        "->isUnique".equals(op) || 
+        "->reject".equals(op) || 
+        "->select".equals(op) || 
+        "->selectMaximals".equals(op) || 
+        "->selectMinimals".equals(op) || 
+        "->forAll".equals(op) || 
+        "->exists".equals(op) || 
+        "->exists1".equals(op)) 
+    { return true; } 
+
+    return false; 
+  } 
+
+  public static boolean isOclDistributedIteratorOperator(
+                                                String op)
+  { if ("->unionAll".equals(op) ||
+        "->intersectAll".equals(op) || 
+        "->concatenateAll".equals(op))
+    { return true; } 
+
+    if ("|unionAll".equals(op) ||
+        "|intersectAll".equals(op) || 
+        "|concatenateAll".equals(op))
+    { return true; } 
+    
+    return false; 
+  } 
+
+
+  public static boolean isOclIndexOperation(String attr, 
+                                            Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression bexpr = (BasicExpression) expr;
+      Expression obj = bexpr.getObjectRef(); 
+
+      if (attr.equals(obj + "")) { } 
+      else 
+      { return false; } 
+ 
+      if (bexpr.data.equals("setAt") || 
+          bexpr.data.equals("insertAt") ||
+          bexpr.data.equals("insertInto") ||
+          bexpr.data.equals("excludingSubrange") ||
+          bexpr.data.equals("subrange")) 
+      { return true; }
+      return false; 
+    }
+
+    if (expr instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) expr; 
+      String op = be.getOperator(); 
+
+      if (attr.equals(be.getLeft() + "")) { } 
+      else 
+      { return false; } 
+      
+    
+      if ("->at".equals(op) || 
+          "->indexOf".equals(op) || 
+          "->lastIndexOf".equals(op) || 
+          "->excludingAt".equals(op) || 
+          "->append".equals(op) || 
+          "->prepend".equals(op)) 
+       { return true; } 
+       return false; 
+     } 
+
+     if (expr instanceof UnaryExpression)
+     { UnaryExpression be = (UnaryExpression) expr; 
+       String op = be.getOperator(); 
+
+       if (attr.equals(be.getArgument() + "")) { } 
+       else 
+       { return false; } 
+      
+    
+       if ("->first".equals(op) || 
+           "->last".equals(op)) 
+       { return true; } 
+       return false;  
+     }
+
+     return false; 
+   } 
+
   public static boolean isOclIteratorExpression(Expression expr)
   { if (expr instanceof BinaryExpression)
     { BinaryExpression ue = (BinaryExpression) expr; 
@@ -3682,6 +3773,9 @@ public static boolean conflictsReverseOp(String op1, String op2)
 
   public abstract Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses); 
+
+  public abstract java.util.Map collectionOperatorUses(int level, 
+                             java.util.Map res); 
 
   public Expression isExistsForall(Vector foralls, Expression tracest)
   { return null; }

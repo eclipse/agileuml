@@ -2705,7 +2705,7 @@ public void findPlugins()
         
         helppane = new JEditorPane();  
         helppane.setEditable(false); 
-        helppane.setSize(300,400); 
+        helppane.setSize(350,400); 
         helppane.setText("Troubleshooting: \n\n" + 
                   "1. Unable to save/view data? \n" + 
                   "   An 'output' subdirectory must exist\n" + 
@@ -2742,12 +2742,17 @@ public void findPlugins()
                   "   constraints in a use case uc - all these variables\n" +
                   "   go into the same Controller operation for uc.\n\n" +  
                   "For more help, please read the manual:\n" + 
-                  "https://www.agilemde.co.uk/umlrsds.pdf\n\n");
+                  "https://www.agilemde.co.uk/umlrsds.pdf\n\n" + 
+           "For requirements formalisation (Formalise data requirements)\n" + 
+           "Use: java -Xms1800m -cp \"*\" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,pos,lemma,ner,parse -file input.txt\n" + 
+           "to produce nlpout.txt from input.txt requirements\n\n" + 
+          "For formalising behaviour requirements use:\n" + 
+          "  java -mx300m -classpath stanford-postagger.jar edu.stanford.nlp.tagger.maxent.MaxentTagger -model models/english-bidirectional-distsim.tagger -textFile infile.txt > tagged.txt");
         int w = getWidth(); 
         int h = getHeight(); 
  
         getContentPane().add(new JScrollPane(helppane), java.awt.BorderLayout.EAST); 
-        setSize(w + 300, h); 
+        setSize(w + 350, h); 
         helppane.setVisible(true); 
         helppane.repaint(); 
         repaint(); 
@@ -2761,7 +2766,7 @@ public void findPlugins()
         Runtime proc = Runtime.getRuntime(); 
         try { Process p = proc.exec("C:\\Program Files\\Mozilla Firefox\\firefox.exe http://www.agilemde.co.uk/umlrsds20.pdf"); } 
         catch (Exception ee) 
-        { System.err.println("!! Unable to open the UML-RSDS manual: requires Firefox"); } 
+        { System.err.println("!! Unable to open the UML-RSDS manual http://agilemde.co.uk/umlrsds20.pdf: requires Firefox"); } 
       }
       else if (label.equals("Quality check"))
       { ucdArea.qualityCheck(); }

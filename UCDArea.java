@@ -27593,6 +27593,9 @@ public void produceCUI(PrintWriter out)
       mtout.println("from oclprocess import *"); 
       mtout.println("from ocliterator import *"); 
       mtout.println("from ocldatasource import *"); 
+      mtout.println("from oclrandom import *");
+      mtout.println("from stringlib import *");
+      
       mtout.println("from enum import Enum"); 
       mtout.println("");  
       mtout.println("import app"); 
@@ -27645,6 +27648,9 @@ public void produceCUI(PrintWriter out)
       else 
       { System.err.println("! Warning: class names should begin with a capital letter and consist only of alphanumeric characters: " + ename); } 
 
+      if (ename.length() > 40)
+      { System.err.println("! Warning: class names should not be longer than 40 characters: " + ename); } 
+      
       if (ent.allSubclassesAreEmpty())
       { System.err.println("! Warning: all immediate subclasses of class " + ent + " are empty -- these may be redundant."); } 
 
@@ -27691,6 +27697,9 @@ public void produceCUI(PrintWriter out)
         if (Entity.strictEntityName(ucname)) { } 
         else 
         { System.err.println("! Warning: use case names should begin with a letter and consist only of alphanumeric characters: " + ucname); } 
+
+        if (ucname.length() > 150)
+        { System.err.println("! Warning: use case names should not be longer than 150 characters: " + ucname); } 
 
         uc.checkIncludesValidity(useCases); 
         System.err.println(); 

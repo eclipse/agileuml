@@ -17264,6 +17264,39 @@ public Statement generateDesignSubtract(Expression rhs)
     return res; 
   } 
 
+  public java.util.Map collectionOperatorUses(int level, 
+                                      java.util.Map res)
+  { //  level |-> [x.setAt(i,y), etc]
+
+    if (data.equals("insertAt") || 
+        data.equals("insertInto") ||
+        data.equals("subrange") ||
+        data.equals("setAt") ||
+        data.equals("excludingSubrange"))
+    { Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(this); 
+      res.put(level, opers); 
+      return res; 
+    } 
+
+    if (arrayIndex != null) 
+    { BasicExpression be = (BasicExpression) clone(); 
+      be.arrayIndex = null; 
+      BinaryExpression newbe = 
+        new BinaryExpression("->at", be, arrayIndex); 
+      Vector opers = (Vector) res.get(level); 
+      if (opers == null) 
+      { opers = new Vector(); } 
+      opers.add(newbe); 
+      res.put(level, opers); 
+      return res; 
+    } 
+
+    return res; 
+  } 
+
   public int syntacticComplexity() 
   { int res = 0; 
 
