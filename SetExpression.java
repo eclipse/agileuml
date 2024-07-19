@@ -1029,6 +1029,15 @@ public class SetExpression extends Expression
     return res;
   }
 
+  public Vector allVariableNames()
+  { Vector res = new Vector();
+    for (int i = 0; i < elements.size(); i++)
+    { Expression val = (Expression) elements.get(i);
+      res = VectorUtil.union(res,val.allVariableNames());
+    }
+    return res;
+  }
+
   public boolean relevantOccurrence(String op, Entity ent, String f,
                                     String val)
   { return false; }

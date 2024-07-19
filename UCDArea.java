@@ -252,7 +252,7 @@ public class UCDArea extends JPanel
         String nme = uc.getName();  
         UseCase uc0 = (UseCase) ModelElement.lookupByName(nme,useCases); 
         if (uc0 != null) 
-        { System.out.println("Existing use case with name: " + nme); 
+        { System.out.println("! Existing use case with name: " + nme); 
           useCases.remove(uc0); 
 		}
       }
@@ -296,6 +296,38 @@ public class UCDArea extends JPanel
       { res.add(e); } 
     } 
     return res; 
+  } 
+
+  public Vector allEntityNames()
+  { Vector names = new Vector(); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      String nme = ent.getName(); 
+      if (names.contains(nme)) { } 
+      else 
+      { names.add(nme); } 
+    } 
+    return names; 
+  } 
+
+  public Vector allOperationNames()
+  { Vector names = new Vector(); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      names.addAll(ent.allOperationNames()); 
+    } 
+    return names; 
+  } 
+
+
+  public Vector allVariableNames()
+  { Vector names = new Vector(); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      names.addAll(ent.allAttributeNames());
+      names.addAll(ent.allVariableNames());  
+    } 
+    return names; 
   } 
 
   public void randomModels2Java()
@@ -18283,6 +18315,53 @@ public void produceCUI(PrintWriter out)
     // changedUseCaseName(oldname, newname); 
   } 
 
+  public void compareModel2Program(ASTTerm sourceAST, 
+                                   Vector tags)
+  { // Checks that identifiers used in program are same 
+    // as those in the abstracted model. 
+
+    Vector sourceIdentifiers = sourceAST.allIdentifiers(tags); 
+
+    Vector enames = allEntityNames(); 
+    Vector opnames = allOperationNames(); 
+    Vector vnames = allVariableNames();
+
+    Vector modelIdentifiers = VectorUtil.union(enames,opnames);  
+    modelIdentifiers = VectorUtil.union(modelIdentifiers,vnames);  
+    modelIdentifiers.remove("skip"); 
+
+    Vector esub = (Vector) modelIdentifiers.clone(); 
+    esub.removeAll(sourceIdentifiers);  // in model, not source
+
+    System.out.println(); 
+    System.out.println(">> Names: " + esub + " occur in model, not source"); 
+
+    Vector csub = (Vector) sourceIdentifiers.clone(); 
+    csub.removeAll(modelIdentifiers);  // in source, not model
+
+    System.out.println(">> Names: " + csub + " occur in source, not model"); 
+    System.out.println(); 
+
+    Vector sids = VectorUtil.asSet(sourceIdentifiers); 
+    Vector mids =
+                  VectorUtil.asSet(modelIdentifiers);
+
+    Vector mextra = VectorUtil.asSet(esub); 
+    Vector sextra = VectorUtil.asSet(csub); 
+
+    if (mids.size() > 0)
+    { System.out.println(">> Model consistency with source = "); 
+      System.out.println("  " + (1.0 - (1.0*mextra.size())/mids.size())); 
+    }  
+                     
+    if (sids.size() > 0)
+    { System.out.println(">> Model completeness with source = "); 
+      System.out.println("  " + (1.0 - (1.0*sextra.size())/sids.size())); 
+    }  
+
+    System.out.println(); 
+  } 
+
   public void loadKM3FromFile()
   { File file = new File("output/mm.km3");  /* default */ 
 
@@ -27425,26 +27504,26 @@ public void produceCUI(PrintWriter out)
       { continue; }
 	
       Vector optests = e.operationTestCasesJava7(mutationtests);
- 
-  /* 
+
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
-    
-      for (int j = 0; j < optests.size(); j++) 
-      { if (optests.get(j) instanceof Vector)
-        { Vector otest = (Vector) optests.get(j); 
-          String oname = otest.get(0) + "";
-          String otxt = otest.get(1) + "";  
-          try
-          { PrintWriter rout = new PrintWriter(
+
+      try
+      { PrintWriter rout = new PrintWriter(
                                 new BufferedWriter(
-                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
-            rout.println(otxt); 
-            rout.close(); 
+                                  new FileWriter("output/tests/" + e.getName() + "_operationTests.txt")));
+    
+        for (int j = 0; j < optests.size(); j++) 
+        { if (optests.get(j) instanceof Vector)
+          { Vector otest = (Vector) optests.get(j); 
+            String oname = otest.get(0) + "";
+            String otxt = otest.get(1) + "";  
+            rout.println(oname + " Test " + j + ":\n" + otxt);
+            rout.println(); 
           } 
-          catch (Exception _x) { } 
-        }
-      } */ 
- 
+        } 
+        rout.close(); 
+      } catch (Exception _x) { } 
+      
     }  
   
     try
@@ -28144,6 +28223,15 @@ public void produceCUI(PrintWriter out)
       ent.setAbstract(false); 
     } 
 
+    typeInference(); 
+
+    typeCheck(); 
+
+    Vector tags = new Vector(); 
+    tags.add("name"); // for Python
+
+    compareModel2Program(xx, tags); 
+
     repaint(); 
   }
 
@@ -28517,6 +28605,12 @@ public void produceCUI(PrintWriter out)
                            paragraphlist,cobolperforms); 
       mainent.addMoveCorrespondingOperations(auxents); 
     } 
+
+    Vector tags = new Vector(); 
+    tags.add("cobolWord"); // for COBOL
+
+    compareModel2Program(yy1, tags); 
+
 
     /* Some essential libraries: */ 
 

@@ -2104,6 +2104,33 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public Vector allOperationNames()
+  { Vector opnames = new Vector(); 
+
+    Vector allops = getOperations(); 
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
+      String opname = op.getName();
+      if (opnames.contains(opname)) { } 
+      else 
+      { opnames.add(opname); } 
+    } 
+    return opnames; 
+  } 
+      
+  public Vector allVariableNames()
+  { Vector attnames = new Vector(); 
+
+    Vector opers = getOperations(); 
+    for (int i = 0; i < opers.size(); i++) 
+    { BehaviouralFeature op = 
+                 (BehaviouralFeature) opers.get(i); 
+      Vector vnames = op.allVariableNames(); 
+      attnames = VectorUtil.union(attnames,vnames);  
+    } 
+    return attnames; 
+  } 
+
   public Vector checkOperationNames()
   { Vector dups = new Vector(); 
     Vector opnames = new Vector(); 

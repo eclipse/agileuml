@@ -314,6 +314,8 @@ public abstract class ASTTerm
 
   public abstract java.util.Set allTagsIn(); 
 
+  public abstract Vector allIdentifiers(Vector tags);
+
   public static Vector rulesFromTagsArities(Vector tagsarities)
   { // For each (tag,n) : tagsarities
     // define CGRule  tag:: _1 |-->_1 or _* |-->_*

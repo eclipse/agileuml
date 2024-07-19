@@ -32,6 +32,16 @@ class VectorUtil
     return res; 
   } 
 
+  static Vector asSet(java.util.Collection arr)
+  { Vector res = new Vector(); 
+    for (Object x : arr) 
+    { if (res.contains(x)) { } 
+      else 
+      { res.add(x); }
+    }  
+    return res; 
+  } 
+
   static Vector allToVector(java.util.Collection arr)
   { Vector res = new Vector(); 
     for (Object x : arr) 

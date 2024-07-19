@@ -94,6 +94,11 @@ public class ASTSymbolTerm extends ASTTerm
   public Vector allNestedSubterms()
   { return new Vector(); }  
 
+  public Vector allIdentifiers(Vector tags)
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
   public String cg(CGSpec cgs)
   { return symbol; } 
 

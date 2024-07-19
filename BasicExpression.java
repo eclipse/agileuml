@@ -16427,6 +16427,46 @@ public Statement generateDesignSubtract(Expression rhs)
     return res;
   } 
 
+  public Vector allVariableNames()
+  { Vector res = new Vector(); // of String
+
+    if (("Sum".equals(data) || "Prd".equals(data)) && 
+        "Integer".equals(objectRef + "") && parameters != null && parameters.size() > 3)
+    { Expression par1 = (Expression) parameters.get(0); 
+      Expression par2 = (Expression) parameters.get(1);
+      Expression par3 = (Expression) parameters.get(2); 
+      Expression par4 = (Expression) parameters.get(3);
+      res.addAll(par1.allVariableNames()); 
+      res.addAll(par2.allVariableNames()); 
+      res.add(par3 + ""); 
+      Vector ss = par4.allVariableNames(); 
+      res.addAll(ss);
+      return res; 
+    }  
+
+    if (umlkind == VARIABLE && parameters == null)  // it is a true variable
+    { if (variable != null) 
+      { res.add(variable + ""); }  // ignoring arrayIndex
+      else 
+      { res.add(this + ""); }
+    } 
+
+    if (objectRef != null)
+    { res.addAll(objectRef.allVariableNames()); }
+
+    if (arrayIndex != null)
+    { res = VectorUtil.union(res,arrayIndex.allVariableNames()); }
+
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        res.addAll(par.allVariableNames()); 
+      } 
+    } 
+
+    return res;
+  } 
+
   public Vector getAssignedVariableUses()
   { Vector res = new Vector();
 

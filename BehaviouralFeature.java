@@ -3885,6 +3885,20 @@ public class BehaviouralFeature extends ModelElement
     return res;
   }
 
+  public Vector allVariableNames()
+  { Vector res = getParameterNames(); 
+    if (activity != null) 
+    { Vector vars = Statement.getLocalDeclarations(activity); 
+      for (int i = 0; i < vars.size(); i++) 
+      { CreationStatement cs = (CreationStatement) vars.get(i); 
+        res.add(cs.getDeclaredVariable()); 
+      } 
+      Vector vs = activity.allVariableNames(); 
+      res = VectorUtil.union(res, vs); 
+    } 
+    return res; 
+  } 
+
   public String getJavaParameterDec()
   { String res = ""; 
     // System.out.println("PARAMETERS = " + parameters); 

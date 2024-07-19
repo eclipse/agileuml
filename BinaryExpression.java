@@ -2849,6 +2849,12 @@ class BinaryExpression extends Expression
     return res;
   } // This is what you need in uml2Cbmm to obtain the parameters of lambda expressions. 
     
+  public Vector allVariableNames()
+  { Vector res = left.allVariableNames(); 
+    res = VectorUtil.union(res, right.allVariableNames()); 
+    return res; 
+  } 
+
   public Vector getVariableUses()
   { if (operator.equals("#") || operator.equals("|") || 
         operator.equals("|A") ||

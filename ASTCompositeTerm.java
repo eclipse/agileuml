@@ -127,6 +127,16 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   }  
 
+  public Vector allIdentifiers(Vector tags)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) terms.get(i); 
+      Vector idens = trm.allIdentifiers(tags); 
+      res.addAll(idens); 
+    } 
+    return res; 
+  } 
+
   public int arity()
   { return terms.size(); } 
 

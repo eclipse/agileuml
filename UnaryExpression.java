@@ -2154,6 +2154,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public Vector allAttributesUsedIn()
   { return argument.allAttributesUsedIn(); } 
 
+  public Vector allVariableNames()
+  { if (operator.equals("lambda"))
+    { Vector ss = argument.allVariableNames(); 
+      if (accumulator != null)
+      { ss.add(accumulator + ""); } 
+      return ss; 
+    }
+ 
+    return argument.allVariableNames(); 
+  } 
+
   public Vector allPreTerms()
   { return argument.allPreTerms(); } 
 

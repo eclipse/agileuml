@@ -262,6 +262,9 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  public Vector allVariableNames()
+  { return new Vector(); } // default
+
   public abstract Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses);
 
@@ -2584,6 +2587,13 @@ class ReturnStatement extends Statement
     return value.equivalentsUsedIn(); 
   } 
 
+  public Vector allVariableNames()
+  { Vector res = new Vector(); 
+    if (value == null) 
+    { return res; } 
+    return value.allVariableNames(); 
+  } 
+
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
@@ -3252,6 +3262,9 @@ class InvocationStatement extends Statement
                        java.util.Map cloneDefs,
                        String rule, String op)
   { } 
+
+  public Vector allVariableNames()
+  { return callExp.allVariableNames(); } 
 
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
@@ -4003,6 +4016,9 @@ class ImplicitInvocationStatement extends Statement
     { return; }
     callExp.findClones(clones,cloneDefs,rule,op); 
   }
+
+  public Vector allVariableNames()
+  { return callExp.allVariableNames(); } 
 
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
@@ -6239,6 +6255,21 @@ class WhileStatement extends Statement
   } // for FOR, need the loopVar : loopRange
     // instead of test. 
 
+  public Vector allVariableNames()
+  { Vector res = new Vector(); 
+    if (loopKind == WHILE && loopTest != null) 
+    { res.addAll(loopTest.allVariableNames()); } 
+    else if (loopKind == FOR && 
+             loopVar != null && loopRange != null) 
+    { res.addAll(loopVar.allVariableNames()); 
+      res.addAll(loopRange.allVariableNames()); 
+    }  
+    res = VectorUtil.union(res,body.allVariableNames()); 
+    if (loopKind == REPEAT && loopTest != null) 
+    { res.addAll(loopTest.allVariableNames()); } 
+    return res; 
+  } 
+
   public Vector metavariables()
   { Vector res = new Vector(); 
     if (loopKind == WHILE && loopTest != null) 
@@ -6333,6 +6364,9 @@ class CreationStatement extends Statement
   public String getVar()
   { return assignsTo; } 
 
+  public String getDeclaredVariable()
+  { return assignsTo; } 
+
   public CreationStatement(String cio, String ast)
   { createsInstanceOf = cio;
     assignsTo = ast; 
@@ -6364,6 +6398,14 @@ class CreationStatement extends Statement
     res.initialValue = defaultInit + ""; 
     return res; 
   } 
+
+  public Vector allVariableNames()
+  { Vector res = new Vector(); 
+    res.add(assignsTo); 
+    if (initialExpression != null)
+    { res.addAll(initialExpression.allVariableNames()); }
+    return res; 
+  }  
 
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { if (initialExpression != null) 
@@ -7740,6 +7782,18 @@ class SequenceStatement extends Statement
     // System.out.println(">>> Clones: " + clones); 
 
   } 
+
+  public Vector allVariableNames()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      res = VectorUtil.union(res,
+                         stat.allVariableNames()); 
+    }
+
+    return res; 
+  } 
+  
 
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { for (int i = 0; i < statements.size(); i++) 
@@ -12325,6 +12379,12 @@ class AssignStatement extends Statement
     rhs.findClones(clones,cdefs,rule,op); 
   }
 
+  public Vector allVariableNames()
+  { Vector res = lhs.allVariableNames(); 
+    res = VectorUtil.union(res, rhs.allVariableNames()); 
+    return res; 
+  } 
+
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
   { lhs.energyUse(uses, rUses, oUses); 
@@ -13570,6 +13630,16 @@ class ConditionalStatement extends Statement
     if (elsePart != null) 
     { elsePart.findMagicNumbers(mgns,rule,op); } 
   }
+
+  public Vector allVariableNames()
+  { Vector res = test.allVariableNames(); 
+    res = VectorUtil.union(res, ifPart.allVariableNames()); 
+    if (elsePart != null) 
+    { res = VectorUtil.union(res, 
+                             elsePart.allVariableNames()); 
+    }
+    return res; 
+  } 
 
   public Statement generateDesign(java.util.Map env, boolean local)
   { Statement ifc = ifPart.generateDesign(env,local);

@@ -110,6 +110,13 @@ public class ASTBasicTerm extends ASTTerm
   public Vector allNestedSubterms()
   { return new Vector(); }  
 
+  public Vector allIdentifiers(Vector tags)
+  { Vector res = new Vector(); 
+    if (tags.contains(tag))
+    { res.add(value); } 
+    return res; 
+  } 
+
   public int arity()
   { return 1; } 
 

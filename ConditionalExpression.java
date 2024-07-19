@@ -352,6 +352,13 @@ public Vector singleMutants()
     return VectorUtil.union(res,elseExp.allAttributesUsedIn()); 
   } 
 
+  public Vector allVariableNames()
+  { Vector res = test.allVariableNames(); 
+    Vector r1 = ifExp.allVariableNames(); 
+    res = VectorUtil.union(res,r1); 
+    return VectorUtil.union(res,elseExp.allVariableNames()); 
+  } 
+
   public Vector allReadBasicExpressionData()
   { Vector res = new Vector(); 
     res = VectorUtil.union(res,

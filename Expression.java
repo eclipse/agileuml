@@ -2723,6 +2723,8 @@ abstract class Expression
 
   public abstract Vector allReadBasicExpressionData();  
 
+  public abstract Vector allVariableNames();  
+
   public boolean confluenceCheck(Vector iterated, Vector created)
   { return true; } 
 
