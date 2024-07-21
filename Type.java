@@ -1601,10 +1601,20 @@ public class Type extends ModelElement
 
   public String initialValueJava7()  // not used? 
   { if (isSequenceType(this))
-    { return "new ArrayList<" + elementType.typeWrapperJava7() + ">()"; } 
+    { if (sorted)
+      { return "new SortedSequence<" + 
+                  elementType.typeWrapperJava7() + ">()"; 
+      }
+      return "new ArrayList<" + elementType.typeWrapperJava7() + ">()"; 
+    } 
 
     if (isSetType(this))
-    { return "new HashSet<" + elementType.typeWrapperJava7() + ">()"; } 
+    { if (sorted)
+      { return "new TreeSet<" + 
+                  elementType.typeWrapperJava7() + ">()"; 
+      }
+      return "new HashSet<" + elementType.typeWrapperJava7() + ">()";
+    } 
     // Take account of sortedness
 
     if (isMapType(this))
@@ -3155,7 +3165,13 @@ public class Type extends ModelElement
         { return "new HashSet()"; }
       } 
 
-      if (nme.equals("Sequence"))
+      if (nme.equals("Sequence") && isSorted())
+      { if (elementType != null) 
+        { return "new SortedSequence<" + elementType.typeWrapperJava7() + ">()"; }
+        else 
+        { return "new SortedSequence()"; } 
+      } 
+      else if (nme.equals("Sequence"))
       { if (elementType != null) 
         { return "new ArrayList<" + elementType.typeWrapperJava7() + ">()"; }
         else 
@@ -3967,10 +3983,14 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Sequence"))
-    { if (elementType != null) 
-      { return "ArrayList<" + elementType.typeWrapperJava7() + ">"; } 
+    { String tname = "ArrayList"; 
+      if (sorted) 
+      { tname = "SortedSequence"; } 
+
+      if (elementType != null) 
+      { return tname + "<" + elementType.typeWrapperJava7() + ">"; } 
       else 
-      { return "ArrayList"; } 
+      { return tname; } 
     } 
 
     if (nme.equals("Map"))
@@ -4060,10 +4080,14 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Sequence"))
-    { if (elementType != null) 
-      { return "List<" + elementType.typeWrapperJava7() + ">"; } 
+    { String tname = "List"; 
+      if (sorted) 
+      { tname = "SortedSequence"; } 
+
+      if (elementType != null) 
+      { return tname + "<" + elementType.typeWrapperJava7() + ">"; } 
       else 
-      { return "List"; } 
+      { return tname; } 
     } 
 
     if (nme.equals("Map"))
@@ -4154,10 +4178,15 @@ public class Type extends ModelElement
     }  
 
     if (nme.equals("Sequence"))
-    { if (elemType != null) 
-      { return "ArrayList<" + elemType.typeWrapperJava7() + ">"; } 
+    { String tname = "ArrayList"; 
+      if (sorted) 
+      { tname = "SortedSequence"; } 
+
+
+      if (elemType != null) 
+      { return tname + "<" + elemType.typeWrapperJava7() + ">"; } 
       else 
-      { return "ArrayList"; }
+      { return tname; }
     }  
 
     if (nme.equals("Map"))
@@ -4251,7 +4280,13 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Sequence"))
-    { return "ArrayList<" + et + ">"; } 
+    { String tname = "ArrayList"; 
+
+      if (typ.isSorted()) 
+      { tname = "SortedSequence"; } 
+
+      return tname + "<" + et + ">"; 
+    } 
 
     if (nme.equals("Map"))
     { String tname = "HashMap"; 
@@ -4424,6 +4459,7 @@ public class Type extends ModelElement
     { String tname = "HashSet"; 
       if (sorted) 
       { tname = "TreeSet"; } 
+
       if (elementType != null) 
       { return tname + "<" + elementType.typeWrapperJava7() + ">"; }
       else 
@@ -4431,10 +4467,14 @@ public class Type extends ModelElement
     } 
 
     if ("Sequence".equals(nme)) 
-    { if (elementType != null) 
-      { return "ArrayList<" + elementType.typeWrapperJava7() + ">"; }
+    { String tname = "ArrayList"; 
+      if (sorted) 
+      { tname = "SortedSequence"; } 
+      
+      if (elementType != null) 
+      { return tname + "<" + elementType.typeWrapperJava7() + ">"; }
       else 
-      { return "ArrayList<Object>"; }
+      { return tname + "<Object>"; }
     } 
 
     if ("Map".equals(nme)) 

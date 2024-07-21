@@ -301,7 +301,11 @@ public class UCDArea extends JPanel
   public Vector allEntityNames()
   { Vector names = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
-    { Entity ent = (Entity) entities.get(i); 
+    { Entity ent = (Entity) entities.get(i);
+
+      if (ent.isComponent()) 
+      { continue; } 
+ 
       String nme = ent.getName(); 
       if (names.contains(nme)) { } 
       else 
@@ -314,6 +318,10 @@ public class UCDArea extends JPanel
   { Vector names = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
+
+      if (ent.isComponent()) 
+      { continue; } 
+
       names.addAll(ent.allOperationNames()); 
     } 
     return names; 
@@ -324,6 +332,10 @@ public class UCDArea extends JPanel
   { Vector names = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
+
+      if (ent.isComponent()) 
+      { continue; } 
+
       names.addAll(ent.allAttributeNames());
       names.addAll(ent.allVariableNames());  
     } 
@@ -15792,7 +15804,7 @@ public void produceCUI(PrintWriter out)
   } 
 
 
-  // From Java AST
+  // Load From Java AST
   public void loadGenericUseCase()
   { Vector auxcstls = new Vector(); 
   
@@ -16004,6 +16016,13 @@ public void produceCUI(PrintWriter out)
       addGeneralUseCase(uc);  
     } 
 
+    Vector tags = new Vector(); 
+    tags.add("variableDeclaratorId"); // for Java
+    tags.add("primary"); 
+
+    compareModel2Program(xx, tags); 
+
+
     repaint(); 
   }
 
@@ -16160,6 +16179,12 @@ public void produceCUI(PrintWriter out)
       } 
 
     }    
+
+    Vector tags = new Vector(); 
+    tags.add("directDeclarator"); // for C
+    // tags.add("primary"); 
+
+    compareModel2Program(cx, tags); 
 
     repaint(); 
   }
@@ -18333,14 +18358,9 @@ public void produceCUI(PrintWriter out)
     Vector esub = (Vector) modelIdentifiers.clone(); 
     esub.removeAll(sourceIdentifiers);  // in model, not source
 
-    System.out.println(); 
-    System.out.println(">> Names: " + esub + " occur in model, not source"); 
-
     Vector csub = (Vector) sourceIdentifiers.clone(); 
     csub.removeAll(modelIdentifiers);  // in source, not model
 
-    System.out.println(">> Names: " + csub + " occur in source, not model"); 
-    System.out.println(); 
 
     Vector sids = VectorUtil.asSet(sourceIdentifiers); 
     Vector mids =
@@ -18348,6 +18368,13 @@ public void produceCUI(PrintWriter out)
 
     Vector mextra = VectorUtil.asSet(esub); 
     Vector sextra = VectorUtil.asSet(csub); 
+
+    System.out.println(); 
+    System.out.println(">> Names: " + sextra + " occur in source, not model"); 
+
+    System.out.println(); 
+    System.out.println(">> Names: " + mextra + " occur in model, not source"); 
+    System.out.println(); 
 
     if (mids.size() > 0)
     { System.out.println(">> Model consistency with source = "); 
@@ -27940,6 +27967,11 @@ public void produceCUI(PrintWriter out)
 
     }    
 
+    Vector tags = new Vector(); 
+    tags.add("identifier"); // for JS
+
+    compareModel2Program(xx, tags); 
+
     repaint(); 
   }
 
@@ -28125,6 +28157,11 @@ public void produceCUI(PrintWriter out)
     long t2 = (new java.util.Date()).getTime(); 
 
     System.out.println(">> Time taken = " + (t2 - t1)); 
+
+    Vector tags = new Vector(); 
+    tags.add("ambiguousIdentifier"); // for VB
+
+    compareModel2Program(zz, tags); 
 
     repaint(); 
   }
@@ -28340,6 +28377,13 @@ public void produceCUI(PrintWriter out)
     } 
 
     Entity.addPascalWithOperations(entities,types); 
+
+    typeCheck(); 
+
+    Vector tags = new Vector(); 
+    tags.add("identifier"); // for Pascal
+
+    compareModel2Program(xx, tags); 
 
     repaint(); 
   }

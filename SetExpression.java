@@ -566,12 +566,11 @@ public class SetExpression extends Expression
     if (type == null)
     { if (ordered)
       { type = new Type("Sequence",null); }
-      else if (isSorted) 
-      { type = new Type("Set",null); 
-        type.setSorted(true); 
-      } 
       else
       { type = new Type("Set",null); } 
+
+      if (isSorted) 
+      { type.setSorted(true); } 
     } 
 
     String jType = type.getJava7(elementType); 
@@ -581,7 +580,8 @@ public class SetExpression extends Expression
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       if (e != null) 
-      { String wexp = wrap(elementType, e.queryFormJava7(env,local)); 
+      { String wexp = 
+           wrap(elementType, e.queryFormJava7(env,local)); 
         if (ordered) 
         { res = "Ocl.addSequence(" + res + ", " + wexp + ")"; } 
         else 
