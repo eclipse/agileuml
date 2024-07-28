@@ -310,6 +310,8 @@ fileSection::
 FILE SECTION . _* |-->_*
 
 fileDescriptionEntry::
+FD _1 _2 . |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n_2`setReportFile<action> _55 _1
+
 FD _1 . _* . _+ |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_+`fileDescriptionRecords<action> _55 _1
 
 FD _1 _* . _+ |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_+`fileDescriptionRecords<action> _55 _1
@@ -325,6 +327,12 @@ SD _1 . _* |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : in
 
 fileDescriptionEntryClause::
 _1 |-->_1
+
+setReportFile::
+_1 |-->_1`setReportFile<when> _1 reportClause
+_1 |-->
+REPORT IS _1 |--><action> _1`reportFile _55
+
 
 externalClause::
 IS EXTERNAL |-->
@@ -393,8 +401,13 @@ codeSetClause::
 CODE-SET _* |-->
 
 reportClause::
-REPORT _* |-->
-REPORTS _* |-->
+REPORT IS _1 |--><action> _1`reportFile _55
+REPORT _1 |--><action> _1`reportFile _55
+REPORTS ARE _1 |--><action> _1`reportFile _55
+REPORTS _1 |--><action> _1`reportFile _55
+REPORTS ARE _1 _* |--><action> _1`reportFile _55
+REPORTS _1 _* |--><action> _1`reportFile _55
+
 
 dataBaseSection::
 DATA-BASE SECTION . _* |-->
@@ -597,19 +610,40 @@ ZERO-FILL |-->
 
 
 reportSection::
-REPORT SECTION . _* |-->
+REPORT SECTION . _* |-->_*
 
 reportDescription::
-_* |-->
+_* |-->_*
 
 reportDescriptionEntry::
-_* |-->
+RD _1 . |-->  attribute _1 : Sequence(String) ; \n  attribute _1_line : String := "                                                  "; \n  attribute _1_LineCount : int := 0 ;\n  attribute _1_PAGE_COUNTER : int := 1;\n  attribute _1_PageLimit : int := 55;\n\n  operation flush_1()\n  pre: true  post: true\n  activity: _1 := _1->append(_1_line);\n    _1_LineCount := _1_LineCount + 1;\n    if _1_LineCount >= _1_PageLimit then _1_PAGE_COUNTER := _1_PAGE_COUNTER + 1; self.pageHeading_1(); _1 := _1->append(_1_line); _1_LineCount := 0 else skip;\n    _1`reportFile := _1`reportFile->union(_1);\n     _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n  operation initiate_1()\n  pre: true post: true\n  activity: self.pageHeading_1();\n\n  operation flush_terminate_1()\n  pre: true  post: true\n  activity: _1 := _1->append(_1_line);\n    _1`reportFile := _1`reportFile->union(_1);\n     _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n<action> _63 _1
+
+RD _1 _* . |-->  attribute _1 : Sequence(String) ; \n  attribute _1_line : String := "                                                  "; \n  attribute _1_LineCount : int := 0 ;\n  attribute _1_PAGE_COUNTER : int := 1;\n  attribute _1_PageLimit : int_*;\n\n  operation flush_1()\n  pre: true  post: true\n  activity:  _1 := _1->append(_1_line);\n    _1_LineCount := _1_LineCount + 1;\n    if _1_LineCount >= _1_PageLimit then _1_PAGE_COUNTER := _1_PAGE_COUNTER + 1; self.pageHeading_1(); _1 := _1->append(_1_line); _1_LineCount := 0 else skip;\n    _1`reportFile := _1`reportFile->union(_1);\n    _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n  operation initiate_1()\n  pre: true post: true\n  activity: self.pageHeading_1();\n\n  operation flush_terminate_1()\n  pre: true  post: true\n  activity: _1 := _1->append(_1_line);\n    _1`reportFile := _1`reportFile->union(_1);\n     _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n<action> _63 _1
+
 
 reportDescriptionGlobalClause::
 _* |-->
 
 reportDescriptionPageLimitClause::
-_* |-->
+PAGE _1 |--> := _1
+PAGE LIMIT _1 |--> := _1
+PAGE LIMITS _1 |--> := _1
+PAGE LIMIT IS _1 |--> := _1
+PAGE LIMITS ARE _1 |--> := _1
+
+PAGE _1 LINE |--> := _1
+PAGE LIMIT _1 LINE |--> := _1
+PAGE LIMITS _1 LINE |--> := _1
+PAGE LIMIT IS _1 LINE |--> := _1
+PAGE LIMITS ARE _1 LINE |--> := _1
+
+PAGE _1 LINES |--> := _1
+PAGE LIMIT _1 LINES |--> := _1
+PAGE LIMITS _1 LINES |--> := _1
+PAGE LIMIT IS _1 LINES |--> := _1
+PAGE LIMITS ARE _1 LINES |--> := _1
+
+
 
 reportDescriptionHeadingClause::
 HEADING _1 |-->
@@ -625,22 +659,31 @@ reportDescriptionFootingClause::
 FOOTING _1 |-->
 
 reportGroupDescriptionEntry::
-_* |-->
+_* |-->_*
 
 reportGroupDescriptionEntryFormat1::
-_* |-->
+_1 _2 . |-->\n  operation _2_63()\n  pre: true post: true\n  activity: \n<when> _2 reportGroupTypeClause
+
+_1 _2 _3 . |-->\n  operation flush_2()\n  pre: true post: true\n  activity: self.flush_63();\n\n  operation _3_2()\n  pre: true post: true\n  activity: \n<when> _3 reportGroupTypeClause, _3`isDetail true
+
+_1 _2 _3 . |-->\n  operation _3_63()\n  pre: true post: true\n  activity: \n<when> _3 reportGroupTypeClause
+
+_1 _2 _3 _4 . |-->\n  operation _4_63()\n  pre: true post: true\n  activity: \n_3<when> _3 reportGroupLineNumberClause, _4 reportGroupTypeClause
+
 
 reportGroupDescriptionEntryFormat2::
 _* |-->
 
 reportGroupDescriptionEntryFormat3::
-_* |-->
+_1 _2 _3 _4  . |-->    _63_line := _63_line.setSubrange(_2, _2 + (_4 + "")->size() - 1, _4 + "") ;\n<when> _2 reportGroupColumnNumberClause, _4 reportGroupValueClause
+_1 _2 _3 _4  . |-->    _63_line := _63_line.setSubrange(_2, _2 + (_4 + "")->size() - 1, _4 + "") ;\n<when> _2 reportGroupColumnNumberClause, _4 reportGroupSourceClause
+_1 _2 . |-->_2<when> _2 reportGroupLineNumberClause
 
 reportGroupBlankWhenZeroClause::
 _* |-->
 
 reportGroupColumnNumberClause::
-_* |-->
+COLUMN _1 |-->_1
 
 reportGroupIndicateClause::
 _* |-->
@@ -649,13 +692,20 @@ reportGroupJustifiedClause::
 _* |-->
 
 reportGroupLineNumberClause::
-_* |-->
+LINE _1 |-->_1<when> _1 reportGroupLineNumberNextPage
+
+LINE _1 |-->    _63_line := "                                                  "; \n_1<when> _1 reportGroupLineNumberPlus
+
 
 reportGroupLineNumberNextPage::
-_* |-->
+1 |-->
+2 |-->    _63 := _63->append("\n");\n    _63_LineCount := _63_LineCount + 1 ;\n
+_1 |-->    _63 := _63->union(Integer.subrange(1,_1-1)->collect("\n"));\n    _63_LineCount := _63_LineCount + (_1 - 1) ;\n
 
 reportGroupLineNumberPlus::
-_* |-->
+PLUS 1 |-->
+PLUS 2 |-->    _63 := _63->append("\n");\n    _63_LineCount := _63_LineCount + 1 ;\n
+PLUS _1 |-->    _63 := _63->union(Integer.subrange(1,_1-1)->collect("\n"));\n    _63_LineCount := _63_LineCount + (_1 - 1) ;\n
 
 reportGroupNextGroupClause::
 _* |-->
@@ -676,40 +726,53 @@ reportGroupSignClause::
 _* |-->
 
 reportGroupSourceClause::
-_* |-->
+SOURCE _1 |-->_1
 
 reportGroupSumClause::
 _* |-->
 
 reportGroupTypeClause::
-_* |-->
+TYPE _1 |-->_1
+
+isDetail::
+TYPE _1 |-->_1`isDetail
+DETAIL |-->true
+_* |-->false
 
 reportGroupTypeReportHeading::
-_* |-->
+REPORT HEADING |-->initiate
+RH |-->initiate
 
 reportGroupTypePageHeading::
-_* |-->
+PAGE HEADING |-->pageHeading
+PH |-->pageHeading
 
 reportGroupTypeControlHeading::
-_* |-->
+CONTROL HEADING _1 |-->_1_controlHeading
+CH _1 |-->_1_controlHeading
 
 reportGroupTypeDetail::
-_* |-->
+DETAIL |-->generate
+DE |-->generate
 
 reportGroupTypeControlFooting::
-_* |-->
+CONTROL FOOTING _1 |-->_1_controlFooting
+CF _1 |-->_1_controlFooting
 
 reportGroupUsageClause::
 _* |-->
 
 reportGroupTypePageFooting::
-_* |-->
+PAGE FOOTING |-->pageFooting
+PF |-->pageFooting
 
 reportGroupTypeReportFooting::
-_* |-->
+REPORT FOOTING |-->terminate
+RF |-->terminate
 
 reportGroupValueClause::
-_* |-->
+VALUE _1 |-->_1
+VALUE IS _1 |-->_1
 
 
 programLibrarySection::
@@ -835,6 +898,7 @@ _1 FILLER . |-->
 77 FILLER _* . |-->
 _1 FILLER _* . |-->
 
+88 _1 _2 . |-->  attribute _1 : boolean ; \n
 
 01 _1 . |-->  attribute _1 : String;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55, _1`isIndexed _55`isIndexed
 
@@ -906,7 +970,42 @@ _1 _* |-->_*`recurse
 getType::
 ZERO |-->int
 ZEROS |-->int
+0 |-->int
+1 |-->int
+_1 ROUNDED |-->_1`getType
+- _1 |-->_1`getType
++ _1 |-->_1`getType
+* _1 |-->_1`getType
+/ _1 |-->double
+** _1 |-->double
+
+( _1 ) |-->_1`getType
+_1 _2 |-->_2`getType<when> _1 multDivs, _1`getType int
+_1 _2 |-->_1`getType<when> _1 multDivs
+_1 _2 _3 |-->_3`getType<when> _1 multDivs, _1`getType int, _2`getType int
+_1 _2 _3 |-->_2`getType<when> _1 multDivs, _1`getType int
+_1 _2 _3 |-->_1`getType<when> _1 multDivs
+
+_1 _2 |-->_2`getType<when> _1 powers, _1`getType int
+_1 _2 |-->_1`getType<when> _1 powers
+
+_1 |-->_1`getType<when> _1 arithmeticExpression
+_1 |-->_1`getType<when> _1 multDiv
+_1 |-->_1`getType<when> _1 plusMinus
+_1 |-->_1`getType<when> _1 powers
+_1 |-->_1`getType<when> _1 multDivs
+_1 |-->_1`getType<when> _1 power
+_1 |-->_1`getType<when> _1 basis
+_1 |-->_1`getType<when> _1 literal
+_1 |-->_1`getType<when> _1 identifier
+
+_1 |-->int<when> _1 integer
 _1 |-->_1`oclType
+
+
+
+
+
 
 
 dataAlignedClause::
@@ -1648,6 +1747,7 @@ ADD _1  |-->_1<when> _1 addCorrespondingStatement
 
 
 addToStatement::
+_1 TO _2  |-->    _2 := (_2 + _1) ;\n<when> _1 addFrom, _2 addTo, _1`getType int, _2`getType int
 _1 TO _2  |-->    _2 := (_2 + _1)_2`roundFunction ;\n<when> _1 addFrom, _2 addTo
 _1 _* TO _3 _+  |-->    (var _addTmp : double ; _addTmp := _1 + _*`sum ;\n      _3 := (_3 + _addTmp)_3`roundFunction ;\n_+`additions      skip); \n
 _1 _* TO _3  |-->    _3 := (_3 + _1 + _*`sum)_3`roundFunction ;\n
@@ -2056,11 +2156,40 @@ closeStatement::
 CLOSE _* |-->_*
 
 closeFile::
-_1 _2 |-->
-_1 |-->    var _1_Result : OclFile := OclFile.newOclFile_Write(OclFile.newOclFile("_1.txt"));\n    _1_Result.writeAllLines(_1);\n    _1_Result.flush();\n    _1_Result.closeFile();\n
+_1 _2 |-->    (var _1_Result : OclFile := OclFile.newOclFile_Write(OclFile.newOclFile("_1.txt"));\n    _1_Result.writeAllLines(_1);\n    _1_Result.flush();\n    _1_Result.closeFile());\n
+
+_1 |-->    (var _1_Result : OclFile := OclFile.newOclFile_Write(OclFile.newOclFile("_1.txt"));\n    _1_Result.writeAllLines(_1);\n    _1_Result.flush();\n    _1_Result.closeFile());\n
+
+
+closeReelUnitStatement::
+_* |-->
+
+closeRelativeStatement::
+WITH LOCK |-->
+_* |-->
+
+closePortFileIOStatement::
+_* |-->
+
+closePortFileIOUsing::
+_1 |-->
+
+
+closePortFileIOUsingCloseDisposition::
+_* |-->
+
+
+closePortFileIOUsingAssociatedData::
+_* |-->
+
+
+closePortFileIOUsingAssociatedDataLength::
+_* |-->
+
 
 
 computeStatement::
+
 COMPUTE _1 = _2 _3 _4 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
 COMPUTE _1 = _2 _3 _4  |-->    _1 := (_2)_1`roundFunction ;\n\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
 
@@ -2071,6 +2200,7 @@ COMPUTE _1 = _2 _3 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n_1`noSizeE
 COMPUTE _1 = _2 _3  |-->    _1 := (_2)_1`roundFunction ;\n_1`noSizeError (_3 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 notOnSizeErrorPhrase
 
 COMPUTE _1 = _2 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n<when> _1 computeStore, _2 arithmeticExpression
+COMPUTE _1 = _2  |-->    _1 := _2 ;\n<when> _1 computeStore, _2 arithmeticExpression, _2`getType int
 COMPUTE _1 = _2  |-->    _1 := (_2)_1`roundFunction ;\n<when> _1 computeStore, _2 arithmeticExpression
 
 COMPUTE _1 EQUAL _2 _3 _4 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
@@ -2206,6 +2336,20 @@ EGCS DATA BY _1 |-->if _typ = "String" then _1 else
 endifs::
 _1 |--> endif
 
+
+initiateStatement::
+INITIATE _1 |-->    self.initiate_1();\n    self.flush_1();\n
+INITIATE _* |-->_*`initiateAll
+
+initiateAll::
+_1 |-->    self.initiate_1();\n    self.flush_1();\n
+
+
+generateStatement::
+GENERATE _1 |-->    self.generate_1();\n    self.flush_1();\n
+
+terminateStatement::
+TERMINATE _1 |-->    self.terminate_1();\n    self.flush_terminate_1();\n
 
 
 inspectStatement::
@@ -2931,9 +3075,12 @@ SET _1 |-->_1
 
 setToStatement::
 _1 TO _2 |-->    _1 := _2 ;\n
-_1 _* TO _2 |-->    _1 := _2 ;\n
-_1 _* TO _2 _+ |-->    _1 := _2 ;\n
+_1 _* TO _2 |-->    (var _setTmp : _2`getType := _2;_*`setStats _1 := _2 ) ;\n
+_1 _* TO _2 _+ |-->    (var _setTmp : _2`getType := _2;_*`setStats _1 := _2 ) ;\n
 
+
+setStats::
+_1 |--> _1 := _setTmp;
 
 setUpDownByStatement::
 _1 UP BY _2 |-->    _1 := _1 + _2 ;\n
@@ -3587,6 +3734,13 @@ _1 ZERO  |-->(_1 = 0)
 
 
 relationArithmeticComparison::
+_1 = SPACES |-->(_1 - " " = "")
+_1 EQUAL SPACES |-->(_1 - " " = "")
+_1 <> SPACES |-->(_1 - " " /= "")
+
+_1 _2 SPACES |-->(_1 - " " = "")<when> _2`isEqOperator true
+_1 _2 SPACES |-->(_1 - " " /= "")<when> _2`isNeqOperator true
+
 _1 _2 _3  |-->(_1 _2 _3)
 
 
@@ -3684,6 +3838,34 @@ ARE LESS OR EQUAL TO  |--><=
 ARE LESS OR EQUAL  |--><=
 ARE <=  |--><= 
 _1 |-->_1
+
+
+isEqOperator::
+EQUAL TO  |-->true
+IS EQUAL TO  |-->true 
+IS EQUAL  |-->true
+IS = |-->true 
+ARE EQUAL TO  |-->true 
+ARE EQUAL  |-->true
+ARE = |-->true
+_1 |-->false
+_* |-->false
+
+
+isNeqOperator::
+NOT EQUAL TO  |-->true
+NOT EQUAL  |-->true
+NOT = |-->true 
+IS NOT EQUAL TO  |-->true
+IS NOT EQUAL  |-->true
+IS NOT =  |-->true
+ARE NOT EQUAL TO  |-->true 
+ARE NOT EQUAL  |-->true
+ARE NOT =  |-->true 
+ARE <> |-->true 
+<> |-->true
+_1 |-->false
+_* |-->false
 
 
 abbreviation::
@@ -3937,6 +4119,37 @@ ZEROS |-->0
 ZEROES |-->0
 
 
+specialRegister::
+DATE |-->(OclDate.newOclDate() + "")
+DAY |-->OclDate.newOclDate().getDate()
+DAY_OF_WEEK |-->OclDate.newOclDate().getDay()
+DEBUG_CONTENTS |-->
+DEBUG_ITEM |--> 
+DEBUG_LINE |--> 
+DEBUG_NAME |--> 
+DEBUG_SUB_1 |--> 
+DEBUG_SUB_2 |--> 
+DEBUG_SUB_3 |-->
+LENGTH OF _1 |-->(_1 + "")->size() 
+LINAGE_COUNTER |--> 
+LINE_COUNTER |-->_63_LineCount
+PAGE_COUNTER |-->_63_PAGE_COUNTER 
+RETURN_CODE |-->
+SHIFT_IN |--> 
+SHIFT_OUT |--> 
+SORT_CONTROL |--> 
+SORT_CORE_SIZE |--> 
+SORT_FILE_SIZE |--> 
+SORT_MESSAGE |--> 
+SORT_MODE_SIZE |--> 
+SORT_RETURN |--> 
+TALLY |--> 
+TIME |-->OclDate.newOclDate().getSystemTime() 
+WHEN_COMPILED |-->
+
+
+
+
 indexName::
 _1 |-->_1
 
@@ -3989,6 +4202,7 @@ _1 |-->_1
 
 
 cobolWord::
+PAGE_COUNTER |-->_63PAGE_COUNTER
 _1 |-->_1
 
 integerLiteral::

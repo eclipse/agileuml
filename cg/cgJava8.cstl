@@ -15,6 +15,7 @@ package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java
 
 Type::
 
+SortedSequence(_1) |-->SortedSequence<_1`jwrap>
 Sequence(_1) |-->ArrayList<_1`jwrap>
 SortedSet(_1) |-->TreeSet<_1`jwrap>
 Set(_1) |-->HashSet<_1`jwrap>
@@ -96,6 +97,7 @@ _1.allInstances |-->_1._1_allInstances
 _1.insertAt(_2,_3) |-->Ocl.insertAt(_1,_2,_3)
 _1.insertInto(_2,_3) |-->Ocl.insertInto(_1,_2,_3)
 _1.excludingSubrange(_2,_3) |-->Ocl.excludingSubrange(_1,_2,_3)
+_1.setSubrange(_2,_3,_4) |-->Ocl.setSubrange(_1,_2,_3,_4)
 
 _1.setAt(_2,_3) |-->Ocl.setAt(_1,_2,_3)
 _1.replace(_2,_3) |-->Ocl.replace(_1,_2,_3)
@@ -422,6 +424,8 @@ SortedSet{} |-->(new TreeSet())
 SortedSet{_1} |-->Ocl.initialiseSortedSet(_1) 
 Sequence{} |-->(new ArrayList())
 Sequence{_1} |-->Ocl.initialiseSequence(_1)
+SortedSequence{} |-->new SortedSequence(new ArrayList())
+SortedSequence{_1} |-->SortedSequence.initialiseSortedSequence(_1) 
 Map{} |-->(new HashMap())
 Map{_1} |-->Ocl.initialiseMap(_1)
 SortedMap{} |-->(new TreeMap())
