@@ -251,7 +251,11 @@ public class SetExpression extends Expression
     else if (isMap())
     { res = "Map{"; }
     else if (ordered) 
-    { res = "Sequence{"; } 
+    { if (isSorted) 
+      { res = "SortedSequence{"; } 
+      else 
+      { res = "Sequence{"; }
+    }  
     else if (isSorted)
     { res = "SortedSet{"; }
     else

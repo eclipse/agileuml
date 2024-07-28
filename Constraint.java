@@ -769,7 +769,7 @@ public class Constraint extends ConstraintOrGroup
       }   
     } 
     else 
-    { Vector areads = ante.readFrame(); 
+    { Vector areads = ante.allReadFrame(); // readFrame? 
       Expression sc = succedent(); 
 
       if (sc instanceof BinaryExpression)

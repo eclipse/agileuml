@@ -6634,10 +6634,16 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->truncateTo"))
-    { return "Set.truncateN(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "Set.truncateN(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->roundTo"))
-    { return "Set.roundN(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "Set.roundN(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
@@ -6830,11 +6836,17 @@ public boolean conflictsWithIn(String op, Expression el,
         bNeeded = false; 
       } 
       else if (operator.equals("->truncateTo"))
-      { res = "Set.truncateN(" + lqf + "," + rqf + ")"; 
+      { if (left.isInteger())
+        { res = lqf; } 
+        else 
+        { res = "Set.truncateN(" + lqf + "," + rqf + ")"; } 
         bNeeded = false;
       } 
       else if (operator.equals("->roundTo"))
-      { res = "Set.roundN(" + lqf + "," + rqf + ")"; 
+      { if (left.isInteger())
+        { res = lqf; } 
+        else 
+        { res = "Set.roundN(" + lqf + "," + rqf + ")"; }
         bNeeded = false; 
       } 
       else if (operator.equals("->hasPrefix"))
@@ -7158,10 +7170,16 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
 
     if (operator.equals("->truncateTo"))
-    { return "Set.truncateN(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "Set.truncateN(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->roundTo"))
-    { return "Set.roundN(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "Set.roundN(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
@@ -7623,10 +7641,16 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
 
     if (operator.equals("->truncateTo"))
-    { return "Ocl.truncateN(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "Ocl.truncateN(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->roundTo"))
-    { return "Ocl.roundN(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "Ocl.roundN(" + lqf + "," + rqf + ")";
+    } 
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
@@ -8107,10 +8131,16 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "SystemTypes.gcd(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->truncateTo"))
-    { return "SystemTypes.truncateTo(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "SystemTypes.truncateTo(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->roundTo"))
-    { return "SystemTypes.roundTo(" + lqf + "," + rqf + ")"; } 
+    { if (left.isInteger())
+      { return lqf; } 
+      return "SystemTypes.roundTo(" + lqf + "," + rqf + ")"; 
+    } 
 
 
     if (operator.equals("<>=")) 

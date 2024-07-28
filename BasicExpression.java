@@ -1779,6 +1779,7 @@ class BasicExpression extends Expression
             data.equals("tail") ||
             data.equals("insertInto") ||
             data.equals("excludingSubrange") ||
+            data.equals("setSubrange") ||
             data.equals("insertAt") || data.equals("setAt") ||
             data.equals("subrange"))
         { return true; } 
@@ -1851,6 +1852,7 @@ class BasicExpression extends Expression
             data.equals("insertAt") ||
             data.equals("insertInto") ||
             data.equals("excludingSubrange") ||
+            data.equals("setSubrange") ||
             data.equals("setAt") || data.equals("subrange"))
         { return true; } 
       } 
@@ -1921,7 +1923,7 @@ class BasicExpression extends Expression
             data.equals("tail") ||
             data.equals("excludingSubrange") || 
             data.equals("subrange"))
-        { return true; } 
+        { return true; } // NOT setSubrange
       } 
       else if ("Integer".equals("" + objectRef) && 
                "subrange".equals(data))
@@ -3055,7 +3057,8 @@ class BasicExpression extends Expression
       else if (data.equals("subrange") || 
                data.equals("pow") || 
                data.equals("setAt") || 
-               data.equals("excludingSubrange") || 
+               data.equals("excludingSubrange") ||
+               data.equals("setSubrange") || 
                data.equals("insertAt") || 
                data.equals("insertInto"))
       { // if a String, substring, otherwise subSequence
@@ -3762,6 +3765,7 @@ class BasicExpression extends Expression
         !data.equals("insertAt") && 
         !data.equals("insertInto") && 
         !data.equals("excludingSubrange") && 
+        !data.equals("setSubrange") && 
         !(data.equals("replace")) && 
         !(data.equals("replaceFirstMatch")) && 
         !(data.equals("replaceAll")) && 
@@ -4231,6 +4235,7 @@ class BasicExpression extends Expression
                data.equals("tail") || 
                data.equals("front") ||
                data.equals("excludingSubrange") || 
+               data.equals("setSubrange") || 
                data.equals("insertAt") || 
                data.equals("insertInto") || 
                data.equals("setAt"))  
@@ -5546,6 +5551,7 @@ class BasicExpression extends Expression
         !data.equals("indexOf") && 
         !data.equals("setAt") && 
         !data.equals("excludingSubrange") && 
+        !data.equals("setSubrange") && 
         !data.equals("insertAt") && 
         !data.equals("insertInto") && 
         !(data.equals("replace")) && 
@@ -5708,6 +5714,7 @@ class BasicExpression extends Expression
       // }
     }
 
+    // JOptionPane.showInputDialog(this + " is function: " + isFunction(data)); 
 
     if (isFunction(data))
     { umlkind = FUNCTION;
@@ -5749,9 +5756,11 @@ class BasicExpression extends Expression
       { type = new Type("long", null); 
         elementType = type; 
       } 
-      else if (data.equals("size") || data.equals("floor") || data.equals("count") ||
+      else if (data.equals("size") || 
+               data.equals("floor") || data.equals("count") ||
           data.equals("toInteger") || 
-          data.equals("indexOf") || data.equals("ceil") || data.equals("round"))
+          data.equals("indexOf") || 
+          data.equals("ceil") || data.equals("round"))
       { type = new Type("int",null); 
         elementType = type; 
       }
@@ -5768,10 +5777,15 @@ class BasicExpression extends Expression
  
         adjustTypeForArrayIndex(); 
       } 
-      else if (data.equals("isDeleted") || data.equals("oclIsKindOf") || data.equals("oclIsTypeOf") ||
-               data.equals("isReal") || data.equals("toBoolean") || 
-               data.equals("isInteger") || data.equals("isLong") ||
-               data.equals("hasPrefix") || data.equals("hasSuffix"))
+      else if (data.equals("isDeleted") || 
+               data.equals("oclIsKindOf") || 
+               data.equals("oclIsTypeOf") ||
+               data.equals("isReal") || 
+               data.equals("toBoolean") || 
+               data.equals("isInteger") || 
+               data.equals("isLong") ||
+               data.equals("hasPrefix") || 
+               data.equals("hasSuffix"))
       { type = new Type("boolean",null);
         elementType = type; 
       } 
@@ -5818,6 +5832,7 @@ class BasicExpression extends Expression
                data.equals("insertAt") || 
                data.equals("insertInto") || 
                data.equals("excludingSubrange") || 
+               data.equals("setSubrange") || 
                data.equals("setAt"))  
       { type = objectRef.getType(); // Sequence or String
         elementType = objectRef.elementType; 
@@ -7193,6 +7208,13 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
         return "Set.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("setSubrange") && 
+               parameters != null && parameters.size() > 2)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        String par3 = ((Expression) parameters.get(2)).queryForm(env,local); 
+        return "Set.setSubrange(" + pre + "," + par1 + "," + par2 + "," + par3 + ")"; 
+      } 
       else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
@@ -7742,6 +7764,13 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
         return "Set.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("setSubrange") && 
+               parameters != null && parameters.size() > 2)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        String par3 = ((Expression) parameters.get(2)).queryFormJava6(env,local); 
+        return "Set.setSubrange(" + pre + "," + par1 + "," + par2 + "," + par3 + ")"; 
       } 
       else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
@@ -8300,6 +8329,13 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
         return "Ocl.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("setSubrange") && 
+               parameters != null && parameters.size() > 2)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        String par3 = ((Expression) parameters.get(2)).queryFormJava7(env,local); 
+        return "Ocl.setSubrange(" + pre + "," + par1 + "," + par2 + "," + par3 + ")"; 
       } 
       else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
@@ -9084,6 +9120,13 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
         return "SystemTypes.excludingSubrange(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("setSubrange") && 
+               parameters != null && parameters.size() > 2)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        String par3 = ((Expression) parameters.get(2)).queryFormCSharp(env,local); 
+        return "SystemTypes.setSubrange(" + pre + "," + par1 + "," + par2 + "," + par3 + ")"; 
       } 
       else if (data.equals("insertInto") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
@@ -17312,7 +17355,8 @@ public Statement generateDesignSubtract(Expression rhs)
         data.equals("insertInto") ||
         data.equals("subrange") ||
         data.equals("setAt") ||
-        data.equals("excludingSubrange"))
+        data.equals("excludingSubrange") ||
+        data.equals("setSubrange"))
     { Vector opers = (Vector) res.get(level); 
       if (opers == null) 
       { opers = new Vector(); } 
@@ -17452,7 +17496,9 @@ public Statement generateDesignSubtract(Expression rhs)
       { // case of x.insertAt(i,y) or s.subrange(x,y)
         if ("Integer".equals(objectRef + "")) { } 
         else 
-        { args.add(objectRef.cg(cgs)); }  
+        { args.add(objectRef.cg(cgs)); 
+          // eargs.add(objectRef); 
+        }  
         args.add(((Expression) parameters.get(0)).cg(cgs)); 
         args.add(((Expression) parameters.get(1)).cg(cgs)); 
         eargs.add((Expression) parameters.get(0)); 
@@ -17461,6 +17507,28 @@ public Statement generateDesignSubtract(Expression rhs)
     
         if (r != null)
         { System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
+
+          String res = r.applyRule(args,eargs,cgs);
+          if (needsBracket) 
+          { return "(" + res + ")"; } 
+          else 
+          { return res; }
+        }  
+      }  
+      else if (parameters != null && parameters.size() == 3) 
+      { // s.setSubrange(i,j,v)
+        args.add(objectRef.cg(cgs));   
+        args.add(((Expression) parameters.get(0)).cg(cgs)); 
+        args.add(((Expression) parameters.get(1)).cg(cgs)); 
+        args.add(((Expression) parameters.get(2)).cg(cgs));
+        eargs.add(objectRef);  
+        eargs.add((Expression) parameters.get(0)); 
+        eargs.add((Expression) parameters.get(1)); 
+        eargs.add((Expression) parameters.get(2)); 
+        CGRule r = cgs.matchedBasicExpressionRule(this,etext,textrules);
+    
+        if (r != null)
+        { System.out.println(">> Matched basic expression rule: " + r + " to: " + etext + " with arguments= " + args); 
 
           String res = r.applyRule(args,eargs,cgs);
           if (needsBracket) 

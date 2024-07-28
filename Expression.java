@@ -2075,6 +2075,7 @@ abstract class Expression
         d.equals("last") || d.equals("insertAt") ||
         d.equals("insertInto") ||  
         d.equals("excludingSubrange") || 
+        d.equals("setSubrange") || 
         d.equals("setAt") ||
         d.equals("first") || d.equals("tail") || 
         d.equals("front") || d.equals("oclIsUndefined") || 
@@ -2268,6 +2269,7 @@ abstract class Expression
           bexpr.data.equals("insertAt") ||
           bexpr.data.equals("insertInto") ||
           bexpr.data.equals("excludingSubrange") ||
+          bexpr.data.equals("setSubrange") ||
           bexpr.data.equals("subrange")) 
       { return true; }
       return false; 

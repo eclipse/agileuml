@@ -641,8 +641,6 @@ public class CGSpec
     Type elemT = t.getElementType(); 
     Vector args = new Vector(); 
     
-
-    
     for (int x = 0; x < typeUseRules.size(); x++)
     { CGRule selected = null; 
       CGRule r = (CGRule) typeUseRules.get(x);
@@ -733,6 +731,23 @@ public class CGSpec
           selected = r; 
         }
       }
+      else if (t.isSortedSequenceType() && 
+               trimmedlhs.startsWith("SortedSequence") )
+      { if (elemT != null && 
+            trimmedlhs.equals("SortedSequence(" + elemT + ")"))
+        { args.add(elemT);
+          selected = r; 
+        }
+        else if (elemT == null && 
+                 (trimmedlhs.equals("SortedSequence()") ||
+                  trimmedlhs.equals("SortedSequence")))
+        { selected = r; }
+        else if (elemT != null && 
+                 trimmedlhs.equals("SortedSequence(_1)"))
+        { args.add(elemT);
+          selected = r; 
+        } 
+      } 
       else if (t.isRef() && 
                trimmedlhs.startsWith("Ref"))
       { if (elemT != null && trimmedlhs.equals("Ref(" + elemT + ")"))
@@ -1180,6 +1195,15 @@ public class CGSpec
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }  
+      else if (pars != null && pars.size() == 3 && 
+               e.data.equals("setSubrange") && 
+               trimmedlhs.equals("_1.setSubrange(_2,_3,_4)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+        args.add(pars.get(2)); 
+      }  
       else if (pars != null && pars.size() == 2 && 
                e.data.equals("setAt") && 
                trimmedlhs.equals("_1.setAt(_2,_3)"))
@@ -1351,6 +1375,15 @@ public class CGSpec
       } 
       else if (etext.startsWith("Sequence{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Sequence{") && trimmedlhs.endsWith("}"))
+      { if (elems.size() == 0 && r.variables.size() == 0)
+        { selected = r; } // r is empty sequence
+        else if (elems.size() > 0 && r.variables.size() > 0) 
+        { args.add(elems); 
+          selected = r; 
+        } 
+      } 
+      else if (etext.startsWith("SortedSequence{") && etext.endsWith("}") && 
+               trimmedlhs.startsWith("SortedSequence{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
         { selected = r; } // r is empty sequence
         else if (elems.size() > 0 && r.variables.size() > 0) 

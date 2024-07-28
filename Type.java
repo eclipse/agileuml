@@ -277,9 +277,10 @@ public class Type extends ModelElement
   { return "Set".equals(name) && sorted; } 
 
   public boolean isSequenceType() 
-  { return "Sequence".equals(name) ||
-           "SortedSequence".equals(name); 
-  } 
+  { return "Sequence".equals(name); } 
+
+  public boolean isSortedSequenceType()
+  { return "Sequence".equals(name) && sorted; } 
 
   public boolean isMapType() 
   { return "Map".equals(name); } 
@@ -2519,6 +2520,9 @@ public class Type extends ModelElement
       { out.println("SequenceType" + tid + ".elementType = void"); }
 
       out.println("SequenceType" + tid + ".keyType = void"); 
+
+      if (sorted)
+      { out.println("SetType" + tid + ".isSorted = true"); }
 
       /* if (keyType != null) 
       { String ktype = keyType.getUMLModelName(out); 

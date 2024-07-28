@@ -11826,6 +11826,11 @@ public void produceCUI(PrintWriter out)
     out.println("    public static <T> ArrayList<T> addSequence(ArrayList<T> s, T x)"); 
     out.println("    { if (x != null) { s.add(x); }"); 
     out.println("      return s; }\n"); 
+
+    out.println("    public static <T extends Comparable<T>> SortedSequence<T> addSequence(SortedSequence<T> s, T x)");
+    out.println("    { if (x != null) { s.add(x); }");
+    out.println("      return s; }\n"); 
+
     out.println("    public static ArrayList<Integer> addSequence(ArrayList<Integer> s, int x)"); 
     out.println("    { s.add(new Integer(x));"); 
     out.println("      return s; }\n"); 

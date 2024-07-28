@@ -3141,6 +3141,11 @@ public class Attribute extends ModelElement
       // Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint.
  
+      /* JOptionPane.showInputDialog("Constraint " + cc + 
+                     " behavioural: " + cc.isBehavioural() + 
+                     " depends on " + nme + " : " + 
+                     cc.dependsUpon(ename,nme)); */ 
+ 
       if (cc.isBehavioural() && 
           cc.dependsUpon(ename,nme))
       { String cccode = cc.updateFormJava7(env,true);

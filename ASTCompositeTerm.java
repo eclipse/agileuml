@@ -293,6 +293,30 @@ public class ASTCompositeTerm extends ASTTerm
     // FILLER becomes FILLER$n 
     // Identify ambiguous field names
 
+    if ("dataName".equals(tag) && terms.size() == 1)
+    { ASTTerm nameTerm = (ASTTerm) terms.get(0); 
+      ASTTerm ntrm = nameTerm.replaceCobolIdentifiers(); 
+      return new ASTCompositeTerm("dataName", ntrm); 
+    } 
+
+    if ("dataRedefinesClause".equals(tag))
+    { Vector newterms = new Vector();  
+      for (int i = 0; i < terms.size(); i++)
+      { ASTTerm trm = (ASTTerm) terms.get(i);
+        ASTTerm ntrm = trm.replaceCobolIdentifiers(); 
+        if (ntrm != null) 
+        { newterms.add(ntrm); }
+        JOptionPane.showMessageDialog(null, this + 
+              " replaced redefines term " + trm + " by " +
+              ntrm, 
+              " ", JOptionPane.INFORMATION_MESSAGE);
+      }  
+      return new ASTCompositeTerm(tag,newterms); 
+    } 
+
+    
+
+
     if ("dataDescriptionEntryFormat1".equals(tag) && 
         ((ASTTerm) terms.get(1)).getTag().equals("dataPictureClause"))
     { // anonymous data field
@@ -315,7 +339,7 @@ public class ASTCompositeTerm extends ASTTerm
     { // non-anonymous field
       ASTTerm nameTerm = (ASTTerm) terms.get(1); 
       ASTTerm ntrm = nameTerm.replaceCobolIdentifiers(); 
-        
+
       String fld = ntrm.literalForm(); 
       if (ASTTerm.cobolDataDescriptionDataNames.contains(fld))
       { JOptionPane.showMessageDialog(null, this + 
@@ -327,7 +351,23 @@ public class ASTCompositeTerm extends ASTTerm
       } 
       else 
       { ASTTerm.cobolDataDescriptionDataNames.add(fld); }
-      
+
+
+      if (terms.size() > 2 && 
+          ((ASTTerm) terms.get(2)).getTag().equals("dataRedefinesClause"))
+      { ASTTerm redefTerm = (ASTTerm) terms.get(2); 
+        ASTTerm nredef = redefTerm.replaceCobolIdentifiers(); 
+        Vector nterms = new Vector(); 
+        nterms.add(terms.get(0)); 
+        nterms.add(ntrm); 
+        nterms.add(nredef); 
+        for (int i = 3; i < terms.size(); i++)
+        { ASTTerm trm = (ASTTerm) terms.get(i);
+          nterms.add(trm); 
+        } 
+        return new ASTCompositeTerm(tag,nterms); 
+      } 
+        
       Vector nterms = new Vector(); 
       nterms.add(terms.get(0)); 
       nterms.add(ntrm); 
@@ -42489,6 +42529,8 @@ public class ASTCompositeTerm extends ASTTerm
                new Attribute(condName, 
                              new Type("boolean", null), 
                              ModelElement.INTERNAL); 
+            // cent.addAttribute(condAttr); // ?? 
+
             BasicExpression cattr = 
                new BasicExpression(condAttr); 
             BinaryExpression inv1succ = 

@@ -70,7 +70,9 @@ public class ASTBasicTerm extends ASTTerm
       return new ASTBasicTerm(tag, "FILLER_F" + ASTTerm.cobolFillerCount); 
     } 
     
-    if (tag.equals("cobolWord"))
+    if (tag.equals("cobolWord") ||
+        tag.equals("figurativeConstant") ||  
+        tag.equals("specialRegister"))
     { String vtrim = value.trim(); 
       String vsub = 
         vtrim.replace("-", ASTTerm.cobolHyphenReplacement); 

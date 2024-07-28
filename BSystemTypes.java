@@ -9462,6 +9462,17 @@ public class BSystemTypes extends BComponent
       "    return res;\n" + 
       "  }\n\n"; 
 
+    res = res +
+      "  public static String setSubrange(String ss, int startIndex, int endIndex, String v)\n" +
+      "  { String res = ss;\n" +
+      "    if (ss.length() < endIndex)\n" +
+      "    { for (int i = ss.length()-1; i < endIndex; i++)\n" +
+      "      { res = res + \" \"; }\n" +
+      "    }\n" +
+      "    return res.substring(0,startIndex-1) + v +\n" + 
+      "           res.substring(endIndex);  \n" +
+      "  }\n\n";
+
     res = res + "  public static String insertInto(String l, int ind, Object ob)\n" + 
       "  { String res = \"\";\n" + 
       "    for (int i = 0; i < ind-1 && i < l.length(); i++)\n" +  
@@ -9597,6 +9608,18 @@ public class BSystemTypes extends BComponent
       "    return res;\n" + 
       "  }\n\n";  
 
+    res = res +
+      "  public static String setSubrange(String ss, int startIndex, int endIndex, String v)\n" +
+      "  { String res = ss;\n" +
+      "    if (ss.length() < endIndex)\n" +
+      "    { for (int i = ss.length()-1; i < endIndex; i++)\n" +
+      "      { res = res + \" \"; }\n" +
+      "    }\n" +
+      "    return res.substring(0,startIndex-1) + v +\n" + 
+      "           res.substring(endIndex);  \n" +
+      "  }\n\n";
+
+
     return res; 
   } 
 
@@ -9714,6 +9737,17 @@ public class BSystemTypes extends BComponent
       "    return res;\n" + 
       "  }\n\n"; 
  
+    res = res +
+      "  public static String setSubrange(String ss, int startIndex, int endIndex, String v)\n" +
+      "  { String res = ss;\n" +
+      "    if (ss.length() < endIndex)\n" +
+      "    { for (int i = ss.length()-1; i < endIndex; i++)\n" +
+      "      { res = res + \" \"; }\n" +
+      "    }\n" +
+      "    return res.substring(0,startIndex-1) + v +\n" + 
+      "           res.substring(endIndex);  \n" +
+      "  }\n\n";
+
     return res; 
   } 
 
@@ -9832,6 +9866,17 @@ public class BSystemTypes extends BComponent
       "    { res = res + l[i]; }\n" + 
       "    return res;\n" + 
       "  }\n\n"; 
+
+    res = res +
+      "  public static string setSubrange(string ss, int startIndex, int endIndex, String v)\n" +
+      "  { string res = ss;\n" +
+      "    if (ss.Length < endIndex)\n" +
+      "    { for (int i = ss.Length-1; i < endIndex; i++)\n" +
+      "      { res = res + \" \"; }\n" +
+      "    }\n" +
+      "    return SystemTypes.subrange(ss,1,startIndex-1) + v +\n" + 
+      "           SystemTypes.subrange(ss,endIndex+1,ss.Length);  \n" +
+      "  }\n\n";
 
     return res; 
   } 

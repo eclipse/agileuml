@@ -375,6 +375,7 @@ public class Compiler2
         str.equals("sortedBy") ||
         // str.equals("excludingAt") ||
         // str.equals("excludingSubrange") ||  
+        // str.equals("setSubrange") ||  
         str.equals("excludingFirst") || 
         // str.equals("setAt") || str.equals("restrict") ||
         // str.equals("antirestrict") ||  
@@ -3353,6 +3354,11 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     // Likewise, SortedSequence
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
+        "SortedSequence".equals(lexicals.get(pstart) + "") &&
+        "{".equals(lexicals.get(pstart + 1) + ""))
+    { return parse_sortedsequence_expression(bc,pstart+1,pend,entities,types); } 
+
+    if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Ref".equals(lexicals.get(pstart) + "") &&
         "{".equals(lexicals.get(pstart + 1) + ""))
     { return parse_ref_expression(bc,pstart+1,pend,entities,types); } 
@@ -3740,6 +3746,17 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return null; } 
     Expression res = new SetExpression(ve,true); 
     // System.out.println("Parsed sequence expression: " + res); 
+    return res; 
+  } 
+
+  public Expression parse_sortedsequence_expression(int bc,int pstart,int pend, Vector entities, Vector types)
+  { Vector ve = 
+      parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
+    if (ve == null) 
+    { return null; } 
+    Expression res = new SetExpression(ve,true);
+    res.setSorted(true);  
+    System.out.println(">>> Parsed sorted sequence expression: " + res); 
     return res; 
   } 
 
@@ -6359,6 +6376,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
            "  ss.excludingSubrange(i,j) is ss with subrange\n" + 
            "  from i to j removed. Positions start at 1\n"; 
       return "excludingSubrange"; 
+    } 
+
+    if ("setSubrange".startsWith(st)) 
+    { mess[0] = "subrange update operator on sequences and strings\n"  + 
+           "  ss.setSubrange(i,j,v) is ss with subrange\n" + 
+           "  from i to j replaced by v. Positions start at 1\n"; 
+      return "setSubrange"; 
     } 
 
     if ("insert".startsWith(st)) 
