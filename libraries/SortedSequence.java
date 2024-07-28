@@ -30,6 +30,13 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
     ss.elements = elems; 
     return ss;
   }
+
+  public static <S extends Comparable<S>> SortedSequence<S> initialiseSortedSequence(S ... args)
+  { SortedSequence<S> result = new SortedSequence<S>(); 
+    for (int i = 0; i < args.length; i++) 
+    { result.add(args[i]); } 
+    return result;  
+  } 	
   
   public T get(int i) 
   { return elements.get(i); } 
@@ -165,7 +172,7 @@ class SortedSequence<T extends Comparable<T>> implements List<T>
   { boolean res = elements.addAll(col); 
     Collections.sort(elements);
     return res;  
-  } // ignores the index.  
+  } // More efficient to sort col and then merge.  
 
   public SortedSequence<T> merge(SortedSequence<T> sq)
   { ArrayList<T> res = new ArrayList<T>();

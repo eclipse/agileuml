@@ -1,0 +1,687 @@
+class OclFile {
+    
+    static string name = ""; // internal
+    static int port = 0; // internal
+    static long position = 0; // internal
+    static long markedPosition = 0;
+    static bool eof = true; // internal
+    static bool closed = true; 
+    static string lastRead = ""; // internal
+    
+    static FileIOLib.FileDetails inputStream = null;
+    static FileIOLib.FileDetails outputStream = null;
+    static FileIOLib.FileDetails objectStream = null;
+    
+    static Dictionary oclfilenameindex; // String --> OclFile
+    static FileIOLib.FileDetails System_in = OclFile.CreateOclFile("System.in");
+    static FileIOLib.FileDetails System_out = OclFile.CreateOclFile("System.out");
+    static FileIOLib.FileDetails System_err = OclFile.CreateOclFile("System.err");
+    
+    static function FileIOLib.FileDetails CreateOclFile(string namex) {
+        if (oclfilenameindex[namex] != null) {
+            return oclfilenameindex.Get(namex); 
+        }
+        FileIOLib.FileDetails oclfilex = Domain.OclFile.Create();
+        oclfilex.name = namex;
+        oclfilex.port = 0;
+        oclfilex.position = 0L;
+        oclfilex.markedPosition = 0L;
+        oclfilex.eof = true;
+        oclfilex.closed = true;
+        oclfilex.lastRead = "";
+        oclfilenameindex.Set(namex, oclfilex);
+
+        return oclfilex;
+    }
+
+    static function FileIOLib.FileDetails GetInstance() {
+        name = "";
+        port = 0;
+        position = 0L;
+        markedPosition = 0L;
+        eof = false;
+        closed = true; 
+        lastRead = "";
+    }
+
+    static function FileIOLib.FileDetails GetOclFileByPK(string namex) { 
+        return oclfilenameindex.Get(namex); 
+    }
+
+    static function void Setname(string name_x) {
+        name = name_x; 
+    }
+
+    static function void Setport(int port_x) { 
+        port = port_x; 
+    }
+    
+    static function void SetInputStream(Stream s) {
+        inputStream = FileIOLib.FileDetails.Load(s); 
+    }
+
+    static function void SetOutputStream(Stream s) { 
+        outputStream = FileIOLib.FileDetails.Load(s); 
+    }
+
+    /* static function void setPosition(long position_x) { // unable to implement 
+        if (inputStream != null) {
+            FileIOLib.FileDetails bstream = inputStream.BaseStream;
+            bstream.Seek(position_x, SeekOrigin.Begin);
+            position = position_x;
+        } else if (outputStream != null) {
+            Stream bstream = outputStream.BaseStream;
+            bstream.Seek(position_x, SeekOrigin.Begin);
+            position = position_x;
+        } else if (objectStream != null) {
+            objectStream.Seek(position, SeekOrigin.Begin);
+            position = position_x;
+        }
+    } */
+    
+    static function void Seteof(bool eof_x) { 
+        eof = eof_x; 
+    }
+
+    static function void SetlastRead(string lastRead_x) { 
+        lastRead = lastRead_x; 
+    }
+
+    static function string Getname() { 
+        return name; 
+    }
+
+    static function int Getport() { 
+        return port; 
+    }
+
+    static funciton long Getposition() { 
+        return position; 
+    }
+
+    static function bool Geteof() { 
+        return eof; 
+    }
+
+    static function string GetlastRead() { 
+        return lastRead; 
+    }
+
+    static function bool IsOpen() { 
+        return !closed; 
+    }
+    
+    static function FileIOLib.FileDetails NewOclFile(string nme) {
+        FileIOLib.FileDetails f = Domain.OclFile.Create();
+        f.Setname(nme);
+        return f;
+    }
+
+    static function FileIOLib.FileDetails NewOclFile_Remote(string nme, int portNumber) {
+        FileIOLib.FileDetails f = Domain.OclFile.Create();
+        f.Setname(nme);
+        f.Setport(portNumber);
+        return f;
+    }
+
+    static function FileIOLib.FileDetails NewOclFile_Read(OclFile f) {
+        f.closed = false;
+
+        if (f.getname().Equals("System.in")) { 
+            return f;
+        }
+
+        if (f.inputStream == null && f.name != null) {
+            f.inputStream = FileIOLib.FileDetails.Load(f.getname()); 
+        } 
+        return f;
+    }
+    
+    static function FileIOLib.FileDetails NewOclFile_Write(OclFile f) {
+        f.closed = false;
+
+        if (f.getname().Equals("System.out") || f.getname().Equals("System.err")) { 
+            return f; 
+        }
+            
+        if (f.outputStream == null && f.name != null) { 
+            f.outputStream = FileIOLib.FileDetails.Load(f.getname()); 
+        } 
+        return f;
+    }
+
+    static function FileIOLib.FileDetails NewOclFile_ReadB(OclFile f) {
+        // f.objectStream = File.Open(f.getname(), FileMode.Open); 
+        OclFile.NewOclFile_Read(f);
+        f.closed = false;
+        return f;
+    }
+
+    static function FileIOLib.FileDetails NewOclFile_WriteB(OclFile f) { 
+        // f.objectStream = File.Create(f.getname());
+        OclFile.NewOclFile_Write(f);
+        f.closed = false;
+        return f;
+    }
+
+    static function FileIOLib.FileDetails CreateTemporaryFile(string nme, string ext) {
+        FileIOLib.FileDetails f = OclFile.NewOclFile(nme + "." + ext);
+        return OclFile.NewOclFile_Write(f);
+    }
+
+    static function FileIOLib.FileDetails GetInputStream() { 
+        return OclFile.NewOclFile_Read(this); 
+    }
+
+    static function FileIOLib.FileDetails GetOutputStream() { 
+        return OclFile.NewOclFile_Write(this); 
+    }
+
+    static function void SetPort(int portNumber) { 
+        port = portNumber; 
+    }
+
+    static function int CompareTo(OclFile f) { 
+        return string.Compare(name, f.getname()); 
+    }
+
+    static function bool CanRead() {
+        if (IsFile()) {
+            return true; 
+        }
+        return false;
+    }
+
+    static function bool CanWrite() {
+        bool result = false;
+        if (IsFile()) {
+            FileIOLib.FileDetails atts = FileIOLib.FileDetails.Load(name);
+            if (atts.IsReadOnly) { 
+                return false; 
+            }
+            return true;
+        }
+        return result;
+    }
+    
+    static function void OpenRead() {
+        closed = false;
+
+        if (name.Equals("System.in")) { 
+            return; 
+        }
+
+        if (inputStream == null && name != null) { 
+            inputStream = File.OpenText(Getname()); 
+        }
+    }
+    
+    static function void OpenWrite() {
+        closed = false;
+
+        if (name.Equals("System.out") || name.Equals("System.err")) { 
+            return; 
+        }
+
+        if (outputStream == null && name != null) { 
+            outputStream = FileIOLib.FileDetails.Load(Getname()); 
+        }
+
+    }
+    
+    static function void OpenReadB() { 
+        OpenRead(); 
+    }
+
+    static function void OpenWriteB() { 
+        OpenWrite(); 
+    }
+
+    static function void CloseFile() {
+        closed = true;
+
+        if (outputStream != null) { 
+            outputStream = null; 
+        }
+        if (inputStream != null) {
+            inputStream = null; 
+        } 
+        if (objectStream != null) { 
+            objectStream= null; 
+        }
+        position = 0;
+    }
+
+    static function bool Exists() {
+        if (FileIOLib.File.Exists(name)) {
+            return true; 
+        }
+        return FileIOLib.Directory.Exists(name);
+    }
+
+    static function bool IsFile() {
+        return FileIOLib.File.Exists(name);
+    }
+
+    static function bool IsDirectory() {
+        return FileIOLib.Directory.Exists(name);
+    }
+
+    static function bool IsHidden() {
+        bool result = false;
+        FileIOLib.FileDetails atts = FileIOLib.FileDetails.Load(name);
+        if (atts.Name.StartWith("."))) {
+            return true; 
+        }
+        return result;
+    }
+    
+    static function bool IsAbsolute() {
+        bool result = false;
+        if (name.StartsWith("/")) { 
+            return true; 
+        }
+        if (name.Length > 1 && name.CharAt(0) == ':') { 
+            return true; 
+        }
+        return result;
+    }
+    
+    static function string GetAbsolutePath() { 
+        return name; 
+    }
+
+    static function string GetPath() {
+        return name;
+    }
+    
+    static function string GetParent() {
+        int ind = name.LastIndexOf("\\");
+        string result = ".";
+        if (ind > 0) { 
+            esult = name.Substring(0, ind); 
+        }
+        return result;
+     }
+
+    static function FileIOLib.FileDetails GetParentFile() {
+        if (IsFile()) {
+            FileIOLib.Directory.GetDirectories(name);
+        } else {
+            FileIOLib.Directory.GetDirectories(name + "/..");
+        }
+        return result;
+    }
+
+    //No such information
+    /* static function long LastModified() {
+        long result = 0;
+        DateTime mdate = File.GetLastWriteTime(name);
+        result = SystemTypes.getTime(mdate);
+        return result;
+    } */
+
+
+    static function long Length() {
+        long result = FileIOLib.FileDetails.Load(name).Length;
+
+        return result;
+    }
+    
+    static function bool Delete() {
+        try {
+            FileIOLib.File.Delete(name);
+            position = 0;
+            markedPosition = 0; 
+            closed = true;
+
+            return true;
+        } catch (Exception e) { 
+            return false; 
+        }
+    }
+
+    static function bool DeleteFile(string nme) {
+        try {
+            FileIOLib.File.Delete(nme);
+            return true;
+        } catch (Exception e) { 
+            return false; 
+        }
+    }
+    
+    static function long GetPosition() {
+        return position;
+    }
+
+    static function string GetName() {
+        return name;
+    }
+
+    static function string GetInetAddress() {
+        return name;
+    }
+
+    static function string GetLocalAddress() { 
+        return name; 
+    }
+
+    static function int GetPort() { 
+        return port; 
+    }
+
+    static function int GetLocalPort() {
+        return port;
+    }
+
+    static function Collection List() {
+        Collection result;
+        if (isDirectory()) {
+            Collection fnames = Directory.GetFiles(name).ToCollection();
+            for int i = 0; i < fnames.Length; i + 1 { 
+                result.Add(fnames.Get(i)); 
+            }
+            return result;
+        }
+        return result;
+    }
+
+    static function Collection ListFiles() {
+        Collection result;
+        if (isDirectory()) {
+            string[] fnames = Directory.GetFiles(name).ToCollection();
+            for int i = 0; i < fnames.Length; i + 1 {
+                result.Add(OclFile.NewOclFile(fnames.Get(i))); 
+            }
+            return result;
+        }
+        return result;
+    }
+    
+    static function void Print(string s) {
+        if ("System.out".Equals(name) || "System.err".Equals(name)) { 
+            DebugLib.Logger.WriteInfoLine(s); 
+        } else { 
+            Write(s); 
+        }
+    }
+
+    static function void Println(string s) {
+        if ("System.out".Equals(name) || "System.err".Equals(name)) { 
+            DebugLib.Logger.WriteInfoLine(s); 
+        } else {
+            Writeln(s); 
+        }
+    }
+    
+    static function void WriteAllLines(Collection sq) {
+        if ("System.out".Equals(name) || "System.err".Equals(name)) { 
+            for int i = 0; i < sq.Length; i + 1 { 
+                DebugLib.Logger.WriteInfoLine(sq.Get(i) + ""); 
+            }
+        } else { 
+            for (int i = 0; i < sq.Length; i++) {
+                writeln(sq.Get(i) + ""); 
+            }
+        }
+    }
+    
+    static function void Printf(string f, Collection sq) {
+        Collection args;
+        for int i = 0; i < sq.Length; i + 1 { 
+            args.Set(i, sq.Get(i)); 
+        }
+        string fmt = OclFile.ConvertConversionFormat(f);
+        string formattedString = String.Format(fmt, args);
+        Print(formattedString);
+    }
+
+    static function void Write(string s) {
+        if (outputStream != null) {
+            FileIOLib.File.WriteAllTo(outputStream.FullPath, s);
+        }
+    }
+
+    static function void WriteN(Collection sq, int n) {
+        if (outputStream != null) {
+            for int i = 0; i < sq.Length && i < n; i + 1 {
+                string s = sq.Get(i);
+                FileIOLib.File.WriteAllTo(outputStream.FullPath, s);
+            }
+        }
+    }
+
+    static function void WriteByte(int x) {
+        if (outputStream != null) { 
+            FileIOLib.File.WriteAllTo(outputStream.FullPath, byte.Parse(x.ToString())); 
+        }
+    }
+
+    static function void WriteNbytes(Collection sq, int n) {
+        if (outputStream != null) {
+            for int i = 0; i < sq.Length && i < n; i + 1 {
+                int x = sq.Get(i);
+                FileIOLib.File.WriteAllTo(outputStream.FullPath, byte.Parse(x.ToString()));
+            }
+        }
+
+    }
+
+    static function void WriteAllBytes(Collection sq) {
+        if (outputStream != null) {
+            for (int i = 0; i < sq.Length; i++) {
+                int x = sq.Get(i);
+                FileIOLib.File.WriteAllTo(outputStream.FullPath, byte.Parse(x.ToString()));
+            }
+        }
+
+    }
+
+    static function void WriteObject<T>(T s) {
+        if (outputStream != null) {
+            FileIOLib.File.WriteAllTo(outputStream.FullPath, s.ToString());
+        }
+    }
+
+    static function void Writeln(string s) {
+        if (outputStream != null) { 
+            FileIOLib.File.WriteAllTo(outputStream.FullPath, s);
+        }
+    }
+
+    static function void Flush() {
+        return;
+    }
+
+    //Unable to implement
+    /*static function bool HasNext() {
+        bool result = false;
+        if ("System.in".Equals(name)) {
+            lastRead = Console.ReadLine();
+            if (lastRead != null) { 
+                position = position + lastRead.Length; 
+                return true; 
+            }
+            eof = true;
+            return result;
+        } else if (inputStream != null && inputStream.Peek() > -1) {
+            int c = inputStream.Read();
+            while (c != -1 && Char.IsWhiteSpace((char)c)) {
+                position++;
+                c = inputStream.Read();
+            } 
+
+            if (c == -1) { 
+                eof = true; return false; 
+            }
+                
+            lastRead = "";
+            while (c != -1 && !Char.IsWhiteSpace((char) c)) { 
+                lastRead = lastRead + SystemTypes.byte2char(c);
+                position++;
+                c = inputStream.Read(); 
+            }
+
+            if (c == -1) { 
+                eof = true; return true; 
+            }
+
+            return true; 
+        } else { 
+            eof = true; 
+        }
+        return result;
+    }*/
+
+    static function string GetCurrent() { 
+        return lastRead; 
+    }
+
+    // In current version, all read functions will return the whole context
+    static function string Read() {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+
+    static function string ReadN(int n) {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+
+    static function int ReadByte() {
+            if (inputStream != null) {
+            return int.Parse(FileIOLib.File.ReadAllText(inputStream.FullPath));
+        }
+        return "";
+    }
+
+    static function Collection ReadNbytes(int n) {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+
+    static function Collection ReadAllBytes() {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+    
+    static function void copyFromTo(k source, OclFile target) {   
+        if (source == null || target == null) { 
+            return; 
+        }
+
+        if (source.inputStream != null) {
+            FileIOLib.File.Move(source.inputStream.FullPat, target.inputStream.FullPath, true); // Can be overwritten     
+        }
+    }
+    
+    static function string ReadObject[T]() {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+
+    static function string ReadLine(string prompt) { 
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    } 
+
+    static function string ReadLine() {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+
+    static function string ReadAllLines(){
+        if (inputStream != null || "System.in".Equals(name)) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+
+        return ""; 
+    }
+
+    static function string ReadAll() {
+        if (inputStream != null) {
+            return FileIOLib.File.ReadAllText(inputStream.FullPath);
+        }
+        return "";
+    }
+
+    //Unable to implement
+    /*static function void mark() {
+        if (inputStream != null) { 
+            markedPosition = ((FileStream)inputStream.BaseStream).Position; 
+        }
+    }
+
+    static function void reset() {
+        if (inputStream != null) {
+            ((FileStream)inputStream.BaseStream).Seek(markedPosition, SeekOrigin.Begin);
+            position = markedPosition;
+        }
+    }
+
+    static function void skipBytes(int n) {
+        if (inputStream != null) {
+            for int i = 0; i < n; i + 1 {
+                int x = inputStream.Read();
+                if (x < 0) {
+                    eof = true;
+                    return;
+                }
+                position++;
+            }
+        }
+    }*/
+
+    static function bool mkdir() {
+        bool result = false;
+        FileIOLib.Directory.Create(name);
+        if (FileIOLib.Directory.Exists(name)) { 
+            return true; 
+        }
+        return result;
+    }
+
+    static function bool Mkdirs() {
+        return mkdir(); 
+    } 
+
+    static function string ConvertConversionFormat(string cstyle) {
+        string res = cstyle;
+        int argindex = 0;
+        int pind = res.IndexOf("%");
+
+        while (pind >= 0){
+            if (pind + 1 < res.Length && "s".Equals(res.Substring(pind + 1, 1))) { 
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%d", "{" + argindex + ":S}"); 
+            } else if (pind + 1 < res.Length && "d".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%e", "{" + argindex + ":D}"); 
+            } else if (pind + 1 < res.Length && "f".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%f", "{" + argindex + ":F}"); 
+            } else if (pind + 1 < res.Length && "e".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%s", "{" + argindex + ":E}"); 
+            } else if (pind + 1 < res.Length && "g".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%x", "{" + argindex + ":G}"); 
+            } else if (pind + 1 < res.Length && "x".Equals(res.Substring(pind + 1, 1))) {
+                res = Domain.MambaHelper.ReplaceFirstMatch(res, "%g", "{" + argindex + ":X}"); 
+            }
+            argindex++;
+            pind = res.IndexOf("%");
+        }
+        return res;
+    }
+
+}

@@ -477,7 +477,7 @@ String
 
  query
 true
-( name = "Sequence" => result = "[]" ) & ( name = "Set" & isSorted = true => result = "SortedSet({})") & ( name = "Set" => result = "set({})" ) & ( name = "Map" & isSorted = true => result = "SortedDict({})" ) & ( name = "Map" => result = "dict({})" ) & (name = "Function" => result = "None") & ( name = "Ref" => result = "[" + elementType.defaultInitialValue() + "]" )
+( name = "Sequence" & isSorted = false => result = "[]" ) & ( name = "Sequence" & isSorted = true => result = "SortedList([])") & ( name = "Set" & isSorted = true => result = "SortedSet({})") & ( name = "Set" => result = "set({})" ) & ( name = "Map" & isSorted = true => result = "SortedDict({})" ) & ( name = "Map" => result = "dict({})" ) & (name = "Function" => result = "None") & ( name = "Ref" => result = "[" + elementType.defaultInitialValue() + "]" )
 
 
 
@@ -849,7 +849,7 @@ String
 ls String rs String 
  query
 true
-( operator = "/" => result = mapDividesExpression(ls,rs) ) & ( operator = "mod" => result = ls + " % " + rs ) & ( operator = "div" => result = ls + " // " + rs ) & ( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = "->pow" => result = "math.pow(" + ls + ", " + rs + ")" ) & ( operator = "->gcd" => result = "ocl.gcd(" + ls + ", " + rs + ")" ) & ( operator = "->truncateTo" => result = "ocl.truncateTo(" + ls + ", " + rs + ")" ) & ( operator = "->roundTo" => result = "ocl.roundTo(" + ls + ", " + rs + ")" ) & ( true => result = ls + " " + operator + " " + rs )
+( operator = "/" => result = mapDividesExpression(ls,rs) ) & ( operator = "mod" => result = ls + " % " + rs ) & ( operator = "div" => result = ls + " // " + rs ) & ( operator = "=" => result = ls + " == " + rs ) & ( operator = "<>=" => result = ls + " is " + rs ) & ( operator = "/=" => result = ls + " != " + rs ) & ( operator = "->pow" => result = "math.pow(" + ls + ", " + rs + ")" ) & ( operator = "->gcd" => result = "ocl.gcd(" + ls + ", " + rs + ")" ) & ( operator = "->truncateTo" & left.type.name = "int" => result = ls) & ( operator = "->truncateTo" => result = "ocl.truncateTo(" + ls + ", " + rs + ")" ) & ( operator = "->roundTo" & left.type.name = "int" => result = ls) & ( operator = "->roundTo" => result = "ocl.roundTo(" + ls + ", " + rs + ")" ) & ( true => result = ls + " " + operator + " " + rs )
 
 
 
@@ -1071,7 +1071,7 @@ String
 ls String rs String
 query
 true
-( operator = ":" & right.isSet() => result = rs + ".add(" + ls + ")" ) & ( operator = ":" & right.isCollection() => result = rs + ".append(" + ls + ")" ) & ( operator = "/:" & right.isSet() => result = rs + ".discard(" + ls + ")" ) & ( operator = "/:" & right.isCollection() => result = rs + ".remove(" + ls + ")" ) & ( operator = "<:" & right.isSet() => result = rs + ".update(" + ls + ")" ) & ( operator = ":" & right.isCollection() => result = rs + ".extend(" + ls + ")" ) & ( operator = "/<:" & right.isSet() => result = rs + ".difference_update(" + ls + ")" ) & (true => result = "exec(\"" + self.toPython() + "\")") 
+( operator = ":" & right.isSet() => result = rs + ".add(" + ls + ")" ) & ( operator = ":" & right.isCollection() => result = rs + ".append(" + ls + ")" ) & ( operator = "/:" & right.isSet() => result = rs + ".discard(" + ls + ")" ) & ( operator = "/:" & right.isCollection() => result = rs + ".remove(" + ls + ")" ) & ( operator = "<:" & right.isSet() => result = rs + ".update(" + ls + ")" ) & ( operator = ":" & right.isCollection() => result = rs + ".extend(" + ls + ")" ) & ( operator = "/<:" & right.isSet() => result = rs + ".difference_update(" + ls + ")" ) & (true => result = "pass") 
 
 
 
@@ -1255,7 +1255,7 @@ String
 arg String
 query
 true
-(operator = "->isDeleted" => result = "del " + arg) & (operator = "->display" => result = "print(" + arg + ")") & (true => result = "exec(\"" + toPython() + "\")")
+(operator = "->isDeleted" => result = "del " + arg) & (operator = "->display" => result = "print(" + arg + ")") & (true => result = "pass")
 
 
 
@@ -1293,7 +1293,7 @@ String
 elems Sequence(String) tn String 
  query
 true
-( tn = "Set" & isSorted = true => result = "SortedSet({" + Expression.tolist(elems) + "})" ) & ( tn = "Set" => result = "set({" + Expression.tolist(elems) + "})" ) & ( tn = "Sequence" => result = "[" + Expression.tolist(elems) + "]" ) & ( tn = "Map" & isSorted = true => result = "SortedDict({" + Expression.maptolist(elems) + "})") & ( tn = "Map" => result = "dict({" + Expression.maptolist(elems) + "})") & ( tn = "Ref" & elems.size > 0 => result = "[" + elementType.defaultInitialValue() + "]*" + elems[1] )
+( tn = "Set" & isSorted = true => result = "SortedSet({" + Expression.tolist(elems) + "})" ) & ( tn = "Set" => result = "set({" + Expression.tolist(elems) + "})" ) & ( tn = "Sequence" & isSorted = true => result = "SortedList([" + Expression.tolist(elems) + "])" ) & ( tn = "Sequence" => result = "[" + Expression.tolist(elems) + "]" ) & ( tn = "Map" & isSorted = true => result = "SortedDict({" + Expression.maptolist(elems) + "})") & ( tn = "Map" => result = "dict({" + Expression.maptolist(elems) + "})") & ( tn = "Ref" & elems.size > 0 => result = "[" + elementType.defaultInitialValue() + "]*" + elems[1] )
 
 
 
@@ -1316,7 +1316,7 @@ String
 
 query
 true
-result = "exec(\"" + self.toPython() + "\")"
+result = "pass"
 
 
 
@@ -1566,7 +1566,7 @@ String
 obs Set(String) aind Set(String) pars Sequence(String) 
  query
 obs.size > 0
-arg = obs->any() & ( data = "allInstances" => result = "allInstances_" + arg + "()" ) & ( "Integer" = objectRef.any.data => result = mapIntegerFunctionExpression(obs,aind,pars) ) & ( data = "ceil" or data = "floor" => result = "int(math." + data + "(" + arg + "))" ) & ( data = "sqr" or data = "cbrt" => result = "ocl." + data + "(" + arg + ")" ) & ( BasicExpression.isMathFunction(data) => result = "math." + data + "(" + arg + ")" ) & ( data = "replace" => result = "ocl.replace(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceFirstMatch" => result = "ocl.replaceFirstMatch(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceAllMatches" => result = "ocl.replaceAllMatches(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceAll" => result = "ocl.replaceAll(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "insertAt" => result = mapInsertAtFunctionExpression(obs,aind,pars) ) & ( data = "insertInto" => result = "ocl.insertInto(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "excludingSubrange" => result = "ocl.excludingSubrange(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "setAt" => result = mapSetAtFunctionExpression(obs, aind, pars) ) & ( data = "oclIsUndefined" => result = "(" + arg + " == None)" ) & ( data = "oclAsType" => result = pars->first() + "(" + arg + ")" ) & ( data = "sum" => result = "ocl.sum(" + arg + ")" ) & ( data = "prd" => result = "ocl.prd(" + arg + ")" ) & ( data = "max" => result = "ocl.max" + type.name + "(" + arg + ")" ) & ( data = "min" => result = "ocl.min" + type.name + "(" + arg + ")" ) & ( data = "front" => result = "(" + arg + ")[0:-1]" ) & ( data = "tail" => result = "(" + arg + ")[1:]" ) & ( data = "first" => result = "(" + arg + ")[0]" ) & ( data = "last" => result = "(" + arg + ")[-1]" ) & ( data = "sort" => result = "ocl.sort" + type.name + "(" + arg + ")" ) & ( data = "size" => result = "len(" + arg + ")" ) & ( data = "toLowerCase" => result = "ocl.toLowerCase(" + arg + ")" ) & ( data = "toUpperCase" => result = "ocl.toUpperCase(" + arg + ")" ) & ( data = "reverse" => result = "ocl.reverse" + type.name + "(" + arg + ")" ) & ( data = "subrange" => result = mapSubrangeFunctionExpression(obs,aind,pars) ) & ( true => result = "ocl." + data + "(" + arg + ")" )
+arg = obs->any() & ( data = "allInstances" => result = "allInstances_" + arg + "()" ) & ( "Integer" = objectRef.any.data => result = mapIntegerFunctionExpression(obs,aind,pars) ) & ( data = "ceil" or data = "floor" => result = "int(math." + data + "(" + arg + "))" ) & ( data = "sqr" or data = "cbrt" => result = "ocl." + data + "(" + arg + ")" ) & ( BasicExpression.isMathFunction(data) => result = "math." + data + "(" + arg + ")" ) & ( data = "replace" => result = "ocl.replace(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceFirstMatch" => result = "ocl.replaceFirstMatch(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceAllMatches" => result = "ocl.replaceAllMatches(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "replaceAll" => result = "ocl.replaceAll(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "insertAt" => result = mapInsertAtFunctionExpression(obs,aind,pars) ) & ( data = "insertInto" => result = "ocl.insertInto(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "excludingSubrange" => result = "ocl.excludingSubrange(" + arg + ", " + pars[1] + ", " + pars[2] + ")" ) & ( data = "setSubrange" => result = "ocl.setSubrange(" + arg + ", " + pars[1] + ", " + pars[2] + ", " + pars[3] + ")" ) & ( data = "setAt" => result = mapSetAtFunctionExpression(obs, aind, pars) ) & ( data = "oclIsUndefined" => result = "(" + arg + " == None)" ) & ( data = "oclAsType" => result = pars->first() + "(" + arg + ")" ) & ( data = "sum" => result = "ocl.sum(" + arg + ")" ) & ( data = "prd" => result = "ocl.prd(" + arg + ")" ) & ( data = "max" => result = "ocl.max" + type.name + "(" + arg + ")" ) & ( data = "min" => result = "ocl.min" + type.name + "(" + arg + ")" ) & ( data = "front" => result = "(" + arg + ")[0:-1]" ) & ( data = "tail" => result = "(" + arg + ")[1:]" ) & ( data = "first" => result = "(" + arg + ")[0]" ) & ( data = "last" => result = "(" + arg + ")[-1]" ) & ( data = "sort" => result = "ocl.sort" + type.name + "(" + arg + ")" ) & ( data = "size" => result = "len(" + arg + ")" ) & ( data = "toLowerCase" => result = "ocl.toLowerCase(" + arg + ")" ) & ( data = "toUpperCase" => result = "ocl.toUpperCase(" + arg + ")" ) & ( data = "reverse" => result = "ocl.reverse" + type.name + "(" + arg + ")" ) & ( data = "subrange" => result = mapSubrangeFunctionExpression(obs,aind,pars) ) & ( true => result = "ocl." + data + "(" + arg + ")" )
 
 
 
@@ -2070,7 +2070,7 @@ String
 indent int 
  query
 true
-(left.type.name = "int" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (left.type.name = "long" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (true => result = Statement.tab(indent) + left.toPython() + " = " + right.toPython() + "\n")
+(left.type.name = "int" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (left.type.name = "long" & right.type.name = "String" => result = Statement.tab(indent) + left.toPython() + " = ocl.toInteger(" + right.toPython() + ")\n") & (left.type.name = "String" & right.type.name /= "String" => result = Statement.tab(indent) + left.toPython() + " = str(" + right.toPython() + ")\n") & (true => result = Statement.tab(indent) + left.toPython() + " = " + right.toPython() + "\n")
 
 
 
@@ -2597,7 +2597,7 @@ false
 Constraint:
 null
 true
-"import ocl"->display() & "import math"->display() & "import re"->display() & "import copy"->display() & ""->display() & "from mathlib import *"->display() & "from oclfile import *"->display() & "from ocltype import *"->display() & "from ocldate import *"->display() & "from oclprocess import *"->display() & "from ocliterator import *"->display() & "from oclrandom import *"->display() & "from ocldatasource import *"->display() & "from sortedcontainers import *"->display() & "from enum import Enum"->display() & ""->display() & Entity.deleteOp()->display() & Entity.displayOps()->display()
+"import ocl"->display() & "import math"->display() & "import re"->display() & "import copy"->display() & ""->display() & "from mathlib import *"->display() & "from stringlib import *"->display() & "from oclfile import *"->display() & "from ocltype import *"->display() & "from ocldate import *"->display() & "from oclprocess import *"->display() & "from ocliterator import *"->display() & "from oclrandom import *"->display() & "from ocldatasource import *"->display() & "from sortedcontainers import *"->display() & "from enum import Enum"->display() & ""->display() & Entity.deleteOp()->display() & Entity.displayOps()->display()
 null printcode
 false
 

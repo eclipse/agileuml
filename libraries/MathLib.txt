@@ -1,0 +1,1066 @@
+
+class MathLib{
+    
+    static int ix = 0; // internal
+    static int iy = 0; // internal
+    static int iz = 0; // internal
+    static double defaultTolerance = 0.001; // internal
+    static Collection hexdigit; // internal
+
+    static function void Setix(int ix_x) { 
+        ix = ix_x; 
+    }
+
+    static function void Setiy(int iy_x) { 
+        iy = iy_x; 
+    }
+
+    static function void Setiz(int iz_x) { 
+        iz = iz_x; 
+    }
+    
+    static function void Sethexdigit(Collection hexdigit_x) { 
+        hexdigit = hexdigit_x; 
+    }
+
+    static function void Sethexdigit(int _ind, string hexdigit_x) { 
+        hexdigit.Set(_ind, hexdigit_x); 
+    }
+
+    static function void Addhexdigit(string hexdigit_x){
+        hexdigit.Add(hexdigit_x); 
+    }
+
+    static function void Removehexdigit(string hexdigit_x){ 
+        Collection tmp;
+        hexdigit = tmp; 
+    }
+
+    static function int Getix() { 
+        return ix; 
+    }
+
+    static function Collection GetAllix(Collection mathlib_s){
+        Collection[int] result;
+        if (mathlib_s.Length > 0){ 
+            result.Add(Domain.MathLib.ix); 
+        }
+        return result;
+    }
+
+    static function Collection GetAllOrderedix(Collection mathlib_s){
+        Collection result;
+        for int i = 0; i < mathlib_s.Length; i + 1{
+             result.Add(mathlib_s.Get(i).ix);
+        }
+        return result;
+    }
+
+    static function int Getiy() { 
+        return iy; 
+    }
+
+    static function Collection GetAlliy(Collection mathlib_s){
+        Collection[int] result;
+        if (mathlib_s.Length > 0){ 
+            result.Add(Domain.MathLib.iy); 
+        }
+        return result;
+    }
+
+    static function Collection GetAllOrderediy(Collection mathlib_s){
+        Collection result;
+        for int i = 0; i < mathlib_s.Length; i + 1{
+             result.Add(mathlib_s.Get(i).iy);
+        }
+        return result;
+    }
+
+    static function int Getiz() { 
+        return iz; 
+    }
+
+    static function Collection GetAlliz(Collection mathlib_s){
+        Collection[int] result;
+        if (mathlib_s.Length > 0){ 
+            result.Add(Domain.MathLib.iz); 
+        }
+        return result;
+    }
+
+    static function Collection GetAllOrderediz(Collection mathlib_s){
+        Collection result;
+        for int i = 0; i < mathlib_s.Length; i + 1{
+             result.Add(mathlib_s.Get(i).iz);
+        }
+        return result;
+    }
+
+    static function Collection Gethexdigit() { 
+        return hexdigit; 
+    }
+ 
+    static function double Pi(){
+        return CommonLib.Math.Pi();
+    }
+    
+    static function double EValue(){
+        double result = 2.71828;
+        return result;
+    }
+
+    static function double PiValue(){
+        return CommonLib.Math.Pi();
+    }
+
+
+    static function double E(){
+        double result = 2.71828;
+        return result;
+    }
+    
+    static function void SetSeeds(int x, int y, int z){
+        Domain.MathLib.Setix(x);
+        Domain.MathLib.Setiy(y);
+        Domain.MathLib.Setiz(z);
+    }
+    
+    static function void SetSeed(int r)  { 
+        Domain.MathLib.SetSeeds((r % 30269), (r % 30307), (r % 30323)); 
+    } 
+
+    static function double Nrandom(){
+        Domain.MathLib.Setix((Domain.MathLib.Getix() * 171) % 30269);
+        Domain.MathLib.Setiy((Domain.MathLib.Getiy() * 172) % 30307);
+        Domain.MathLib.Setiz((Domain.MathLib.Getiz() * 170) % 30323);
+        return (Domain.MathLib.Getix() / 30269.0 + Domain.MathLib.Getiy() / 30307.0 + Domain.MathLib.Getiz() / 30323.0);
+    }
+
+    static function double Random(){
+        double result = 0.0;
+        double r = Domain.MathLib.Nrandom();
+        result = (r - Math.Floor(r).ToString());
+        return result;
+    }
+
+    static function long Combinatorial(int n, int m){
+        long result = 0;
+        if (n < m || m < 0) { 
+            return result; 
+        }
+
+        if (n - m < m){
+            result = Domain.MathLib.Prdint(Domain.MathLib.IntegerSubrange(m + 1, n)) / 
+                             Domain.MathLib.Prdint(Domain.MathLib.IntegerSubrange(1, n - m));
+        } else if (n - m >= m) {
+            result = SystemTypes.prdint(Domain.MathLib.IntegerSubrange(n - m + 1, n)) / 
+                             SystemTypes.prdint(Domain.MathLib.IntegerSubrange(1, m));
+        }
+        return result;
+    }
+
+
+    static function long Factorial(int x){
+        long result = 0;
+
+        if (x < 2){
+            result = 1;
+        } else if (x >= 2) {
+            result = Domain.MathLib.Prdint(Domain.MathLib.IntegerSubrange(2, x));
+        }
+        return result;
+    }
+    
+    static function int Prdint(Collection[int] a){ 
+        int prd = 1; 
+        for int i = 0; i < a.Length; i + 1 { 
+            int x = a.Get(i);
+            if (x != null) { 
+                prd *= x; 
+            }
+        } 
+        return prd; 
+    }
+    
+    static function Collection[int] IntegerSubrange(int i, int j){
+        Collection[int] result;
+        for int k = i; k <= j; k + 1 { 
+            result.Add(k); 
+        } 
+    }
+
+    static function double Asinh(double x){
+        double result = Domain.MathLib.Log((x + CommonLib.Math.Sqrt((x * x + 1))));
+        return result;
+    }
+
+    static function double Acosh(double x){
+        double result = 0.0;
+        if (x < 1) { 
+            return result; 
+        }
+
+        result = Domain.MathLib.Log((x + CommonLib.Math.Sqrt((x * x - 1))));
+        return result;
+    }
+
+    static function double Atanh(double x){
+        double result = 0.0;
+        if (x == 1) { 
+            return result; 
+        }
+
+        result = 0.5 * Domain.MathLib.Log(((1 + x) / (1 - x)));
+        return result;
+    }
+    
+    static function double Log(double x) {
+        double y = 1;  // Initial guess
+        double tolerance = 0.0000001;  // Set a tolerance level for accuracy
+        double lastY = 0;
+        
+        while (Math.Abs(y - lastY) > tolerance) {
+            lastY = y;
+            y = y - 1 + x / Math.Pow(2.71828, y);
+        }
+        
+        return y;
+    }
+
+
+    static function string Decimal2bits(long x) {
+        string result = "";
+
+        if (x == 0) { 
+            result = ""; 
+        } else { 
+            result = Domain.MathLib.Decimal2bits(x / 2) + "" + (x % 2); 
+        }
+        return result;
+    }
+
+    static function string Decimal2binary(long x) {
+        string result = "";
+
+        if (x < 0) { 
+            result = "-" + Domain.MathLib.Decimal2bits(-x); 
+        } else {
+            if (x == 0) { 
+                result = "0"; 
+            } else {
+                result = Domain.MathLib.Decimal2bits(x); 
+            }
+            
+        }   
+        return result;
+    }
+
+    static function string Decimal2oct(long x) {
+        string result = "";
+
+        if (x == 0) { 
+            result = ""; 
+        } else { 
+            result = Domain.MathLib.Decimal2oct(x / 8) + "" + (x % 8); 
+        }
+        return result;
+    }
+
+    static function string Decimal2octal(long x) {
+        string result = "";
+
+        if (x < 0) { 
+            result = "-" + Domain.MathLib.Decimal2oct(-x); 
+        } else {
+            if (x == 0) { 
+                result = "0"; 
+            } else { 
+                result = Domain.MathLib.Decimal2oct(x); 
+            }
+        }
+        return result;
+    }
+
+    static function string Decimal2hx(long x){
+        string result = "";
+
+        if (x == 0) { 
+            result = ""; 
+        } else { 
+            result = Domain.MathLib.Decimal2hx(x / 16) + ("" + ((string)Domain.MathLib.Gethexdigit()[((int)(x % 16))])); 
+        }
+        return result;
+    }
+
+    static function string Decimal2hex(long x){
+        string result = "";
+
+        if (x < 0) { 
+            result = "-" + Domain.MathLib.Decimal2hx(-x);
+        } else {
+            if (x == 0) { 
+                result = "0"; 
+            } else { 
+                result = Domain.MathLib.Decimal2hx(x); 
+            }
+        }
+        return result;
+    }
+
+    static function long Bytes2integer(Collection bs) {
+        if (bs.Length == 0) { 
+            return 0; 
+        }
+        if (bs.Length == 1) { 
+            return int.Parse(bs.Get(0).ToString()); 
+        }
+        if (bs.Length == 2) { 
+            return 256 * int.Parse(bs.Get(0).ToString()) + int.Parse(bs.Get(1).ToString()); 
+        }
+
+        int lowdigit = int.Parse(bs.Get(bs.Length - 1).ToString());
+        Collection tmp;
+        for int i = 0; i < bs.Length - 1; i + 1 {
+            tmp.Add(bs.Get(i));
+        }
+        Collection highdigits = tmp;
+        return 256 * Domain.MathLib.Bytes2integer(highdigits) + lowdigit;
+    }
+
+    static function Collection Integer2bytes(long x) {
+        Collection result;
+
+        long y = x / 256;
+        int z = int.Parse((x % 256).ToString());
+        if (y == 0) {
+            result.Add(z);
+            return result;
+        }
+        Collection highbytes = Domain.MathLib.Integer2bytes(y);
+        result.AddRange(highbytes);
+        result.Add(z);
+        return result;
+    }
+
+    static function Collection Integer2Nbytes(long x, int n){
+        Collection res = Domain.MathLib.Integer2bytes(x);
+
+         while (res.Length < n) { 
+            res.Insert(0, 0); 
+        }
+        return res;
+    }
+
+    static function int BitwiseAnd(int x, int y) { 
+        return x & y; 
+    }
+
+    static function long BitwiseAnd(long x, long y) { 
+        return x & y; 
+    }
+
+
+    static function int BitwiseOr(int x, int y) { 
+        return x | y; 
+    }
+
+    static funciton long BitwiseOr(long x, long y) {
+        return x | y;
+    }
+
+    static function int BitwiseXor(int x, int y) {
+        return x^y; 
+    }
+
+    static function long BitwiseXor(long x, long y) {
+        return x ^ y;
+    }
+    
+    static function int BitwiseNot(int x) { 
+        return ~x; 
+    }
+
+    static function long BitwiseNot(long x) { 
+        return ~x; 
+    }
+    
+    static function Collection ToBitSequence(long x) {
+        long x1;
+        x1 = x;
+        Collection res;
+        while (x1 > 0) {
+            if (x1 % 2 == 0) { 
+                res = Domain.MathLib.Concatenate(Domain.MathLib.MakeSet(false), res); 
+            } else { 
+                res = Domain.MathLib.Concatenate(Domain.MathLib.MakeSet(true), res); 
+            }
+
+            x1 = x1 / 2;
+        }
+        return res;
+    }
+    
+    static function Collection[T] Concatenate(Collection[T] a, Collection[T] b){ 
+        Collectioin[T] result; 
+        res.AddRange(a); 
+        res.AddRange(b); 
+        return result; 
+    }
+    
+    static function Collection[T] MakeSet(T value) {
+        Collection[T] result;
+        result.Add(value);
+        return result;
+    }
+
+    static function long ModInverse(long n, long p) {
+        if (p <= 0) { 
+            return 0;
+        }
+
+        long x = (n % p);
+        for int i = 1; i < p; i + 1 {
+            if (((i * x) % p) == 1) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    static function long ModPow(long n, long m, long p) { 
+        if (p <= 0) { 
+            return 0; 
+        }
+        long res = 1;
+        long x = (n % p);
+        for int i = 1; i <= m; i + 1 {
+            res = ((res * x) % p);
+        }
+        return res;
+    }
+    
+    static function long DoubleToLongBits(double d) { 
+        return long.Parse(d.ToString*()); 
+    }
+
+    static function double LongBitsToDouble(long x) { 
+        return double.Parse(x.ToString*()); 
+    }
+    
+    static function double RoundN(double x, int n) {
+        if (n < 0) { 
+            return Math.Round(x); 
+        }
+        double y = x * CommonLib.Math.Pow(10, n);
+        return CommonLib.Math.Round(y) / CommonLib.Math.Pow(10, n);
+    }
+
+    static function double TruncateN(double x, int n) {
+        if (n < 0) { 
+            return CommonLib.Math.Floor(x.ToString()); 
+        }
+        double y = x * Math.Pow(10, n);
+        return CommonLib.Math.Floor(y) / Math.Pow(10, n);
+    }
+
+    static function double ToFixedPoint(double x, int m, int n) {
+        if (m < 0 || n < 0) { 
+            return x; 
+        }
+        int y = CommonLib.Math.Floor(x * Math.Pow(10, n));
+        int z = y % CommonLib.Math.Floor(Math.Pow(10, m + n));
+        return z / Math.Pow(10.0, n);
+    }
+
+    static function double ToFixedPointRound(double x, int m, int n) {
+        if (m < 0 || n < 0) { 
+            return x; 
+        }
+        int y = CommonLib.Math.Floor(Math.Round(x * Math.Pow(10, n)));
+        int z = y % (CommonLib.Math.Floor(Math.Pow(10, m + n)));
+        return z / Math.Pow(10.0, n);
+    }
+
+    static function double LeftTruncateTo(double x, int m) {
+        int integerPart = CommonLib.Math.Floor(x);
+        double fractionPart = x - integerPart;
+        return (integerPart % (CommonLib.Math.Floor(Math.Pow(10, m)))) + fractionPart;
+    }
+        
+    static function bool IsIntegerOverflow(double x, int m) {
+        bool result = false;
+
+        int y = (int) x;
+        if (y > 0) {
+            result = (CommonLib.Math.Floor(Math.Log10(y))) + 1 > m;
+        } else {
+            if (y < 0) {
+                result = (CommonLib.Math.Floor(Math.Log10(-y))) + 1 > m;
+            } else {
+                result = m < 1? true: false;
+            }
+        }
+        return result;
+    }
+    
+    static function double Mean(Collection sq) {
+        double result = 0.0;
+        if ((sq).Length <= 0) { 
+            return result; 
+        }
+        double tmp = 0.0;
+        for int i = 0; i < sq.Length; i + 1 {
+            tmp = tmp + sq.Get(i);
+        }
+        result = tmp / (sq).Length;
+        return result;
+    }
+
+    static function double Median(Collection sq) {
+        double result = 0.0;
+        if ((sq).Length <= 0) {
+            return result; 
+        }
+  
+        sq.Sort((x,y)=> x > y ? -1 : 1);
+        Collection s1 = sq;
+        int sze = (sq).Length;
+        if (sze % 2 == 1) {
+            result = double.Parse("" + s1.Get(1 + sze) / 2 - 1);
+        } else if (sze % 2 == 0) {
+            result = (double.Parse("" + s1.Getsze / 2 - 1) + double.Parse("" + s1.Get(1 + (sze / 2) - 1)) / 2.0;
+        }
+        return result;
+    }
+
+    static function Collection Collect_3(Collection _l, double m){ 
+        // Implements: sq->collect( x | ( x - m )->sqr() )
+        Collection _results_3;
+        for int _icollect = 0; _icollect < _l.Length; _icollect + 1 {
+            double x = double.Parse("" + _l.Get(_icollect);
+            _results_3.Add((((x - m)) * ((x - m))));
+        }
+        return _results_3;
+    }
+                                    
+    static function double Variance(Collection sq) {
+        double result = 0.0;
+        if ((sq).Length <= 0) { 
+            return result; 
+        }
+
+        double m = Domain.MathLib.Mean(sq);
+        Collection tmpCollection = MathLib.Collect_3(sq, m))
+        double tmp = 0.0;
+        for int i = 0; i < tmpCollection.Length; i + 1 {
+            tmp = tmp + tmpCollection.Get(i);
+        }
+        result = tmp / (sq).Length;
+        return result;
+    }
+
+    static function double StandardDeviation(Collection sq) {
+        double result = 0.0;
+        if ((sq).Length <= 0) { 
+            return result; 
+        }
+
+        double m = Domain.MathLib.Variance(sq);
+        result = CommonLib.Math.Sqrt(m);
+        return result;
+    }
+
+    static function int Lcm(int x, int y) {
+        int result = 0;
+
+        if (x == 0 && y == 0) {
+            result = 0;
+        } else {
+            result = (int) ((x * y) / Domain.MathLib.Gcd(x, y));
+        }
+        return result;
+    }
+                      
+    static function long Gcd(long xx, long yy){ 
+        long x = CommonLib.Math.Abs(xx); 
+        long y = CommonLib.Math.Abs(yy); 
+        while (x != 0 && y != 0){ 
+            long z = y; 
+            y = x % y; 
+            x = z; 
+        } 
+        
+        if (y == 0){ 
+            return x; 
+        } 
+
+        if (x == 0){ 
+            return y; 
+        } 
+        
+        return 0;
+    }             
+
+    static function double BisectionAsc(double r, double rl, double ru, Func f, double tol) {
+        double result = 0.0;
+
+        double v = f.Invoke(r);
+        if (v < tol && v > -tol) {
+            result = r;
+        } else {
+            if (v > 0) {
+                result = Domain.MathLib.BisectionAsc((rl + r) / 2, rl, r, f, tol);
+            } else if (v < 0) {
+                result = Domain.MathLib.BisectionAsc((r + ru) / 2, r, ru, f, tol);
+            }
+        }
+        return result;
+    }
+                               
+    static function Collection Collect_4(Collection _l, Collection s, Collection m, int i){ 
+        // Implements: Integer.subrange(1,m.size)->collect( k | s[k] * ( m[k]->at(i) ) )
+        Collection _results_4;
+        for int _icollect = 0; _icollect < _l.Length; _icollect + 1 {
+            int k = CommonLib.Math.Floor(_l.Get(_icollect));
+            _results_4.Add(double.Parse("" + s.Get(k - 1) * double.Parse("" + (m.Get(k - 1]).Get(i - 1));
+        }
+        return _results_4;
+    }
+                                                                     
+    static function Collection Collect_5(Collection _l, Collection m, Collection s){ 
+        // Implements: Integer.subrange(1,s.size)->collect( i | Integer.Sum(1,m.size,k,s[k] * ( m[k]->at(i) )) )
+        Collection _results_5;
+        for int _icollect = 0; _icollect < _l.Length; _icollect + 1 {
+            int i = CommonLib.Math.Floor(_l.Get(_icollect));
+            Collection tmpCollection = Domain.MathLib.collect_4(Domain.MathLib.IntegerSubrange(1, m.Length), s, m, i);
+            double tmp = 0.0;
+            for int i = 0; i < tmpCollection.Length; i + 1 {
+                tmp = tmp + tmpCollection.Get(i);
+            }
+            _results_5.Add(SystemTypes.sumdouble(tmp));
+        }
+        return _results_5;
+    }
+
+    static function Collection RowMult(Collection s, Collection m){
+        Collection result;
+
+        result = Domain.MathLib.Collect_5(Domain.MathLib.IntegerSubrange(1, s.Length), m, s);
+        return result;
+    }
+
+    static function Collection Collect_6(Collection _l, Collection m2) { 
+        // Implements: m1->collect( row | Domain.MathLib.rowMult(row,m2) )
+        Collection _results_6;
+        for int _icollect = 0; _icollect < _l.Length; _icollect + 1 {
+            Collection row = _l.Get(_icollect);
+            _results_6.Add(Domain.MathLib.rowMult(row, m2));
+        }
+        return _results_6;
+    }
+
+    static function Collection MatrixMultiplication(Collection m1, Collection m2) {
+        Collection result;
+
+        result = Domain.MathLib.Collect_6(m1, m2);
+        return result;
+    }
+
+    static function Func Differential(Func f) { 
+        Func result = null;
+        double multiplier = 1.0 / ( 2.0 * Domain.MathLib.defaultTolerance); 
+
+        result = (Func<double,double>) (x => (( multiplier * ( f.Invoke(x + Domain.MathLib.defaultTolerance) - f.Invoke(x - Domain.MathLib.defaultTolerance) ) ))); 
+        return result;
+    }
+
+    static function double DefiniteIntegral(double st, double en, Func f) {
+        double tol = Domain.MathLib.defaultTolerance;
+        double area = 0.0;
+        double d = tol * (en - st);
+        double cum = st;
+
+        while (cum < en) {
+            double next = cum + d;
+
+            area = area + d * (f.Invoke(cum) + f.Invoke(next)) / 2.0;
+            cum = next;
+        }
+        return area;
+    }
+
+    static function Func IndefiniteIntegral(Func<double, double> f) {
+        Func result = null;
+
+        result = (Func<double, double>)(x => (Domain.MathLib.DefiniteIntegral(0, x, f)));
+        return result;
+    }
+
+  }
+
+
+
+
+class FinanceLib { 
+
+    static function double DiscountDiscrete(double amount, double rate, double time) {
+        double result = 0.0;
+        if (rate <= -1 || time < 0) {
+            return result; 
+        }
+        
+        result = amount / CommonLib.Math.Pow((1 + rate), time);
+        return result;
+    }
+
+    static function double NetPresentValueDiscrete(double rate, Collection values) {
+        double result = 0.0;
+        if (rate <= -1) {
+            return result; 
+        }
+
+        int upper = values.Length; 
+        for int i = 0; i < upper; i + 1 { 
+            result = result + Domain.MathLib.DiscountDiscrete((double) values[i], rate, i); 
+        }
+        return result;
+    }
+
+    static function double PresentValueDiscrete(double rate, Collection values) {
+        double result = 0.0;
+        if (rate <= -1) {
+            return result; 
+        }
+
+        int upper = values.Length;
+
+        for int i = 0; i < upper; i + 1 {
+            Object val = values.Get(i);
+            double dval = 0.0;
+            int tmp = 1;
+            if (val.GetType() == dvale.GetType()) { 
+                dval = double.Parse(val.ToString()); 
+            } else if (val.GetType() == tmp.GetType()) {
+                dval = 1.0 * int.Parser(val.ToString()); 
+            }
+            result = result + Domain.MathLib.DiscountDiscrete(dval, rate, i + 1);
+        }
+        return result;
+    }
+    
+    static function double BisectionDiscrete(double r, double rl, double ru, Collection values) {
+        double result = 0.0;
+        if (r <= -1 || rl <= -1 || ru <= -1) {
+            return result; 
+        }
+
+        double v = FinanceLib.NetPresentValueDiscrete(r, values);
+        if (ru - rl < Domain.MathLib.GetdefaultTolerance()) {
+            return r; 
+        }
+        if (v > 0) {
+            return FinanceLib.BisectionDiscrete((ru + r) / 2, r, ru, values); 
+        } else if (v < 0) { 
+            return FinanceLib.bisectionDiscrete((r + rl) / 2, rl, r, values); 
+        }
+        return r;
+    }
+
+    static function double IrrDiscrete(Collection values) {
+        double res = FinanceLib.BisectionDiscrete(0.1, -0.5, 1.0, values);
+        return res;
+    }
+
+    static function Collection StraddleDates(OclDate d1, OclDate d2, int period) {
+        OclDate cd = d1;
+
+        while (cd.compareToYMD(d2) <= 0) {
+            cd = cd.addMonthYMD(period);
+        }
+          
+        Collection res;
+        OclDate prevd = cd.subtractMonthYMD(period);
+        res.Add(prevd);
+        res.Add(cd);
+        return res;
+    }
+
+    static function int NumberOfPeriods(OclDate settle, OclDate matur, int period) {
+        int result = 0;
+
+        double monthsToMaturity = OclDate.differenceMonths(matur, settle) * 1.0);
+        result = int.Parser(CommonLib.Math.Ceil((monthsToMaturity / period)));
+        return result;
+    }
+    
+    static function Collection SequenceOfPeriods(OclDate sett, OclDate mat, int period) {
+        Collection result;
+
+        int numPeriods = FinanceLib.NumberOfPeriods(sett, mat, period); 
+        result = Domain.MathLib.IntegerSubrange(1, numPeriods);
+        return result;
+    }
+
+    static function Collection CouponDates(OclDate matur, int period, int numPeriods) { 
+        Collection cpdates; 
+        cpdates.Add(matur);
+
+        OclDate cpdate = matur;
+
+        for int _i10 = 0; _i10 < numPeriods - 1; _i10 + 1 {
+            int mo = cpdate.getMonth() - period;
+
+            int prevMonth = mo;
+            int prevYear = cpdate.getYear();
+            int prevDay = cpdate.getDate();
+
+            if (mo <= 0) {
+                prevMonth = 12 + mo;
+                prevYear = cpdate.getYear() - 1;
+            }
+            
+            cpdate = OclDate.newOclDate_YMD(prevYear, prevMonth, prevDay);
+            cpdates.Add(cpdate);
+        }
+
+        cpdates = cpdates.Reverse();
+        return cpdates;
+    }
+    
+    static function int Days360(OclDate d1, OclDate d2, string num, OclDate mat) {
+      /* num is the dayCount convention */
+            
+        int dd1 = d1.getDate();
+        int dd2 = d2.getDate();
+        int mm1 = d1.getMonth();
+        int mm2 = d2.getMonth();
+        int yy1 = d1.getYear();
+        int yy2 = d2.getYear();
+        if (num.Equals("30/360")) {
+            return 360 * (yy2 - yy1) + 30 * (mm2 - mm1) + (dd2 - dd1);
+        } else if (num.Equals("30/360B")) {
+            dd1 = CommonLib.Math.Min(dd1, 30);
+            if (dd1 > 29) { 
+                dd2 = CommonLib.Math.Min(dd2, 30); 
+            }
+            return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+        } else if (num.Equals("30/360US")) {
+            if (mm1 == 2 && (dd1 == 28 || dd1 == 29) && mm2 == 2 && (dd2 == 28 || dd2 == 29)) {
+                dd2 = 30;
+            }
+            if (mm1 == 2 && (dd1 == 28 || dd1 == 29)) {
+                dd1 = 30; 
+            }
+            if (dd2 == 31 && (dd1 == 30 || dd1 == 31)) {
+                dd2 = 30; 
+            }
+            if (dd1 == 31) { 
+                dd1 = 30; 
+            }
+            return 360 * (yy2 - yy1) + 30 * (mm2 - mm1) + (dd2 - dd1);
+        } else if (num.Equals("30E/360")) {
+            if (dd1 == 31) { 
+                dd1 = 30; 
+            }
+            if (dd2 == 31) { 
+                dd2 = 30; 
+            }
+            return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+        } else if (num.Equals("30E/360ISDA")) {
+            if (d1.isEndOfMonth()) { 
+                dd1 = 30; 
+            }
+            if (!(d2 == mat && mm2 == 2) && d2.isEndOfMonth()) { 
+                dd2 = 30; 
+            }
+            return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1);
+        } else { 
+            return 360*(yy2 - yy1) + 30*(mm2 - mm1) + (dd2 - dd1); 
+        }
+    }
+
+    static function Collection NumberOfMonths(OclDate pd, OclDate settle, double cd, string dayCount, OclDate matur) { 
+      /* Returns sequence of two doubles */ 
+        double sv = 0.0;
+        Collection result;
+
+        if (dayCount.Equals("Actual/360") || 
+            dayCount.Equals("Actual/365F") ||
+            dayCount.Equals("Actual/ActualICMA") ||
+            dayCount.Equals("Actual/364") || 
+            dayCount.Equals("Actual/ActualISDA")) {
+            
+            int daysBetween = OclDate.daysBetweenDates(pd, settle);
+            sv = (cd - daysBetween) / cd;
+            result.Add(sv); 
+            result.Add(cd - daysBetween);
+            return result;
+        } else {
+            int daysBetween360 = FinanceLib.Days360(pd, settle, dayCount, matur);
+            sv = (cd - daysBetween360) / cd;
+            result.Add(sv); 
+            result.Add(cd - daysBetween360);
+            return result;
+        }
+    }
+
+    static function Collection CalculateCouponPayments(Collection paymentDates, double annualCouponRate, string dayCountC, int freq) {
+        /* Result is sequence of two double sequences */ 
+
+        Collection result;
+        Collection coupon_payments;
+        Collection dates_payments;
+        double cum_days = 0.0;
+        double days = 0.0;
+
+        for int i = 1; i < paymentDates.Length; i + 1 {
+            OclDate start_date_str = aymentDates.Get(i - 1);
+            OclDate end_date_str = paymentDates.Get(i);
+
+            if (dayCountC.Equals("30/360") || 
+                dayCountC.Equals("30/360B") || 
+                dayCountC.Equals("30/360US") ||
+                dayCountC.Equals("30E/360") || 
+                dayCountC.Equals("30E/360ISDA") || 
+                dayCountC.Equals("Actual/360")) {
+            
+                days = FinanceLib.Days360(start_date_str, end_date_str, dayCountC, paymentDates.Get(paymentDates.Length - 1));
+            } else if (dayCountC.Equals("Actual/365F")) {
+                days = 365.0 / freq; 
+            } else if (dayCountC.Equals("Actual/364")) {
+                days = 364.0 / freq; 
+            } else { /* actual/actual calculations */
+                days = OclDate.daysBetweenDates(start_date_str, end_date_str); 
+            }
+
+            double coupon_payment = annualCouponRate / freq;
+
+            coupon_payments.Add(coupon_payment);
+            cum_days += days;
+            dates_payments.Add(cum_days);
+        }
+          
+        result.Add(coupon_payments);
+        result.Add(dates_payments); 
+        return result;
+   }
+
+    static function Collection BondCashFlows(OclDate settle, OclDate matur, double coupon, string dayCount, int freq) {
+        Collection results;
+
+        int period = int.Parse(CommonLib.Math.Floor(12 / freq).toString());
+        int np = FinanceLib.NumberOfPeriods(settle, matur, period);
+        Collection snp = FinanceLib.SequenceOfPeriods(settle, matur, period);
+        Collection cd = FinanceLib.CouponDates(matur, period, np);
+
+        OclDate pm = cd.Get(0).subtractMonthYMD(period);
+        Collection cdn;
+        cdn.Add(pm); 
+        cdn.AddRange(cd);
+        Collection coupPayments = FinanceLib.CalculateCouponPayments(cdn, coupon, dayCount, freq);
+        Collection cumd = coupPayments.Get(1);
+        Collection cp = coupPayments.Get(0);
+        Collection nm = FinanceLib.numberOfMonths(pm, settle, cumd.Get(0), dayCount, matur); 
+
+
+        if (settle.compareToYMD(pm) == 0) {
+            results.Add(cp); 
+            results.Add(cd); 
+            results.Add(snp); 
+            results.Add(cumd);  
+        } else {
+            Collection newsnp;
+            foreach (int x in snp) { 
+                newsnp.Add(x - (snp.Get(0) - nm.Get(0))); 
+            }
+            Collection newcumd;
+            foreach (double x in cumd) { 
+                newcumd.Add(x - (cumd.Get(0) - nm.Get(1))); 
+            }
+            results.Add(cp); 
+            results.Add(cd); 
+            results.Add(newsnp); 
+            results.Add(newcumd);
+        }
+        return results;
+    }
+
+
+    static function double BondPrice(double yld, OclDate settle, OclDate matur, double coup, string dayCount, int freq) {
+        Collection bcfs = FinanceLib.BondCashFlows(settle, matur, coup, dayCount, freq);
+
+        Collection coupRates = bcfs.Get(0);
+
+        Collection timePoints = bcfs.Get(2);
+
+        Collection discountFactors;
+        for int _icollect = 0; _icollect < timePoints.Length; _icollect + 1 {
+            double x = timePoints.Get(_icollect);
+            discountFactors.Add(CommonLib.Math.Pow(1.0 / (1 + (yld / freq)), x));
+        }
+
+        coupRates.Set(coupRates.Length - 1, coupRates.Get(coupRates.Length - 1) + 1);
+        double sp = 0.0;
+
+        Collection _range13 = Domain.MathLib.IntegerSubrange(1, (coupRates).Length);
+        for int _i12 = 0; _i12 < _range13.Length; _i12 + 1 {
+            int i = _range13.Get(_i12);
+           sp = sp + (discountFactors.Get(i - 1) * coupRates.Get(i - 1));
+        }
+        return sp;
+    }
+    
+    static function double AccInterest(OclDate issue, OclDate settle, int freq, double coup) {
+        
+        int period = int.Parse(CommonLib.Math.Floor(12 / freq).ToString());
+
+        Collection st = FinanceLib.StraddleDates(issue, settle, period);
+        double aif = (1.0 * OclDate.daysBetweenDates(t.Get(0), settle)) / OclDate.DaysBetweenDates(st.Get(0), st.Get(1));
+
+        return aif * (coup / freq);
+    }
+    
+    static function double AccumulatedInterest(OclDate issue, OclDate settle, int freq, double coup, string dayCount, OclDate matur) {
+        int period = (int) (12 / freq);
+
+        Collection st = FinanceLib.StraddleDates(issue, settle, period);
+        double aif = 0.0;
+        OclDate d1 = st.Get(0);
+        OclDate d2 = st.Get(1);
+        int ys = d1.getYear();
+        int ye = settle.getYear();
+        OclDate ysEnd = OclDate.newOclDate_YMD(ys, 12, 31);
+        OclDate yeStart = OclDate.newOclDate_YMD(ye, 1, 1);
+
+        if (dayCount.Equals("Actual/365F")) {
+            aif = (OclDate.daysBetweenDates(d1, settle) / 365.0) * coup;
+        } else if (dayCount.Equals("Actual/ActualISDA")) {
+            if (d1.isLeapYear() && settle.isLeapYear()) { 
+                aif = (OclDate.daysBetweenDates(d1, settle) / 366.0) * coup; 
+            } else if (!(d1.isLeapYear()) && !(settle.isLeapYear())) {
+                aif = (OclDate.daysBetweenDates(d1, settle) / 365.0) * coup;
+            } else if (d1.isLeapYear() && !(settle.isLeapYear())) {
+                aif = (OclDate.daysBetweenDates(d1, ysEnd) / 366.0) * coup + (OclDate.daysBetweenDates(yeStart, settle) / 365.0) * coup;
+            } else {
+                aif = (OclDate.daysBetweenDates(d1, ysEnd) / 365.0) * coup + (OclDate.daysBetweenDates(yeStart, settle) / 366.0) * coup;
+            }
+        } else if (dayCount.Equals("Actual/364")) {
+            aif = (OclDate.daysBetweenDates(d1, settle) / 364.0) * coup; 
+        } else if (dayCount.Equals("Actual/360")) { 
+            aif = (OclDate.daysBetweenDates(d1, settle) / 360.0) * coup; 
+        } else if (dayCount.Equals("Actual/ActualICMA")) { 
+            aif = coup* (1.0*OclDate.daysBetweenDates(d1, settle)) / (freq * OclDate.daysBetweenDates(d1, d2)); 
+        } else { 
+            aif = (FinanceLib.days360(d1, settle, dayCount, matur) / 360.0) * coup; 
+        }
+        return aif; 
+    }
+    
+    static function double BondPriceClean(double Y, OclDate I, OclDate S, OclDate M, double c, string dcf, int f) {
+        double result = 0.0;
+
+        result = FinanceLib.BondPrice(Y, S, M, c, dcf, f) - FinanceLib.AccumulatedInterest(I, S, f, c, dcf, M);
+        return result;
+    }
+    
+  }

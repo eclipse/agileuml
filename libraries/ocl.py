@@ -487,6 +487,15 @@ def excludingSubrange(x,i,j) :
   x1.extend(x2)
   return x1
 
+def setSubrange(x,i,j,v) :
+  # Only for strings. i must be > 0, i <= j
+  if i <= 0 : 
+    return x
+  if i > j : 
+    return x
+  x1 = x[0:i-1] + str(v) + x[j:]
+  return x1
+
 def insertAt(x,i,s) :
   # i must be > 0
   if i <= 0 : 
@@ -548,6 +557,11 @@ def includingSequence(s,x) :
   res = []
   res.extend(s)
   res.append(x)
+  return res
+
+def includingSortedSequence(s,x) :
+  res = s.copy()
+  res.add(x)
   return res
 
 def includingSet(s,x) :
@@ -1074,5 +1088,10 @@ def values(m) :
 # data = ["1111234", "1000234", "1000421", "1111012"]
 # sdata = sortedBy(data, [lambda s : s[0:5], lambda s : s[5:8]])
 # print(sdata)
+
+# ss = "a long string"
+# pp = setSubrange(ss, 3, 5, "and")
+# print(pp)
+
 
 

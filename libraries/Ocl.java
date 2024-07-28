@@ -403,7 +403,8 @@ class OclMaplet<K,T>
       { result.add(args[i]); } 
       return result; 
     } 
-	
+
+  
     public static <K,T> HashMap<K,T> initialiseMap(OclMaplet ... args)
     { HashMap<K,T> result = new HashMap<K,T>(); 
       for (int i = 0; i < args.length; i++) 
@@ -1051,9 +1052,15 @@ class OclMaplet<K,T>
     return res;
   }
 
-  public static <T> ArrayList<T> includingSequence(List<T> l, T ob)
+  public static <T> ArrayList<T> includingSequence(ArrayList<T> l, T ob)
   { ArrayList<T> res = new ArrayList<T>();
     res.addAll(l);
+    res.add(ob);
+    return res;
+  }
+
+  public static <T extends Comparable<T>> SortedSequence<T> includingSequence(SortedSequence<T> l, T ob)
+  { SortedSequence<T> res = (SortedSequence<T>) l.clone();
     res.add(ob);
     return res;
   }
@@ -1303,6 +1310,19 @@ class OclMaplet<K,T>
     for (int i = endIndex; i < l.length(); i++)
     { res = res + l.charAt(i); }
     return res;
+  }
+
+  public static String setSubrange(String ss, int startIndex, int endIndex, String v)
+  { String res = ss;
+
+    if (ss.length() < endIndex)
+    { for (int i = ss.length()-1; i < endIndex; i++)
+      { res = res + " "; }
+    }
+
+    String s1 = res.substring(0,startIndex-1) + v + 
+                res.substring(endIndex); 
+    return s1; 
   }
 
   public static String removeAt(String ss, int ind)
