@@ -17295,6 +17295,36 @@ public Statement generateDesignSubtract(Expression rhs)
 
   } 
 
+  public Expression simplifyOCL() 
+  { // Replaces energy-expensive processing by simpler. 
+
+    Expression objR = objectRef; 
+    if (objectRef != null) 
+    { objR = objectRef.simplifyOCL(); }
+
+    Expression arrInd = arrayIndex; 
+    if (arrayIndex != null) 
+    { arrInd = arrayIndex.simplifyOCL(); } 
+
+    Vector pars = new Vector(); 
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        pars.add(par.simplifyOCL()); 
+      } 
+    } 
+    else 
+    { pars = parameters; } 
+
+    BasicExpression res = (BasicExpression) clone(); 
+    res.objectRef = objR; 
+    res.arrayIndex = arrInd; 
+    res.parameters = pars; 
+    return res; 
+  } 
+
+
+
   public Map energyUse(Map res, Vector rUses, Vector oUses) 
   { // Calls to OclType reflection operators and OclDatasource
     // connect are red flags. 
@@ -17379,7 +17409,8 @@ public Statement generateDesignSubtract(Expression rhs)
     } 
 
     return res; 
-  } 
+  } // and in the parameters and object ref
+
 
   public int syntacticComplexity() 
   { int res = 0; 

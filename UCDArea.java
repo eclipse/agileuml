@@ -3543,6 +3543,18 @@ public class UCDArea extends JPanel
     out.println("*** Estimated maintainability correction cost = " + lowcost + " minutes (" + (lowcost/60.0) + " hours)"); 
   }
 
+  public void simplifyOCL()
+  { for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      if (ent.isDerived()) { continue; } 
+
+      if (ent.isComponent() || ent.isExternal())
+      { continue; } 
+
+      ent.simplifyOCL(); 
+    }
+  }
+
   public void energyAnalysis()
   { java.util.Map clnes = new java.util.HashMap(); 
     energyAnalysis(clnes); 

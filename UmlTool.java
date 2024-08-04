@@ -1019,6 +1019,13 @@ public void findPlugins()
       "Reduces depth of code nesting where possible");
     qualityMenu.add(reduceNestingop);
 
+    JMenuItem simplifyOCLop = 
+      new JMenuItem("Simplify OCL"); 
+    simplifyOCLop.addActionListener(this);
+    simplifyOCLop.setToolTipText(
+      "Simplifies OCL expressions where possible");
+    qualityMenu.add(simplifyOCLop);
+
     JMenuItem refineMenu = new JMenu("Refinement"); 
     transMenu.add(refineMenu); 
 
@@ -2854,6 +2861,8 @@ public void findPlugins()
       { this.hoistOperationLocalDecs(); } 
       else if (label.equals("Reduce code nesting"))
       { this.reduceCodeNesting(); } 
+      else if (label.equals("Simplify OCL"))
+      { ucdArea.simplifyOCL(); } 
       else if (label.equals("Value Object"))
       { ucdArea.makeValueObjects(); }
       else if (label.equals("Singleton"))

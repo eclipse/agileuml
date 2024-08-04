@@ -144,6 +144,21 @@ public class ConditionalExpression extends Expression
     return new ConditionalStatement(test, ifstat, elsestat); 
   } 
 
+  public Expression simplifyOCL()
+  { Expression ifstat = ifExp.simplifyOCL(); 
+    Expression elsestat = elseExp.simplifyOCL();
+
+    Expression testexpr = test.simplifyOCL(); 
+
+    if ((testexpr + "").equals("true"))
+    { return ifstat; } 
+
+    if ((testexpr + "").equals("false"))
+    { return elsestat; } 
+ 
+    return new ConditionalExpression(testexpr, ifstat, elsestat); 
+  } 
+
   public Map energyUse(Map res, Vector rUses, Vector oUses) 
   { test.energyUse(res,rUses,oUses); 
     ifExp.energyUse(res,rUses,oUses); 

@@ -1426,6 +1426,19 @@ public class SetExpression extends Expression
     return res; 
   }  
 
+  public Expression simplifyOCL() 
+  { Vector elems = new Vector(); 
+    for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i);  
+      elems.add(elem.simplifyOCL());
+    } 
+
+    SetExpression res = (SetExpression) clone(); 
+    res.elements = elems; 
+
+    return res; 
+  }  
+
   public java.util.Map collectionOperatorUses(int level, 
                              java.util.Map res)
   { for (int i = 0; i < elements.size(); i++) 

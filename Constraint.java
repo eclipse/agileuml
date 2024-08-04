@@ -316,6 +316,29 @@ public class Constraint extends ConstraintOrGroup
   public boolean isBehavioural()
   { return behavioural; } 
 
+  public boolean isDeltaConstraint(String nme)
+  { // nme /= nme@pre or nme@pre /= nme
+    Expression ante = antecedent(); 
+
+    // System.out.println("Antecedent: " + ante); 
+
+    if (ante instanceof BinaryExpression) 
+    { BinaryExpression bexpr = (BinaryExpression) ante; 
+      if ("/=".equals(bexpr.getOperator()))
+      { if (nme.equals(bexpr.getLeft() + "") && 
+            (nme + "@pre").equals(bexpr.getRight() + ""))
+        { return true; }
+        if (nme.equals(bexpr.getRight() + "") && 
+            (nme + "@pre").equals(bexpr.getLeft() + ""))
+        { return true; } 
+        return false; 
+      } 
+      return false; 
+    } 
+    return false; 
+  } 
+    
+
   public String cg(CGSpec cgs)
   { Expression ante = antecedent(); 
     Expression succ = succedent(); 

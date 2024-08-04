@@ -4239,6 +4239,15 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public void simplifyOCL() 
+  { if (pre != null) 
+    { pre = pre.simplifyOCL(); } 
+    if (post != null) 
+    { post = post.simplifyOCL(); } 
+    if (activity != null) 
+    { activity = activity.optimiseOCL(); }  
+  } 
+
   public Map energyAnalysis(Vector redUses, Vector amberUses)
   { // Scan the postcondition/activity for energy expensive
     // expressions/code

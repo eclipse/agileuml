@@ -5540,6 +5540,15 @@ public class Entity extends ModelElement implements Comparable
     return sze; 
   } 
   
+  public void simplifyOCL()
+  { int n = operations.size(); 
+
+    for (int i = 0; i < n; i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
+      op.simplifyOCL(); 
+    } 
+  } 
+
   public Map energyAnalysis()
   { Map res = new Map(); 
     res.set("red", 0); 

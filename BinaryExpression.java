@@ -20080,6 +20080,166 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     return null; 
   } 
 
+  public Expression simplifyOCL()
+  { // Double iterations ->select(...)->select(...)
+    // replaced
+
+    Expression lexpr = left.simplifyOCL(); 
+    Expression rexpr = right.simplifyOCL(); 
+
+
+    if (operator.equals("|"))
+    { BinaryExpression arg = (BinaryExpression) left; 
+      Expression domain = arg.getRight(); 
+      if (domain instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) domain; 
+
+        if (lbe.operator.equals("->select"))
+        { System.out.println(">> Inefficient nested select: " + this);
+          Expression newleft = lbe.getLeft();
+          Expression newright = lbe.getRight();
+          BasicExpression ref = 
+                     (BasicExpression) arg.getLeft();   
+          Expression newpred = 
+            Expression.simplifyAnd(
+               newright.addReference(ref, ref.getType()), right); 
+          Expression newdomain = 
+            new BinaryExpression(":", ref, 
+                                      newleft); 
+          return new BinaryExpression("|", newdomain, newpred); 
+        }  
+        else if (lbe.operator.equals("->reject"))
+        { System.out.println(">> Inefficient nested select: " + this);
+          Expression newleft = lbe.getLeft(); 
+          Expression newright = lbe.getRight();
+          BasicExpression ref = 
+                     (BasicExpression) arg.getLeft();   
+          Expression newpred = 
+            Expression.simplifyAnd(
+              Expression.negate(newright.addReference(ref,
+                                           ref.getType())), 
+              right); 
+          Expression newdomain = 
+            new BinaryExpression(":", ref, 
+                                      newleft); 
+          return new BinaryExpression("|", newdomain, newpred); 
+        }  
+      }
+    }
+    else if (operator.equals("|R"))
+    { BinaryExpression arg = (BinaryExpression) left; 
+      Expression domain = arg.getRight(); 
+      if (domain instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) domain; 
+
+        if (lbe.operator.equals("->select"))
+        { System.out.println(">> Inefficient nested select/reject: " + this);
+          Expression newleft = lbe.getLeft();
+          Expression newright = lbe.getRight();
+          BasicExpression ref = 
+                     (BasicExpression) arg.getLeft();   
+          Expression newpred = 
+            Expression.simplifyAnd(
+               newright.addReference(ref, ref.getType()), 
+                   Expression.negate(right)); 
+          Expression newdomain = 
+            new BinaryExpression(":", ref, 
+                                      newleft); 
+          return new BinaryExpression("|", newdomain, newpred); 
+        }  
+        else if (lbe.operator.equals("->reject"))
+        { System.out.println(">> Inefficient nested reject: " + this);
+          Expression newleft = lbe.getLeft(); 
+          Expression newright = lbe.getRight();
+          BasicExpression ref = 
+                     (BasicExpression) arg.getLeft();   
+          Expression newpred = 
+            Expression.simplifyOr(
+              newright.addReference(ref,
+                                    ref.getType()), 
+              right); 
+          Expression newdomain = 
+            new BinaryExpression(":", ref, 
+                                      newleft); 
+          return new BinaryExpression("|R", newdomain, newpred); 
+        }  
+      }
+    }
+    else if (operator.equals("->select"))
+    {  
+      if (left instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) left; 
+        if (lbe.operator.equals("->select"))
+        { System.out.println(">> Inefficient nested select: " + this);
+          Expression predicate1 = lbe.getRight(); 
+          Expression combinedPred = 
+              new BinaryExpression("&", predicate1, right); 
+          BinaryExpression res = (BinaryExpression) clone();
+          res.left = lbe.getLeft(); 
+          res.operator = "->select"; 
+          res.right = combinedPred; 
+          System.out.println(">> Replacing with: " + res); 
+          return res; 
+        }
+        else if (lbe.operator.equals("->reject"))
+        { System.out.println(">> Inefficient nested select: " + this);
+          Expression predicate1 = lbe.getRight();
+          Expression pred2 = 
+               Expression.negate(predicate1);  
+          Expression combinedPred = 
+              new BinaryExpression("&", pred2, right); 
+          BinaryExpression res = (BinaryExpression) clone();
+          res.left = lbe.getLeft(); 
+          res.operator = "->select"; 
+          res.right = combinedPred; 
+          System.out.println(">> Replacing with: " + res); 
+          return res; 
+        }
+      }
+    }  
+    else if (operator.equals("->reject"))
+    {  
+      if (left instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) left; 
+        if (lbe.operator.equals("->select"))
+        { System.out.println(">> Inefficient nested select: " + this);
+          Expression predicate1 = lbe.getRight(); 
+          Expression combinedPred = 
+              new BinaryExpression("&", 
+                  Expression.negate(predicate1), right); 
+          BinaryExpression res = (BinaryExpression) clone();
+          res.left = lbe.getLeft(); 
+          res.operator = "->select"; 
+          res.right = combinedPred; 
+          System.out.println(">> Replacing with: " + res); 
+          return res; 
+        }
+        else if (lbe.operator.equals("->reject"))
+        { System.out.println(">> Inefficient nested select: " + this);
+          Expression predicate1 = lbe.getRight();
+          Expression pred2 = 
+               Expression.negate(predicate1); 
+          pred2.setBrackets(true); 
+          right.setBrackets(true);  
+          Expression combinedPred = 
+              new BinaryExpression("or", pred2, right); 
+          BinaryExpression res = (BinaryExpression) clone();
+          res.left = lbe.getLeft(); 
+          res.operator = "->reject"; 
+          res.right = combinedPred; 
+          System.out.println(">> Replacing with: " + res); 
+          return res; 
+        }
+      }
+    }  
+
+    BinaryExpression res = (BinaryExpression) clone(); 
+    res.left = lexpr; 
+    res.right = rexpr; 
+    return res; 
+  }
+
+
   public Map energyUse(Map res, Vector rUses, Vector aUses) 
   { // Double iterations ->select(...)->select(...)
     // are amber flags.

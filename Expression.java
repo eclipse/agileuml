@@ -2740,6 +2740,9 @@ abstract class Expression
 
   abstract public Expression simplify(); 
 
+  public Expression simplifyOCL()
+  { return simplify(); } 
+
   protected static Expression pruneDuplicates(Vector cnames, 
                                               Expression e1,
                                               Expression e2)

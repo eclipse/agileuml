@@ -3083,10 +3083,15 @@ public class Attribute extends ModelElement
 
     Vector v = type.getValues();
     String val = nme + "_x"; 
+
     Attribute par = 
       new Attribute(val,type,ModelElement.INTERNAL);
     par.setElementType(elementType); 
 
+    BasicExpression attxbe = new BasicExpression(val);
+    // attxbe.setType(type); 
+    // attxbe.setElementType(elementType);  
+    
     Vector v1 = new Vector();
     v1.add(par);
     String t = type.getJava7(); // (elementType) 
@@ -3101,6 +3106,9 @@ public class Attribute extends ModelElement
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
 
+    java.util.Map env = new java.util.HashMap(); 
+    env.put(ename, "this"); 
+  
     String qual = " "; 
     String code = ""; 
     String sync = ""; 
@@ -3117,24 +3125,41 @@ public class Attribute extends ModelElement
     }
     else 
     { code = nme + " = " + val + ";"; } // controller sets static atts, once only 
+
+    String precode = ""; 
+
+    for (int j = 0; j < cons.size(); j++)   
+         // may be constraints of subclass ent
+    { Constraint cc = (Constraint) cons.get(j);
+ 
+      if (cc.isDeltaConstraint(nme) && 
+          cc.dependsUpon(ename,nme))
+      { Constraint cc2 = 
+             (Constraint) cc.substituteEq(nme,attxbe); 
+        String cccode = cc2.updateFormJava7(env,true);
+
+        System.out.println(">> Delta constraint " + cc + "\n" + 
+                   ">> action for set" + nme + " is: " + cccode);
+        precode = precode + "\n" + 
+                   cccode + "\n";
+      }    
+    }
+
  
     String opheader; 
     opheader = "public" + sync + qual + "void set" + nme + "(" + t +
-             " " + val + ") { " + code; 
+             " " + val + ") { " + precode + "\n    " + code; 
 
     if (!instanceScope)
     { opheader = opheader + " }\n\n" + 
         "public" + sync + " void localSet" + nme + "(" + t +
-             " " + val + ") { "; 
+             " " + val + ") { " + precode; 
     }
        
-    BasicExpression attxbe = new BasicExpression(val); 
       
     Vector contexts = new Vector(); 
     contexts.add(ent); 
-    java.util.Map env = new java.util.HashMap(); 
-    env.put(ename, "this"); 
-  
+    
     for (int j = 0; j < cons.size(); j++)   
          // may be constraints of subclass ent
     { Constraint cc = (Constraint) cons.get(j);
@@ -3146,7 +3171,10 @@ public class Attribute extends ModelElement
                      " depends on " + nme + " : " + 
                      cc.dependsUpon(ename,nme)); */ 
  
-      if (cc.isBehavioural() && 
+      if (cc.isDeltaConstraint(nme) && 
+          cc.dependsUpon(ename,nme))
+      {  }    
+      else if (cc.isBehavioural() && 
           cc.dependsUpon(ename,nme))
       { String cccode = cc.updateFormJava7(env,true);
 

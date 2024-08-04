@@ -265,6 +265,8 @@ abstract class Statement implements Cloneable
   public Vector allVariableNames()
   { return new Vector(); } // default
 
+  public abstract Statement optimiseOCL();
+
   public abstract Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses);
 
@@ -2252,6 +2254,13 @@ class ReturnStatement extends Statement
     return uses; 
   }  
 
+  public Statement optimiseOCL()
+  { if (value == null) 
+    { return this; } 
+    Expression newval = value.simplifyOCL(); 
+    return new ReturnStatement(newval); 
+  }  
+
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
                              java.util.Map operatorsAtLevel)
@@ -2794,6 +2803,9 @@ class BreakStatement extends Statement
                          String op, String rule)
   { return; } 
 
+  public Statement optimiseOCL()
+  { return this; }  
+
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
   { return uses; }  
@@ -2988,6 +3000,9 @@ class ContinueStatement extends Statement
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
   { return uses; }  
+
+  public Statement optimiseOCL()
+  { return this; }  
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
@@ -3265,6 +3280,11 @@ class InvocationStatement extends Statement
 
   public Vector allVariableNames()
   { return callExp.allVariableNames(); } 
+
+  public Statement optimiseOCL()
+  { Expression cexp = callExp.simplifyOCL(); 
+    return new InvocationStatement(cexp); 
+  }  
 
   public Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses)
@@ -4066,6 +4086,11 @@ class ImplicitInvocationStatement extends Statement
     return new ImplicitInvocationStatement(newExp); 
   } 
 
+  public Statement optimiseOCL()
+  { Expression cexp = callExp.simplifyOCL(); 
+    return new ImplicitInvocationStatement(cexp); 
+  }
+
   public String toString()  /* B display */  
   { String res = "execute ( " + callExp + " )"; 
     return res; 
@@ -4728,6 +4753,40 @@ class WhileStatement extends Statement
     Expression vv = null; 
     if (variant != null) 
     { vv = variant.addContainerReference(ref,var,newexcls); }  
+    res.setVariant(vv); 
+
+    return res; 
+  } 
+
+  public Statement optimiseOCL()
+  { Expression lv = null; 
+    if (loopVar != null) 
+    { lv = (Expression) loopVar.clone(); }
+  
+    Expression lr = null; 
+    if (loopRange != null) 
+    { lr = loopRange.simplifyOCL(); }
+  
+    Expression lt = null; 
+    if (loopTest != null) 
+    { lt = loopTest.simplifyOCL(); }
+
+    Statement newbody = body.optimiseOCL();
+ 
+    WhileStatement res = new WhileStatement(lt,newbody); 
+    res.setEntity(entity); 
+    res.setLoopKind(loopKind); 
+    res.setLoopRange(lv,lr); 
+    res.setBrackets(brackets); 
+
+    Expression inv = null; 
+    if (invariant != null) 
+    { inv = invariant.simplifyOCL(); }  
+    res.setInvariant(inv); 
+
+    Expression vv = null; 
+    if (variant != null) 
+    { vv = variant.simplifyOCL(); }  
     res.setVariant(vv); 
 
     return res; 
@@ -6581,6 +6640,21 @@ class CreationStatement extends Statement
     return res; 
   } 
 
+  public Statement optimiseOCL()
+  { String cio = createsInstanceOf; 
+    String ast = assignsTo; 
+
+    CreationStatement res = new CreationStatement(cio,ast);
+    res.setType(instanceType); 
+    res.setElementType(elementType);  
+	
+    if (initialExpression != null) 
+    { Expression newExpr = initialExpression.simplifyOCL(); 
+      res.setInitialisation(newExpr); 
+    }
+    return res; 
+  } 
+
   public Statement removeSlicedParameters(
                      BehaviouralFeature bf, Vector fpars)
   { String cio = createsInstanceOf; 
@@ -7821,6 +7895,19 @@ class SequenceStatement extends Statement
     }
   } 
 
+  public Statement optimiseOCL()
+  { Vector newstats = new Vector(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      Statement newstat = stat.optimiseOCL(); 
+      newstats.add(newstat); 
+    } 
+    SequenceStatement res = new SequenceStatement(newstats);
+    res.setEntity(entity); 
+    res.setBrackets(brackets); 
+    return res;  
+  } 
+
   public Statement dereference(BasicExpression var)
   { Vector newstats = new Vector(); 
     for (int i = 0; i < statements.size(); i++) 
@@ -8807,6 +8894,19 @@ class CaseStatement extends Statement
     return cs; 
   } 
 
+  public Statement optimiseOCL()
+  { CaseStatement cs = new CaseStatement(); 
+    Vector ss = cases.elements; 
+    for (int i = 0; i < ss.size(); i++) 
+    { Maplet mm = (Maplet) ss.get(i); 
+      Statement cse = (Statement) mm.dest; 
+      Statement stat = cse.optimiseOCL(); 
+      Maplet nn = new Maplet(mm.source,stat); 
+      cs.addCase(nn); 
+    } 
+    return cs; 
+  } 
+
   public void addCase(Maplet mm)
   { cases.add_element(mm); }
 
@@ -9267,6 +9367,14 @@ class ErrorStatement extends Statement
     return new ErrorStatement(null); 
   } 
 
+  public Statement optimiseOCL()
+  { if (thrownObject != null) 
+    { Expression tobj = thrownObject.simplifyOCL(); 
+      return new ErrorStatement(tobj); 
+    } 
+    return new ErrorStatement(null); 
+  } 
+
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { if (thrownObject != null) 
     { thrownObject.energyUse(uses, rUses, aUses); } 
@@ -9619,6 +9727,16 @@ class AssertStatement extends Statement
     Expression newmessage = message; 
     if (message != null) 
     { newmessage = message.dereference(var); }
+    return new AssertStatement(newcond,newmessage); 
+  }  
+
+  public Statement optimiseOCL() 
+  { Expression newcond = condition; 
+    if (condition != null) 
+    { newcond = condition.simplifyOCL(); }
+    Expression newmessage = message; 
+    if (message != null) 
+    { newmessage = message.simplifyOCL(); }
     return new AssertStatement(newcond,newmessage); 
   }  
 
@@ -10027,6 +10145,18 @@ class CatchStatement extends Statement
   public Statement dereference(BasicExpression var) 
   { return new CatchStatement(caughtObject.dereference(var), action.dereference(var)); }
 
+  public Statement optimiseOCL() 
+  { Expression cobj = null; 
+    if (caughtObject != null) 
+    { cobj = caughtObject.simplifyOCL(); }
+
+    Statement cact = null;  
+    if (action != null) 
+    { cact = action.optimiseOCL(); } 
+
+    return new CatchStatement(cobj,cact); 
+  }
+
   public void findClones(java.util.Map clones, String rule, String op)
   { if (action != null)
     { action.findClones(clones,rule,op); }
@@ -10405,7 +10535,6 @@ class TryStatement extends Statement
     { catchClauses = ends; 
       endStatement = null; 
     }  
- 
   }
 
   public void setClauses(Vector stats)
@@ -10588,6 +10717,26 @@ class TryStatement extends Statement
     res.setClauses(catchClones); 
     if (endStatement != null) 
     { res.setEndStatement((Statement) endStatement.clone()); } 
+    return res; 
+  } 
+
+  public Statement optimiseOCL() 
+  { Statement s1 = null; 
+    if (body != null) 
+    { s1 = body.optimiseOCL(); }
+  
+    TryStatement res = new TryStatement(s1);
+
+    Vector catchClones = new Vector(); 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Statement ccClone = (Statement) cc.optimiseOCL(); 
+      catchClones.add(ccClone); 
+    } 
+    res.setClauses(catchClones); 
+
+    if (endStatement != null) 
+    { res.setEndStatement(endStatement.optimiseOCL()); } 
     return res; 
   } 
 
@@ -11276,6 +11425,19 @@ class IfStatement extends Statement
     for (int i = 0; i < cases.size(); i++) 
     { IfCase cse = (IfCase) cases.get(i); 
       IfCase newcse = (IfCase) cse.clone(); 
+      newcases.add(newcse); 
+    } 
+    IfStatement res = new IfStatement(); 
+    res.cases = newcases; 
+    res.setEntity(entity); 
+    return res; 
+  }  // clone the conditions
+
+  public Statement optimiseOCL() 
+  { Vector newcases = new Vector(); 
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      IfCase newcse = (IfCase) cse.optimiseOCL(); 
       newcases.add(newcse); 
     } 
     IfStatement res = new IfStatement(); 
@@ -12356,6 +12518,15 @@ class AssignStatement extends Statement
     return res; 
   } 
 
+  public Statement optimiseOCL()
+  { Expression newlhs = lhs.simplifyOCL(); 
+    Expression newrhs = rhs.simplifyOCL(); 
+    AssignStatement res = new AssignStatement(newlhs,newrhs); 
+    res.setType(type); 
+    res.setCopyValue(copyValue); 
+    return res; 
+  } 
+
   public void findClones(java.util.Map clones, String rule, String op)
   { if (rhs.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
     { return; }
@@ -13065,6 +13236,14 @@ class IfCase
     return res; 
   }  
 
+  public IfCase optimiseOCL()
+  { Expression newtest = test.simplifyOCL(); 
+    Statement newif = ifPart.optimiseOCL(); 
+    IfCase res = new IfCase(newtest,newif); 
+    res.setEntity(entity); 
+    return res; 
+  }  
+
   public IfCase dereference(BasicExpression var)
   { Expression newtest = (Expression) test.dereference(var); 
     Statement newif = (Statement) ifPart.dereference(var); 
@@ -13541,6 +13720,25 @@ class ConditionalStatement extends Statement
     Statement elsec = null; 
     if (elsePart != null) 
     { elsec = (Statement) elsePart.clone(); }
+    return new ConditionalStatement(testc, ifc, elsec); 
+  }  
+
+  public Statement optimiseOCL()
+  { Expression testc = test.simplifyOCL(); 
+    Statement ifc = ifPart.optimiseOCL(); 
+    Statement elsec = null; 
+    if (elsePart != null) 
+    { elsec = elsePart.optimiseOCL(); }
+
+    if ("true".equals(testc + "")) 
+    { return ifc; } 
+
+    if ("false".equals(testc + "")) 
+    { if (elsec == null) 
+      { return new InvocationStatement("skip"); } 
+      return elsec; 
+    } 
+
     return new ConditionalStatement(testc, ifc, elsec); 
   }  
 
@@ -14194,6 +14392,11 @@ class FinalStatement extends Statement
 
   public Object clone()
   { Statement ifc = (Statement) body.clone(); 
+    return new FinalStatement(ifc); 
+  }  
+
+  public Statement optimiseOCL()
+  { Statement ifc = body.optimiseOCL(); 
     return new FinalStatement(ifc); 
   }  
 

@@ -741,6 +741,83 @@ public void findClones(java.util.Map clones,
     return res; 
   } 
 
+  public Expression simplifyOCL() 
+  { Expression arg = 
+       argument.simplifyOCL(); 
+
+    if (operator.equals("->any"))
+    {
+      if (argument instanceof BinaryExpression) 
+      { BinaryExpression lbe = (BinaryExpression) argument; 
+
+        if (lbe.operator.equals("|"))
+        { // lbe.left | lbe.right
+          
+          BinaryExpression res = 
+            new BinaryExpression("|A", lbe.left, lbe.right); 
+
+          System.out.println("! Inefficient ->any operation: " + 
+            this + 
+            "\n! Replaced by " + res);
+
+          return res; 
+        }
+        else if (lbe.operator.equals("->select"))
+        { // Inefficient col->select(P)->any() expression
+          // instead use:    col->any(P)
+
+          BinaryExpression res = 
+            new BinaryExpression("->any", lbe.left, lbe.right); 
+
+          System.out.println("! Inefficient ->any operation: " + 
+            this + 
+            "\n! Replaced by " + res);
+
+          return res; 
+        }
+        else if (lbe.operator.equals("|R"))
+        { UnaryExpression notR = 
+            new UnaryExpression("not", lbe.right); 
+          BinaryExpression res = 
+            new BinaryExpression("|A", lbe.left, notR); 
+
+          System.out.println("! Inefficient ->any operation: " + 
+            this + 
+            "\n! Replaced by " + res);
+
+          return res; 
+        }
+        else if (lbe.operator.equals("->reject"))
+        { UnaryExpression notR = 
+            new UnaryExpression("not", lbe.right); 
+          BinaryExpression res = 
+            new BinaryExpression("->any", lbe.left, notR); 
+
+          System.out.println("! Inefficient ->any operation: " + 
+            this + 
+            "\n! Replaced by " + res);
+  
+          return res; 
+        }
+      } 
+    }
+    else if ("->sort".equals(operator))
+    { if (argument.isSorted())
+      { // Redundant ->sort operation:  
+        // Argument is already sorted.
+
+        System.out.println("! Redundant ->sort operation: " + 
+            this + 
+            "\n! Argument is already sorted.");
+        return arg; 
+      }
+    } 
+
+    UnaryExpression res = (UnaryExpression) clone(); 
+    res.argument = arg; 
+    return res; 
+  } 
+
   public java.util.Map collectionOperatorUses(int level, 
                                       java.util.Map res)
   { //  level |-> [x.setAt(i,y), etc]
