@@ -613,12 +613,48 @@ reportSection::
 REPORT SECTION . _* |-->_*
 
 reportDescription::
-_* |-->_*
+_* |-->_*`sumvariableDeclarations\n_*\n  operation _incrementSumCounters()\n  pre: true post: true\n  activity: skip;\n_*`sumincrementOperation\n
 
 reportDescriptionEntry::
 RD _1 . |-->  attribute _1 : Sequence(String) ; \n  attribute _1_line : String := "                                                  "; \n  attribute _1_LineCount : int := 0 ;\n  attribute _1_PAGE_COUNTER : int := 1;\n  attribute _1_PageLimit : int := 55;\n\n  operation flush_1()\n  pre: true  post: true\n  activity: _1 := _1->append(_1_line);\n    _1_LineCount := _1_LineCount + 1;\n    if _1_LineCount >= _1_PageLimit then _1_PAGE_COUNTER := _1_PAGE_COUNTER + 1; self.pageHeading_1(); _1 := _1->append(_1_line); _1_LineCount := 0 else skip;\n    _1`reportFile := _1`reportFile->union(_1);\n     _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n  operation initiate_1()\n  pre: true post: true\n  activity: self.pageHeading_1();\n\n  operation flush_terminate_1()\n  pre: true  post: true\n  activity: _1 := _1->append(_1_line);\n    _1`reportFile := _1`reportFile->union(_1);\n     _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n<action> _63 _1
 
 RD _1 _* . |-->  attribute _1 : Sequence(String) ; \n  attribute _1_line : String := "                                                  "; \n  attribute _1_LineCount : int := 0 ;\n  attribute _1_PAGE_COUNTER : int := 1;\n  attribute _1_PageLimit : int_*;\n\n  operation flush_1()\n  pre: true  post: true\n  activity:  _1 := _1->append(_1_line);\n    _1_LineCount := _1_LineCount + 1;\n    if _1_LineCount >= _1_PageLimit then _1_PAGE_COUNTER := _1_PAGE_COUNTER + 1; self.pageHeading_1(); _1 := _1->append(_1_line); _1_LineCount := 0 else skip;\n    _1`reportFile := _1`reportFile->union(_1);\n    _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n  operation initiate_1()\n  pre: true post: true\n  activity: self.pageHeading_1();\n\n  operation flush_terminate_1()\n  pre: true  post: true\n  activity: _1 := _1->append(_1_line);\n    _1`reportFile := _1`reportFile->union(_1);\n     _1 := Sequence{}->collect("");\n    _1_line := "                                                  "; \n\n<action> _63 _1
+
+
+sumvariableDeclarations::
+SUM _1 |-->  attribute _1_Sum : int := 0;\n
+RD _1 . |--> 
+RD _1 _* . |-->
+
+_1 |-->_1`sumvariableDeclarations<when> _1 reportGroupDescriptionEntry
+_1 |-->_1`sumvariableDeclarations<when> _1 reportGroupDescriptionEntryFormat3
+_1 |-->
+
+_1 _2 _3 _4 . |-->_4`sumvariableDeclarations<when> _4 reportGroupSumClause
+_1 _2 _3 . |-->_3`sumvariableDeclarations<when> _3 reportGroupSumClause
+_1 _2 . |-->_2`sumvariableDeclarations<when> _2 reportGroupSumClause
+
+_* |-->
+
+
+
+sumincrementOperation::
+SUM _1 |-->    _1_Sum := _1_Sum + _1;\n
+RD _1 . |--> 
+RD _1 _* . |-->
+
+_1 |-->_1`sumincrementOperation<when> _1 reportGroupDescriptionEntry
+_1 |-->_1`sumincrementOperation<when> _1 reportGroupDescriptionEntryFormat3
+_1 |-->
+
+_1 _2 _3 _4 . |-->_4`sumincrementOperation<when> _4 reportGroupSumClause
+_1 _2 _3 . |-->_3`sumincrementOperation<when> _3 reportGroupSumClause
+_1 _2 . |-->_2`sumincrementOperation<when> _2 reportGroupSumClause
+
+_* |-->
+
+
+
 
 
 reportDescriptionGlobalClause::
@@ -664,9 +700,9 @@ _* |-->_*
 reportGroupDescriptionEntryFormat1::
 _1 _2 . |-->\n  operation _2_63()\n  pre: true post: true\n  activity: \n<when> _2 reportGroupTypeClause
 
-_1 _2 _3 . |-->\n  operation flush_2()\n  pre: true post: true\n  activity: self.flush_63();\n\n  operation _3_2()\n  pre: true post: true\n  activity: \n<when> _3 reportGroupTypeClause, _3`isDetail true
+_1 _2 _3 . |-->\n  operation flush_2()\n  pre: true post: true\n  activity: self.flush_63();\n\n  operation _3_2()\n  pre: true post: true\n  activity: self._incrementSumCounters();\n<when> _3 reportGroupTypeClause, _3`isDetail true
 
-_1 _2 _3 . |-->\n  operation _3_63()\n  pre: true post: true\n  activity: \n<when> _3 reportGroupTypeClause
+_1 _2 _3 . |-->_3`reportTypeInvariant\n  operation _3_63()\n  pre: true post: true\n  activity: \n<when> _3 reportGroupTypeClause
 
 _1 _2 _3 _4 . |-->\n  operation _4_63()\n  pre: true post: true\n  activity: \n_3<when> _3 reportGroupLineNumberClause, _4 reportGroupTypeClause
 
@@ -676,8 +712,13 @@ _* |-->
 
 reportGroupDescriptionEntryFormat3::
 _1 _2 _3 _4  . |-->    _63_line := _63_line.setSubrange(_2, _2 + (_4 + "")->size() - 1, _4 + "") ;\n<when> _2 reportGroupColumnNumberClause, _4 reportGroupValueClause
+
 _1 _2 _3 _4  . |-->    _63_line := _63_line.setSubrange(_2, _2 + (_4 + "")->size() - 1, _4 + "") ;\n<when> _2 reportGroupColumnNumberClause, _4 reportGroupSourceClause
+
+_1 _2 _3 _4  . |-->    _63_line := _63_line.setSubrange(_2, _2 + (_4 + "")->size() - 1, _4 + "") ;\n<when> _2 reportGroupColumnNumberClause, _4 reportGroupSumClause
+
 _1 _2 . |-->_2<when> _2 reportGroupLineNumberClause
+
 
 reportGroupBlankWhenZeroClause::
 _* |-->
@@ -699,12 +740,12 @@ LINE _1 |-->    _63_line := "                                                  "
 
 reportGroupLineNumberNextPage::
 1 |-->
-2 |-->    _63 := _63->append("\n");\n    _63_LineCount := _63_LineCount + 1 ;\n
+2 |-->    _63 := _63->append(_63_line + "\n");\n    _63_line := "                                                  "; \n    _63_LineCount := _63_LineCount + 1 ;\n
 _1 |-->    _63 := _63->union(Integer.subrange(1,_1-1)->collect("\n"));\n    _63_LineCount := _63_LineCount + (_1 - 1) ;\n
 
 reportGroupLineNumberPlus::
 PLUS 1 |-->
-PLUS 2 |-->    _63 := _63->append("\n");\n    _63_LineCount := _63_LineCount + 1 ;\n
+PLUS 2 |-->    _63 := _63->append(_63_line + "\n");\n    _63_line := "                                                  ";\n    _63_LineCount := _63_LineCount + 1 ;\n
 PLUS _1 |-->    _63 := _63->union(Integer.subrange(1,_1-1)->collect("\n"));\n    _63_LineCount := _63_LineCount + (_1 - 1) ;\n
 
 reportGroupNextGroupClause::
@@ -728,8 +769,9 @@ _* |-->
 reportGroupSourceClause::
 SOURCE _1 |-->_1
 
+
 reportGroupSumClause::
-_* |-->
+SUM _1 |-->_1_Sum
 
 reportGroupTypeClause::
 TYPE _1 |-->_1
@@ -737,7 +779,32 @@ TYPE _1 |-->_1
 isDetail::
 TYPE _1 |-->_1`isDetail
 DETAIL |-->true
+DE |-->true
 _* |-->false
+
+
+reportTypeInvariant::
+TYPE _1 |-->_1`reportTypeInvariant
+
+CONTROL HEADING _1 |-->\n  invariant _1 /= _1@pre => self._1_controlHeading_63() & self.flush_terminate_63();\n
+CH _1 |-->\n  invariant _1 /= _1@pre => self._1_controlHeading_63() & self.flush_terminate_63();\n
+
+CONTROL FOOTING _1 |-->\n  invariant _1 /= _1@pre => self._1_controlFooting_63() & self.flush_terminate_63();\n
+CF _1 |-->\n  invariant _1 /= _1@pre => self._1_controlFooting_63() & self.flush_terminate_63();\n
+
+DETAIL |-->
+DE |-->
+REPORT HEADING |-->
+RH |-->
+PAGE HEADING |-->
+PH |-->
+PAGE FOOTING |-->
+PF |-->
+REPORT FOOTING |-->
+RF |-->
+_* |-->
+
+
 
 reportGroupTypeReportHeading::
 REPORT HEADING |-->initiate
