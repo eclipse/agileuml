@@ -6071,7 +6071,8 @@ public void findClones(java.util.Map clones,
     Expression collectleft = left; 
 
     if (operator.equals("|C") || 
-        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|unionAll".equals(operator) || 
+        "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { collectleft = ((BinaryExpression) left).right; }
     

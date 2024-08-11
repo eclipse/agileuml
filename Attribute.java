@@ -2852,11 +2852,11 @@ public class Attribute extends ModelElement
     if (eType == null) 
     { eType = new Type("OclAny", null); } 
 
-    JOptionPane.showMessageDialog(null, 
+    /* JOptionPane.showMessageDialog(null, 
        "Type of " + this + " is " + type + 
               " (" + elementType + ") " + eType, 
               "", 
-              JOptionPane.INFORMATION_MESSAGE);
+              JOptionPane.INFORMATION_MESSAGE); */ 
 
     String val = nme + "_x"; 
     Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
@@ -3128,22 +3128,58 @@ public class Attribute extends ModelElement
 
     String precode = ""; 
 
+    // If any normal constraint triggered by setnme
+    // updates variable P,
+    // create a pre-state
+    // variable P_pre for each P that is tested by a delta 
+    // constraint on P. 
+
+    Vector allWriteFrame = new Vector(); 
+    Vector assocs = new Vector(); 
+    Vector deltaVariables = new Vector(); 
+
     for (int j = 0; j < cons.size(); j++)   
          // may be constraints of subclass ent
     { Constraint cc = (Constraint) cons.get(j);
- 
-      if (cc.isDeltaConstraint(nme) && 
+      if (cc.isBehavioural() && 
           cc.dependsUpon(ename,nme))
-      { Constraint cc2 = 
-             (Constraint) cc.substituteEq(nme,attxbe); 
-        String cccode = cc2.updateFormJava7(env,true);
+      { allWriteFrame.addAll(cc.wr(assocs)); } 
+    } 
 
-        System.out.println(">> Delta constraint " + cc + "\n" + 
-                   ">> action for set" + nme + " is: " + cccode);
-        precode = precode + "\n" + 
-                   cccode + "\n";
+    allWriteFrame.add(ename + "::" + nme); 
+
+    /* JOptionPane.showInputDialog("Write frame of set" + nme + 
+                     "() constraints " + cons + 
+                     " is: " + allWriteFrame); */ 
+
+    for (Object f : allWriteFrame)
+    { String fname = f + ""; 
+      int eindex = fname.indexOf("::");
+      fname = fname.substring(eindex+2); 
+
+      Attribute attr = ent.getAttribute(fname); 
+      if (attr == null) { continue; } 
+
+      // JOptionPane.showInputDialog("Write includes " + fname); 
+
+      for (int j = 0; j < cons.size(); j++)   
+         // may be constraints of subclass ent
+      { Constraint cc = (Constraint) cons.get(j);
+ 
+        if (cc.isDeltaConstraint(fname))
+        { precode = precode + "\n" + 
+                  "    " + 
+                  Type.getJava7type(attr.getType()) + " " + 
+                  fname + "_pre = " + 
+                  fname + ";\n";
+          deltaVariables.add(fname); 
+          continue; // Only need to do this once
+        }
       }    
-    }
+    } //  deltaVariables can be changed by setnme() and 
+      //  are triggers of a delta constraint. Those 
+      //  delta constraints need implementing code, after
+      //  the standard constraints code. 
 
  
     String opheader; 
@@ -3167,13 +3203,18 @@ public class Attribute extends ModelElement
       // must type check new constraint.
  
       /* JOptionPane.showInputDialog("Constraint " + cc + 
-                     " behavioural: " + cc.isBehavioural() + 
+                     " behavioural: " + cc.isBehavioural() +
+                     " is delta: " + cc.isDeltaConstraint(nme) +  
                      " depends on " + nme + " : " + 
                      cc.dependsUpon(ename,nme)); */ 
  
-      if (cc.isDeltaConstraint(nme) && 
-          cc.dependsUpon(ename,nme))
-      {  }    
+      if (cc.isDeltaConstraint(nme))
+      { /* Constraint ccx = 
+          cc.substitutePre(nme, nme + "_pre");
+        String cccode = ccx.updateFormJava7(env,true);
+        opheader = opheader + "\n" + 
+                   cccode + "\n"; */ 
+      }    
       else if (cc.isBehavioural() && 
           cc.dependsUpon(ename,nme))
       { String cccode = cc.updateFormJava7(env,true);
@@ -3201,6 +3242,26 @@ public class Attribute extends ModelElement
         System.out.println(">> Possible precond for set" + nme + ": " + cpre); 
       }
     }
+
+    for (Object f : deltaVariables)
+    { String fname = f + ""; 
+
+      Attribute attr = ent.getAttribute(fname); 
+      if (attr == null) { continue; } 
+
+      for (int j = 0; j < cons.size(); j++)   
+         // may be constraints of subclass ent
+      { Constraint cc = (Constraint) cons.get(j);
+ 
+        if (cc.isDeltaConstraint(fname))
+        { Constraint ccx = 
+          cc.substitutePre(fname, fname + "_pre");
+          String cccode = ccx.updateFormJava7(env,true);
+          opheader = opheader + "\n" + 
+                     cccode + "\n";
+        }
+      }    
+    }  
 
     return opheader + "  }\n"; 
   }  // actuators -- include a message?  Should not be local?

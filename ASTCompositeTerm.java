@@ -43596,17 +43596,6 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
-    if ("statement".equals(tag))
-    { // one of any kind of statement
-
-      for (int i = 0; i < terms.size(); i++) 
-      { ASTTerm ttx = (ASTTerm) terms.get(i); 
-        ttx.cobolPerformThruDefinitions(context, invs);
-      }  
-
-      return res; 
-    } 
-
     if ("performStatement".equals(tag))
     { // PERFORM (performInlineStatement | 
       //    performProcedureStatement)
@@ -43641,7 +43630,14 @@ public class ASTCompositeTerm extends ASTTerm
 
       return res; 
     } 
+
+    /* Default: */ 
   
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm ttx = (ASTTerm) terms.get(i); 
+      ttx.cobolPerformThruDefinitions(context, invs);
+    }  
+
     return res; 
   } 
 

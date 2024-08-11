@@ -328,7 +328,7 @@ public class Constraint extends ConstraintOrGroup
       { if (nme.equals(bexpr.getLeft() + "") && 
             (nme + "@pre").equals(bexpr.getRight() + ""))
         { return true; }
-        if (nme.equals(bexpr.getRight() + "") && 
+        else if (nme.equals(bexpr.getRight() + "") && 
             (nme + "@pre").equals(bexpr.getLeft() + ""))
         { return true; } 
         return false; 
@@ -336,6 +336,50 @@ public class Constraint extends ConstraintOrGroup
       return false; 
     } 
     return false; 
+  } 
+
+  public Constraint substitutePre(String nme, String pname)
+  { // nme /= nme@pre or nme@pre /= nme
+    // replaced by nme /= pname, etc
+
+    Expression ante = antecedent(); 
+    Expression newante; 
+
+    // System.out.println("Antecedent: " + ante); 
+
+    if (ante instanceof BinaryExpression) 
+    { BinaryExpression bexpr = (BinaryExpression) ante; 
+      if ("/=".equals(bexpr.getOperator()))
+      { if (nme.equals(bexpr.getLeft() + "") && 
+            (nme + "@pre").equals(bexpr.getRight() + ""))
+        { BasicExpression rexpr = 
+            (BasicExpression) bexpr.getRight().clone(); 
+          rexpr.setData(pname); 
+          newante = 
+            new BinaryExpression("/=", bexpr.getLeft(), 
+                                 rexpr);
+          Constraint newcons = (Constraint) clone(); 
+          newcons.setAntecedent(newante); 
+          return newcons;  
+        }
+        else if (nme.equals(bexpr.getRight() + "") && 
+            (nme + "@pre").equals(bexpr.getLeft() + ""))
+        { BasicExpression lexpr = 
+            (BasicExpression) bexpr.getLeft().clone(); 
+          lexpr.setData(pname); 
+          newante = 
+            new BinaryExpression("/=", lexpr, 
+                                 bexpr.getRight());
+          Constraint newcons = (Constraint) clone(); 
+          newcons.setAntecedent(newante); 
+          return newcons;  
+        }
+ 
+        return this; 
+      } 
+      return this; 
+    } 
+    return this; 
   } 
     
 
