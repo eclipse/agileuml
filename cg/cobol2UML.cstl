@@ -622,7 +622,7 @@ RD _1 _* . |-->  attribute _1 : Sequence(String) ; \n  attribute _1_line : Strin
 
 
 sumvariableDeclarations::
-SUM _1 |-->  attribute _1_Sum : int := 0;\n
+SUM _1 |-->  attribute _1_Sum : _1`oclType;\n
 RD _1 . |--> 
 RD _1 _* . |-->
 
@@ -3011,12 +3011,26 @@ KEY _1  |-->_key.subrange(_1`startPosition,_1`endPosition) = _1<when> _1 qualifi
 
 receiveStatement::
 RECEIVE _1 END-RECEIVE |-->_1
+
+RECEIVE _1 _2 END-RECEIVE |-->    try ( _1    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause
+
+RECEIVE _1 _2 END-RECEIVE |-->    try ( _1_2    skip) catch (_ex : OclException) do (skip);\n<when> _2 notOnExceptionClause
+
+RECEIVE _1 _2 _3 END-RECEIVE |-->    try ( _1_3    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+
 RECEIVE _1 |-->_1
+
+RECEIVE _1 _2 |-->    try ( _1    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause
+
+RECEIVE _1 _2 |-->    try ( _1_2    skip) catch (_ex : OclException) do (skip);\n<when> _2 notOnExceptionClause
+
+RECEIVE _1 _2 _3 |-->    try ( _1_3    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause, _3 notOnExceptionClause
 
 
 receiveFromStatement::
-_1 FROM _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
-_1 FROM _2 _* |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
+_1 FROM _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programIndex, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 FROM _2 _* |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programIndex, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
 
 
 receiveFrom::
@@ -3024,9 +3038,59 @@ THREAD _1 |-->_1
 LAST THREAD |-->
 ANY THREAD |-->
 
+
 receiveIntoStatement::
 _1 MESSAGE INTO _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 MESSAGE INTO _2 _3 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 MESSAGE INTO _2 _3 _4 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 SEGMENT INTO _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 SEGMENT INTO _2 _3 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 SEGMENT INTO _2 _3 _4 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
 _1 MESSAGE _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 MESSAGE _2 _3 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 MESSAGE _2 _3 _4 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 SEGMENT _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 SEGMENT _2 _3 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+_1 SEGMENT _2 _3 _4 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+
+receiveNoData::
+NO DATA _* |-->
+
+receiveWithData::
+WITH DATA _* |-->
+
+receiveBefore::
+BEFORE _1 |-->
+BEFORE TIME _1 |-->
+
+
+receiveWith::
+WITH NO WAIT |-->
+NO WAIT |-->
+
+receiveThread::
+THREAD IN _1 |-->_1
+THREAD _1 |-->_1
+
+receiveSize::
+SIZE IN _1 |-->
+SIZE _1 |-->
+
+receiveStatus::
+STATUS IN _1 |-->
+STATUS _1 |-->
 
 
 
@@ -3120,20 +3184,68 @@ WHEN _1 _* |-->      if _1 then (_*    skip) else skip ;\n
 
 sendStatement::
 SEND _1 |-->_1<when> _1 sendStatementSync
+SEND _1 |-->_1<when> _1 sendStatementAsync
+
 SEND _1 _2 |-->    try ( _1    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause
+
 SEND _1 _2 |-->    try ( _1_2    skip) catch (_ex : OclException) do (skip);\n<when> _2 notOnExceptionClause
+
 SEND _1 _2 _3 |-->    try ( _1_3    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause, _3 notOnExceptionClause
 
 
 sendStatementSync::
 _1 _2 |-->    (var _dd : OclDatasource := OclDatasource.newSocket("127.0.0.1", 5000 + _2`programIndex);\n    execute (_dd.getOutputStream()).writeObject(_1);\n    execute (_dd.getOutputStream()).flush());\n<when> _2 sendFromPhrase
 
+_1 _2 _* |-->    (var _dd : OclDatasource := OclDatasource.newSocket("127.0.0.1", 5000 + _2`programIndex);\n    execute (_dd.getOutputStream()).writeObject(_1);\n    execute (_dd.getOutputStream()).flush());\n<when> _2 sendFromPhrase
+
+
+sendStatementAsync::
+TO TOP _1 |-->    (var _dd : OclDatasource := OclDatasource.newSocket("127.0.0.1", 5000 + _2`programIndex);\n    execute (_dd.getOutputStream()).writeObject(_1);\n    execute (_dd.getOutputStream()).flush());\n
+
+TO BOTTOM _1 |-->    (var _dd : OclDatasource := OclDatasource.newSocket("127.0.0.1", 5000 + _2`programIndex);\n    execute (_dd.getOutputStream()).writeObject(_1);\n    execute (_dd.getOutputStream()).flush());\n
+
+TO _1 |-->    (var _dd : OclDatasource := OclDatasource.newSocket("127.0.0.1", 5000 + _2`programIndex);\n    execute (_dd.getOutputStream()).writeObject(_1);\n    execute (_dd.getOutputStream()).flush());\n
+
 
 sendFromPhrase::
 FROM _1 |-->_1
 
+sendWithPhrase::
+WITH EGI |-->
+WITH EMI |--> 
+WITH ESI |-->
+WITH _1 |-->
+
+sendReplacingPhrase::
+REPLACING LINE |-->
+REPLACING |-->
+
+sendAdvancingPhrase::
+BEFORE ADVANCING _1 |-->
+AFTER ADVANCING _1 |-->
+BEFORE _1 |-->
+AFTER _1 |-->
+
+sendAdvancingPage::
+PAGE |-->
+
+
+sendAdvancingLines::
+_1 LINE |-->
+_1 LINES |-->
+_1 |-->
+
+
+sendAdvancingMnemonic::
+_1 |-->
+
+
+
 programIndex::
 FROM _1 |-->_1`programNumber
+THREAD _1 |-->_1`programNumber
+LAST THREAD |-->
+ANY THREAD |-->
 
 
 setStatement::
