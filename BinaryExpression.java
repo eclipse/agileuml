@@ -3877,8 +3877,35 @@ public void findClones(java.util.Map clones,
       elementType = scope.elementType; 
       multiplicity = ModelElement.MANY; 
     }    
-    else if (operator.equals("->collect") || 
-             operator.equals("->unionAll") ||
+    else if (operator.equals("->collect"))   
+    { if (left.isCollection() || left.isMap()) { } 
+      else 
+      { System.err.println("!! Left argument of " + operator + 
+                           " must be a collection or map"); 
+        left.setType(new Type("Sequence", null)); 
+
+        if (left instanceof BasicExpression)
+        { String vname = ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, left.getType()); 
+        } 
+      }
+
+      Type tl = (Type) vartypes.get(left + ""); 
+      
+      if (left.isMap() || Type.isMapType(tl))
+      { elementType = right.getType(); 
+        type = new Type("Map", null); 
+        type.setElementType(elementType); 
+        if (tl == null) { tl = tleft; }
+        type.setKeyType(tleft.getKeyType()); 
+      }  
+      else 
+      { elementType = right.getType(); 
+        type = new Type("Sequence", null); 
+        type.setElementType(elementType); 
+      } // NOT sorted
+    } 
+    else if (operator.equals("->unionAll") ||
              operator.equals("->intersectAll") || 
              operator.equals("->concatenateAll") || 
              operator.equals("->any"))   
@@ -3910,8 +3937,78 @@ public void findClones(java.util.Map clones,
         type = left.elementType; 
       }  
     } 
-    else if (operator.equals("|C") || 
-        "|unionAll".equals(operator) || 
+    else if (operator.equals("|C"))
+    { BinaryExpression lexp = (BinaryExpression) left; 
+      Expression scope = lexp.right;
+      Expression vbl = lexp.left; 
+
+      Type vblType = (Type) vartypes.get(vbl + ""); 
+
+      Type scopetype = (Type) vartypes.get(scope + "");
+
+      if (scope.isCollection() || scope.isMap()) 
+      { if (Type.isVacuousType(scope.elementType))
+        { System.err.println("!! No element type for " + scope); 
+          Type tt = (Type) vartypes.get(scope + ""); 
+          if (tt != null && 
+              !Type.isVacuousType(tt.elementType)) 
+          { scope.setElementType(tt.elementType);
+            vbl.setType(tt.elementType);
+          } 
+          else if (vblType != null) 
+          { scope.setElementType(vblType);
+            vbl.setType(vblType);
+          } 
+
+          System.out.println(">> Set " + scope + " element type to " + scope.getElementType()); 
+        }
+      } 
+      else if (Type.isMapType(scopetype) || 
+               Type.isCollectionType(scopetype)) 
+      { if (Type.isVacuousType(scope.elementType))
+        { System.err.println("!! No element type for " + scope); 
+          if (scopetype != null && 
+              !Type.isVacuousType(scopetype.elementType)) 
+          { scope.setElementType(scopetype.elementType);
+            vbl.setType(scopetype.elementType);
+          } 
+          else if (vblType != null) 
+          { scope.setElementType(vblType);
+            vbl.setType(vblType);
+          } 
+
+          scope.setType(scopetype); 
+
+          System.out.println(">> Set " + this + " element type to " + scope.getElementType()); 
+        }
+      } 
+      else 
+      { System.err.println("!! Left argument of " + operator + 
+                           " must be a collection"); 
+        scope.setType(new Type("Sequence", null)); 
+
+        if (scope instanceof BasicExpression)
+        { String vname = ((BasicExpression) scope).basicString(); 
+          vartypes.put(vname, scope.getType()); 
+        } 
+      } 
+
+      if (scope.isMap() || Type.isMapType(scopetype))
+      { elementType = right.getType(); 
+        type = new Type("Map", null); 
+        type.setElementType(elementType); 
+        if (scopetype == null) { scopetype = scope.getType(); }
+        type.setKeyType(scopetype.getKeyType()); 
+
+        // JOptionPane.showInputDialog(">> Type of " + this + " is " + type); 
+      }  
+      else 
+      { elementType = right.getType(); 
+        type = new Type("Sequence", null); 
+        type.setElementType(elementType); 
+      } // NOT sorted
+    }
+    else if ("|unionAll".equals(operator) || 
         "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left; 
@@ -4314,7 +4411,7 @@ public void findClones(java.util.Map clones,
     { if (tleft != null) 
       { type = tleft; 
         elementType = left.elementType; 
-      } 
+      } // sorted if left is sorted
       else 
       { type = new Type("Map", null); } 
 
@@ -4556,7 +4653,45 @@ public void findClones(java.util.Map clones,
       Type lftype = left.getType(); 
       Type rtype = right.getType(); 
 
-      if (left.isMap() && !right.isMap())
+      Type letype = left.getElementType(); 
+      Type retype = right.getElementType(); 
+
+      if (left.isMap() && right.isMap())
+      { if (operator.equals("\\/") || 
+            operator.equals("->union") || 
+            operator.equals("->symmetricDifference") || 
+            operator.equals("->intersection") || 
+            operator.equals("/\\"))
+        { Vector etypes = new Vector(); 
+          etypes.add(left); 
+          etypes.add(right); 
+          elementType = Type.determineElementType(etypes);
+          type = new Type("Map", null); 
+          type.setSorted(lftype.isSorted()); 
+          type.setKeyType(lftype.getKeyType()); 
+          type.setElementType(elementType); 
+        } 
+        else 
+        { type = new Type("boolean", null); } 
+      }
+      else if (left.isCollection() && right.isCollection())
+      { if (operator.equals("\\/") || 
+            operator.equals("->union") || 
+            operator.equals("->symmetricDifference") || 
+            operator.equals("->intersection") || 
+            operator.equals("/\\"))
+        { Vector etypes = new Vector(); 
+          etypes.add(left); 
+          etypes.add(right); 
+          elementType = Type.determineElementType(etypes);
+          type = new Type(lftype.getName(), null); 
+          type.setSorted(lftype.isSorted()); 
+          type.setElementType(elementType); 
+        } 
+        else 
+        { type = new Type("boolean", null); } 
+      }
+      else if (left.isMap() && !right.isMap())
       { System.err.println("!! RHS of " + this + 
                            " must be map");
  
@@ -4566,10 +4701,10 @@ public void findClones(java.util.Map clones,
         right.setType(rtype); 
 
         if (operator.equals("\\/") || 
-             operator.equals("->union") || 
-             operator.equals("->symmetricDifference") || 
-             operator.equals("->intersection") || 
-             operator.equals("/\\")) 
+            operator.equals("->union") || 
+            operator.equals("->symmetricDifference") || 
+            operator.equals("->intersection") || 
+            operator.equals("/\\")) 
         { type = new Type("Map", null); 
           elementType = left.elementType;
           type.setKeyType(lftype.getKeyType()); 
@@ -4658,9 +4793,10 @@ public void findClones(java.util.Map clones,
           vartypes.put(vname, left.getType()); 
         } 
       } 
-      else 
+      else if (!left.isCollection() && 
+               !left.isMap())
       { System.err.println("!! Arguments of " + this + 
-                           " must be collections");
+                           " must be collections/maps");
         Type ltype = left.getType(); 
  
         if (ltype.getAlias() != null && 
@@ -5586,8 +5722,8 @@ public void findClones(java.util.Map clones,
       { }
       else 
       { System.err.println("!! TYPE ERROR: LHS of " + this + " must be a collection");
-       JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection!", 
-                                     "Type error", JOptionPane.ERROR_MESSAGE);
+       // JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection!", 
+       //                              "Type error", JOptionPane.ERROR_MESSAGE);
       } // deduce type of one side from that of other
 
       if (tright == null && tleft != null)
@@ -6081,23 +6217,26 @@ public void findClones(java.util.Map clones,
       restype.keyType = tleft.keyType; 
       restype.elementType = tright; 
       type = restype; 
-      elementType = tright; 
+      elementType = tright;
+
+      // JOptionPane.showInputDialog("Type of " + this + 
+      //                             " is " + type);  
       return; 
     } 
     else if (collectleft.isMultiple())
     { } 
     else 
     { System.err.println("!!! TYPE ERROR: LHS of collect must be a collection! " + this); 
-      JOptionPane.showMessageDialog(null, "LHS must be a collection: " + this, 
-                                          "Type error", JOptionPane.ERROR_MESSAGE);
+      // JOptionPane.showMessageDialog(null, "LHS must be a collection: " + this, 
+      //                                    "Type error", JOptionPane.ERROR_MESSAGE);
       // type = null; 
       // return; 
     } 
 
     if (tright == null) 
     { System.err.println("!!! TYPE ERROR: No type for collect RHS: " + this); 
-      JOptionPane.showMessageDialog(null, "ERROR: No type for collect RHS: " + this,                                          
-	                                "Type error", JOptionPane.ERROR_MESSAGE);
+      // JOptionPane.showMessageDialog(null, "ERROR: No type for collect RHS: " + this,                                          
+	//                                 "Type error", JOptionPane.ERROR_MESSAGE);
       return; 
     } 
     
@@ -6155,8 +6294,8 @@ public void findClones(java.util.Map clones,
 
         System.err.println("! Warning!: arguments must be numeric in: " + this + " Deduced type: " + type); 
         if (type == null) 
-        { JOptionPane.showMessageDialog(null, "Arguments not numeric in: " + this, 
-                                            "Type error", JOptionPane.ERROR_MESSAGE);
+        { // JOptionPane.showMessageDialog(null, "Arguments not numeric in: " + this, 
+          //                                  "Type error", JOptionPane.ERROR_MESSAGE);
         } 
       } 
 
@@ -20088,6 +20227,15 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     Expression lexpr = left.simplifyOCL(); 
     Expression rexpr = right.simplifyOCL(); 
 
+    if ("->union".equals(operator) && 
+        lexpr instanceof SetExpression && 
+        rexpr instanceof SetExpression)
+    { // merge the literal sets/sequences/maps
+      SetExpression res = 
+        SetExpression.mergeSetExpressions((SetExpression) lexpr,
+                                          (SetExpression) rexpr); 
+      return res; 
+    } 
 
     if (operator.equals("|"))
     { BinaryExpression arg = (BinaryExpression) left; 

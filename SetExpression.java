@@ -25,7 +25,7 @@ public class SetExpression extends Expression
     { type = new Type("Sequence", null); }
     else 
     { type = new Type("Set", null); } 
-  } 
+  } // what about maps? 
 
   public SetExpression(Vector v)
   { if (v == null || v.size() == 0 ||
@@ -72,6 +72,80 @@ public class SetExpression extends Expression
     return res; 
   } 
 
+  public SetExpression(Vector elems, Type typ)
+  { elements = elems; 
+    type = (Type) typ.clone(); 
+    if (Type.isSequenceType(type))
+    { ordered = true; } 
+
+    elementType = Type.determineType(elements); 
+    type.setElementType(elementType);
+  } 
+
+  public static SetExpression mergeSetExpressions(
+                                SetExpression left, 
+                                SetExpression right)
+  { // ->union of two literal collections, maps
+
+    Type typ = left.getType(); 
+    Vector elems1 = left.getElements(); 
+    Vector elems2 = right.getElements(); 
+    Vector newelems = new Vector(); 
+    newelems.addAll(elems1); 
+
+    if (Type.isSequenceType(typ))
+    { newelems.addAll(elems2); 
+      SetExpression res = new SetExpression(newelems,typ); 
+      return res; 
+    } 
+   
+    if (Type.isSetType(typ))
+    { for (int i = 0; i < elems2.size(); i++) 
+      { Expression e2 = (Expression) elems2.get(i); 
+        if (VectorUtil.containsEqualString(
+                               e2 + "", newelems)) 
+        { } 
+        else 
+        { newelems.add(e2); } 
+      }
+      SetExpression res = new SetExpression(newelems,typ); 
+      return res; 
+    }
+
+    // Else - maps
+
+    System.out.println("*** Merging maps " + left + " and " + right); 
+
+    Vector mapelems = new Vector(); 
+    for (int i = 0; i < elems1.size(); i++) 
+    { BinaryExpression maplet1 = 
+          (BinaryExpression) elems1.get(i); 
+      Expression key1 = maplet1.getLeft();
+
+      System.out.println("*** KEY 1: " + key1); 
+
+      boolean foundkey1 = false;  
+      for (int j = 0; j < elems2.size(); j++) 
+      { BinaryExpression maplet2 = 
+          (BinaryExpression) elems2.get(j); 
+        Expression key2 = maplet2.getLeft();
+ 
+        if ((key1 + "").equals(key2 + ""))
+        { // maplet2 overrides maplet1
+          foundkey1 = true; 
+          break; 
+        } // don't include maplet1 in mapelems
+      }
+
+      if (!foundkey1) 
+      { mapelems.add(maplet1); } 
+    }
+    mapelems.addAll(elems2); 
+
+    SetExpression res = new SetExpression(mapelems,typ); 
+    return res;
+  }
+     
   public Vector getParameters() 
   { return new Vector(); } 
 
@@ -932,8 +1006,9 @@ public class SetExpression extends Expression
                    java.util.Map vartypes)
   { return typeCheck(typs,ents,contexts,env); } 
 
-  public boolean typeCheck(final Vector types, final Vector entities,
-                           final Vector contexts, final Vector env)
+  public boolean typeCheck(final Vector types, 
+                           final Vector entities,
+                 final Vector contexts, final Vector env)
   { boolean res = true;
 
     if (type != null && "Ref".equals(type.getName()))

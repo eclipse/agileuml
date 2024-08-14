@@ -11116,11 +11116,23 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // c.nospacelexicalanalysis("(a[i][j]).f(1)");  
     // c.nospacelexicalanalysis("(!a).f(1)"); 
-    c.nospacelexicalanalysis("(OclFile[\"SYSOUT\"]).println(x)"); 
+    // c.nospacelexicalanalysis("(OclFile[\"SYSOUT\"]).println(x)");
+
+    c.nospacelexicalanalysis("Map{ \"Name\" |-> Sequence{\"Braund, Mr. Owen Harris\"}->union(Sequence{\"Allen, Mr. William Henry\"}->union(Sequence{ \"Bonnell, Miss. Elizabeth\" })) }->union(Map{ \"Age\" |-> Sequence{22}->union(Sequence{35}->union(Sequence{ 58 })) }->union(Map{ \"Sex\" |-> Sequence{\"male\"}->union(Sequence{\"male\"}->union(Sequence{ \"female\" })) }->union(Map{ \"Fare\" |-> Sequence{102.0}->union(Sequence{99.0}->union(Sequence{ 250.0 })) }) ) )"); 
+ 
     Expression zz = c.parseExpression(); 
 
     System.out.println(zz); 
 
+    zz.typeCheck(new Vector(), new Vector(), new Vector(), new Vector()); 
+
+    Expression pp = zz.simplifyOCL(); 
+
+    System.out.println(pp); 
+
+    pp.typeCheck(new Vector(), new Vector(), new Vector(), new Vector()); 
+
+    System.out.println(">>> " + pp.getType()); 
 
     // Compiler2 ccx = new Compiler2(); 
     // ccx.nospacelexicalanalysis("x : int"); 

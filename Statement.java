@@ -7358,6 +7358,9 @@ class CreationStatement extends Statement
     if (initialExpression != null) 
     { initialExpression.typeInference(types,entities,
                                       ctxs,env,vartypes); 
+
+      // JOptionPane.showInputDialog("--- " + vartypes + " -- Type inference for: " + initialExpression.getType() + " for " + initialExpression); 
+
       System.out.println(">>> Inferred type " + 
         initialExpression.getType() + "(" + 
         initialExpression.getElementType() + 
@@ -12781,10 +12784,12 @@ class AssignStatement extends Statement
   public boolean typeInference(Vector types, Vector entities, Vector cs, Vector env, java.util.Map vartypes)
   { // Also recognise the type as an entity or enumeration if it exists
 
-    boolean res = lhs.typeCheck(types,entities,cs,env);
-    res = rhs.typeCheck(types,entities,cs,env);
+    // boolean res = lhs.typeCheck(types,entities,cs,env);
+    // res = rhs.typeCheck(types,entities,cs,env);
+    boolean res = rhs.typeInference(types,entities,cs,env,vartypes);
     Type rhsType = rhs.getType();  
-    res = rhs.typeInference(types,entities,cs,env,vartypes);
+    
+    vartypes.put(lhs + "", rhsType); 
 
     if (Type.isVacuousType(lhs.type) && 
         !Type.isVacuousType(rhsType)) 
@@ -12815,6 +12820,8 @@ class AssignStatement extends Statement
     { lhs.type = declaredType;
       System.out.println(">>> " + lhs + " actual type is " + declaredType);  
     } // does not allow for changing the type 
+
+    // JOptionPane.showInputDialog("--- deduced type " + rhsType + " for " + lhs); 
 
     return res; 
   }

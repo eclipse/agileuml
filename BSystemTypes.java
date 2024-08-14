@@ -176,7 +176,7 @@ public class BSystemTypes extends BComponent
       res = res + "    return _results_" + oldindex + ";\n  }\n\n"; 
 
       // Version for maps: 
-	  res = res + "  public static Map select_" + oldindex + "(Map _l"; 
+	  res = res + "  public static HashMap select_" + oldindex + "(Map _l"; 
 
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i); 
@@ -186,7 +186,7 @@ public class BSystemTypes extends BComponent
       } 
       res = res + ")\n"; 
       res = res + "  { // Implements: " + left + "->select(" + var + " | " + pred + ")\n" + 
-                  "    Map _results_" + oldindex + " = new java.util.HashMap();\n" +
+                  "    HashMap _results_" + oldindex + " = new HashMap();\n" +
 				  "    java.util.Set _keys = _l.keySet();\n" +  
                   "    for (Object _i : _keys)\n"; 
       if (ename.equals("int") || "Integer".equals(tname))
@@ -773,7 +773,7 @@ public class BSystemTypes extends BComponent
       res = res + "    return _results_" + oldindex + ";\n  }\n\n"; 
 
       // Also need a Map version: 
-      res = res + "  public static Map collect_" + oldindex + "(Map _l"; 
+      res = res + "  public static HashMap collect_" + oldindex + "(Map _l"; 
 	  for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i); 
         res = res + "," + par.getType().getJava() + " " + par.getName(); 
@@ -781,7 +781,7 @@ public class BSystemTypes extends BComponent
       res = res + ")\n"; 
       res = res + 
          "  { // implements: " + left + "->collect( " +  var + " | " + exp + " )\n" +
-         "    Map _results_" + oldindex + " = new HashMap();\n" + 
+         "    HashMap _results_" + oldindex + " = new HashMap();\n" + 
          "    java.util.Set _keys = _l.keySet();\n" +  
          "    for (Object _i : _keys)\n" + 
          "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n" + 
@@ -1419,7 +1419,7 @@ public class BSystemTypes extends BComponent
 	  
 	  /* Version for maps: */  
 
-	  res = res + "  public static Map reject_" + oldindex + "(Map _l"; 
+	  res = res + "  public static HashMap reject_" + oldindex + "(Map _l"; 
 
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i); 
@@ -1429,7 +1429,7 @@ public class BSystemTypes extends BComponent
       } 
       res = res + ")\n"; 
       res = res + "  { // Implements: " + left + "->reject(" + var + " | " + pred + ")\n" + 
-                  "    Map _results_" + oldindex + " = new java.util.HashMap();\n" +
+                  "    HashMap _results_" + oldindex + " = new HashMap();\n" +
 				  "    java.util.Set _keys = _l.keySet();\n" +  
                   "    for (Object _i : _keys)\n"; 
       if (ename.equals("int") || "Integer".equals(tname))

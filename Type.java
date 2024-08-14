@@ -166,6 +166,12 @@ public class Type extends ModelElement
     { entity.setTypeParameters(pars); } 
   } 
 
+  public boolean equals(Object other)
+  { if (other instanceof Type) 
+    { return ("" + this).equals(other + ""); } 
+    return false; 
+  } 
+
   public static boolean isOclLibraryType(String tname) 
   { if (tname == null) 
     { return false; } 
@@ -4832,6 +4838,34 @@ public class Type extends ModelElement
       }
     }   
 
+    if (typ.startsWith("SortedMap(String,") && typ.endsWith(")"))
+    { String nt = typ.substring(17,typ.length()-1);
+      Type innerT = getTypeFor(nt, types, entities); 
+      Type resT = new Type("Map",null);
+      resT.setSorted(true); 
+      resT.setKeyType(new Type("String", null));  
+      resT.setElementType(innerT); 
+      return resT; 
+    }   
+
+    if (typ.startsWith("SortedMap(") && typ.endsWith(")"))
+    { for (int i = 11; i < typ.length(); i++) 
+      { if (",".equals(typ.charAt(i) + ""))
+        { String nt = typ.substring(11,i);
+          Type innerT = getTypeFor(nt, types, entities);
+          String rt = typ.substring(i+1,typ.length()-1);
+          Type restT = getTypeFor(rt, types, entities); 
+          if (innerT != null && restT != null) 
+          { Type resT = new Type("Map",null);
+            resT.setSorted(true); 
+            resT.setKeyType(innerT);  
+            resT.setElementType(restT); 
+            return resT; 
+          } 
+        }
+      }
+    }   
+
     if (typ.startsWith("Function(String,") && typ.endsWith(")"))
     { String nt = typ.substring(16,typ.length()-1);
       Type innerT = getTypeFor(nt, types, entities); 
@@ -4888,6 +4922,12 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (Type.isSequenceType(t) && 
+                 Type.isSequenceType(expectedType))
+        { expectedType = new Type("Sequence", null); } 
+        else if (Type.isSetType(t) && 
+                 Type.isSetType(expectedType))
+        { expectedType = new Type("Set", null); } 
         else if (tn1.equals(tn2))
         { } // both maps, both sequences, both sets
         else 
@@ -4933,6 +4973,12 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (Type.isSequenceType(t) && 
+                 Type.isSequenceType(expectedType))
+        { expectedType = new Type("Sequence", null); } 
+        else if (Type.isSetType(t) && 
+                 Type.isSetType(expectedType))
+        { expectedType = new Type("Set", null); } 
         else if (tn1.equals(tn2)) { } 
         else 
         { Entity e1 = expectedType.getEntity(); 
@@ -5014,14 +5060,25 @@ public class Type extends ModelElement
       else
       { String tn1 = expectedType.getName();
         String tn2 = t.getName();
-        if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+
+        if (tn1.equals("double") && 
+            (tn2.equals("int") || tn2.equals("long")))
         { }
         else if (tn1.equals("long") && tn2.equals("int"))
         { }
-        else if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+        else if (tn2.equals("double") && 
+                 (tn1.equals("int") || tn1.equals("long")))
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (Type.isSequenceType(t) && 
+                 Type.isSequenceType(expectedType))
+        { expectedType = new Type("Sequence", null); 
+          JOptionPane.showInputDialog("** Deduced element type " + expectedType + " for " + elems); 
+        } 
+        else if (Type.isSetType(t) && 
+                 Type.isSetType(expectedType))
+        { expectedType = new Type("Set", null); } 
         else if (tn1.equals(tn2)) { }
         else if (expectedType.isEnumeration() && 
                  t.isEnumeration())
@@ -5047,6 +5104,7 @@ public class Type extends ModelElement
         }
       }
     }
+
     return expectedType;
   }
 
