@@ -831,7 +831,7 @@ trailer::
 . min _1 |-->->min()
 . head _1 |-->->collect( _ser | _ser.subrange(1,_1))
 . tail _1 |-->->collect( _ser | _ser.subrange(_1, _ser->size()))
-. at _1 |-->_1`secondArg->at(_1`firstArg->first())
+. at _1 |-->_1`reversedAccess
 
 . day |-->.getDate()
 . year |-->.getYear()
@@ -1481,6 +1481,17 @@ _1 |-->$x
 
 
  
+reversedAccess::
+0 |-->->first()
+
+_1 , _2 |-->_2`reversedAccess_1`reversedAccess
+
+[ _1 ] |-->_1`reversedAccess<when> _1 subscriptlist
+_1 |-->_1`reversedAccess<when> _1 subscriptlist
+
+_1 |-->->at(_1)<when> _1 String
+_1 |-->->at(_1 + 1)
+
 
 subscriptlist::
 : |-->
@@ -2121,6 +2132,7 @@ trailerOclType::
 . median _1 |-->double
 . head _1 |-->Map
 . tail _1 |-->Map
+. at _1 |-->OclAny
 
 . capitalize _1 |-->String
 . join _1 |-->String
