@@ -189,7 +189,7 @@ public class Type extends ModelElement
     if (exceptions2java.get(tname) != null) 
     { return true; } 
     return false; 
-  } // MathLib, FinanceLib, Excel, OclRegex, 
+  } // MathLib, MatrixLib, FinanceLib, Excel, OclRegex, 
     // StringLib and OclComparator are static
 
   public static boolean isDefinedType(Type t) 
@@ -4902,7 +4902,7 @@ public class Type extends ModelElement
     { Expression be = (Expression) exps.get(j);
       Type t = be.getType();
 
-      System.out.println(">> Type of expression " + be + " = " + t); 
+      // System.out.println(">> Type of expression " + be + " = " + t); 
 
       if (t == null) { }
       else if (expectedType == null)
@@ -4922,12 +4922,41 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (t.isSortedSequenceType() && 
+                 expectedType.isSortedSequenceType())
+        { expectedType = new Type("Sequence", null); 
+          expectedType.setSorted(true); 
+        } 
         else if (Type.isSequenceType(t) && 
                  Type.isSequenceType(expectedType))
         { expectedType = new Type("Sequence", null); } 
+        else if (t.isSortedSetType() && 
+                 expectedType.isSortedSetType())
+        { expectedType = new Type("Set", null); 
+          expectedType.setSorted(true); 
+        } 
         else if (Type.isSetType(t) && 
                  Type.isSetType(expectedType))
         { expectedType = new Type("Set", null); } 
+        else if (t.isSortedMapType() && 
+                 expectedType.isSortedMapType())
+        { Type expectedKeyType = null; 
+          if (t.getKeyType() != null && 
+              t.getKeyType().equals(expectedType.getKeyType()))
+          { expectedKeyType = t.getKeyType(); }
+          expectedType = new Type("Map", null); 
+          expectedType.setKeyType(expectedKeyType);
+          expectedType.setSorted(true); 
+        } 
+        else if (Type.isMapType(t) && 
+                 Type.isMapType(expectedType))
+        { Type expectedKeyType = null; 
+          if (t.getKeyType() != null && 
+              t.getKeyType().equals(expectedType.getKeyType()))
+          { expectedKeyType = t.getKeyType(); }
+          expectedType = new Type("Map", null);
+          expectedType.setKeyType(expectedKeyType); 
+        }  
         else if (tn1.equals(tn2))
         { } // both maps, both sequences, both sets
         else 
@@ -4973,12 +5002,41 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (t.isSortedSequenceType() && 
+                 expectedType.isSortedSequenceType())
+        { expectedType = new Type("Sequence", null); 
+          expectedType.setSorted(true); 
+        } 
         else if (Type.isSequenceType(t) && 
                  Type.isSequenceType(expectedType))
         { expectedType = new Type("Sequence", null); } 
+        else if (t.isSortedSetType() && 
+                 expectedType.isSortedSetType())
+        { expectedType = new Type("Set", null); 
+          expectedType.setSorted(true); 
+        } 
         else if (Type.isSetType(t) && 
                  Type.isSetType(expectedType))
         { expectedType = new Type("Set", null); } 
+        else if (t.isSortedMapType() && 
+                 expectedType.isSortedMapType())
+        { Type expectedKeyType = null; 
+          if (t.getKeyType() != null && 
+              t.getKeyType().equals(expectedType.getKeyType()))
+          { expectedKeyType = t.getKeyType(); }
+          expectedType = new Type("Map", null); 
+          expectedType.setKeyType(expectedKeyType);
+          expectedType.setSorted(true); 
+        } 
+        else if (Type.isMapType(t) && 
+                 Type.isMapType(expectedType))
+        { Type expectedKeyType = null; 
+          if (t.getKeyType() != null && 
+              t.getKeyType().equals(expectedType.getKeyType()))
+          { expectedKeyType = t.getKeyType(); }
+          expectedType = new Type("Map", null); 
+          expectedType.setKeyType(expectedKeyType);
+        } 
         else if (tn1.equals(tn2)) { } 
         else 
         { Entity e1 = expectedType.getEntity(); 
@@ -5071,14 +5129,43 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (t.isSortedSequenceType() && 
+                 expectedType.isSortedSequenceType())
+        { expectedType = new Type("Sequence", null); 
+          expectedType.setSorted(true); 
+        } 
         else if (Type.isSequenceType(t) && 
                  Type.isSequenceType(expectedType))
         { expectedType = new Type("Sequence", null); 
-          JOptionPane.showInputDialog("** Deduced element type " + expectedType + " for " + elems); 
+          // JOptionPane.showInputDialog("** Deduced element type " + expectedType + " for " + elems); 
+        } 
+        else if (t.isSortedSetType() && 
+                 expectedType.isSortedSetType())
+        { expectedType = new Type("Set", null); 
+          expectedType.setSorted(true); 
         } 
         else if (Type.isSetType(t) && 
                  Type.isSetType(expectedType))
         { expectedType = new Type("Set", null); } 
+        else if (t.isSortedMapType() && 
+                 expectedType.isSortedMapType())
+        { Type expectedKeyType = null; 
+          if (t.getKeyType() != null && 
+              t.getKeyType().equals(expectedType.getKeyType()))
+          { expectedKeyType = t.getKeyType(); }
+          expectedType = new Type("Map", null); 
+          expectedType.setKeyType(expectedKeyType);
+          expectedType.setSorted(true); 
+        } 
+        else if (Type.isMapType(t) && 
+                 Type.isMapType(expectedType))
+        { Type expectedKeyType = null; 
+          if (t.getKeyType() != null && 
+              t.getKeyType().equals(expectedType.getKeyType()))
+          { expectedKeyType = t.getKeyType(); }
+          expectedType = new Type("Map", null); 
+          expectedType.setKeyType(expectedKeyType);
+        } 
         else if (tn1.equals(tn2)) { }
         else if (expectedType.isEnumeration() && 
                  t.isEnumeration())
