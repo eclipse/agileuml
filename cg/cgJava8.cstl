@@ -9,7 +9,7 @@
 
 
 Package::
-package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java.util.*;\nimport java.util.Map;\nimport java.util.HashMap;\nimport java.io.Serializable;\nimport java.util.function.Function;\n\n\n_2 \n_3\npublic class _1\n{ public static void main(String[] args) { }\n\n_4 \n}\n
+package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java.util.*;\nimport java.util.Map;\nimport java.util.HashMap;\nimport java.util.TreeMap;\nimport java.io.Serializable;\nimport java.util.function.Function;\n\n\n_2 \n_3\npublic class _1\n{ public static void main(String[] args) { }\n\n_4 \n}\n
 
 
 
