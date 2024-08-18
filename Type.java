@@ -840,25 +840,36 @@ public class Type extends ModelElement
       return false; 
     } 
 
-    if (t1name.equals("Sequence") && t2name.equals("Sequence"))
+    if (t1name.equals("Sequence") && t2name.equals("Sequence") && 
+        t1.isSorted() == t2.isSorted())
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       return Type.isRecursiveSubtype(et1,et2); 
     } 
 
-    if (t1name.equals("Set") && t2name.equals("Sequence"))
+  /*  if (t1name.equals("Set") && t2name.equals("Sequence"))
+    { Type et1 = t1.getElementType(); 
+      Type et2 = t2.getElementType(); 
+      return Type.isRecursiveSubtype(et1,et2); 
+    } */ // Maybe needed for MM matching 
+
+    if (t1name.equals("Set") && t2name.equals("Set") &&
+        t1.isSorted() == t2.isSorted())
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       return Type.isRecursiveSubtype(et1,et2); 
     } 
 
-    if (t1name.equals("Set") && t2name.equals("Set"))
+    if (t1name.equals("Map") && t2name.equals("Map") && 
+        t1.isSorted() == t2.isSorted() &&
+        t1.getKeyType() != null && 
+        t1.getKeyType().equals(t2.getKeyType()))
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       return Type.isRecursiveSubtype(et1,et2); 
     } 
 
-    if (t1name.equals("Map") && t2name.equals("Map"))
+    if (t1name.equals("Ref") && t2name.equals("Ref"))
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       return Type.isRecursiveSubtype(et1,et2); 
@@ -1113,7 +1124,8 @@ public class Type extends ModelElement
       return false; 
     } 
 
-    if (t1name.equals("Sequence") && t2name.equals("Sequence"))
+    if (t1name.equals("Sequence") && t2name.equals("Sequence") &&
+        t1.isSorted() == t2.isSorted())
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       if (et1 == null) 
@@ -1126,7 +1138,8 @@ public class Type extends ModelElement
     if (t1name.equals("Set") && t2name.equals("Sequence"))
     { return false; } 
 
-    if (t1name.equals("Set") && t2name.equals("Set"))
+    if (t1name.equals("Set") && t2name.equals("Set") &&
+        t1.isSorted() == t2.isSorted())
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       if (et1 == null) 
@@ -1136,7 +1149,8 @@ public class Type extends ModelElement
       return et1.getName().equals(et2.getName()); 
     } 
 
-    if (t1name.equals("Map") && t2name.equals("Map"))
+    if (t1name.equals("Map") && t2name.equals("Map") &&
+        t1.isSorted() == t2.isSorted())
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       if (et1 == null) 
@@ -1144,7 +1158,7 @@ public class Type extends ModelElement
       if (et2 == null) 
       { return true; } 
       return et1.getName().equals(et2.getName()); 
-    } 
+    } // also the key types are the same. 
 
     return false; 
   } 
@@ -5888,7 +5902,8 @@ public class Type extends ModelElement
     String t1name = t1.getName(); 
     String t2name = t2.getName(); 
 	
-    if (t1.isCollection() && t2.isCollection() && t1name.equals(t2name))
+    if (t1.isCollection() && t2.isCollection() && 
+        t1name.equals(t2name))
     { return typeCompatible(elemt1, elemt1, elemt2, elemt2); }   // sets and sequences of compatible types
 	
 	if (t1.isCollection() && !t2.isCollection())
@@ -5905,14 +5920,15 @@ public class Type extends ModelElement
 	if (t1.isNumeric() && t2.isString())
 	{ return true; }
 	
-	if ((t1name + "").equals("int") && (t2name + "").equals("long")) 
-    { return true; } // and other cases where t1 is a subtype of t2
+     if ((t1name + "").equals("int") && 
+         (t2name + "").equals("long")) 
+     { return true; } // and other cases where t1 is a subtype of t2
     
-    if ((t1name + "").equals(t2name + "")) 
-    { return true; }  
+     if ((t1name + "").equals(t2name + "")) 
+     { return true; }  
     
-    return false; 
-  } 
+     return false; 
+   } 
 
   public static Type randomType(Vector entities)
   { double dd = Math.random(); 

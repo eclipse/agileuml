@@ -342,6 +342,20 @@ public class UCDArea extends JPanel
     return names; 
   } 
 
+  public Vector allAttributeNames()
+  { Vector names = new Vector(); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+
+      if (ent.isComponent()) 
+      { continue; } 
+
+      Vector entatts = ent.allAttributeNames();
+      names = VectorUtil.union(names,entatts); 
+    } 
+    return names; 
+  } 
+
   public void randomModels2Java()
   { File file = new File("./cg/uml2java.cstl");
 	  
@@ -18368,20 +18382,47 @@ public void produceCUI(PrintWriter out)
     Vector opnames = allOperationNames(); 
     Vector vnames = allVariableNames();
 
+    Vector attnames = allAttributeNames(); 
+    // For Java, C#, have setters, getters for each of these. 
+
     Vector modelIdentifiers = VectorUtil.union(enames,opnames);  
     modelIdentifiers = VectorUtil.union(modelIdentifiers,vnames);  
     modelIdentifiers.remove("skip"); 
 
+    Vector javaIdentifiers = (Vector) modelIdentifiers.clone();
+    for (int i = 0; i < attnames.size(); i++) 
+    { String attname = (String) attnames.get(i); 
+      javaIdentifiers.add("set" + attname); 
+      javaIdentifiers.add("get" + attname);
+    } 
+
     Vector esub = (Vector) modelIdentifiers.clone(); 
     esub.removeAll(sourceIdentifiers);  // in model, not source
+
 
     Vector csub = (Vector) sourceIdentifiers.clone(); 
     csub.removeAll(modelIdentifiers);  // in source, not model
 
 
-    Vector sids = VectorUtil.asSet(sourceIdentifiers); 
+    Vector sids = VectorUtil.asSet(sourceIdentifiers);
+
+    System.out.println(">> There are " + sids.size() + " source identifiers"); 
+ 
     Vector mids =
                   VectorUtil.asSet(modelIdentifiers);
+
+    System.out.println(">> There are " + mids.size() + " model identifiers"); 
+
+    Vector pidens = new Vector(); 
+    pidens.addAll(mids); 
+    pidens.add("__init__"); 
+    pidens.add("ocl"); 
+
+    Vector jids = VectorUtil.asSet(javaIdentifiers);
+
+    System.out.println(">> There are " + jids.size() + " Java/C# identifiers"); 
+
+    System.out.println(">> There are " + pidens.size() + " Python identifiers"); 
 
     Vector mextra = VectorUtil.asSet(esub); 
     Vector sextra = VectorUtil.asSet(csub); 
@@ -18401,6 +18442,49 @@ public void produceCUI(PrintWriter out)
     if (sids.size() > 0)
     { System.out.println(">> Model completeness with source = "); 
       System.out.println("  " + (1.0 - (1.0*sextra.size())/sids.size())); 
+    }  
+
+    System.out.println(); 
+
+    Vector jadded = (Vector) jids.clone(); 
+    jadded.removeAll(sourceIdentifiers);  // in Java, not source
+
+    Vector svect = (Vector) sourceIdentifiers.clone(); 
+    svect.removeAll(jids);  // in source, not Java
+
+    System.out.println(); 
+    System.out.println(">> Names: " + svect + " occur in source, not Java"); 
+
+    System.out.println(); 
+    System.out.println(">> Names: " + jadded + " occur in Java, not source"); 
+    System.out.println(); 
+
+    if (jids.size() > 0)
+    { System.out.println(">> Java/C# consistency with source = "); 
+      System.out.println("  " + (1.0 - (1.0*jadded.size())/jids.size())); 
+    }  
+                     
+    if (jids.size() > 0)
+    { System.out.println(">> Java/C# completeness with source = "); 
+      System.out.println("  " + (1.0 - (1.0*svect.size())/sids.size())); 
+    }  
+
+    System.out.println(); 
+
+    Vector spvect = (Vector) sourceIdentifiers.clone(); 
+    spvect.removeAll(pidens);  // in source, not Python
+
+    Vector padded = (Vector) pidens.clone(); 
+    padded.removeAll(sourceIdentifiers);  // in Python, not source
+
+    if (pidens.size() > 0)
+    { System.out.println(">> Python consistency with source = "); 
+      System.out.println("  " + (1.0 - (1.0*padded.size())/pidens.size())); 
+    }  
+                     
+    if (jids.size() > 0)
+    { System.out.println(">> Python completeness with source = "); 
+      System.out.println("  " + (1.0 - (1.0*spvect.size())/sids.size())); 
     }  
 
     System.out.println(); 
