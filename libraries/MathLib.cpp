@@ -140,6 +140,30 @@ MathLib::setix(( MathLib::getix() * 171 ) % 30269);
     return result;
   }
 
+  int MathLib::bitwiseRotateRight(int x, int n)
+  {
+    if (n <= 0)
+    {
+        return x;
+    }
+    int m = n % 32;
+    int arg1 = x % ((int) pow(2, m));
+    return (arg1 << (32 - m)) | (x >> m);
+  }
+
+ int MathLib::bitwiseRotateLeft(int x, int n)
+ {
+    if (n <= 0)
+    {
+        return x;
+    }
+
+    int m = n % 32; 
+    int arg1 = (int) (x << m); 
+    return arg1 | (x >> (32 - m));
+ }
+
+
   int MathLib::bitwiseAnd(int x,int y)
   { return x&y; }
 

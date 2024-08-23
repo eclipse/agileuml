@@ -222,6 +222,42 @@ class MathLib:
   def bitwiseNot(x) : 
     return ~x
 
+  def bitwiseRotateLeft(x, n):
+    return int(f"{x:032b}"[n:] + f"{x:032b}"[:n], 2)
+
+  def mask1(n):
+    if n >= 0:
+       return 2**n - 1
+    else:
+       return 0
+
+  def bitwiseRotateRight(n, rotations) :
+    # bitwise right rotations of integer n,
+    # for a given bit field width = 4 bytes (int).
+    # or 8 bytes (long)
+
+    width = 4 # OCL int
+    bits = 8*width
+    rotations %= bits  #  width bytes = 8*bytes bits
+    if rotations < 1 :
+        return n
+    mask = MathLib.mask1(bits)  # store the mask
+    n &= mask
+    return (n >> rotations) | ((n << (bits - rotations)) & mask) 
+
+  def rotateLeft(x, n) : 
+    if n <= 0 : 
+      return x
+    m = n % 32
+    arg1 = (x << m) % (2 << 32)
+    return arg1 | (x >> (32 - m))
+
+  def rotateRight(x, n) : 
+    if n <= 0 : 
+      return x
+    m = n % 32
+    arg1 = (x % (2**m))
+    return (arg1 << (32-m)) | (x >> m)    
 
   def toBitSequence(x) : 
     x1 = x  
@@ -746,11 +782,11 @@ class FinanceLib :
 
 # print(FinanceLib.discountDiscrete(100,0.1,5))
 # print(FinanceLib.presentValueDiscrete(0.01, [-100,2,102]))
-print(FinanceLib.netPresentValueDiscrete(0.01, [-100,0.5,100.5]))
-print(FinanceLib.irrDiscrete([-100,0.5,100.5]))
+# print(FinanceLib.netPresentValueDiscrete(0.01, [-100,0.5,100.5]))
+# print(FinanceLib.irrDiscrete([-100,0.5,100.5]))
 
-print(FinanceLib.netPresentValueDiscrete(0.01, [-95,2,2,2,102]))
-print(FinanceLib.irrDiscrete([-95,2,2,2,102]))
+# print(FinanceLib.netPresentValueDiscrete(0.01, [-95,2,2,2,102]))
+# print(FinanceLib.irrDiscrete([-95,2,2,2,102]))
 
 # print(MathLib.roundN(22.555,2))
 # print(MathLib.roundN(33.5,0))
@@ -829,4 +865,7 @@ print(FinanceLib.irrDiscrete([-95,2,2,2,102]))
 # print(p(2))
 # print(p(3))
 
-print(MathLib.intPower(5,-3))
+# print(MathLib.intPower(5,-3))
+
+# print(MathLib.rotleft(10,2))
+# print(MathLib.bitwiseRotateLeft(10,2))

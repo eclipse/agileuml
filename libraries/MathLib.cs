@@ -368,7 +368,16 @@
             return res;
         }
 
+        public static int bitwiseRotateLeft(int x, int n)
+        {
+            return (int) BitOperations.RotateLeft((uint) x, n);
+        }
 
+        public static int bitwiseRotateRight(int x, int n)
+        {
+            return (int) BitOperations.RotateRight((uint) x, n);
+        }
+		
         public static int bitwiseAnd(int x, int y)
         { return x & y; }
 

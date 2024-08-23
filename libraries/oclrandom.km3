@@ -1,6 +1,6 @@
 package oclrandom { 
 
-/* Twister or Sobol sequences */
+/* LCG, PCG, Twister or Sobol sequences */
 
 
   class OclRandom {
@@ -12,7 +12,7 @@ package oclrandom {
     attribute iy : int;
     attribute iz : int;
 
-    attribute algorithm : String := "congruence"; 
+    attribute algorithm : String := "LCG"; 
 
     attribute distribution : String; 
 
@@ -67,6 +67,10 @@ package oclrandom {
         OclRandom._defaultInstanceOclRandom := OclRandom.newOclRandom()
       else skip ; 
       return OclRandom._defaultInstanceOclRandom; 
+
+    operation setAlgorithm(algo : String) : void
+    pre: true 
+    post: algorithm = algo; 
 
     operation setSeeds(x : int , y : int , z : int ) : void
     pre: true

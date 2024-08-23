@@ -290,6 +290,12 @@ class MathLib
     { res.add(0,0); }   
     return res; 
   } 
+  
+  public static int bitwiseRotateRight(int x, int y)
+  { return Integer.rotateRight(x,y); }
+
+  public static int bitwiseRotateLeft(int x, int y)
+  { return Integer.rotateLeft(x,y); }
 
   public static int bitwiseAnd(int x,int y)
   { return x&y; }
@@ -618,7 +624,15 @@ class MathLib
   }
 
   public static void main(String[] args)
-  { /* Function<Double,Double> f = (x) -> { return x*x*x - 0.5; };
+  { 
+    System.out.println(MathLib.bitwiseRotateRight(1024,2)); 
+    System.out.println(MathLib.bitwiseRotateLeft(10,2));
+	
+	// print(MathLib.rotleft(10000000000,2))
+    System.out.println(MathLib.bitwiseRotateLeft(1000000000,2)); 
+ 
+	
+    /* Function<Double,Double> f = (x) -> { return x*x*x - 0.5; };
      
 	double v = MathLib.bisectionAsc(0.5,0,1,f,0.001); 
 	System.out.println(v);

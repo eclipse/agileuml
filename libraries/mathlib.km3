@@ -180,6 +180,24 @@ package mathlib {
   static query bitwiseNot(x : int) : int
   pre: true post: result = -(x+1); 
 
+  static query bitwiseRotateRight(x : int, n : int) : int
+  pre: true post: true
+  activity : 
+    if n <= 0 then return x else skip ; 
+    var m : int := (n mod 32) ; 
+    var arg1 : int := (x mod (2->pow(m))) ; 
+    return MathLib.bitwiseOr(arg1 * (2->pow(32-m)), x / (2->pow(m)));
+
+  static query bitwiseRotateLeft(x : int, n : int) : int
+  pre: n >= 0 
+  post: true
+  activity : 
+    if n <= 0 then return x else skip ; 
+    var m : int := (n mod 32) ; 
+    var arg1 : int := (x * (2->pow(m)))->oclAsType(int) ; 
+    return MathLib.bitwiseOr(arg1, x / (2->pow(32 - m)));
+  
+
   static query toBitSequence(x : long) : Sequence(boolean)
   pre: true post: true
   activity: 

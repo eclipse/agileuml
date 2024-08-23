@@ -85,6 +85,10 @@ class MathLib
 
   static long bitwiseNot(long x);
 
+  static int bitwiseRotateLeft(int x, int n); 
+
+  static int bitwiseRotateRight(int x, int n); 
+ 
   static vector<bool>* toBitSequence(long x);
 
   static long modInverse(long n,long p);

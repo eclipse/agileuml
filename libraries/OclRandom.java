@@ -8,7 +8,8 @@ import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.Collections;
 
-class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new ArrayList<OclRandom>();
+class OclRandom { 
+  static ArrayList<OclRandom> OclRandom_allInstances = new ArrayList<OclRandom>();
 
   OclRandom() { OclRandom_allInstances.add(this); }
 
@@ -19,6 +20,7 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
   int iy = 0;
   int iz = 0;
   String distribution = "uniform"; 
+  String algorithm = "LCG"; /* also PCG */ 
 
   double bernoulliP = 0.0; 
   int binomialN = 1; 
@@ -29,6 +31,7 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
   private double uniformUpper = 1.0; 
 
   private static OclRandom _defaultInstanceOclRandom = null; 
+  private Pcg32 pcg; 
 
   String oclrandomId = ""; /* primary */
   static Map<String,OclRandom> OclRandom_index = new HashMap<String,OclRandom>();
@@ -199,6 +202,8 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
     this.ix = x;
     this.iy = y;
     this.iz = z;
+    if ("PCG".equals(algorithm))
+    { pcg.seed(x,y); } 
   }
 
 
@@ -207,8 +212,14 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
     this.ix = (int) (n % 30269);
     this.iy = (int) (n % 30307);
     this.iz = (int) (n % 30323);
+    if ("PCG".equals(algorithm))
+    { pcg.seed(n,n); } 
   }
 
+  public void setAlgorithm(String algo)
+  { if ("PCG".equals(algo))
+    { pcg = new Pcg32(); }
+  }
 
   public double nrandom()
   {
@@ -221,7 +232,9 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
 
 
   public double nextDouble()
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextDouble(); } 
+
     double result = 0.0;
     double r = 0.0;
     r = this.nrandom();
@@ -231,7 +244,9 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
 
 
   public double nextFloat()
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextFloat(); } 
+
     double result = 0.0;
     double r = 0.0;
     r = this.nrandom();
@@ -241,7 +256,9 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
 
 
   public double nextGaussian()
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextGaussian(); } 
+
     double result = 0.0;
     double d = 0.0;
     d = this.nrandom();
@@ -251,7 +268,9 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
 
 
   public int nextInt(int n)
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextInt(n); } 
+
     int result = 0;
     double d = 0.0;
     d = this.nextDouble();
@@ -260,14 +279,18 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
   }
 
   public int nextInt()
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextInt(); } 
+
     int result = 0;
     result = this.nextInt(2147483647);
     return result;
   }
 
   public long nextLong()
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextLong(); } 
+
     long result = 0;
     double d = 0.0;
     d = this.nextDouble();
@@ -275,8 +298,21 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
     return result;
   }
 
+  public long nextLong(long n)
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextLong(n); } 
+
+    long result = 0;
+    double d = 0.0;
+    d = this.nextDouble();
+    result = (long) Math.floor(d * n);
+    return result;
+  }
+
   public boolean nextBoolean()
-  {
+  { if ("PCG".equals(algorithm))
+    { return pcg.nextBoolean(); } 
+
     boolean result = false;
     double d = 0.0;
     d = this.nextDouble();
@@ -381,6 +417,8 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
   {
     OclRandom r = null;
     r = OclRandom.newOclRandom();
+    r.setAlgorithm("PCG"); 
+
     ArrayList res = new ArrayList();
     res = (new ArrayList());
     ArrayList old = new ArrayList();
@@ -447,5 +485,54 @@ class OclRandom { static ArrayList<OclRandom> OclRandom_allInstances = new Array
     return res;  
   } 
    
+  /* 
+  public static void main(String[] args)
+  { OclRandom lcg = OclRandom.newOclRandom(); 
+
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+
+    System.out.println(); 
+
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+
+    System.out.println(); 
+
+    System.out.println(lcg.nextGaussian()); 
+    System.out.println(lcg.nextGaussian()); 
+    System.out.println(lcg.nextGaussian()); 
+
+    System.out.println(); 
+
+    lcg.setAlgorithm("PCG"); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+    System.out.println(lcg.nextInt()); 
+
+    System.out.println(); 
+
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+    System.out.println(lcg.nextDouble()); 
+
+    System.out.println(); 
+
+    System.out.println(lcg.nextGaussian()); 
+    System.out.println(lcg.nextGaussian()); 
+    System.out.println(lcg.nextGaussian()); 
+  } */ 
 }
+
+
 
