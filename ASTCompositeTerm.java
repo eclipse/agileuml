@@ -20724,8 +20724,9 @@ public class ASTCompositeTerm extends ASTTerm
           return "MathLib.bitwiseAnd(" + e1x + ", " + e2x + ")"; 
         } 
 
-        if ("|".equals(op + "") && e1.isInteger() && 
-            e2.isInteger())
+        if ("|".equals(op + "") && 
+            (e1.isInteger() || 
+             e2.isInteger()))
         { ASTTerm.setType(this, "int");
 
           if (e1.expression != null && 
@@ -20739,9 +20740,12 @@ public class ASTCompositeTerm extends ASTTerm
           return "MathLib.bitwiseOr(" + e1x + ", " + e2x + ")"; 
         } 
 
-        if ("^".equals(op + "") && e1.isInteger() && 
-            e2.isInteger())
+        if ("^".equals(op + "") && 
+            (e1.isInteger() || 
+             e2.isInteger()))
         { ASTTerm.setType(this, "int");
+
+          // JOptionPane.showInputDialog("bitwiseOr for " + e1 + " " + e2); 
 
           if (e1.expression != null && 
               e2.expression != null) 
@@ -24897,6 +24901,54 @@ public class ASTCompositeTerm extends ASTTerm
           } 
 
           return "(" + callp1 + ")->toLong()"; 
+        } 
+        else if ("rotateRight".equals(called) && 
+                 "Integer".equals(argliteral))
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
+          
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+          
+          ASTTerm.setType(thisliteral,"int"); 
+
+          if (callarg1.expression != null && 
+              callarg2.expression != null) 
+          { Vector rargs = new Vector(); 
+            rargs.add(callarg1.expression); 
+            rargs.add(callarg2.expression); 
+
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "bitwiseRotateRight", "MathLib",
+                rargs);  
+          } 
+
+          return "MathLib.bitwiseRotateRight(" + callp1 + "," + callp2 + ")"; 
+        } 
+        else if ("rotateLeft".equals(called) && 
+                 "Integer".equals(argliteral))
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
+          
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+          
+          ASTTerm.setType(thisliteral,"int"); 
+
+          if (callarg1.expression != null && 
+              callarg2.expression != null) 
+          { Vector rargs = new Vector(); 
+            rargs.add(callarg1.expression); 
+            rargs.add(callarg2.expression); 
+
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "bitwiseRotateLeft", "MathLib",
+                rargs);  
+          } 
+
+          return "MathLib.bitwiseRotateLeft(" + callp1 + "," + callp2 + ")"; 
         } 
         else if ("longBitsToDouble".equals(called) && 
                  "Double".equals(argliteral))
@@ -35848,7 +35900,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression.setType(new Type("long", null)); 
           }
           return "(" + e1x + "/(2->pow(" + e2x + ")))->oclAsType(long)"; 
-        } 
+        } // But >>> is different to >>
 
         if ("instanceof".equals(op + ""))
         { ASTTerm.setType(this, "boolean"); 
@@ -36035,9 +36087,15 @@ public class ASTCompositeTerm extends ASTTerm
         } 
 
 
-        if ("^".equals(op + "") && e1.isInteger() && 
-            e2.isInteger())
+        if ("^".equals(op + "") && 
+            (e1.isInteger() || 
+             e2.isInteger()))
         { ASTTerm.setType(this, "int");
+
+          String e1xx = e1.toKM3(); 
+          String e2xx = e2.toKM3(); 
+       
+          JOptionPane.showInputDialog("bitwiseOr for " + e1 + " " + e2 + " " + e1.expression + " " + e2.expression); 
 
           if (e1.expression != null && 
               e2.expression != null) 
@@ -36048,7 +36106,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression.setType(new Type("int", null)); 
           } 
 
-          return "MathLib.bitwiseXor(" + e1x + ", " + e2x + ")"; 
+          return "MathLib.bitwiseXor(" + e1xx + ", " + e2xx + ")"; 
         } 
 
 

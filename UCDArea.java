@@ -9913,7 +9913,8 @@ public class UCDArea extends JPanel
     out.println("using System.Data.SqlClient;"); 
     out.println("using System.Net.Sockets;"); 
     out.println("using System.Net.Http;"); 
- 
+    out.println("using System.Numerics;");  
+
     out.println("using System.Windows.Forms;\n\n");
 
     out.println(""); 
@@ -10103,6 +10104,7 @@ public class UCDArea extends JPanel
     out2.println("#include <functional>"); 
     out2.println("#include <cstdlib>"); 
     out2.println("#include <condition_variable>");
+    out2.println("#include <bit>"); 
     out2.println("#include <sys/stat.h>"); 
     out2.println("#include <direct.h>");  
     out2.println("#include <winsock2.h>"); 
@@ -10744,7 +10746,9 @@ public void produceCUI(PrintWriter out)
     Entity oclrandom = 
       (Entity) ModelElement.lookupByName("OclRandom", entities); 
     if (oclrandom != null) 
-    { BSystemTypes.generateLibraryJava7("OclRandom",out); }
+    { BSystemTypes.generateLibraryJava7("OclRandom",out); 
+      BSystemTypes.generateLibraryJava7("Pcg32",out); 
+    }
 
     Entity oclfile = 
       (Entity) ModelElement.lookupByName("OclFile", entities); 
@@ -10885,7 +10889,8 @@ public void produceCUI(PrintWriter out)
     out.println("using System.Data.Common;"); 
     out.println("using System.Data.SqlClient;"); 
     out.println("using System.Net.Sockets;"); 
-     
+    out.println("using System.Numerics;");  
+
     out.println("using System.Windows.Forms;");
 
     for (int i = 0; i < importList.size(); i++) 
@@ -27427,7 +27432,8 @@ public void produceCUI(PrintWriter out)
       mtout.println("using System.Data.Common;");
       mtout.println("using System.Data.SqlClient;");
       mtout.println("using System.Net.Sockets;"); 
-       
+      mtout.println("using System.Numerics;");  
+
       mtout.println(); 
       mtout.println("public class MutationTest"); 
       mtout.println("{"); 

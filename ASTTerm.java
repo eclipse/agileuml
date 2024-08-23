@@ -1366,12 +1366,16 @@ public abstract class ASTTerm
   } 
 
   public boolean isInteger() 
-  { String litf = literalForm(); 
+  { 
+    String litf = literalForm(); 
     String typ = ASTTerm.getType(litf);
     if (typ == null)
     { return Expression.isInteger(litf) ||
              Expression.isLong(litf); 
     }   
+
+    // JOptionPane.showInputDialog("isInteger for " + this + " " + typ); 
+
     return ASTTerm.isInteger(typ); 
   } 
 
