@@ -1374,6 +1374,7 @@ Integer . MAX_VALUE |-->2147483647
 Integer . MIN_VALUE |-->-2147483648
 Integer . SIZE |-->32
 Integer . TYPE |-->0->oclType()
+
 int . class |-->0->oclType()
 
 Integer . _1 |-->_1`integerMethodCall
@@ -1797,6 +1798,9 @@ valueOf ( _1 ) |-->(_1`first)->toInteger()
 toBinaryString ( _1 ) |-->(MathLib.decimal2binary(_1) + "")
 toHexString ( _1 ) |-->(MathLib.decimal2hex(_1) + "")
 toOctalString ( _1 ) |-->(MathLib.decimal2octal(_1) + "")
+rotateRight ( _1 ) |-->MathLib.bitwiseRotateRight(_1)
+rotateLeft ( _1 ) |-->MathLib.bitwiseRotateLeft(_1)
+
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
