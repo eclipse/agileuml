@@ -272,9 +272,10 @@ abstract class Statement implements Cloneable
 
   public abstract java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel);
+                             java.util.Map operatorsAtLevel, 
+                             Vector vars);
   // collection operation uses at each nesting level
-  // level |-> [expr1, expr2, ...] 
+  // level |-> [expr1, expr2, ...] with iterators vars
 
   public static boolean endsWithSelfCall(
             BehaviouralFeature bf, String nme, Statement st)
@@ -2263,10 +2264,12 @@ class ReturnStatement extends Statement
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel)
+                             java.util.Map operatorsAtLevel,
+                             Vector vars)
   { if (value == null) 
     { return operatorsAtLevel; } 
-    value.collectionOperatorUses(nestingLevel, operatorsAtLevel); 
+    value.collectionOperatorUses(nestingLevel, 
+                                 operatorsAtLevel, vars); 
     return operatorsAtLevel; 
   }  
 
@@ -2812,7 +2815,8 @@ class BreakStatement extends Statement
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel)
+                             java.util.Map operatorsAtLevel, 
+                             Vector vars)
   { return operatorsAtLevel; }  
 }
 
@@ -3006,7 +3010,8 @@ class ContinueStatement extends Statement
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel)
+                             java.util.Map operatorsAtLevel,
+                             Vector vars)
   { return operatorsAtLevel; }  
 }
 
@@ -3294,8 +3299,10 @@ class InvocationStatement extends Statement
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel)
-  { callExp.collectionOperatorUses(nestingLevel, operatorsAtLevel); 
+                             java.util.Map operatorsAtLevel, 
+                             Vector vars)
+  { callExp.collectionOperatorUses(nestingLevel, 
+                                   operatorsAtLevel, vars); 
     return operatorsAtLevel; 
   }  
 
@@ -4048,9 +4055,10 @@ class ImplicitInvocationStatement extends Statement
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel)
+                             java.util.Map operatorsAtLevel, 
+                             Vector vars)
   { callExp.collectionOperatorUses(nestingLevel, 
-                                   operatorsAtLevel); 
+                                   operatorsAtLevel, vars); 
     return operatorsAtLevel; 
   }  
 
@@ -4690,21 +4698,29 @@ class WhileStatement extends Statement
     { int rcount = (int) uses.get("red"); 
       uses.set("red", rcount + 1); 
       rUses.add("!!! Nested loops can be very inefficient: " + this); 
-    }
+    } // or indeed if there is a collection iteration expr
 
     return uses; 
   } // red if nested loops. Amber for a while loop.
 
   public java.util.Map collectionOperatorUses(
                              int nestingLevel, 
-                             java.util.Map operatorsAtLevel)
+                             java.util.Map operatorsAtLevel, 
+                             Vector vars)
   { if (loopRange != null) 
     { loopRange.collectionOperatorUses(nestingLevel, 
-                                       operatorsAtLevel); 
+                                       operatorsAtLevel, 
+                                       vars); 
     }
+
+    Vector newvars = new Vector(); 
+    newvars.addAll(vars); 
+    
+    if (loopVar != null) 
+    { newvars.add("" + loopVar); } 
   
     body.collectionOperatorUses(nestingLevel + 1,
-                                operatorsAtLevel);
+                                operatorsAtLevel, newvars);
     return operatorsAtLevel; 
   }  
 
@@ -6473,9 +6489,12 @@ class CreationStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                              java.util.Map uses)
+                                 java.util.Map uses,
+                                 Vector vars)
   { if (initialExpression != null) 
-    { initialExpression.collectionOperatorUses(lev, uses); } 
+    { initialExpression.collectionOperatorUses(lev, 
+                                        uses, vars); 
+    } 
     return uses; 
   } 
 
@@ -7882,10 +7901,11 @@ class SequenceStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                              java.util.Map uses)
+                              java.util.Map uses, 
+                              Vector vars)
   { for (int i = 0; i < statements.size(); i++) 
     { Statement stat = (Statement) statements.get(i); 
-      stat.collectionOperatorUses(lev, uses); 
+      stat.collectionOperatorUses(lev, uses, vars); 
     }
 
     return uses; 
@@ -9256,14 +9276,14 @@ class CaseStatement extends Statement
   }
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                              java.util.Map uses) 
+                              java.util.Map uses, Vector vars) 
   { 
     int n = cases.elements.size();
 
     for (int i = 0; i < n; i++)
     { Maplet mm = (Maplet) cases.elements.elementAt(i);
       Statement cse = (Statement) mm.dest;
-      cse.collectionOperatorUses(lev, uses); 
+      cse.collectionOperatorUses(lev, uses, vars); 
     }
 
     return uses; 
@@ -9385,9 +9405,10 @@ class ErrorStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                    java.util.Map uses)
+                                 java.util.Map uses, 
+                                 Vector vars)
   { if (thrownObject != null) 
-    { thrownObject.collectionOperatorUses(lev, uses); } 
+    { thrownObject.collectionOperatorUses(lev, uses, vars); } 
     return uses; 
   } 
 
@@ -9714,11 +9735,12 @@ class AssertStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                    java.util.Map uses)
+                                    java.util.Map uses, 
+                                    Vector vars)
   { if (condition != null) 
-    { condition.collectionOperatorUses(lev, uses); } 
+    { condition.collectionOperatorUses(lev, uses, vars); } 
     if (message != null) 
-    { message.collectionOperatorUses(lev, uses); } 
+    { message.collectionOperatorUses(lev, uses, vars); } 
     return uses; 
   } 
 
@@ -10184,9 +10206,10 @@ class CatchStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                    java.util.Map uses)
+                                    java.util.Map uses, 
+                                    Vector vars)
   { if (action != null) 
-    { action.collectionOperatorUses(lev, uses); } 
+    { action.collectionOperatorUses(lev, uses, vars); } 
     return uses; 
   } 
 
@@ -10651,17 +10674,18 @@ class TryStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                    java.util.Map uses)
+                                    java.util.Map uses, 
+                                    Vector vars)
   { if (body != null) 
-    { body.collectionOperatorUses(lev, uses); } 
+    { body.collectionOperatorUses(lev, uses, vars); } 
     
     for (int i = 0; i < catchClauses.size(); i++) 
     { Statement stat = (Statement) catchClauses.get(i); 
-      stat.collectionOperatorUses(lev, uses); 
+      stat.collectionOperatorUses(lev, uses, vars); 
     }
 
     if (endStatement != null)
-    { endStatement.collectionOperatorUses(lev, uses); } 
+    { endStatement.collectionOperatorUses(lev, uses, vars); } 
 
     return uses; 
   } 
@@ -11519,10 +11543,10 @@ class IfStatement extends Statement
   }
 
   public java.util.Map collectionOperatorUses(int lev, 
-                          java.util.Map uses)
+                          java.util.Map uses, Vector vars)
   { for (int i = 0; i < cases.size(); i++) 
     { IfCase cse = (IfCase) cases.get(i); 
-      cse.collectionOperatorUses(lev, uses); 
+      cse.collectionOperatorUses(lev, uses, vars); 
     } 
 
     return uses; 
@@ -12567,9 +12591,10 @@ class AssignStatement extends Statement
   }  
 
   public java.util.Map collectionOperatorUses(int lev, 
-                          java.util.Map uses)
-  { rhs.collectionOperatorUses(lev, uses); 
-    lhs.collectionOperatorUses(lev, uses); 
+                          java.util.Map uses, 
+                          Vector vars)
+  { rhs.collectionOperatorUses(lev, uses, vars); 
+    lhs.collectionOperatorUses(lev, uses, vars); 
     return uses; 
   } 
 
@@ -13281,9 +13306,10 @@ class IfCase
   }
 
   public java.util.Map collectionOperatorUses(int lev, 
-                          java.util.Map uses)
-  { test.collectionOperatorUses(lev, uses); 
-    ifPart.collectionOperatorUses(lev, uses);
+                          java.util.Map uses, 
+                          Vector vars)
+  { test.collectionOperatorUses(lev, uses, vars); 
+    ifPart.collectionOperatorUses(lev, uses, vars);
     return uses; 
   }
 
@@ -13750,11 +13776,12 @@ class ConditionalStatement extends Statement
   }  
 
   public java.util.Map collectionOperatorUses(int lev, 
-                          java.util.Map uses)
+                          java.util.Map uses, 
+                          Vector vars)
 
-  { test.collectionOperatorUses(lev, uses); 
-    ifPart.collectionOperatorUses(lev, uses);
-    elsePart.collectionOperatorUses(lev, uses);
+  { test.collectionOperatorUses(lev, uses, vars); 
+    ifPart.collectionOperatorUses(lev, uses, vars);
+    elsePart.collectionOperatorUses(lev, uses, vars);
     return uses; 
   } 
 
@@ -14421,8 +14448,9 @@ class FinalStatement extends Statement
   } 
 
   public java.util.Map collectionOperatorUses(int lev, 
-                                    java.util.Map uses)
-  { body.collectionOperatorUses(lev, uses); 
+                                    java.util.Map uses, 
+                                    Vector vars)
+  { body.collectionOperatorUses(lev, uses, vars); 
     return uses; 
   } 
 

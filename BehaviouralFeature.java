@@ -4322,15 +4322,16 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public void collectionOperatorUses(int level, 
-                                     java.util.Map res)
+                                     java.util.Map res, 
+                                     Vector vars)
   { // Scan the postcondition/activity for energy expensive
     // expressions/code
 
     if (post != null) 
-    { post.collectionOperatorUses(level, res); } 
+    { post.collectionOperatorUses(level, res, vars); } 
 
     if (activity != null) 
-    { activity.collectionOperatorUses(level, res); } 
+    { activity.collectionOperatorUses(level, res, vars); } 
 
   } // and activity
 

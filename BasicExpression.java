@@ -17378,7 +17378,7 @@ public Statement generateDesignSubtract(Expression rhs)
   } 
 
   public java.util.Map collectionOperatorUses(int level, 
-                                      java.util.Map res)
+                                java.util.Map res, Vector vars)
   { //  level |-> [x.setAt(i,y), etc]
 
     if (data.equals("insertAt") || 
@@ -17391,7 +17391,14 @@ public Statement generateDesignSubtract(Expression rhs)
       if (opers == null) 
       { opers = new Vector(); } 
       opers.add(this); 
-      res.put(level, opers); 
+      res.put(level, opers);
+
+      Vector vuses = variablesUsedIn(vars); 
+      if (level > 1 && vuses.size() == 0)
+      { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+          "Use Extract local variable to optimise."); 
+      }
+ 
       return res; 
     } 
 

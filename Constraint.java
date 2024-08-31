@@ -2573,6 +2573,62 @@ public Constraint generalType0inverse()
     return res;
   }
 
+/*  public Map energyUse(Map res, Vector rUses, Vector aUses) 
+  { // Double iterations ->select(...)->select(...)
+    // are amber flags.
+    // ->select(...)->any() is a red flag.  
+
+    if (cond0 != null)
+    { cond0.energyUse(res, rUses, aUses); }
+
+    if (cond != null)
+    { cond.energyUse(res, rUses, aUses); }
+
+    if (succ != null)
+    { succ.energyUse(res, rUses, aUses); }
+
+    return res; 
+  } // Warning if multiple iteration variables
+   */ 
+
+  public java.util.Map collectionOperatorUses(int level, 
+                                      java.util.Map res, 
+                                      Vector vars)
+  { //  level |-> [x.setAt(i,y), etc]
+    Expression ante = antecedent(); 
+
+    Vector qvars1 = new Vector(); 
+    Vector lvars1 = new Vector(); 
+      
+    Vector allvars = new Vector(); 
+    Vector pars = new Vector(); 
+    pars.addAll(usecase.getParameters()); 
+    Vector pars1 = ModelElement.getNames(pars); 
+
+    if (ante != null) 
+    { Expression betrue = new BasicExpression(true); 
+      Vector v0 = new Vector(); 
+      v0.add(betrue); 
+      v0.add(betrue.clone()); 
+
+      Vector splitante = ante.splitToCond0Cond1(v0,pars1,
+                                   qvars1,lvars1,allvars);
+ 
+      System.out.println(">> Constraint variables: " + variables + " " + qvars1 + " " + lvars1);
+    }  
+      
+    if (cond0 != null)
+    { cond0.collectionOperatorUses(level, res, vars); }
+
+    if (cond != null)
+    { cond.collectionOperatorUses(level, res, vars); }
+
+    if (succ != null)
+    { succ.collectionOperatorUses(level, res, vars); }
+
+    return res; 
+  } 
+
   public boolean isRolenameOf(String f)
   { for (int i = 0; i < associations.size(); i++) 
     { Association ast = (Association) associations.get(i); 

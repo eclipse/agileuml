@@ -20452,10 +20452,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   } 
 
   public java.util.Map collectionOperatorUses(int level, 
-                                      java.util.Map res)
+                                      java.util.Map res, 
+                                      Vector vars)
   { //  level |-> [x.setAt(i,y), etc]
 
-    left.collectionOperatorUses(level,res); 
+    left.collectionOperatorUses(level,res,vars); 
 
     if (operator.equals("->including") ||
         operator.equals("->prepend") ||
@@ -20478,6 +20479,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { opers = new Vector(); } 
       opers.add(this); 
       res.put(level, opers); 
+
+      Vector vuses = variablesUsedIn(vars); 
+      if (level > 1 && vuses.size() == 0)
+      { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+          "Use Extract local variable to optimise."); 
+      }
+
       return res; 
     } 
 
@@ -20488,6 +20496,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { opers = new Vector(); } 
       opers.add(this); 
       res.put(level, opers); 
+
+      Vector vuses = variablesUsedIn(vars); 
+      if (level > 1 && vuses.size() == 0)
+      { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+          "Use Extract local variable to optimise."); 
+      }
+
       return res; 
     } 
 
@@ -20505,8 +20520,18 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { opers = new Vector(); } 
       opers.add(this); 
       res.put(level, opers); 
+
+      Vector vuses = variablesUsedIn(vars); 
+      if (level > 1 && vuses.size() == 0)
+      { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+          "Use Extract local variable to optimise."); 
+      }
       
-      right.collectionOperatorUses(level+1, res); 
+      Vector newvars = new Vector(); 
+      newvars.addAll(vars); 
+      newvars.add("self"); 
+
+      right.collectionOperatorUses(level+1, res, newvars); 
       return res; 
     } 
 
@@ -20525,12 +20550,19 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { opers = new Vector(); } 
       opers.add(this); 
       res.put(level, opers); 
+
+      BinaryExpression iter = (BinaryExpression) left; 
+      String var = "" + iter.getLeft(); 
       
-      right.collectionOperatorUses(level+1, res); 
+      Vector newvars = new Vector(); 
+      newvars.addAll(vars); 
+      newvars.add(var); 
+
+      right.collectionOperatorUses(level+1, res, newvars); 
       return res; 
     } 
 
-    right.collectionOperatorUses(level,res); 
+    right.collectionOperatorUses(level,res,vars); 
 
     return res; 
   } // and the left and right. 

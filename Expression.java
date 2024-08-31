@@ -3782,7 +3782,7 @@ public static boolean conflictsReverseOp(String op1, String op2)
                                 Vector rUses, Vector oUses); 
 
   public abstract java.util.Map collectionOperatorUses(int level, 
-                             java.util.Map res); 
+                             java.util.Map res, Vector vars); 
 
   public Expression isExistsForall(Vector foralls, Expression tracest)
   { return null; }

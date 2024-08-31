@@ -191,11 +191,12 @@ public class ConditionalExpression extends Expression
   } 
 
   public java.util.Map collectionOperatorUses(int level, 
-                             java.util.Map res)
-  { test.collectionOperatorUses(level,res); 
-    ifExp.collectionOperatorUses(level,res); 
+                             java.util.Map res, 
+                             Vector vars)
+  { test.collectionOperatorUses(level,res,vars); 
+    ifExp.collectionOperatorUses(level,res,vars); 
     java.util.Map result = 
-            elseExp.collectionOperatorUses(level,res); 
+            elseExp.collectionOperatorUses(level,res,vars); 
     return result; 
   } 
 

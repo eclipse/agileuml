@@ -1515,10 +1515,11 @@ public class SetExpression extends Expression
   }  
 
   public java.util.Map collectionOperatorUses(int level, 
-                             java.util.Map res)
+                             java.util.Map res, 
+                             Vector vars)
   { for (int i = 0; i < elements.size(); i++) 
     { Expression elem = (Expression) elements.get(i);  
-      elem.collectionOperatorUses(level, res);
+      elem.collectionOperatorUses(level, res, vars);
     } 
 
     return res; 

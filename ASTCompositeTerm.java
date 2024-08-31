@@ -34669,15 +34669,6 @@ public class ASTCompositeTerm extends ASTTerm
             (Entity) ModelElement.lookupByName(
                               cname,ASTTerm.entities); 
 
-          if (cent == null) 
-          { cent = new Entity(cname); 
-            ASTTerm.entities.add(cent); 
-          } 
-
-          Expression inst = 
-            BasicExpression.newStaticCallBasicExpression(
-              "new" + cname, cname); 
-
           ASTTerm met = (ASTTerm) terms.get(2); 
           String mname = met.literalForm(); 
 
@@ -34687,11 +34678,35 @@ public class ASTCompositeTerm extends ASTTerm
                 new Attribute("_par", 
                   new Type("OclAny", null), 
                   ModelElement.INTERNAL); 
+
           BasicExpression parvar = 
             new BasicExpression(bfpar); 
 
-          if (cent != null) 
-          { BehaviouralFeature bf = 
+          BasicExpression parmname = 
+              BasicExpression.newCallBasicExpression(mname,
+                                            parvar,
+                                            new Vector()); 
+          if (cent == null) 
+          { // cent = new Entity(cname); 
+            // ASTTerm.entities.add(cent); 
+            // It is a static operation of a standard object
+            Expression inst = cls.expression; 
+            BehaviouralFeature bf = 
+                  new BehaviouralFeature(mname);
+            bf.setResultType(new Type("OclAny", null));  
+            bf.addParameter(bfpar);
+                
+            expression = bf.makeLambdaExpression(inst);
+            //     new UnaryExpression("lambda", parmname); 
+            // ((UnaryExpression) expression).setAccumulator(bfpar);  
+          } 
+          else 
+          { Expression inst = 
+              BasicExpression.newStaticCallBasicExpression(
+                "new" + cname, cname); 
+
+
+            BehaviouralFeature bf = 
               cent.getOperation(mname); 
             if (bf == null) 
             { bf = new BehaviouralFeature(mname);
@@ -34704,15 +34719,12 @@ public class ASTCompositeTerm extends ASTTerm
 
             ASTTerm.setType(this, "Function(" + cname + ", " + rtype + ")"); 
 
-            BasicExpression parmname = 
-              BasicExpression.newCallBasicExpression(mname,
-                                                     parvar,
-                                            new Vector()); 
-
             expression = // bf.makeLambdaExpression(inst);
-              new UnaryExpression("lambda", parmname); 
-            ((UnaryExpression) expression).setAccumulator(bfpar); 
-          } 
+                new UnaryExpression("lambda", parmname); 
+            ((UnaryExpression) expression).setAccumulator(bfpar);  
+          }
+
+          // JOptionPane.showInputDialog(":: expression: " + expression); 
 
           return "lambda _par : " + cname + " in _par." + mname + "()";  
         } 

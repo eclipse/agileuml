@@ -819,10 +819,11 @@ public void findClones(java.util.Map clones,
   } 
 
   public java.util.Map collectionOperatorUses(int level, 
-                                      java.util.Map res)
+                                      java.util.Map res, 
+                                      Vector vars)
   { //  level |-> [x.setAt(i,y), etc]
 
-    argument.collectionOperatorUses(level, res); 
+    argument.collectionOperatorUses(level, res, vars); 
 
     if (operator.equals("->sort") || 
         operator.equals("->unionAll") || 
@@ -838,6 +839,13 @@ public void findClones(java.util.Map clones,
       { opers = new Vector(); } 
       opers.add(this); 
       res.put(level, opers); 
+
+      Vector vuses = variablesUsedIn(vars); 
+      if (level > 1 && vuses.size() == 0)
+      { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+          "Use Extract local variable to optimise."); 
+      }
+          
       return res; 
     } 
 

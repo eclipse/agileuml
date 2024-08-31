@@ -5557,6 +5557,7 @@ public class Entity extends ModelElement implements Comparable
     String ename = getName(); 
 
     java.util.Map collOps = new java.util.HashMap(); 
+    Vector collVars = new Vector(); // iterator vars in scope
 
     System.out.println(); 
     System.out.println("++++++++ Energy analysis of class " + ename + " ++++++++++++"); 
@@ -5573,7 +5574,7 @@ public class Entity extends ModelElement implements Comparable
 
       Map res1 = op.energyAnalysis(redDetails, amberDetails);
 
-      op.collectionOperatorUses(1, collOps); 
+      op.collectionOperatorUses(1, collOps, collVars); 
  
       int redop = (int) res1.get("red"); 
       int amberop = (int) res1.get("amber"); 
