@@ -28,6 +28,8 @@ class OclRandom :
     self.uniformLower = 0.0
     self.uniformUpper = 1.0
     self.poissonLambda = 1.0
+    self.algorithm = "LCG"
+    self.pcg = None
     OclRandom.oclrandom_instances.append(self)
 
   def newOclRandom(n = 0) :
@@ -115,16 +117,24 @@ class OclRandom :
     result = rd
     return result
 
+  def setAlgorithm(self, algo) : 
+    self.algorithm = algo
+    if algo == "PCG" : 
+      self.pcg = np.random.default_rng()
 
   def setSeed(self, n = int(time.time())) :
     self.ix = (n % 30269)
     self.iy = (n % 30307)
     self.iz = (n % 30323) 
+    if self.algorithm == "PCG" : 
+      self.pcg = np.random.default_rng(n)
  
   def setSeeds(self, x, y, z) :
     self.ix = x
     self.iy = y
     self.iz = z
+    if self.algorithm == "PCG" : 
+      self.pcg = np.random.default_rng(x)
 
   def nrandom(self) :
     result = 0.0
@@ -134,24 +144,24 @@ class OclRandom :
     return (self.ix/30269.0 + self.iy/30307.0 + self.iz/30323.0)
 
   def nextDouble(self) :
+    if self.algorithm == "PCG" : 
+      return self.pcg.random()
     result = 0.0
     r = self.nrandom()
     result = (r - int(math.floor(r)))
     return result
 
   def nextFloat(self) :
-    result = 0.0
-    r = self.nrandom()
-    result = (r - int(math.floor(r)))
-    return result
+    return self.nextDouble()
 
   def nextGaussian(self) :
-    result = 0.0
-    d = self.nrandom()
-    result = d*2.0 - 3.0
-    return result
+    if self.algorithm == "PCG" : 
+      return self.pcg.standard_normal()
+    return self.nextNormal(0,1)
 
   def nextInt(self, n = 2147483647) :
+    if self.algorithm == "PCG" : 
+      return self.pcg.integers(0, high = n)
     result = 0
     d = self.nextDouble()
     result = int(math.floor(d * n))
@@ -327,6 +337,44 @@ def allInstances_OclRandom() :
 # print(rr.nextBinomial(5,0.3))
 # print(rr.nextBinomial(5,0.3))
 
+rr = OclRandom.newOclRandom()
+
+print(rr.nextDouble())
+print(rr.nextDouble())
+print(rr.nextDouble())
+
+print("")
+
+print(rr.nextGaussian())
+print(rr.nextGaussian())
+print(rr.nextGaussian())
+
+print("")
+
+print(rr.nextInt())
+print(rr.nextInt())
+print(rr.nextInt())
+
+print("")
+
+rr.setAlgorithm("PCG")
+
+print(rr.nextDouble())
+print(rr.nextDouble())
+print(rr.nextDouble())
+
+print("")
+
+print(rr.nextGaussian())
+print(rr.nextGaussian())
+print(rr.nextGaussian())
+
+
+print("")
+
+print(rr.nextInt())
+print(rr.nextInt())
+print(rr.nextInt())
 
 
 
