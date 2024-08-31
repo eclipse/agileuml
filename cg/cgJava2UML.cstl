@@ -1158,6 +1158,12 @@ _1 ( _2 ) |-->._1(_2)
 _1 |-->._1
 
 
+dcolonObject::
+System . out |-->OclFile["System.out"]
+_1 |-->_1.new_1()
+
+
+
 queryForm::
 _1 , _2 |-->_1`queryForm
 
@@ -1188,7 +1194,7 @@ _1 ? _2 : _3 |-->if _1`queryForm then _2`queryForm else _3`queryForm endif
 
 _1 instanceof _2 |-->_1`queryForm->oclIsKindOf(_2)
 
-_1 :: _2 |-->lambda _pars : OclAny in _1.new_1()._2(_pars)
+_1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
 
 _1 . new _2 |-->(_1`queryForm)._2
 
@@ -1540,6 +1546,7 @@ count ( ) |-->->size()
 findAny ( ) |-->->any(true)
 findFirst ( ) |-->->first()
 distinct ( ) |-->->asOrderedSet()
+
 allMatch ( _1 ) |-->->forAll( _x2 | (_1)->apply(_x2) )
 anyMatch ( _1 ) |-->->exists( _x2 | (_1)->apply(_x2) )
 noneMatch ( _1 ) |-->->forAll( _x2 | not((_1)->apply(_x2)) )
@@ -2063,6 +2070,7 @@ scheduleAtFixedRate ( _1 ) |-->setTask(_1`first) ; _1`first.setSchedule(_1`tailt
 filter ( _1 ) |-->->select( _x1 | (_1)->apply(_x1) )
 mapToInt ( _1 ) |-->->collect( _x1 | (_1)->apply(_x1) )
 stream ( ) |-->
+forEach ( _1 ) |-->->forAll( _x2 | execute (_1)->apply(_x2) )
 
 absolute ( _1 ) |-->.setPosition(_1)
 updateString ( _1 ) |-->.getCurrent()[_1`first] := _1`last
@@ -2145,7 +2153,7 @@ _1 . first |-->_1->at("first")
 _1 . second |-->_1->at("second")
 _1 . third |-->_1->at("third")
 
-_1 :: _2 |-->lambda _pars : OclAny in _1.new_1()._2(_pars)
+_1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
 
 System.out |-->OclFile["System.out"]
 System.in |-->OclFile["System.in"]
@@ -2367,7 +2375,7 @@ _1 . _2 |-->_1_2`mapMethodCallQueryForm<when> _1 Map
 _1 . _2 |-->_1_2`fileMethodCallQueryForm<when> _1 File
 _1 . _2 |-->_1_2`dateMethodCallQueryForm<when> _1 Date
 
-_1 . _2 |-->_1_2`methodCallQueryForm<when>_2 methodCall
+_1 . _2 |-->_1_2`methodCallQueryForm<when> _2 methodCall
 
 _1 . _2 |-->_1._2
 
@@ -2581,6 +2589,10 @@ _1 . _2 |-->    _1 := _1_2`collectionMethodCallSideEffect<when> _1 Collection
 _1 . _2 |-->    _1_2`methodCallSideEffect<when> _1 File
     
 _1 . _2 |-->    _1`updatedObject := _1_2`methodCallSideEffect<when> _2 updatesObject
+
+
+_1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm_2<when> _2 methodCall
+
 
 _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm._2
 
