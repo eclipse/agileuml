@@ -5269,7 +5269,8 @@ public class Entity extends ModelElement implements Comparable
 
   public void extractLocalVariables()
   { // Looks for clones within operations, replaces these 
-    // by calls to new operations, or new local declarations. 
+    // by new local declarations. Also, constant expressions
+    // within loops are replaced.  
 
     java.util.Map clones = new java.util.HashMap(); 
     java.util.Map cdefs = new java.util.HashMap(); 
@@ -5287,10 +5288,8 @@ public class Entity extends ModelElement implements Comparable
 
     op.findClones(clones,cdefs); 
      
-
     // System.out.println(">> Potential clones " + clones); 
     // System.out.println(">> Potential clone definitions " + cdefs); 
-
 
     Vector vkeys = new Vector(); 
     vkeys.addAll(clones.keySet());
@@ -5306,7 +5305,7 @@ public class Entity extends ModelElement implements Comparable
 
           // If clones all in same op, then try to refactor
           // using a new local variable of the op - at first
-          // location where read frame is not subsequently 
+          // location where expr read frame is not subsequently 
           // written. 
  
           Type etype = expr.getType(); 
@@ -5324,8 +5323,8 @@ public class Entity extends ModelElement implements Comparable
               getOperation(opername); 
 
           if (VectorUtil.allElementsEqual(copies) && 
-              oper != null)
-          { System.out.println(">>> Copies in same operation " + opername); 
+              oper != null && oper.getActivity() != null)
+          { System.out.println(">>> Copies in code of operation " + opername); 
             Statement bfactivity = oper.getActivity(); 
             Statement newcode = 
               Statement.tryInsertCloneDeclaration(
@@ -5341,6 +5340,41 @@ public class Entity extends ModelElement implements Comparable
             }   
           } 
         }
+      } 
+    } 
+
+    java.util.Map collOps = new java.util.HashMap(); 
+    Vector collVars = new Vector(); // iterator vars in scope
+
+    op.collectionOperatorUses(1, collOps, collVars); 
+    System.out.println(">> Collection ops " + collOps); 
+
+    java.util.Set keys = collOps.keySet(); 
+    for (Object key : keys)
+    { Integer x = (Integer) key; 
+      if (x > 1)
+      { Vector exprs = (Vector) collOps.get(x); 
+        for (int i = 0; i < exprs.size(); i++) 
+        { Expression expr = (Expression) exprs.get(i); 
+          if (expr.refactorELV == true) // and over the size lim 
+          { System.out.println(">> Refactoring constant expression nested in loop: " + expr);
+ 
+            Type etype = expr.getType(); 
+            Type elemtype = expr.getElementType(); 
+            System.out.println(">> Loop constant expression type: " + etype + " (" + elemtype + ")"); 
+
+            Statement bfactivity = op.getActivity(); 
+            Statement newcode = 
+              Statement.tryInsertCloneDeclaration(
+                          bfactivity, expr, etype, elemtype);
+    
+            if (newcode != null) 
+            { System.out.println(">>> New code for " + op + " is " + newcode); 
+              op.setActivity(newcode); 
+              return; 
+            }
+          } 
+        } 
       } 
     } 
   } 
@@ -10206,7 +10240,13 @@ System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
   } 
 
   private void buildCloneOperationJava7(PrintWriter out)
-  { String nme = getName(); 
+  { String nme = getName();
+
+    if (isAbstract())
+    { out.println("  public abstract Object clone();\n");
+      return; 
+    }  
+     
     
     out.println("  public Object clone()"); 
     out.println("  { " + nme + " result = new " + nme + "();"); 

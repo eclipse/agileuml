@@ -264,6 +264,216 @@ public class UseCase extends ModelElement
     return uc; 
   } // but don't copy the extends list, classifier, or includes? I think you should.
 
+  public Map energyAnalysis()
+  { Map res = new Map(); 
+    res.set("red", 0); 
+    res.set("amber", 0); 
+
+    String ename = getName(); 
+
+    java.util.Map collOps = new java.util.HashMap(); 
+    Vector collVars = new Vector(); // iterator vars in scope
+
+    System.out.println(); 
+    System.out.println("++++++++ Energy analysis of usecase " + ename + " ++++++++++++"); 
+    System.out.println(); 
+
+    for (int i = 0; i < orderedPostconditions.size(); i++) 
+    { Constraint con = (Constraint) orderedPostconditions.get(i); 
+
+      Vector redDetails = new Vector(); 
+      Vector amberDetails = new Vector(); 
+      
+      Map conres = new Map(); 
+      conres.set("red", 0); 
+      conres.set("amber", 0); 
+
+      Map res1 = con.energyUse(conres,redDetails, amberDetails);
+
+      int redop = (int) res1.get("red"); 
+      int amberop = (int) res1.get("amber"); 
+
+      con.collectionOperatorUses(1, collOps, collVars); 
+
+      System.out.println(); 
+
+      if (redop > 0) 
+      { System.out.println("!!! Constraint " + con + 
+                           "\n!!! has " + redop + " energy use " +
+                           " red flags!");
+
+        for (int j = 0; j < redDetails.size(); j++) 
+        { System.out.println(redDetails.get(j)); } 
+        System.out.println(); 
+ 
+        int redscore = (int) res.get("red"); 
+        res.set("red", redscore + redop); 
+      } 
+     
+      if (amberop > 0) 
+      { System.out.println("!! Constraint " + con + 
+                           "\n!! has " + amberop + 
+                           " energy use " +
+                           " amber flags!"); 
+
+        for (int j = 0; j < amberDetails.size(); j++) 
+        { System.out.println(amberDetails.get(j)); } 
+        System.out.println(); 
+
+        int amberscore = (int) res.get("amber"); 
+        res.set("amber", amberscore + amberop); 
+      } 
+    } 
+
+    int n = ownedOperations.size(); 
+
+    for (int i = 0; i < n; i++) 
+    { BehaviouralFeature op = 
+        (BehaviouralFeature) ownedOperations.get(i); 
+      String opname = op.getName(); 
+
+      Vector redDetails = new Vector(); 
+      Vector amberDetails = new Vector(); 
+
+      Map res1 = op.energyAnalysis(redDetails, amberDetails);
+
+      op.collectionOperatorUses(1, collOps, collVars); 
+ 
+      int redop = (int) res1.get("red"); 
+      int amberop = (int) res1.get("amber"); 
+      
+      if (redop > 0) 
+      { System.out.println("!!! Operation " + opname + 
+                           " has " + redop + " energy use " +
+                           " red flags!");
+
+        for (int j = 0; j < redDetails.size(); j++) 
+        { System.out.println(redDetails.get(j)); } 
+        System.out.println(); 
+ 
+        int redscore = (int) res.get("red"); 
+        res.set("red", redscore + redop); 
+      } 
+     
+      if (amberop > 0) 
+      { System.out.println("!! Operation " + opname + 
+                           " has " + amberop + 
+                           " energy use " +
+                           " amber flags!"); 
+
+        for (int j = 0; j < amberDetails.size(); j++) 
+        { System.out.println(amberDetails.get(j)); } 
+        System.out.println(); 
+
+        int amberscore = (int) res.get("amber"); 
+        res.set("amber", amberscore + amberop); 
+      } 
+
+    } 
+
+    java.util.Set keys = collOps.keySet(); 
+
+    for (Object k : keys)
+    { if (k instanceof Integer)
+      { int lev = ((Integer) k).intValue(); 
+        if (lev > 1) 
+        { 
+         // For each level > 1, look at the operations used and 
+         // provide advice on what collections to use or not use. 
+         // If no use of indexing operations, advise to use
+         // set or bag.  
+
+          Vector maxops = (Vector) collOps.get(lev); 
+          System.out.println(">>> Level " + lev + 
+                             " operators are: " + 
+                             maxops + "\n");
+
+          for (int i = 0; i < maxops.size(); i++) 
+          { Expression maxop = (Expression) maxops.get(i); 
+
+            if (maxop instanceof UnaryExpression)
+            { UnaryExpression ue = (UnaryExpression) maxop; 
+              String oper = ue.getOperator(); 
+              Expression arg = ue.getArgument(); 
+
+              if (Expression.isOclDistributedIteratorOperator(oper))
+              { System.err.println("! Warning: " + maxop + " is a >= O(S) operation\n" + 
+                  " in the sum S of sizes of the argument elements. \n"); 
+              }
+              else if ("->max".equals(oper) || 
+                       "->min".equals(oper))
+              { if (arg.isSequence())
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(n) operation on Sequence " + arg + "\n" + 
+                    " SortedSet or SortedBag can be more efficient if no indexing is needed\n"); 
+                }
+              }
+
+              continue;   
+            }
+
+            if (maxop instanceof BinaryExpression)
+            { BinaryExpression be = (BinaryExpression) maxop;
+              String oper = be.getOperator(); 
+
+              if (Expression.isOclDistributedIteratorOperator(oper))
+              { System.err.println("! Warning: " + maxop + " is a >= O(S) operation\n" + 
+                  " in the sum S of sizes of the argument elements. \n"); 
+              }  
+              else if (
+                  Expression.isOclIteratorOperator(oper) ||
+                  "->intersection".equals(oper) || 
+                  "->restrict".equals(oper) || 
+                  "->includesAll".equals(oper) ||
+                  "->excludesAll".equals(oper) ||
+                  "<:".equals(oper) ||  
+                  "->antirestrict".equals(oper) ||
+                  "->iterate".equals(oper))
+              { System.err.println("! Warning: " + maxop + " is a >= O(n) operation in the size of the LHS collection/map. \n"); }  
+
+              if ("->union".equals(oper) || 
+                  "->symmetricDifference".equals(oper))
+              { System.err.println("! Warning: " + maxop + " is an O(n) operation in the sum of sizes of the arguments. \n"); }  
+
+              if ("->sortedBy".equals(oper) || 
+                  "|sortedBy".equals(oper))
+              { System.err.println("! Warning: " + maxop + " is an O(n*log(n)) operation in the size of the LHS. \n"); }  
+
+              if (be.getLeft().isSequence())
+              { if ("->includes".equals(oper) ||
+                    "->excludingFirst".equals(oper)) 
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(n) operation on Sequence " + be.getLeft() + "\n" + 
+                    " Set, Bag, SortedSet or SortedBag can be more efficient if no indexing is needed\n"); 
+                } 
+                else if ("->including".equals(oper))
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(log n) operation on Sequence " + be.getLeft() + "\n" + 
+                    " Set or Bag can be more efficient if no indexing is needed\n"); 
+                } 
+                else if ("->excluding".equals(oper) ||
+                         "->count".equals(oper))
+                { System.err.println("! Warning: " + oper + 
+                    " is an O(n) operation on Sequence " + be.getLeft() + "\n" + 
+                    " Set or SortedSet can be more efficient if no indexing or duplicates are needed\n"); 
+                } 
+                 
+              }
+            } 
+          } 
+        }
+      }
+    }
+
+    System.out.println(); 
+      
+System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++"); 
+    System.out.println(); 
+
+    return res; 
+  }
+
+
   public String getDescription()
   { return description; } 
 

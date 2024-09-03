@@ -537,7 +537,9 @@ public Vector singleMutants()
     be.multiplicity = multiplicity;
     be.umlkind = umlkind; 
     be.setBrackets(needsBracket); 
-    be.formalParameter = formalParameter; 
+    be.formalParameter = formalParameter;
+    be.refactorELV = refactorELV; 
+ 
     return be; 
   } // is this sufficient? 
 

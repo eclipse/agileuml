@@ -20,6 +20,7 @@ public class UnaryExpression extends Expression
   Expression argument; 
   Attribute accumulator = null;      // lambda
 
+
   // For expressions   e->size()  e->any()  s->isDeleted()  etc
 
   public UnaryExpression(String op, Expression arg)
@@ -382,7 +383,9 @@ public class UnaryExpression extends Expression
     res.elementType = elementType;  // type of elements if a set
     res.entity = entity; 
     res.multiplicity = multiplicity;
-    res.formalParameter = formalParameter; 
+    res.formalParameter = formalParameter;
+    res.refactorELV = refactorELV; 
+ 
     if (accumulator != null) 
     { Attribute newacc = 
          new Attribute(accumulator.getName(), 
@@ -843,7 +846,8 @@ public void findClones(java.util.Map clones,
       Vector vuses = variablesUsedIn(vars); 
       if (level > 1 && vuses.size() == 0)
       { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
-          "Use Extract local variable to optimise."); 
+          "Use Extract local variable to optimise.");
+        refactorELV = true;  
       }
           
       return res; 

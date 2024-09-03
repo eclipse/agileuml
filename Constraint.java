@@ -1,6 +1,6 @@
 import java.util.Vector; 
-import java.util.Map; 
-import java.util.HashMap; 
+// import java.util.Map; 
+// import java.util.HashMap; 
 import java.io.*; 
 import javax.swing.*; 
 
@@ -35,11 +35,11 @@ public class Constraint extends ConstraintOrGroup
   private boolean behavioural = true;         // generates code 
   private Vector baseEntities = new Vector(); // Entity
 
-  private java.util.Map variableRanges = new HashMap();  // String --> Expression 
+  private java.util.Map variableRanges = new java.util.HashMap();  // String --> Expression 
     // the scopes of the variables in the antecedent
   private Vector secondaryVars = new Vector(); // of String
 
-  private java.util.Map letDefinitions = new HashMap();  // String --> Expression 
+  private java.util.Map letDefinitions = new java.util.HashMap();  // String --> Expression 
     // the definitions of let variables in the antecedent
   private Vector letVars = new Vector();   // of String
 
@@ -2573,28 +2573,11 @@ public Constraint generalType0inverse()
     return res;
   }
 
-/*  public Map energyUse(Map res, Vector rUses, Vector aUses) 
+  public Map energyUse(Map res, Vector rUses, Vector aUses) 
   { // Double iterations ->select(...)->select(...)
     // are amber flags.
     // ->select(...)->any() is a red flag.  
 
-    if (cond0 != null)
-    { cond0.energyUse(res, rUses, aUses); }
-
-    if (cond != null)
-    { cond.energyUse(res, rUses, aUses); }
-
-    if (succ != null)
-    { succ.energyUse(res, rUses, aUses); }
-
-    return res; 
-  } // Warning if multiple iteration variables
-   */ 
-
-  public java.util.Map collectionOperatorUses(int level, 
-                                      java.util.Map res, 
-                                      Vector vars)
-  { //  level |-> [x.setAt(i,y), etc]
     Expression ante = antecedent(); 
 
     Vector qvars1 = new Vector(); 
@@ -2616,15 +2599,44 @@ public Constraint generalType0inverse()
  
       System.out.println(">> Constraint variables: " + variables + " " + qvars1 + " " + lvars1);
     }  
-      
+
     if (cond0 != null)
-    { cond0.collectionOperatorUses(level, res, vars); }
+    { cond0.energyUse(res, rUses, aUses); }
 
     if (cond != null)
-    { cond.collectionOperatorUses(level, res, vars); }
+    { cond.energyUse(res, rUses, aUses); }
 
     if (succ != null)
-    { succ.collectionOperatorUses(level, res, vars); }
+    { succ.energyUse(res, rUses, aUses); }
+
+    Vector vnames = ModelElement.getNames(variables); 
+    
+    if (vnames.size() > 0)
+    { aUses.add("!! Multiple iterator variables -- potentially expensive to execute: " + vnames + " in: " + this);
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1);
+    } 
+
+    return res; 
+  } // Warning if multiple iteration variables
+    
+
+  public java.util.Map collectionOperatorUses(int level, 
+                                      java.util.Map res, 
+                                      Vector vars)
+  { //  level |-> [x.setAt(i,y), etc]
+    
+    Vector vnames = ModelElement.getNames(variables); 
+    vnames.addAll(vars); 
+    
+    if (cond0 != null)
+    { cond0.collectionOperatorUses(level, res, vnames); }
+
+    if (cond != null)
+    { cond.collectionOperatorUses(level, res, vnames); }
+
+    if (succ != null)
+    { succ.collectionOperatorUses(level, res, vnames); }
 
     return res; 
   } 
@@ -5383,7 +5395,7 @@ public Constraint generalType0inverse()
 
   public Vector neededAssociations(Vector ents, Vector allassocs)
   { // builds up paths between ents as much as possible
-    Map paths = new HashMap(); // ents --> seq(seq(Association))
+    java.util.Map paths = new java.util.HashMap(); // ents --> seq(seq(Association))
     Vector res = new Vector(); 
     for (int i = 0; i < allassocs.size(); i++) 
     { Association ast = (Association) allassocs.get(i); 
@@ -5407,7 +5419,8 @@ public Constraint generalType0inverse()
     return res;   // extract the assocs that link needed entities
   }
 
-  private void addToPaths(Association ast, Vector ents, Map paths)
+  private void addToPaths(Association ast, Vector ents, 
+                          java.util.Map paths)
   { // ast.entity1 /: ents
     for (int i = 0; i < ents.size(); i++) 
     { Entity e = (Entity) ents.get(i); 

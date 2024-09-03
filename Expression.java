@@ -55,6 +55,8 @@ abstract class Expression
 
   protected Type sizeofType = null; 
 
+  boolean refactorELV = false; // candidate for ELV
+
   protected static Vector comparitors = new Vector(); 
   static 
   { comparitors.add("="); 
@@ -1927,6 +1929,18 @@ abstract class Expression
   public boolean isObject()
   { return type != null && type.isEntityType(); }
 
+  public boolean isCollectionValued()
+  { if (type == null) 
+    { return false; } 
+
+    String tname = type.getName(); 
+
+    if ("Set".equals(tname) || "Sequence".equals(tname) ||
+        "Map".equals(tname))
+    { return true; } 
+
+    return false; 
+  }
 
   public boolean isSetValued()
   { return type != null && type.isSet(); }

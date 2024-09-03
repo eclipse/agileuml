@@ -1567,7 +1567,8 @@ public class UCDArea extends JPanel
     } 
     
     String cloneLimit = 
-      JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+      JOptionPane.showInputDialog("Enter clone/expression size limit (default 10) for extraction: ");
+
     if (cloneLimit != null) 
     { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
       catch (Exception _ex) 
@@ -3598,6 +3599,16 @@ public class UCDArea extends JPanel
         //             ent.getName() + " is: " + cg); 
         res = Map.union(res,cg); 
       }  
+    } 
+
+    for (int j = 0; j < useCases.size(); j++) 
+    { UseCase uc = (UseCase) useCases.get(j); 
+      // if (uc.isDerived()) { continue; } 
+
+      Map scores = uc.energyAnalysis(); 
+      redFlags = redFlags + (int) scores.get("red"); 
+      amberFlags = 
+        amberFlags + (int) scores.get("amber"); 
     } 
 
     // compute transitive closure of this

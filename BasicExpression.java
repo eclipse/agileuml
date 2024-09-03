@@ -866,6 +866,7 @@ class BasicExpression extends Expression
     res.entity = entity; 
     res.mult = mult; 
     res.multiplicity = multiplicity; 
+    res.refactorELV = refactorELV; 
 
     if (arrayIndex != null) 
     { res.arrayIndex = (Expression) arrayIndex.clone(); }
@@ -17333,7 +17334,13 @@ public Statement generateDesignSubtract(Expression rhs)
     { objectRef.energyUse(res,rUses,oUses); }
 
     if (arrayIndex != null) 
-    { arrayIndex.energyUse(res,rUses,oUses); } 
+    { arrayIndex.energyUse(res,rUses,oUses); 
+      if (arrayIndex.isCollectionValued())
+      { rUses.add("!!! Expensive operation: implicit ->collect over index collection in: " + this);
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      } 
+    } 
 
     if (parameters != null) 
     { for (int i = 0; i < parameters.size(); i++) 
@@ -17396,7 +17403,8 @@ public Statement generateDesignSubtract(Expression rhs)
       Vector vuses = variablesUsedIn(vars); 
       if (level > 1 && vuses.size() == 0)
       { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
-          "Use Extract local variable to optimise."); 
+          "Use Extract local variable to optimise.");
+        refactorELV = true;  
       }
  
       return res; 

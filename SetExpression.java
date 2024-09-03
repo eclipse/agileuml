@@ -1361,7 +1361,9 @@ public class SetExpression extends Expression
     res.type = type; 
     res.elementType = elementType; 
     res.ordered = ordered; 
-    res.formalParameter = formalParameter; 
+    res.formalParameter = formalParameter;
+    res.refactorELV = refactorELV; 
+ 
 	// if (isMap())
 	// { res.setType(type); }
     return res; 
