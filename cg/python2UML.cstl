@@ -1486,6 +1486,7 @@ rangeArguments::
 ( _1 ) |-->_1`rangeArguments
 _1 |-->Integer.subrange(0, _1-1)
 _1 , _2 |-->Integer.subrange(_1, _2-1)
+_1 , _2 , -1 |-->Integer.subrange(_2 + 1, _1)->reverse()
 _1 , _2 , _3 |-->Integer.subrange(_1, _2-1)->select( $x | ($x - _1) mod _3 = 0 )
 
 sortedArguments::
@@ -1641,6 +1642,7 @@ _1 _2 |-->    var _1 _2<when> _2`colonAssign true <action> _1`defined true
 
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1`defined true
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1 matches .*\..*
+_1 _2 |-->    _1 _2<when> _2`equalAssign true, _1 matches .*\[.*
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1`hasTrailer true
 
 _1 _2 |-->    var _1 : _2`ocltype _2<when> _2`equalAssign true <action> _1`defined true, _1 _2`ocltype
