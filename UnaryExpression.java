@@ -895,7 +895,27 @@ public void findClones(java.util.Map clones,
      return "if (" + isin.queryForm(language,env,local) + ") { } else { " + setin + " }";
    }  
    else if ("->last".equals(operator))    // argument->last() := var
-   { UnaryExpression selfsize = new UnaryExpression("->size", argument);
+   { UnaryExpression selfsize = 
+         new UnaryExpression("->size", argument);
+
+     if (argument instanceof UnaryExpression && 
+         "->front".equals(
+             ((UnaryExpression) argument).operator))
+     { // arg->front()->last() := var  is 
+       // arg[arg->size()-1] := var
+       Expression innerarg = 
+           ((UnaryExpression) argument).getArgument(); 
+       BasicExpression inargclone = 
+           (BasicExpression) innerarg.clone();
+       BinaryExpression newind = 
+           new BinaryExpression("-", selfsize, 
+                            new BasicExpression(1)); 
+       inargclone.setArrayIndex(newind);
+       BinaryExpression setprelast = 
+           new BinaryExpression("=", inargclone, var);
+       return setprelast.updateForm(language,env,local);
+     }
+  
      BinaryExpression eqempty = new BinaryExpression("=", selfsize, new BasicExpression(0) );
      SetExpression se = new SetExpression();
      se.setOrdered(true);
@@ -926,7 +946,35 @@ public void findClones(java.util.Map clones,
     }  
     else if ("->front".equals(operator))
     { UnaryExpression selfsize = new UnaryExpression("->size", argument);
-      BinaryExpression neqempty = new BinaryExpression(">", selfsize, new BasicExpression(0) );
+
+      if (argument instanceof UnaryExpression && 
+          "->front".equals(
+             ((UnaryExpression) argument).operator))
+      { // arg->front()->front() := var  is 
+        // arg := arg.setSubrange(1, arg->size()-2, var)
+
+       Expression innerarg = 
+           ((UnaryExpression) argument).getArgument(); 
+       BasicExpression inargclone = 
+           (BasicExpression) innerarg.clone();
+       BinaryExpression newind = 
+           new BinaryExpression("-", selfsize, 
+                            new BasicExpression(2));
+       Vector pars = new Vector(); 
+       pars.add(new BasicExpression(1)); 
+       pars.add(newind); 
+       pars.add(var); 
+
+       BasicExpression newval = 
+          BasicExpression.newFunctionBasicExpression(
+                          "setSubrange", inargclone, pars); 
+
+       BinaryExpression setprelast = 
+           new BinaryExpression("=", inargclone, newval);
+       return setprelast.updateForm(language,env,local);
+     }
+
+     BinaryExpression neqempty = new BinaryExpression(">", selfsize, new BasicExpression(0) );
       SetExpression se = new SetExpression();
       se.setOrdered(true);
       Type t = argument.getElementType();
