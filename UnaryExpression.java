@@ -96,7 +96,8 @@ public class UnaryExpression extends Expression
     } 
     return res; 
   } 
-    
+
+      
 
   public static UnaryExpression newUnaryExpression(String op, Expression expr) 
   { if (expr == null) 

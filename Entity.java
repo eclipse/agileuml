@@ -5272,6 +5272,8 @@ public class Entity extends ModelElement implements Comparable
     // by new local declarations. Also, constant expressions
     // within loops are replaced.  
 
+    Vector anames = allAttributeNames(); 
+
     java.util.Map clones = new java.util.HashMap(); 
     java.util.Map cdefs = new java.util.HashMap(); 
 
@@ -5307,7 +5309,13 @@ public class Entity extends ModelElement implements Comparable
           // using a new local variable of the op - at first
           // location where expr read frame is not subsequently 
           // written. 
- 
+          // expr variables subset of op parameters union
+          // all attributes of this class. 
+
+          Vector vuses = expr.allVariableNames();
+          Vector auses = expr.allAttributesUsedIn(); 
+          vuses.addAll(VectorUtil.getStrings(auses)); 
+
           Type etype = expr.getType(); 
           Type elemtype = expr.getElementType(); 
           System.out.println(">> Clone expression type: " + etype + " (" + elemtype + ")"); 
@@ -5322,19 +5330,42 @@ public class Entity extends ModelElement implements Comparable
           BehaviouralFeature oper = 
               getOperation(opername); 
 
+          Vector operPars = oper.getParameters(); 
+          Vector parnames = ModelElement.getNames(operPars); 
+          Vector scopeVars = new Vector(); 
+          scopeVars.addAll(anames); 
+          scopeVars.addAll(parnames); 
+
+         System.out.println(">> Scope variables of " + expr + ": " + scopeVars); 
+         System.out.println(">> Variable uses of " + expr + ": " + vuses); 
+
           if (VectorUtil.allElementsEqual(copies) && 
-              oper != null && oper.getActivity() != null)
+              oper != null && 
+              scopeVars.containsAll(vuses))
           { System.out.println(">>> Copies in code of operation " + opername); 
+
             Statement bfactivity = oper.getActivity(); 
-            Statement newcode = 
-              Statement.tryInsertCloneDeclaration(
+            Expression bfpost = oper.getPost(); 
+
+            if (oper.getActivity() != null) 
+            { Statement newcode = 
+                Statement.tryInsertCloneDeclaration(
                           bfactivity, expr, etype, elemtype);
     
-            if (newcode != null) 
-            { System.out.println(">>> New code for " + opername + " is " + newcode); 
+              System.out.println(">>> New code for " + opername + " is " + newcode);
+ 
               oper.setActivity(newcode); 
               return; 
             }
+            else if (bfpost != null)
+            { // new let statement: 
+              Expression newpost = 
+                BinaryExpression.newLetBinaryExpression(bfpost,
+                                    etype, elemtype, expr); 
+              System.out.println(">>> New postcondition for " + opername + " is " + newpost); 
+              oper.setPost(newpost); 
+              return; 
+            } 
             else 
             { System.out.println(">>> Unable to extract variable in " + opername); 
             }   
@@ -5349,21 +5380,37 @@ public class Entity extends ModelElement implements Comparable
     op.collectionOperatorUses(1, collOps, collVars); 
     System.out.println(">> Collection ops " + collOps); 
 
+    Vector opPars = op.getParameters(); 
+    Vector opparnames = ModelElement.getNames(opPars); 
+    Vector scopeVars = new Vector(); 
+    scopeVars.addAll(anames); 
+    scopeVars.addAll(opparnames); 
+
     java.util.Set keys = collOps.keySet(); 
     for (Object key : keys)
     { Integer x = (Integer) key; 
       if (x > 1)
-      { Vector exprs = (Vector) collOps.get(x); 
+      { Vector exprs = (Vector) collOps.get(x);
+ 
         for (int i = 0; i < exprs.size(); i++) 
         { Expression expr = (Expression) exprs.get(i); 
-          if (expr.refactorELV == true) // and over the size lim 
+
+          Vector vuses = expr.allVariableNames();
+          Vector auses = expr.allAttributesUsedIn(); 
+          vuses.addAll(VectorUtil.getStrings(auses)); 
+
+          if (expr.refactorELV == true && 
+              scopeVars.containsAll(vuses)) // and > size lim 
           { System.out.println(">> Refactoring constant expression nested in loop: " + expr);
  
+
             Type etype = expr.getType(); 
             Type elemtype = expr.getElementType(); 
             System.out.println(">> Loop constant expression type: " + etype + " (" + elemtype + ")"); 
 
             Statement bfactivity = op.getActivity(); 
+            Expression bfpost = op.getPost(); 
+
             Statement newcode = 
               Statement.tryInsertCloneDeclaration(
                           bfactivity, expr, etype, elemtype);
@@ -5373,6 +5420,15 @@ public class Entity extends ModelElement implements Comparable
               op.setActivity(newcode); 
               return; 
             }
+            else if (bfpost != null)
+            { // new let statement: 
+              Expression newpost = 
+                BinaryExpression.newLetBinaryExpression(bfpost,
+                                    etype, elemtype, expr); 
+              System.out.println(">>> New postcondition for " + op + " is " + newpost); 
+              op.setPost(newpost); 
+              return; 
+            } 
           } 
         } 
       } 

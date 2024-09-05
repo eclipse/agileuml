@@ -53,6 +53,29 @@ class BinaryExpression extends Expression
     return new BinaryExpression(op,ex1,ex2); 
   } 
 
+  public static Expression newLetBinaryExpression(
+                         Expression body, 
+                         Type typ, Type etyp, 
+                         Expression expr)
+  { // let v : typ = expr in body[v/expr]
+    String vname = 
+        Identifier.nextIdentifier("factored_expr");
+    Attribute accum = 
+      new Attribute(vname, typ, ModelElement.INTERNAL); 
+    accum.setElementType(etyp); 
+
+    BasicExpression var = 
+      BasicExpression.newVariableBasicExpression(vname,typ); 
+
+    Expression sbody = body.substituteEq(expr + "", var); 
+    sbody.setBrackets(true); 
+
+    BinaryExpression res = 
+      new BinaryExpression("let", expr, sbody);
+    res.setAccumulator(accum);  
+    return res; 
+  } 
+
   public Object clone()
   { BinaryExpression res = 
       new BinaryExpression(operator,(Expression) left.clone(),(Expression) right.clone());

@@ -128,6 +128,13 @@ class VectorUtil
     return res; 
   } 
 
+  static Vector getStrings(final Vector nameds)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < nameds.size(); i++) 
+    { res.add("" + nameds.get(i)); } 
+    return res; 
+  } 
+
   static Vector vectorEqmerge(final Vector a, final Vector b)
   { Vector res = (Vector) a.clone();
     for (int i = 0; i < b.size(); i++)
