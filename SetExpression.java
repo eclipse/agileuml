@@ -703,7 +703,8 @@ public class SetExpression extends Expression
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       res = "SystemTypes.addSet(" + res + "," + 
-                Expression.wrapCSharp(elementType, e.queryFormCSharp(env,local)) + ")";
+                Expression.wrapCSharp(elementType, 
+                            e.queryFormCSharp(env,local)) + ")";
     }
 
     return res; 

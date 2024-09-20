@@ -931,19 +931,30 @@ public void findClones(java.util.Map clones,
      return "if (" + eqempty.queryForm(language,env,local) + ") { " + setarg + " } else { " + setlast + " }";
     }  
     else if ("->first".equals(operator))
-    { UnaryExpression selfsize = new UnaryExpression("->size", argument);
+    { /* UnaryExpression selfsize = new UnaryExpression("->size", argument);
       BinaryExpression eqempty = new BinaryExpression("=", selfsize, new BasicExpression(0) );
       SetExpression se = new SetExpression();
       se.setOrdered(true);
       se.addElement(var);
       BinaryExpression setarge = new BinaryExpression("=", argument, se);
-      String setarg = setarge.updateForm(language,env,local);
+      String setarg = setarge.updateForm(language,env,local); */
+
       BasicExpression argclone = (BasicExpression) argument.clone();
       argclone.setArrayIndex(new BasicExpression(1));
+      argclone.setType(type);
+      argclone.setElementType(elementType);  
+      argclone.setArrayType(argument.getType()); 
+
       BinaryExpression setfirste = new BinaryExpression("=", argclone, var);
       String setfirst = setfirste.updateForm(language,env,local);
     
-      return "if (" + eqempty.queryForm(language,env,local) + ") { " + setarg + " } else { " + setfirst + " }";
+      /* return "if (" + eqempty.queryForm(language,env,local) + ") { " + setarg + " } else { " + setfirst + " }";
+
+      return BasicExpression.updateFormEqIndex(
+                language,argument,
+                new BasicExpression(1),val,var,env,local); */
+ 
+      return setfirst;  
     }  
     else if ("->front".equals(operator))
     { UnaryExpression selfsize = new UnaryExpression("->size", argument);

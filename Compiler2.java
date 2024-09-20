@@ -2964,7 +2964,9 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   // div is only for ATL. 
 
   public Expression parseAtExpression(int bc , int pstart, int pend, Vector entities, Vector types)
-  { for (int i = pend-1; pstart < i; i--) 
+  { // e->at(i)
+
+    for (int i = pend-1; pstart < i; i--) 
     { String ss = lexicals.get(i).toString(); 
       if (ss.equals("->") && i+2 < lexicals.size() && "(".equals(lexicals.get(i+2) + "") && 
           ")".equals(lexicals.get(pend) + ""))
@@ -2979,12 +2981,54 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           { BasicExpression be = (BasicExpression) ee2;
             
             be.setArrayIndex(ee1);  
-            System.out.println(">>> Parsed basic expression: " + be); 
+            System.out.println(">>> Parsed at expression: " + be); 
             return be;
           }  
         } 
       }
-	}
+    }
+    return null; 
+  }
+
+  public Expression parseCollectExpression(int bc , int pstart, int pend, Vector entities, Vector types)
+  { // e->collect( v | f )
+
+    for (int i = pend-1; pstart < i; i--) 
+    { String ss = lexicals.get(i).toString();
+ 
+      if (ss.equals("->") && i+4 < lexicals.size() && 
+          "(".equals(lexicals.get(i+2) + "") && 
+          ")".equals(lexicals.get(pend) + ""))
+      { String ss2 = lexicals.get(i+1).toString(); 
+        String vdash = lexicals.get(i+4).toString(); 
+
+        if (i + 3 <= pend && "collect".equals(ss2) && 
+            i + 5 <= pend && "|".equals(vdash)) 
+        { // ee2->collect( ind | ee1)
+
+          Expression ind = 
+            parse_expression(bc+1, i+3, i+3, entities, types);  
+          Expression ee1 = 
+            parse_expression(bc+1,i+5,pend-1,entities, types);
+ 
+          if (ind == null || ee1 == null) 
+          { continue; }
+ 
+          Expression ee2 = 
+             parse_factor_expression(
+                       bc,pstart,i-1,entities,types); 
+
+          if (ee2 == null) { continue; } 
+
+          BinaryExpression incol = 
+            new BinaryExpression(":", ind, ee2); 
+          BinaryExpression res = 
+            new BinaryExpression("|C", incol, ee1); 
+          return res; 
+        } 
+      }
+    }
+
     return null; 
   }
   
@@ -7052,10 +7096,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             ast.setOperator(":="); 
             return ast; 
           } 
+
           Expression e1 = parse_basic_expression(0,s,i-1,entities,types); 
-          if (e1 == null) { e1 = parseAtExpression(0,s,i-1,entities,types); }
           if (e1 == null) 
-          { return null; } 
+          { e1 = parseAtExpression(0,s,i-1,entities,types); }
+          if (e1 == null) 
+          { e1 = parseCollectExpression(0,s,i-1,entities,types); }
+          if (e1 == null) 
+          { return null; }
+ 
           Expression e2 = parse_expression(0,i+1,e,entities,types); 
           if (e2 == null)
           { 

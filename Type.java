@@ -3856,7 +3856,96 @@ public class Type extends ModelElement
     { return nme; }
   }
  
- 
+  public static String typeTestJava(String lqf, String typ)
+  { if ("int".equals(typ))
+    { return "Set.isInteger(\"\" + " + lqf + ")"; } 
+    if ("long".equals(typ))
+    { return "Set.isLong(\"\" + " + lqf + ")"; } 
+    if ("double".equals(typ))
+    { return "Set.isReal(\"\" + " + lqf + ")"; } 
+
+    if ("boolean".equals(typ))
+    { return "\"true\".equals(\"\" + " + lqf + ") || \"false\".equals(\"\" + " + lqf + ")"; } 
+
+    if ("Sequence".equals(typ) || "Set".equals(typ))
+    { return lqf + " instanceof Vector"; } 
+
+    if ("Map".equals(typ))
+    { return lqf + " instanceof Map"; } 
+
+    return lqf + " instanceof " + typ; 
+  } 
+
+  public static String typeTestJava6(String lqf, String typ)
+  { if ("int".equals(typ))
+    { return "Set.isInteger(\"\" + " + lqf + ")"; } 
+    if ("long".equals(typ))
+    { return "Set.isLong(\"\" + " + lqf + ")"; } 
+    if ("double".equals(typ))
+    { return "Set.isReal(\"\" + " + lqf + ")"; } 
+
+    if ("boolean".equals(typ))
+    { return "\"true\".equals(\"\" + " + lqf + ") || \"false\".equals(\"\" + " + lqf + ")"; } 
+
+    if ("Sequence".equals(typ))
+    { return lqf + " instanceof ArrayList"; } 
+
+    if ("Set".equals(typ))
+    { return lqf + " instanceof Set"; } 
+
+    if ("Map".equals(typ))
+    { return lqf + " instanceof Map"; } 
+
+    return lqf + " instanceof " + typ; 
+  } 
+
+  public static String typeTestJava7(String lqf, String typ)
+  { if ("int".equals(typ))
+    { return "Ocl.isInteger(\"\" + " + lqf + ")"; } 
+    if ("long".equals(typ))
+    { return "Ocl.isLong(\"\" + " + lqf + ")"; } 
+    if ("double".equals(typ))
+    { return "Ocl.isReal(\"\" + " + lqf + ")"; } 
+
+    if ("boolean".equals(typ))
+    { return "\"true\".equals(\"\" + " + lqf + ") || \"false\".equals(\"\" + " + lqf + ")"; } 
+
+    if ("Sequence".equals(typ))
+    { return lqf + " instanceof ArrayList"; } 
+
+    if ("Set".equals(typ))
+    { return lqf + " instanceof Set"; } 
+
+    if ("Map".equals(typ))
+    { return lqf + " instanceof Map"; } 
+
+    return lqf + " instanceof " + typ; 
+  } 
+
+  public static String typeTestCSharp(String lqf, String typ)
+  { if ("int".equals(typ))
+    { return "SystemTypes.isInteger(\"\" + " + lqf + ")"; } 
+    if ("long".equals(typ))
+    { return "SystemTypes.isLong(\"\" + " + lqf + ")"; } 
+    if ("double".equals(typ))
+    { return "SystemTypes.isReal(\"\" + " + lqf + ")"; } 
+
+    if ("boolean".equals(typ))
+    { return "\"true\".equals(\"\" + " + lqf + ") || \"false\".equals(\"\" + " + lqf + ")"; } 
+
+    if ("Sequence".equals(typ))
+    { return lqf + " is ArrayList"; } 
+
+    if ("Set".equals(typ))
+    { return lqf + " is ArrayList"; } 
+
+    if ("Map".equals(typ))
+    { return lqf + " is Hashtable"; } 
+
+    return lqf + " is " + typ; 
+  } 
+
+
   public String getJava()
   { String nme = getName();
     if (nme.equals("Set") || nme.equals("Sequence"))

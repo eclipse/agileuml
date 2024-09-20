@@ -369,6 +369,9 @@ class BasicExpression extends Expression
     { variable.setElementType(et); } 
   } 
 
+  public void setArrayType(Type tt) 
+  { arrayType = tt; } 
+
   public static BasicExpression newASTBasicExpression(ASTTerm t)
   { BasicExpression res = new BasicExpression(""); 
     if (t instanceof ASTBasicTerm)
@@ -11069,6 +11072,12 @@ public Statement generateDesignSubtract(Expression rhs)
   { // obj[ind] = val2 where obj is complex expression, 
     // either a sequence, ref or map, or 
     // itself an indexed expression
+
+    Type objt = obj.getType();
+    if (objt == null) 
+    { return "/* No type for: " + obj + " */"; } 
+ 
+    Type objet = objt.getElementType(); 
  
     if (ind != null) 
     { String indopt = ind.queryForm(env,local);
@@ -11076,10 +11085,50 @@ public Statement generateDesignSubtract(Expression rhs)
       String wind = ind.wrap(indopt); 
       String wval = var.wrap(val2); 
  
-      if (ind.type != null && "String".equals(ind.type.getName()))
+      if (ind.type != null && 
+          "String".equals(ind.type.getName()))
       { return "((Map) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
       else if (obj.isRef())
       { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
+      else if (Type.isSequenceType(objet) && 
+               (var.isNumeric() || var.isString() || 
+                var.isBoolean()))
+      { // obj[ind] := 
+        //   MatrixLib.singleValueMatrix(
+        //       Sequence{obj[ind]->size()}, var)
+
+        Expression col = 
+          new BinaryExpression("->at", obj, ind); 
+
+        SetExpression setexpr = 
+          new SetExpression(true);
+        Expression uex = new UnaryExpression("->size", col); 
+        uex.setType(new Type("int", null));  
+        setexpr.addElement(uex);
+        setexpr.setElementType(new Type("int", null));  
+
+        String setocl = 
+          "(new SystemTypes.Set().add( " + 
+                uex.queryForm(env,local) + " )).getElements()"; 
+
+
+        Vector rangepars = new Vector(); 
+        rangepars.add(setexpr); 
+        rangepars.add(var);  
+
+        BasicExpression scope = 
+          BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "Set", rangepars);
+        scope.setType(new Type("Sequence", null)); 
+        scope.setElementType(var.getType());
+        scope.umlkind = QUERY;  
+       
+
+        return 
+          BasicExpression.updateFormEqIndex(obj,ind,
+            "Set.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+            scope, env, local); 
+      }   
       else 
       { return "((Vector) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
     } 
@@ -11091,6 +11140,12 @@ public Statement generateDesignSubtract(Expression rhs)
   { // obj[ind] = val2 where obj is complex expression, 
     // either a sequence or map, or 
     // itself an indexed expression
+
+    Type objt = obj.getType();
+    if (objt == null) 
+    { return "/* No type for: " + obj + " */"; } 
+ 
+    Type objet = objt.getElementType(); 
  
     if (ind != null) 
     { String indopt = ind.queryFormJava6(env,local);
@@ -11102,6 +11157,43 @@ public Statement generateDesignSubtract(Expression rhs)
       { return "((HashMap) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
       else if (obj.isRef())
       { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
+      else if (Type.isSequenceType(objet) && 
+               (var.isNumeric() || var.isString() || 
+                var.isBoolean()))
+      { // obj[ind] := 
+        //   MatrixLib.singleValueMatrix(
+        //       Sequence{obj[ind]->size()}, var)
+
+        Expression col = 
+          new BinaryExpression("->at", obj, ind); 
+
+        SetExpression setexpr = 
+          new SetExpression(true);
+        Expression uex = new UnaryExpression("->size", col); 
+        uex.setType(new Type("int", null));  
+        setexpr.addElement(uex);
+        setexpr.setElementType(new Type("int", null));  
+
+        String setocl = 
+          "Set.addSequence(new ArrayList(), " + 
+                uex.queryFormJava6(env,local) + " )"; 
+
+        Vector rangepars = new Vector(); 
+        rangepars.add(setexpr); 
+        rangepars.add(var);  
+
+        BasicExpression scope = 
+          BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "Set", rangepars);
+        scope.setType(new Type("Sequence", null)); 
+        scope.setElementType(var.getType());
+        scope.umlkind = QUERY;  
+       
+        return 
+          BasicExpression.updateFormEqIndexJava6(obj,ind,
+            "Set.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+            scope, env, local); 
+      }   
       else 
       { return "((ArrayList) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
     } 
@@ -11114,8 +11206,9 @@ public Statement generateDesignSubtract(Expression rhs)
     // either a sequence or map, or 
     // itself an indexed expression
 
-   System.out.println(">>> Update to " + obj + "[" + ind + 
-                      "] := " + val2); 
+   JOptionPane.showInputDialog(
+            ">>> Update to " + obj + "[" + ind + 
+            "] := " + val2); 
  
    Type objt = obj.getType();
    if (objt == null) 
@@ -11133,7 +11226,48 @@ public Statement generateDesignSubtract(Expression rhs)
      if (objt.isMapType())
      { return "((" + j7type + ") " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
      else if (obj.isRef())
-     { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
+     { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }
+     else if (Type.isSequenceType(objet) && 
+              (var.isNumeric() || var.isString() || 
+               var.isBoolean()))
+     { // obj[ind] := 
+       //   MatrixLib.singleValueMatrix(
+       //       Sequence{obj[ind]->size()}, var)
+
+       Expression col = 
+         new BinaryExpression("->at", obj, ind); 
+
+       SetExpression setexpr = 
+         new SetExpression(true);
+       Expression uex = new UnaryExpression("->size", col); 
+       uex.setType(new Type("int", null));  
+       setexpr.addElement(uex);
+       setexpr.setElementType(new Type("int", null));  
+
+       String setocl = 
+         "Ocl.addSequence(new ArrayList<Integer>(), " + uex + ")"; 
+       // String setocl = 
+       //   "(new SystemTypes.Set().add( " + 
+       //         uex.queryForm(env,local) + " )).getElements()"; 
+
+
+       Vector rangepars = new Vector(); 
+       rangepars.add(setexpr); 
+       rangepars.add(var);  
+
+       BasicExpression scope = 
+         BasicExpression.newStaticCallBasicExpression(
+           "singleValueMatrix", "Ocl", rangepars);
+       scope.setType(new Type("Sequence", null)); 
+       scope.setElementType(var.getType());
+       scope.umlkind = QUERY;  
+       
+
+       return 
+         BasicExpression.updateFormEqIndexJava7(obj,ind,
+           "Ocl.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+           scope, env, local); 
+     }   
      else if (obj instanceof BasicExpression) 
      { Vector pars = new Vector(); 
        // setatpars.add(obj); 
@@ -11160,6 +11294,12 @@ public Statement generateDesignSubtract(Expression rhs)
   { // obj[ind] = val2 where obj is complex expression, 
     // either a sequence, reference or map, or 
     // itself an indexed expression
+
+    Type objt = obj.getType();
+    if (objt == null) 
+    { return "/* No type for: " + obj + " */"; } 
+ 
+    Type objet = objt.getElementType(); 
  
     if (ind != null) 
     { String indopt = ind.queryFormCSharp(env,local);
@@ -11172,6 +11312,43 @@ public Statement generateDesignSubtract(Expression rhs)
       { return "((Hashtable) " + lexp + ")[" + wind + "] = " + wval + ";"; }  // map[ind] = val2 
       else if (Type.isReferenceType(obj.type))
       { return lexp + "[" + indopt + "-1] = " + val2 + ";"; } 
+      else if (Type.isSequenceType(objet) && 
+               (var.isNumeric() || var.isString() || 
+                var.isBoolean()))
+      { // obj[ind] := 
+        //   MatrixLib.singleValueMatrix(
+        //       Sequence{obj[ind]->size()}, var)
+
+        Expression col = 
+          new BinaryExpression("->at", obj, ind); 
+
+        SetExpression setexpr = 
+          new SetExpression(true);
+        Expression uex = new UnaryExpression("->size", col); 
+        uex.setType(new Type("int", null));  
+        setexpr.addElement(uex);
+        setexpr.setElementType(new Type("int", null));  
+
+        String setocl = 
+          "SystemTypes.addSet(new ArrayList(), " + 
+                uex.queryFormCSharp(env,local) + " )"; 
+
+        Vector rangepars = new Vector(); 
+        rangepars.add(setexpr); 
+        rangepars.add(var);  
+
+        BasicExpression scope = 
+          BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "SystemTypes", rangepars);
+        scope.setType(new Type("Sequence", null)); 
+        scope.setElementType(var.getType());
+        scope.umlkind = QUERY;  
+       
+        return 
+          BasicExpression.updateFormEqIndexCSharp(obj,ind,
+            "SystemTypes.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+            scope, env, local); 
+      }   
       else 
       { return "((ArrayList) " + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
     } 
@@ -11211,7 +11388,45 @@ public Statement generateDesignSubtract(Expression rhs)
 
     String datax = data;
     if (objectRef != null) 
-    { datax = objectRef.queryFormCPP(env,local) + "." + data; } 
+    { datax = objectRef.queryForm(env,local) + "." + data; } 
+    // queryFormCPP ??
+    
+    if (Type.isSequenceType(type) && 
+        (var.isNumeric() || var.isString() || 
+         var.isBoolean()))
+     { // this := 
+       //   MatrixLib.singleValueMatrix(
+       //       Sequence{this->size()}, var)
+
+       SetExpression setexpr = 
+         new SetExpression(true); 
+
+       Expression uex = new UnaryExpression("->size", this); 
+       uex.setType(new Type("int", null));  
+       setexpr.addElement(uex);
+       setexpr.setElementType(new Type("int", null));  
+
+       String setocl = 
+         "(new SystemTypes.Set().add( " + 
+                uex.queryForm(env,local) + " )).getElements()"; 
+
+       Vector rangepars = new Vector(); 
+       rangepars.add(setexpr); 
+       rangepars.add(var);  
+
+       Expression scope = 
+         BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "Set",  rangepars);
+       scope.setType(new Type("Sequence", null)); 
+       scope.setElementType(var.getType()); 
+       scope.umlkind = QUERY;       
+
+       return 
+         this.updateFormEq(env,
+           "Set.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+           scope, local); 
+     }   
+
 
     if ("subrange".equals(data) && parameters != null && 
         objectRef != null && 
@@ -11461,6 +11676,43 @@ public Statement generateDesignSubtract(Expression rhs)
 
     // System.out.println("#### " + this + " := " + val2); 
 
+    if (Type.isSequenceType(type) && 
+        (var.isNumeric() || var.isString() || 
+         var.isBoolean()))
+     { // this := 
+       //   MatrixLib.singleValueMatrix(
+       //       Sequence{this->size()}, var)
+
+       SetExpression setexpr = 
+         new SetExpression(true); 
+
+       Expression uex = new UnaryExpression("->size", this); 
+       uex.setType(new Type("int", null));  
+       setexpr.addElement(uex);
+       setexpr.setElementType(new Type("int", null));  
+
+       String setocl = 
+         "Set.addSequence(new ArrayList(), " + 
+                uex.queryFormJava6(env,local) + " )"; 
+
+       Vector rangepars = new Vector(); 
+       rangepars.add(setexpr); 
+       rangepars.add(var);  
+
+       Expression scope = 
+         BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "Set",  rangepars);
+       scope.setType(new Type("Sequence", null)); 
+       scope.setElementType(var.getType()); 
+       scope.umlkind = QUERY;       
+
+       return 
+         this.updateFormEqJava6(env,
+           "Set.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+           scope, local); 
+     }   
+
+
     if ("subrange".equals(data) && parameters != null && 
         objectRef != null && 
         objectRef instanceof BasicExpression)
@@ -11704,9 +11956,47 @@ public Statement generateDesignSubtract(Expression rhs)
 
   public String updateFormEqJava7(java.util.Map env, String val2, Expression var, boolean local)
   { String cont = "Controller.inst()"; 
+ 
     String datax = data;
     if (objectRef != null) 
     { datax = objectRef.queryFormJava7(env,local) + "." + data; } 
+
+    if (Type.isSequenceType(type) && 
+        (var.isNumeric() || var.isString() || 
+         var.isBoolean()))
+     { // this := 
+       //   MatrixLib.singleValueMatrix(
+       //       Sequence{this->size()}, var)
+
+       SetExpression setexpr = 
+         new SetExpression(true); 
+
+       Expression uex = new UnaryExpression("->size", this); 
+       uex.setType(new Type("int", null));  
+       setexpr.addElement(uex);
+       setexpr.setElementType(new Type("int", null));  
+
+       String setocl = 
+         "Ocl.addSequence(new ArrayList<Integer>(), " + 
+                uex.queryFormJava7(env,local) + ")"; 
+
+       Vector rangepars = new Vector(); 
+       rangepars.add(setexpr); 
+       rangepars.add(var);  
+
+       Expression scope = 
+         BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "Ocl",  rangepars);
+       scope.setType(new Type("Sequence", null)); 
+       scope.setElementType(var.getType()); 
+       scope.umlkind = QUERY;       
+
+       return 
+         this.updateFormEqJava7(env,
+           "Ocl.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+           scope, local); 
+     }   
+
 
     if ("subrange".equals(data) && parameters != null && 
         objectRef != null && 
@@ -12052,6 +12342,44 @@ public Statement generateDesignSubtract(Expression rhs)
   { String cont = "Controller.inst()"; 
 
     // System.out.println(">>> Assignment " + this + " = " + val2); 
+
+     if (Type.isSequenceType(type) && 
+        (var.isNumeric() || var.isString() || 
+         var.isBoolean()))
+     { // this := 
+       //   MatrixLib.singleValueMatrix(
+       //       Sequence{this->size()}, var)
+
+       SetExpression setexpr = 
+         new SetExpression(true); 
+
+       Expression uex = new UnaryExpression("->size", this); 
+       uex.setType(new Type("int", null));  
+       setexpr.addElement(uex);
+       setexpr.setElementType(new Type("int", null));  
+
+       String setocl = 
+         "SystemTypes.addSet(new ArrayList(), " + 
+                uex.queryFormCSharp(env,local) + " )"; 
+
+       Vector rangepars = new Vector(); 
+       rangepars.add(setexpr); 
+       rangepars.add(var);  
+
+       Expression scope = 
+         BasicExpression.newStaticCallBasicExpression(
+            "singleValueMatrix", "SystemTypes",  rangepars);
+       scope.setType(new Type("Sequence", null)); 
+       scope.setElementType(var.getType()); 
+       scope.umlkind = QUERY;       
+
+       return 
+         this.updateFormEqCSharp(env,
+           "SystemTypes.singleValueMatrix(" + setocl + ", " + val2 + ")", 
+           scope, local); 
+     }   
+
+
 
     String datax = data;
 

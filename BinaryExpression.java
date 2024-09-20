@@ -6911,11 +6911,21 @@ public boolean conflictsWithIn(String op, Expression el,
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " instanceof " + right + ")"; } 
 
+    if (operator.equals("->oclIsKindOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestJava(lqf, right + "") + ")"; 
+    } 
+
     // ->oclIsTypeOf (in the exact class)
 	
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
     { return "(" + lqf + ".getClass() == " + right + ".class)"; } 
+
+    if (operator.equals("->oclIsTypeOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestJava(lqf, right + "") + ")"; 
+    } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("<:"))  
@@ -7407,9 +7417,19 @@ public boolean conflictsWithIn(String op, Expression el,
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " instanceof " + right + ")"; }  // Java6 version of type named by right
 
+    if (operator.equals("->oclIsKindOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestJava6(lqf, right + "") + ")"; 
+    } 
+
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
     { return "(" + lqf + ".getClass() == " + right + ".class)"; } 
+
+    if (operator.equals("->oclIsTypeOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestJava6(lqf, right + "") + ")"; 
+    } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -7875,9 +7895,19 @@ public boolean conflictsWithIn(String op, Expression el,
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " instanceof " + right + ")"; }  
 	
-	if (right.umlkind == CLASSID && 
+    if (operator.equals("->oclIsKindOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestJava7(lqf, right + "") + ")"; 
+    } 
+
+    if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
     { return "(" + lqf + ".getClass() == " + right + ".class)"; } 
+
+    if (operator.equals("->oclIsTypeOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestJava7(lqf, right + "") + ")"; 
+    } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -8387,17 +8417,29 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     if (right.umlkind == CLASSID && 
-        ((BasicExpression) right).arrayIndex == null && operator.equals(":"))  
+        ((BasicExpression) right).arrayIndex == null && 
+        operator.equals(":"))  
     { return "(" + lqf + " is " + right + ")"; } 
 
     if (right.umlkind == CLASSID && 
-        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
+        ((BasicExpression) right).arrayIndex == null && 
+        operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " is " + right + ")"; } 
 	
-	if (right.umlkind == CLASSID && 
-        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
+    if (operator.equals("->oclIsKindOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestCSharp(lqf, right + "") + ")"; 
+    } 
+
+    if (right.umlkind == CLASSID && 
+        ((BasicExpression) right).arrayIndex == null && 
+         operator.equals("->oclIsTypeOf"))  
     { return "(" + lqf + " is " + right + ")"; } 
 
+    if (operator.equals("->oclIsTypeOf"))  
+    { // right is a type name: int, Sequence, etc
+      return "(" + Type.typeTestCSharp(lqf, right + "") + ")"; 
+    } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -14700,6 +14742,63 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
      BinaryExpression uniexp = new BinaryExpression("->union", se, rejectg); 
      BinaryExpression assign = new BinaryExpression("=", left, uniexp); 
      return assign.updateForm(language,env,local);
+   }  
+   // else if ("->collect".equals(operator))
+   // { // col->collect( e ) := var is 
+     // for _i : Integer.subrange(1,col->size())
+     // do (var _x : T := col->at(_i); _x.e := var->at(_i))
+   // }
+   else if ("|C".equals(operator)) 
+   { BinaryExpression lbe = (BinaryExpression) left; 
+     BasicExpression vx = (BasicExpression) lbe.getLeft(); 
+     Expression col = lbe.getRight();
+
+     if (col.isSequence()) { } 
+     else 
+     { System.err.println("!! Warning: can only update a sequence via a ->collect view, not other types of collections: " + col); } 
+
+     BasicExpression _ind = 
+       BasicExpression.newVariableBasicExpression("_ind", 
+                               new Type("int", null)); 
+      
+     Vector rangepars = new Vector(); 
+     rangepars.add(new BasicExpression(1)); 
+     rangepars.add(new UnaryExpression("->size", col));  
+
+     Expression scope = 
+       BasicExpression.newFunctionBasicExpression(
+         "subrange", "Integer", rangepars);
+     scope.setType(new Type("Sequence", null)); 
+     scope.setElementType(new Type("int", null)); 
+ 
+     CreationStatement cs = new CreationStatement(vx, 
+                                   col.getElementType());
+     // Expression colclone = (Expression) col.clone(); 
+     // colclone.setArrayIndex(_ind);  
+     Expression iniExpr = new BinaryExpression("->at", col, _ind); 
+     iniExpr.setType(col.getElementType()); 
+     cs.setInitialisation(iniExpr); 
+
+     Expression rhs; 
+     if (var.isNumeric() || var.isString() || 
+         var.isBoolean())
+     { rhs = var; } 
+     else 
+     { rhs = new BinaryExpression("->at", var, _ind); 
+       rhs.setType(var.getElementType());
+     } 
+
+     AssignStatement astat = 
+       new AssignStatement(right, rhs);
+ 
+     SequenceStatement ss = new SequenceStatement(); 
+     ss.addStatement(cs); 
+     ss.addStatement(astat); 
+     ss.setBrackets(true); 
+
+     WhileStatement ws = 
+       new WhileStatement(_ind, scope, ss); 
+     return ws.updateForm(language, env, local); 
    }  
    else if ("->including".equals(operator) && Type.isSetType(type))
    { // left->intersection(var)->union(var - { right })

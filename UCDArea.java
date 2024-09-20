@@ -11386,7 +11386,7 @@ public void produceCUI(PrintWriter out)
     out.println("    public Set add(boolean x)"); 
     out.println("    { elements.add(new Boolean(x));"); 
     out.println("      return this; }\n"); 
-    out.println("    public List getElements() { return elements; }\n"); 
+    out.println("    public Vector getElements() { return elements; }\n"); 
     
     String mop = BSystemTypes.generateCopyOps(); 
     out.println("\n" + mop); 
@@ -11865,9 +11865,10 @@ public void produceCUI(PrintWriter out)
     out.println("    { s.add(new Boolean(x));"); 
     out.println("      return s; }\n"); 
 
-    out.println("    public static <T> ArrayList<T> addSequence(ArrayList<T> s, T x)"); 
-    out.println("    { if (x != null) { s.add(x); }"); 
-    out.println("      return s; }\n"); 
+    out.println("    public static <T> ArrayList<T> addSequence(ArrayList<T> s, Object x)"); 
+    out.println("    { if (x != null) { s.add((T) x); }"); 
+    out.println("      return s;"); 
+    out.println("    }\n"); 
 
     out.println("    public static <T extends Comparable<T>> SortedSequence<T> addSequence(SortedSequence<T> s, T x)");
     out.println("    { if (x != null) { s.add(x); }");

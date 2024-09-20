@@ -6689,7 +6689,31 @@ public class BSystemTypes extends BComponent
       "    res.addAll(a); \n" + 
       "    res.addAll(b); \n" + 
       "    return res;\n" + 
-      "  }\n";
+      "  }\n\n";
+
+   res = res + 
+   "  public static Vector singleValueMatrix(Vector sh, Object x)\n" + 
+   "  { Vector result;\n" + 
+   "    if ((sh).size() == 0)\n" + 
+   "    { return (new Vector()); }\n" + 
+   "    int n = (int) sh.get(0);\n" +  
+   "   \n" + 
+   "    if ((sh).size() == 1)\n" + 
+   "    { Vector _results_0 = new Vector();\n" + 
+   "      for (int _i = 0; _i < n; _i++)\n" + 
+   "      { _results_0.add(x); }\n" + 
+   "      return _results_0;\n" + 
+   "    }\n" + 
+   "\n" + 
+   "    Vector tl = (Vector) Set.tail(sh);\n" +  
+   "    Vector res = (new Vector());\n" + 
+   "    Vector _results_1 = new Vector();\n" + 
+   "    for (int _i = 0; _i < n; _i++)\n" + 
+   "    { _results_1.add(Set.singleValueMatrix(tl,x)); }\n" + 
+   "    res = (Vector) Set.concatenate(res, _results_1);\n" + 
+   "    return res;\n" + 
+   "  }\n\n"; 
+
     return res;
   }
 
@@ -6699,18 +6723,66 @@ public class BSystemTypes extends BComponent
       "    res.addAll(a); \n" + 
       "    res.addAll(b); \n" + 
       "    return res;\n" + 
-      "  }\n";
+      "  }\n\n";
+
+    res = res + 
+    "  public static ArrayList singleValueMatrix(ArrayList sh, Object x)\n" + 
+    "  { ArrayList result;\n" + 
+    "    if (sh.size() == 0)\n" + 
+    "    { return new ArrayList(); }\n" + 
+    "    int n = (int) sh.get(0);\n" +  
+    "   \n" + 
+    "    if (sh.size() == 1)\n" + 
+    "    { ArrayList _results_0 = new ArrayList();\n" + 
+    "      for (int _i = 0; _i < n; _i++)\n" + 
+    "      { _results_0.add(x); }\n" + 
+    "      return _results_0;\n" + 
+    "    }\n" + 
+    "\n" + 
+    "    ArrayList tl = (ArrayList) Set.tail(sh);\n" +  
+    "    ArrayList res = new ArrayList();\n" + 
+    "    ArrayList _results_1 = new ArrayList();\n" + 
+    "    for (int _i = 0; _i < n; _i++)\n" + 
+    "    { _results_1.add(Set.singleValueMatrix(tl,x)); }\n" + 
+    "    res = (ArrayList) Set.concatenate(res, _results_1);\n" + 
+    "    return res;\n" + 
+    "  }\n\n"; 
+
     return res;
   }
 
   public static String generateConcatOpJava7()
-  { String res = "  public static <T> ArrayList<T> concatenate(Collection<T> a, Collection<T> b)\n" +
+  { String res = "  public static <T> ArrayList<T> concatenate(Collection<T> a, Collection b)\n" +
       "  { ArrayList<T> res = new ArrayList<T>(); \n" +
       "    res.addAll(a); \n" + 
       "    res.addAll(b); \n" + 
       "    return res;\n" + 
-      "  }\n";
-    return res;
+      "  }\n\n";
+
+   res = res + 
+   "  public static ArrayList<Object> singleValueMatrix(ArrayList<Integer> sh,Object x)\n" + 
+   "  { ArrayList<Object> result;\n" + 
+   "    if ((sh).size() == 0)\n" + 
+   "    { return (new ArrayList<Object>()); }\n" + 
+   "    int n = (int) sh.get(0);\n" +  
+   "   \n" + 
+   "    if ((sh).size() == 1)\n" + 
+   "    { ArrayList<Object> _results_0 = new ArrayList<Object>();\n" + 
+   "      for (int _i = 0; _i < n; _i++)\n" + 
+   "      { _results_0.add(x); }\n" + 
+   "      return _results_0;\n" + 
+   "    }\n" + 
+   "\n" + 
+   "    ArrayList<Integer> tl = Ocl.tail(sh);\n" +  
+   "    ArrayList<Object> res = (new ArrayList<Object>());\n" + 
+   "    ArrayList<ArrayList<Object>> _results_1 = new ArrayList<ArrayList<Object>>();\n" + 
+   "    for (int _i = 0; _i < n; _i++)\n" + 
+   "    { _results_1.add(Ocl.singleValueMatrix(tl,x)); }\n" + 
+   "    res = Ocl.concatenate(res, _results_1);\n" + 
+   "    return res;\n" + 
+   "  }\n\n"; 
+
+   return res;
   }
 
   public static String generateConcatOpCSharp()
@@ -6737,6 +6809,29 @@ public class BSystemTypes extends BComponent
       "    res.Add(x); \n" +
       "    return res;\n" +
       "  }\n\n";
+
+    res = res + 
+    "  public static ArrayList singleValueMatrix(ArrayList sh, object x)\n" + 
+    "  { ArrayList result;\n" + 
+    "    if (sh.Count == 0)\n" + 
+    "    { return new ArrayList(); }\n" + 
+    "    int n = (int) sh[0];\n" +  
+    "   \n" + 
+    "    if (sh.Count == 1)\n" + 
+    "    { ArrayList _results_0 = new ArrayList();\n" + 
+    "      for (int _i = 0; _i < n; _i++)\n" + 
+    "      { _results_0.Add(x); }\n" + 
+    "      return _results_0;\n" + 
+    "    }\n" + 
+    "\n" + 
+    "    ArrayList tl = (ArrayList) SystemTypes.tail(sh);\n" +  
+    "    ArrayList res = new ArrayList();\n" + 
+    "    ArrayList _results_1 = new ArrayList();\n" + 
+    "    for (int _i = 0; _i < n; _i++)\n" + 
+    "    { _results_1.Add(SystemTypes.singleValueMatrix(tl,x)); }\n" + 
+    "    res = (ArrayList) SystemTypes.concatenate(res, _results_1);\n" + 
+    "    return res;\n" + 
+    "  }\n\n"; 
 
     return res;
   }
