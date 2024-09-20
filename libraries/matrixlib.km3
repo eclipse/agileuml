@@ -9,7 +9,7 @@ class MatrixLib {
 
    static query matrixMultiplication(m1: Sequence(Sequence(double)), m2 : Sequence(Sequence(double))) : Sequence(Sequence(double))
    pre: true
-   post: result = m1->collect( row | MathLib.rowMult(row, m2) );
+   post: result = m1->collect( row | MatrixLib.rowMult(row, m2) );
 
   static query subRows(m : Sequence(OclAny), s : Sequence(int)) : Sequence(OclAny) 
   pre: true
@@ -60,7 +60,7 @@ class MatrixLib {
       return res ; 
     return res;
 
-  static operation singleValueMatrix(sh : Sequence(int), x : double) : Sequence(OclAny)
+  static query singleValueMatrix(sh : Sequence(int), x : OclAny) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -78,7 +78,8 @@ class MatrixLib {
     res := Integer.subrange(1,sh->at(1))->collect(MatrixLib.singleValueMatrix(sh->tail(), x)) ; 
     return res; 
 
-  static operation fillMatrixFrom(sq : Sequence(double), sh : Sequence(int)) : Sequence(OclAny)
+
+  static query fillMatrixFrom(sq : Sequence(double), sh : Sequence(int)) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -108,7 +109,7 @@ class MatrixLib {
   post: 
     result = Integer.subrange(1,n)->collect( i | Integer.subrange(1,n)->collect( j | if i = j then 1.0 else 0.0 endif ) ); 
 
-  static query flattenMatrix(m : Sequence(OclAny)) : Sequence(double) 
+  static query flattenMatrix(m : Sequence(OclAny)) : Sequence(OclAny) 
   pre: true 
   post: true
   activity: 
@@ -153,7 +154,7 @@ class MatrixLib {
     else 
       return m->prd(); 
 
-   static operation elementwiseApply(m : Sequence(OclAny), f : Function(double,double)) : Sequence(OclAny)
+   static query elementwiseApply(m : Sequence(OclAny), f : Function(double,double)) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -172,7 +173,7 @@ class MatrixLib {
     return m->collect( _elem | f->apply(_elem->oclAsType(double)));
  
 
-   static operation elementwiseMult(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+   static query elementwiseMult(m : Sequence(OclAny), x : double) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -190,7 +191,27 @@ class MatrixLib {
 
     return m->collect( _elem | (_elem->oclAsType(double))*x )
 
-   static operation elementwiseDivide(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+
+  static query elementwiseAdd(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+  pre: true 
+  post: true
+  activity: 
+    if m->size() = 0 
+    then 
+      return Sequence{}
+    else skip; 
+
+    if m->at(1)->oclIsTypeOf(Sequence) 
+    then 
+      return m->collect( _r | 
+                  MatrixLib.elementwiseAdd(_r, x))
+    else 
+      skip;
+
+    return m->collect( _elem | (_elem->oclAsType(double)) + x )
+
+
+   static query elementwiseDivide(m : Sequence(OclAny), x : double) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -206,7 +227,7 @@ class MatrixLib {
     else 
       skip;
 
-   static operation elementwiseLess(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+   static query elementwiseLess(m : Sequence(OclAny), x : double) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -224,7 +245,7 @@ class MatrixLib {
 
     return m->collect( _elem | if (_elem->oclAsType(double)) < x then true else false endif )
 
-   static operation elementwiseGreater(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+   static query elementwiseGreater(m : Sequence(OclAny), x : double) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 
@@ -243,7 +264,7 @@ class MatrixLib {
     return m->collect( _elem | if (_elem->oclAsType(double)) > x then true else false endif )
 
 
-   static operation elementwiseEqual(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+   static query elementwiseEqual(m : Sequence(OclAny), x : double) : Sequence(OclAny)
   pre: true 
   post: true
   activity: 

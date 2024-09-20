@@ -31,6 +31,10 @@ package oclrandom {
     pre: true
     post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "uniform" & result = rd ); 
 
+    static operation newOclRandom_PCG() : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.algorithm = "PCG" & rd.distribution = "uniform" & result = rd ); 
+
     static operation newOclRandom_Seed(n : long) : OclRandom
     pre: true
     post: OclRandom->exists( rd | rd.ix = (n mod 30269)->oclAsType(int) & rd.iy = (n mod 30307)->oclAsType(int) & rd.iz = (n mod 30323)->oclAsType(int) & rd.distribution = "uniform" & result = rd ); 
@@ -225,6 +229,27 @@ package oclrandom {
 
     static operation randomUniqueElements(sq : Sequence, n : int) : Sequence
     pre: true post: true; 
+
+    static operation randomValuesMatrix(sh : Sequence(int)) : Sequence(OclAny)
+    pre: true 
+    post: true
+    activity: 
+      var rd : OclRandom := OclRandom.newOclRandom_PCG() ; 
+
+      if sh->size() = 0 
+      then 
+        return Sequence{}
+      else skip ; 
+
+      if sh->size() = 1 
+      then 
+        return Integer.subrange(1,sh->at(1))->collect(rd.nextDouble())
+      else skip ; 
+      
+    var res : Sequence(OclAny) ; 
+    res := Integer.subrange(1,sh->at(1))->collect(OclRandom.randomValuesMatrix(sh->tail())) ; 
+    return res; 
+
   }
 }
 

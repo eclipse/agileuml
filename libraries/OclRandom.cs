@@ -238,7 +238,7 @@
 
         public void setAlgorithm(string algo)
         { if ("PCG".Equals(algo))
-          { pcg = new Pcg(); } 
+          { pcg = new Pcg((ulong) SystemTypes.getTime() , 0xda3e39cb94b95bdbUL); } 
           algorithm = algo; 
         } 
 
@@ -272,7 +272,7 @@ public string getdistribution() { return distribution; }
         public double getpoissonLambda() { return poissonLambda; }
 
 
-         public static OclRandom newOclRandom()
+        public static OclRandom newOclRandom()
         {
             OclRandom result = null;
 
@@ -281,6 +281,21 @@ public string getdistribution() { return distribution; }
             rd.setiy(781);
             rd.setiz(913);
             rd.setdistribution("uniform");
+            result = rd;
+            return result;
+        }
+
+        public static OclRandom newOclRandom_PCG()
+        {
+            OclRandom result = null;
+
+            OclRandom rd = new OclRandom();
+            rd.setix(1001);
+            rd.setiy(781);
+            rd.setiz(913);
+            rd.setdistribution("uniform");
+            rd.algorithm = "PCG"; 
+            rd.pcg = new Pcg((ulong) SystemTypes.getTime() , 0xda3e39cb94b95bdbUL); 
             result = rd;
             return result;
         }
@@ -725,4 +740,55 @@ public string getdistribution() { return distribution; }
             return res;
         }
 
+    public static ArrayList randomList(int n, OclRandom rd)
+    { // Implements: Integer.subrange(1,sh->at(1))->collect( int_0_xx | rd.nextDouble() )
+
+      ArrayList _results_0 = new ArrayList();
+      for (int _i = 0; _i < n; _i++)
+      { _results_0.Add(rd.nextDouble()); }
+
+      return _results_0;
     }
+
+        public static ArrayList randomMatrix(int n,
+                                             ArrayList sh, OclRandom rd)
+        { // Implements: Integer.subrange(1,sh->at(1))->collect( int_1_xx | OclRandom.randomValuesMatrix(sh->tail()) )
+
+            ArrayList _results_1 = new ArrayList();
+            for (int _i = 0; _i < n; _i++)
+            {
+                _results_1.Add(
+                  OclRandom.randomValuesMatrix(
+                                  SystemTypes.tail(sh), rd));
+            }
+
+            return _results_1;
+        }
+
+        public static ArrayList randomValuesMatrix(ArrayList sh)
+        {
+            OclRandom rd = OclRandom.newOclRandom_PCG();
+
+            if (sh.Count == 0)
+            { return (new ArrayList()); }
+
+            if ((sh).Count == 1)
+            { return OclRandom.randomList((int)sh[0], rd); }
+
+            ArrayList res = OclRandom.randomMatrix((int)sh[0], sh, rd);
+            return res;
+        }
+
+        public static ArrayList randomValuesMatrix(ArrayList sh, OclRandom rd)
+        {
+            if (sh.Count == 0)
+            { return (new ArrayList()); }
+
+            if ((sh).Count == 1)
+            { return OclRandom.randomList((int)sh[0], rd); }
+
+            ArrayList res = OclRandom.randomMatrix((int)sh[0], sh, rd);
+            return res;
+        }
+
+}

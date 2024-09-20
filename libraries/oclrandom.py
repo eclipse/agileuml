@@ -117,10 +117,15 @@ class OclRandom :
     result = rd
     return result
 
-  def setAlgorithm(self, algo) : 
-    self.algorithm = algo
-    if algo == "PCG" : 
-      self.pcg = np.random.default_rng()
+  def newOclRandom_PCG() : 
+    rd = createOclRandom()
+    rd.algorithm = "PCG" 
+    rd.pcg = np.random.default_rng()
+    rd.ix = 1001
+    rd.iy = 781
+    rd.iz = 913
+    rd.distribution = "uniform"
+    return rd
 
   def setSeed(self, n = int(time.time())) :
     self.ix = (n % 30269)
@@ -302,6 +307,9 @@ class OclRandom :
   def randomElements(col,n) : 
     return np.random.default_rng().choice(col, n)
 
+  def randomValuesMatrix(sh) : 
+    return np.random.rand(sh)
+
   def defaultInstanceOclRandom() : 
     if OclRandom._defaultInstanceOclRandom == None : 
       OclRandom._defaultInstanceOclRandom = OclRandom.newOclRandom_Seed()
@@ -336,45 +344,5 @@ def allInstances_OclRandom() :
 # print(rr.nextBinomial(5,0.3))
 # print(rr.nextBinomial(5,0.3))
 # print(rr.nextBinomial(5,0.3))
-
-rr = OclRandom.newOclRandom()
-
-print(rr.nextDouble())
-print(rr.nextDouble())
-print(rr.nextDouble())
-
-print("")
-
-print(rr.nextGaussian())
-print(rr.nextGaussian())
-print(rr.nextGaussian())
-
-print("")
-
-print(rr.nextInt())
-print(rr.nextInt())
-print(rr.nextInt())
-
-print("")
-
-rr.setAlgorithm("PCG")
-
-print(rr.nextDouble())
-print(rr.nextDouble())
-print(rr.nextDouble())
-
-print("")
-
-print(rr.nextGaussian())
-print(rr.nextGaussian())
-print(rr.nextGaussian())
-
-
-print("")
-
-print(rr.nextInt())
-print(rr.nextInt())
-print(rr.nextInt())
-
 
 

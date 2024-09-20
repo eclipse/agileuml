@@ -125,6 +125,20 @@ class OclRandom {
     return result;
   }
 
+  public static OclRandom newOclRandom_PCG()
+  {
+    OclRandom result = null;
+    OclRandom rd = null;
+    rd = OclRandom.createOclRandom();
+    rd.ix = 1001;
+    rd.iy = 781;
+    rd.iz = 913;
+    rd.pcg = new Pcg32();
+    rd.algorithm = "PCG"; 
+    result = rd;
+    return result;
+  }
+
   public static OclRandom newOclRandom_Seed(long n)
   {
     OclRandom result = null;
@@ -484,54 +498,53 @@ class OclRandom {
     } 
     return res;  
   } 
+
+  public static ArrayList<Object> randomList(int n, OclRandom rd)
+  { // Implements: Integer.subrange(1,sh->at(1))->collect( int_0_xx | rd.nextDouble() )
+
+    ArrayList<Object> _results_0 = new ArrayList<Object>();
+    for (int _i = 0; _i < n; _i++)
+    { _results_0.add(new Double(rd.nextDouble())); }
+
+    return _results_0;
+  }
+
+  public static ArrayList<Object> randomMatrix(int n, 
+                                      ArrayList<Integer> sh)
+  { // Implements: Integer.subrange(1,sh->at(1))->collect( int_1_xx | OclRandom.randomValuesMatrix(sh->tail()) )
+
+    ArrayList<Object> _results_1 = new ArrayList<Object>();
+    for (int _i = 0; _i < n; _i++)
+    { _results_1.add(
+         OclRandom.randomValuesMatrix(Ocl.tail(sh)));
+    }
+
+    return _results_1;
+  }
+
+  public static ArrayList<Object> randomValuesMatrix(ArrayList<Integer> sh)
+  { ArrayList<Object> result;
+    OclRandom rd = OclRandom.newOclRandom_PCG();
+
+    if ((sh).size() == 0)
+    { return (new ArrayList<Object>()); }
+
+    if ((sh).size() == 1)
+    { return OclRandom.randomList(sh.get(0), rd); }
+
+    ArrayList<Object> res = 
+                        OclRandom.randomMatrix(sh.get(0), sh);
+    return res;
+  }
+
    
-  /* 
+  /*
   public static void main(String[] args)
-  { OclRandom lcg = OclRandom.newOclRandom(); 
-
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-
-    System.out.println(); 
-
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-
-    System.out.println(); 
-
-    System.out.println(lcg.nextGaussian()); 
-    System.out.println(lcg.nextGaussian()); 
-    System.out.println(lcg.nextGaussian()); 
-
-    System.out.println(); 
-
-    lcg.setAlgorithm("PCG"); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-    System.out.println(lcg.nextInt()); 
-
-    System.out.println(); 
-
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-    System.out.println(lcg.nextDouble()); 
-
-    System.out.println(); 
-
-    System.out.println(lcg.nextGaussian()); 
-    System.out.println(lcg.nextGaussian()); 
-    System.out.println(lcg.nextGaussian()); 
-  } */ 
+  { ArrayList<Integer> sh = new ArrayList<Integer>(); 
+    sh.add(2); sh.add(3); 
+    ArrayList mtrx = OclRandom.randomValuesMatrix(sh); 
+    System.out.println(mtrx);  
+  } */  
 }
 
 
