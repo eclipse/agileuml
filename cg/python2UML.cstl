@@ -266,8 +266,13 @@ random _1 |-->_1`randomTrailer
 pickle _1 |-->_1`pickleTrailer
 datetime _1 |-->_1`datetimeTrailer
 asyncio _1 |-->_1`asyncioTrailer
+
 np _1 |-->_1`numpyTrailer
+np _1 _2 |-->_2`npRandomTrailer<when> _1 matches .random
+
 numpy _1 |-->_1`numpyTrailer
+numpy _1 _2 |-->_2`npRandomTrailer<when> _1 matches .random
+
 pd _1 |-->_1`pandasTrailer
 sys _1 |-->_1`sysTrailer
 sys _1 _2 |-->(_1`sysTrailer)_2
@@ -279,9 +284,9 @@ _1 ** _2 |-->(_1)->pow(_2)
 ~ _1 |-->MathLib.bitwiseNot(_1)
 
 _1 * _2 |-->StringLib.nCopies(_1, _2)<when> _1 String
-_1 * _2 |-->MatrixLib.dotProduct(_1,_2)<when> _1 Sequence, _2 Sequence
-_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1 Sequence
-_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2 Sequence
+_1 * _2 |-->MatrixLib.dotProduct(_1,_2)<when> _1`ocltype Sequence, _2`ocltype Sequence
+_1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1`ocltype Sequence
+_1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2`ocltype Sequence
 _1 * _2 |-->_1 * _2
 
 _1 / _2 |-->_1 / _2
@@ -289,6 +294,9 @@ _1 % _2 |-->StringLib.format(_1,_2)<when> _1 String
 _1 % _2 |-->_1 mod _2
 _1 // _2 |-->_1 div _2
 _1 @ _2 |-->MatrixLib.matrixMultiplication(_1,_2)
+
+_1 + _2 |-->MatrixLib.elementwiseAdd(_1, _2)<when> _1`ocltype Sequence, _2`ocltype int
+_1 + _2 |-->MatrixLib.elementwiseAdd(_1, _2)<when> _1`ocltype Sequence, _2`ocltype double
 
 _1 + _2 |-->_1->union(_2)<when> _1`ocltype Sequence
 _1 + _2 |-->_1->union(_2)<when> _2`ocltype Sequence
@@ -842,10 +850,12 @@ trailer::
 
 . gauss _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
 . normalvariate _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
+. standard_normal _1 |-->.nextGaussian_1
 . uniform _1 |-->.nextUniform_1
 . randrange _1 |-->.nextInt_1
 . random _1 |-->.nextDouble()
 . randint _1 |-->.nextInt(_1`lastArg - _1`firstArg) + _1`firstArg
+. integers _1 |-->.nextInt(_1`lastArg - _1`firstArg) + _1`firstArg
 . seed _1 |-->.setSeed_1
 
 . max _1 |-->->max()
@@ -1093,6 +1103,14 @@ numpyTrailer::
 _1 |-->
 
 
+npRandomTrailer::
+. default_rng _1 |-->OclRandom.newOclRandom_PCG_1
+. rand _1 |-->OclRandom.randomValuesMatrix_1
+. randint _1 |-->(_1`firstArg + (OclRandom.newOclRandom_PCG()).nextInt(_1`lastArg - _1`firstArg))
+. random _1 |-->OclRandom.newOclRandom_PCG().nextDouble()<when> _1 matches \(\)
+. random _1 |-->OclRandom.randomValuesMatrix_1
+
+
 mathTrailer::
 . cosin _1 |-->_1->cos()
 . sin _1 |-->_1->sin()
@@ -1259,6 +1277,13 @@ numpyType::
 . prod _1 |-->double
 
 
+npRandomType::
+. default_rng _1 |-->OclRandom
+. rand _1 |-->Sequence
+. randint _1 |-->int
+. random _1 |-->double<when> _1 matches \(\)
+. random _1 |-->Sequence
+
 
 pickleTrailer::
 . dump _1 |-->_1`secondArg.writeObject(_1`firstArg)
@@ -1401,10 +1426,17 @@ _1 |-->_1`thirdArg
 
 lastArg::
 ( ) |-->
-( _1 ) |-->_1`last
+( _1 ) |-->_1`lastArg
 [ ] |-->
-[ _1 ] |-->_1`last
-_1 |-->_1`lastArg
+/* [ _1 ] |-->_1`last */
+_1 , _2 |-->_2`argValue
+_1 , _* |-->_*`recurse
+_1 |-->_1`argValue
+
+
+argValue::
+_1 = _2 |-->_2
+_1 |-->_1
 
 
 thirdFirstArg::
@@ -1976,8 +2008,13 @@ asyncio _1 |-->OclProcess
 collections _1 |-->_1`collectionsType
 math _1 |-->_1`mathType
 re _1 |-->_1`reType
+
 np _1 |-->_1`numpyType
+np _1 _2 |-->_2`npRandomType<when> _1 matches .random
+
 numpy _1 |-->_1`numpyType
+numpy _1 _2 |-->_2`npRandomType<when> _1 matches .random
+
 pd _1 |-->_1`pandasType
 pandas _1 |-->_1`pandasType
 sys _1 |-->_1`sysType
@@ -1994,10 +2031,11 @@ _1 ** _2 |-->double
 + _1 |-->_1`ocltype
 - _1 |-->_1`ocltype
 ~ _1 |-->int
+
 _1 * _2 |-->String<when> _1 String
-_1 * _2 |-->Sequence<when> _1 Sequence
-_1 * _2 |-->Sequence<when> _2 Sequence
-_1 * _2 |-->int<when> _1 int, _2 int
+_1 * _2 |-->Sequence<when> _1`ocltype Sequence
+_1 * _2 |-->Sequence<when> _2`ocltype Sequence
+_1 * _2 |-->int<when> _1`ocltype int, _2`ocltype int
 _1 * _2 |-->double
 
 _1 / _2 |-->double
