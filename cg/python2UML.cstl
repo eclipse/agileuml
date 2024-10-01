@@ -284,6 +284,7 @@ _1 ** _2 |-->(_1)->pow(_2)
 ~ _1 |-->MathLib.bitwiseNot(_1)
 
 _1 * _2 |-->StringLib.nCopies(_1, _2)<when> _1 String
+
 _1 * _2 |-->MatrixLib.dotProduct(_1,_2)<when> _1`ocltype Sequence, _2`ocltype Sequence
 _1 * _2 |-->MatrixLib.elementwiseMult(_1, _2)<when> _1`ocltype Sequence
 _1 * _2 |-->MatrixLib.elementwiseMult(_2, _1)<when> _2`ocltype Sequence
