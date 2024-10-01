@@ -1,0 +1,15 @@
+PCG XSL RR 128/64
+XSL = xorshift low (bits)
+RR = random rotation
+128 = period of 2^128
+with 2^127 streams
+64 bit output
+ 
+Is 32-bit is more energy efficient?
+
+Java, C#
+C++, C
+Python
+
+Swift
+Go

@@ -11,31 +11,31 @@ class MatrixLib {
    pre: true
    post: result = m1->collect( row | MatrixLib.rowMult(row, m2) );
 
-  static query subRows(m : Sequence(OclAny), s : Sequence(int)) : Sequence(OclAny) 
+  static query subRows(m : Sequence, s : Sequence(int)) : Sequence 
   pre: true
   post: result = s->select( i | 1 <= i & i <= m->size() )->collect( j | m->at(j) );
 
-  static query subMatrix(m : Sequence(Sequence(OclAny)), rows : Sequence(int), cols : Sequence(int)) : Sequence(Sequence(OclAny)) 
+  static query subMatrix(m : Sequence(Sequence), rows : Sequence(int), cols : Sequence(int)) : Sequence 
   pre: true
   post: result = rows->select( i | 1 <= i & i <= m->size() )->collect( j | MatrixLib.subRows(m->at(j), cols) );
 
-  static query matrixExcludingRowColumn(m : Sequence(Sequence(OclAny)), row : int, col : int) : Sequence(Sequence(OclAny)) 
+  static query matrixExcludingRowColumn(m : Sequence, row : int, col : int) : Sequence 
   pre: true
   post: true
   activity: 
-    var res : Sequence(Sequence(OclAny)) := Sequence{}; 
-    for i : Integer.subrange(1,m->size()
+    var res : Sequence := Sequence{}; 
+    for i : Integer.subrange(1,m->size())
     do
       (if i /= row 
        then 
-         var r : Sequence(OclAny) := m->at(i);
-         var subrow : Sequence(OclAny) :=  
+         var r : Sequence := m->at(i)->oclAsType(Sequence);
+         var subrow : Sequence :=  
            Integer.subrange(1,r->size())->select( j | j /= col )->collect( j | r->at(j));
          res := res->append(subrow)
        else skip);
     return res;  
 
- static query column(m : Sequence(OclAny), i : int) : Sequence(OclAny)
+ static query column(m : Sequence, i : int) : Sequence
  pre: true 
  post: 
    (m->at(1)->oclIsTypeOf(Sequence) => 
@@ -46,10 +46,10 @@ class MatrixLib {
  pre: true
  post: true
  activity: 
-    var res : Sequence(int) := Sequence{} ; 
+    var res : Sequence(int) := Sequence{}->collect(0); 
     if x->oclIsTypeOf(Sequence)
     then 
-      var sq : Sequence(OclAny) := x->oclAsType(Sequence) ; 
+      var sq : Sequence := x->oclAsType(Sequence) ; 
       res := Sequence{ sq->size() } ; 
       if sq->size() > 0 
       then 
@@ -60,7 +60,7 @@ class MatrixLib {
       return res ; 
     return res;
 
-  static query singleValueMatrix(sh : Sequence(int), x : OclAny) : Sequence(OclAny)
+  static query singleValueMatrix(sh : Sequence(int), x : OclAny) : Sequence
   pre: true 
   post: true
   activity: 
@@ -74,12 +74,14 @@ class MatrixLib {
       return Integer.subrange(1,sh->at(1))->collect(x)
     else skip ; 
       
-    var res : Sequence(OclAny) ; 
+    var res : Sequence := Sequence{} ;
+ 
     res := Integer.subrange(1,sh->at(1))->collect(MatrixLib.singleValueMatrix(sh->tail(), x)) ; 
+
     return res; 
 
 
-  static query fillMatrixFrom(sq : Sequence(double), sh : Sequence(int)) : Sequence(OclAny)
+  static query fillMatrixFrom(sq : Sequence(double), sh : Sequence(int)) : Sequence
   pre: true 
   post: true
   activity: 
@@ -93,12 +95,12 @@ class MatrixLib {
       return sq.subrange(1,sh->at(1))
     else skip ; 
       
-    var res : Sequence(OclAny) := Sequence{} ; 
+    var res : Sequence := Sequence{} ; 
     var prod : int := sh->tail()->prd() ; 
 
     for i : Integer.subrange(1,sh->at(1))
     do 
-      (var rowi : Sequence(double) := 
+      (var rowi : Sequence := 
          MatrixLib.fillMatrixFrom(sq.subrange(1 + prod*(i-1), prod*i), sh->tail()) ; 
        res := res->append(rowi) ) ;
  
@@ -109,7 +111,7 @@ class MatrixLib {
   post: 
     result = Integer.subrange(1,n)->collect( i | Integer.subrange(1,n)->collect( j | if i = j then 1.0 else 0.0 endif ) ); 
 
-  static query flattenMatrix(m : Sequence(OclAny)) : Sequence(OclAny) 
+  static query flattenMatrix(m : Sequence) : Sequence 
   pre: true 
   post: true
   activity: 
@@ -120,11 +122,15 @@ class MatrixLib {
 
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
-      return MatrixLib.flattenMatrix(m->at(1))->union(MatrixLib.flattenMatrix(m->tail()))
-    else 
-      return m; 
+     (var sq : Sequence := m->at(1)->oclAsType(Sequence) ;
+      return MatrixLib.flattenMatrix(sq)->union(MatrixLib.flattenMatrix(m->tail()))
+     )
+    else
+      skip; 
+ 
+    return m; 
 
-  static query sumMatrix(m : Sequence(OclAny)) : double 
+  static query sumMatrix(m : Sequence) : double 
   pre: true 
   post: true
   activity: 
@@ -135,11 +141,17 @@ class MatrixLib {
 
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
-      return MatrixLib.sumMatrix(m->at(1)) + (MatrixLib.sumMatrix(m->tail()))
+     (var sq : Sequence := m->at(1)->oclAsType(Sequence) ;
+      return MatrixLib.sumMatrix(sq) + MatrixLib.sumMatrix(m->tail())
+     )
     else 
-      return m->sum(); 
+      skip; 
+      
+    var dmat : Sequence(double) := Sequence{0.0}->union(m); 
+    return dmat->sum(); 
 
-  static query prdMatrix(m : Sequence(OclAny)) : double 
+
+  static query prdMatrix(m : Sequence) : double 
   pre: true 
   post: true
   activity: 
@@ -150,11 +162,18 @@ class MatrixLib {
 
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
-      return MatrixLib.prdMatrix(m->at(1))*(MatrixLib.prdMatrix(m->tail()))
+     (var sq : Sequence := m->at(1)->oclAsType(Sequence); 
+      return MatrixLib.prdMatrix(sq)*(MatrixLib.prdMatrix(m->tail()))
+     )
     else 
-      return m->prd(); 
+      skip; 
 
-   static query elementwiseApply(m : Sequence(OclAny), f : Function(double,double)) : Sequence(OclAny)
+    var dmat : Sequence(double) := Sequence{1.0}->union(m); 
+    return dmat->prd(); 
+
+
+  static query elementwiseApply(m : Sequence, 
+                      f : Function(double,double)) : Sequence
   pre: true 
   post: true
   activity: 
@@ -166,14 +185,21 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseApply(_r,f))
+         MatrixLib.elementwiseApply(_r->oclAsType(Sequence), f))
     else 
       skip;
 
-    return m->collect( _elem | f->apply(_elem->oclAsType(double)));
+    var dmat : Sequence(double) := Sequence{}->collect(0.0);
+
+    for x : m 
+    do 
+      (var y : double := x->oclAsType(double);  
+       dmat := dmat->append(f->apply(y))
+      );
+    return dmat; 
  
 
-   static query elementwiseMult(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+   static query elementwiseMult(m : Sequence, x : double) : Sequence
   pre: true 
   post: true
   activity: 
@@ -185,14 +211,20 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseMult(_r, x))
+          MatrixLib.elementwiseMult(_r->oclAsType(Sequence), x))
     else 
       skip;
 
-    return m->collect( _elem | (_elem->oclAsType(double))*x )
+    var dmat : Sequence(double) := Sequence{}->collect(0.0);
+    for z : m
+    do
+      (var y : double := z->oclAsType(double);  
+       dmat := dmat->append(y*x)
+      );
+    return dmat; 
+ 
 
-
-  static query elementwiseAdd(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+  static query elementwiseAdd(m : Sequence, x : double) : Sequence
   pre: true 
   post: true
   activity: 
@@ -204,14 +236,20 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseAdd(_r, x))
+         MatrixLib.elementwiseAdd(_r->oclAsType(Sequence), x))
     else 
       skip;
 
-    return m->collect( _elem | (_elem->oclAsType(double)) + x )
+    var dmat : Sequence(double) := Sequence{}->collect(0.0);
+    for z : m
+    do
+      (var y : double := z->oclAsType(double);  
+       dmat := dmat->append(y + x)
+      );
+    return dmat; 
 
 
-   static query elementwiseDivide(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+   static query elementwiseDivide(m : Sequence, x : double) : Sequence
   pre: true 
   post: true
   activity: 
@@ -223,11 +261,20 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseDivide(_r, x))
+         MatrixLib.elementwiseDivide(_r->oclAsType(Sequence), x))
     else 
       skip;
 
-   static query elementwiseLess(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+    var dmat : Sequence(double) := Sequence{}->collect(0.0);
+    for z : m
+    do
+      (var y : double := z->oclAsType(double);  
+       dmat := dmat->append(y/x)
+      );
+    return dmat; 
+
+
+  static query elementwiseLess(m : Sequence, x : double) : Sequence
   pre: true 
   post: true
   activity: 
@@ -239,13 +286,19 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseLess(_r, x))
+         MatrixLib.elementwiseLess(_r->oclAsType(Sequence), x))
     else 
       skip;
 
-    return m->collect( _elem | if (_elem->oclAsType(double)) < x then true else false endif )
+    var dmat : Sequence(boolean) := Sequence{}->collect(false);
+    for z : m
+    do
+      (var y : double := z->oclAsType(double);  
+       dmat := dmat->append(if y < x then true else false endif)
+      );
+    return dmat; 
 
-   static query elementwiseGreater(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+  static query elementwiseGreater(m : Sequence, x : double) : Sequence
   pre: true 
   post: true
   activity: 
@@ -257,14 +310,20 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseGreater(_r, x))
+        MatrixLib.elementwiseGreater(_r->oclAsType(Sequence), x))
     else 
       skip;
 
-    return m->collect( _elem | if (_elem->oclAsType(double)) > x then true else false endif )
+    var dmat : Sequence(boolean) := Sequence{}->collect(false);
+    for z : m
+    do
+      (var y : double := z->oclAsType(double);  
+       dmat := dmat->append(if y > x then true else false endif)
+      );
+    return dmat; 
 
 
-   static query elementwiseEqual(m : Sequence(OclAny), x : double) : Sequence(OclAny)
+  static query elementwiseEqual(m : Sequence, x : double) : Sequence
   pre: true 
   post: true
   activity: 
@@ -276,37 +335,43 @@ class MatrixLib {
     if m->at(1)->oclIsTypeOf(Sequence) 
     then 
       return m->collect( _r | 
-                  MatrixLib.elementwiseEqual(_r, x))
+        MatrixLib.elementwiseEqual(_r->oclAsType(Sequence), x))
     else 
       skip;
 
-    return m->collect( _elem | if (_elem->oclAsType(double)) = x then true else false endif )
+    var dmat : Sequence(boolean) := Sequence{}->collect(false);
+    for z : m
+    do
+      (var y : double := z->oclAsType(double);  
+       dmat := dmat->append(if x = y then true else false endif)
+      );
+    return dmat; 
 
 
   static query detaux(x1 : double, x2 : double, y1 : double, y2 : double) : double 
   pre: true
   post: result = x1*y2 - x2*y1; 
 
-  static query determinant2(m : Sequence(Sequence(OclAny))) : double 
+  static query determinant2(m : Sequence(Sequence)) : double 
   pre: m->size() = 2 & m[1]->size() = 2
   post: result = MatrixLib.detaux(m[1]->at(1)->oclAsType(double), m[1]->at(2)->oclAsType(double), m[2]->at(1)->oclAsType(double), m[2]->at(2)->oclAsType(double)); 
 
-  static query determinant3(m : Sequence(Sequence(OclAny))) : double 
+  static query determinant3(m : Sequence(Sequence)) : double 
   pre: m->size() = 3 & m[1]->size() = 3
   post: true
   activity: 
-    var subm1 : Sequence(Sequence(OclAny)) := 
+    var subm1 : Sequence(Sequence) := 
       MatrixLib.subMatrix(m, Sequence{2,3}, Sequence{2,3}); 
-    var subm2 : Sequence(Sequence(OclAny)) := 
+    var subm2 : Sequence(Sequence) := 
       MatrixLib.subMatrix(m, Sequence{2,3}, Sequence{1,3}); 
-    var subm3 : Sequence(Sequence(OclAny)) := 
+    var subm3 : Sequence(Sequence) := 
       MatrixLib.subMatrix(m, Sequence{2,3}, Sequence{1,2}); 
 
     return (m[1]->at(1)->oclAsType(double))* MatrixLib.determinant2(subm1) - 
        (m[1]->at(2)->oclAsType(double))*MatrixLib.determinant2(subm2) + 
        (m[1]->at(3)->oclAsType(double))*MatrixLib.determinant2(subm3); 
 
-   static query determinant(m : Sequence(OclAny)) : double
+   static query determinant(m : Sequence) : double
    pre: true
    post: true
    activity:
@@ -330,225 +395,289 @@ class MatrixLib {
      else skip;  
 
      var res : double := 0.0; 
-     var row : Sequence(OclAny) := m->at(1); 
+     var row : Sequence := m->at(1)->oclAsType(Sequence); 
      var factor : int := 1; 
 
      for i : Integer.subrange(1,n)
      do 
-       (var submat : Sequence(OclAny) := 
+       (var submat : Sequence := 
           MatrixLib.matrixExcludingRowColumn(m,1,i); 
         var det : double := 
           MatrixLib.determinant(submat); 
-        res := res + 
-               factor*(row->at(i)->oclAsType(double))*det;
-        factor := factor*(-1)); 
+        var rowi : double := row->at(i)->oclAsType(double); 
+        res := res + factor*rowi*det;
+        factor := -factor
+       ); 
       return res; 
 
        
-   static query rowAddition(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query rowAddition(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity:
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
  
      if m1->at(1)->oclIsTypeOf(Sequence)
      then 
        for i : Integer.subrange(1, m1->size()) 
        do
-         res := res->append(MatrixLib.rowAddition(m1->at(i), m2->at(i))); 
+        (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+         var sq2 : Sequence := m2->at(i)->oclAsType(Sequence); 
+         
+         res := res->append(
+                  MatrixLib.rowAddition(sq1, sq2))
+        ); 
        return res
      else skip; 
 
      for j : Integer.subrange(1, m1->size())
      do 
-       res := res->append(
-                m1->at(j)->oclAsType(double) + 
-                m2->at(j)->oclAsType(double));
+      (var m1j : double := m1->at(j)->oclAsType(double) ; 
+       var m2j : double := m2->at(j)->oclAsType(double) ; 
+       res := res->append(m1j + m2j)
+      );
      return res;  
          
 
-   static query matrixAddition(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query matrixAddition(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity: 
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
 
      for i : Integer.subrange(1,m1->size()) 
      do 
-       res := res->append(MatrixLib.rowAddition(m1->at(i), m2->at(i))); 
+      (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+       var sq2 : Sequence := m2->at(i)->oclAsType(Sequence);
+       res := res->append(MatrixLib.rowAddition(sq1, sq2))
+      ); 
      return res; 
 
-   static query rowSubtraction(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+
+   static query rowSubtraction(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity:
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
  
      if m1->at(1)->oclIsTypeOf(Sequence)
      then 
        for i : Integer.subrange(1, m1->size()) 
        do
-         res := res->append(MatrixLib.rowSubtraction(m1->at(i), m2->at(i))); 
+        (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+         var sq2 : Sequence := m2->at(i)->oclAsType(Sequence); 
+         
+         res := res->append(
+            MatrixLib.rowSubtraction(sq1,sq2))
+        ); 
        return res
      else skip; 
 
      for j : Integer.subrange(1, m1->size())
      do 
-       res := res->append(
-                m1->at(j)->oclAsType(double) - 
-                m2->at(j)->oclAsType(double));
+      (var m1j : double := m1->at(j)->oclAsType(double) ; 
+       var m2j : double := m2->at(j)->oclAsType(double) ; 
+       res := res->append(m1j - m2j)
+      );
+
      return res;  
 
-   static query matrixSubtraction(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query matrixSubtraction(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity: 
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
 
      for i : Integer.subrange(1,m1->size()) 
      do 
-       res := res->append(MatrixLib.rowSubtraction(m1->at(i), m2->at(i))); 
+      (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+       var sq2 : Sequence := m2->at(i)->oclAsType(Sequence);
+       res := res->append(MatrixLib.rowSubtraction(sq1,sq2))
+      ); 
      return res; 
 
-   static query rowDotProduct(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query rowDotProduct(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity:
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
  
      if m1->at(1)->oclIsTypeOf(Sequence)
      then 
        for i : Integer.subrange(1, m1->size()) 
        do
-         res := res->append(MatrixLib.rowDotProduct(m1->at(i), m2->at(i))); 
+        (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+         var sq2 : Sequence := m2->at(i)->oclAsType(Sequence); 
+ 
+         res := res->append(MatrixLib.rowDotProduct(sq1, sq2))
+        ); 
        return res
      else skip; 
 
      for j : Integer.subrange(1, m1->size())
      do 
-       res := res->append(
-                m1->at(j)->oclAsType(double) * 
-                m2->at(j)->oclAsType(double));
+      (var m1j : double := m1->at(j)->oclAsType(double) ; 
+       var m2j : double := m2->at(j)->oclAsType(double) ; 
+       res := res->append(m1j * m2j)
+      );
      return res;  
          
 
-   static query dotProduct(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query dotProduct(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity: 
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
 
      for i : Integer.subrange(1,m1->size()) 
      do 
-       res := res->append(MatrixLib.rowDotProduct(m1->at(i), m2->at(i))); 
+      (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+       var sq2 : Sequence := m2->at(i)->oclAsType(Sequence);
+
+       res := res->append(MatrixLib.rowDotProduct(sq1, sq2))
+      ); 
      return res; 
 
-   static query rowDotDivision(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query rowDotDivision(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity:
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
  
      if m1->at(1)->oclIsTypeOf(Sequence)
      then 
        for i : Integer.subrange(1, m1->size()) 
        do
-         res := res->append(MatrixLib.rowDotDivision(m1->at(i), m2->at(i))); 
+        (var m1i : Sequence := m1->at(i)->oclAsType(Sequence);
+         var m2i : Sequence := m2->at(i)->oclAsType(Sequence);
+         res := res->append(
+           MatrixLib.rowDotDivision(m1i, m2i) ) 
+        ); 
        return res
      else skip; 
 
      for j : Integer.subrange(1, m1->size())
      do 
+      (var m1j : double := m1->at(j)->oclAsType(double) ; 
+       var m2j : double := m2->at(j)->oclAsType(double) ; 
+       res := res->append(m1j/m2j)
+      ) ; 
+     return res;  
+
+   static query dotDivision(m1 : Sequence, m2 : Sequence) : Sequence
+   pre: true
+   post: true
+   activity: 
+     var res : Sequence := Sequence{}; 
+
+     for i : Integer.subrange(1,m1->size()) 
+     do 
+      (var sq1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+       var sq2 : Sequence := m2->at(i)->oclAsType(Sequence);
+       res := res->append(MatrixLib.rowDotDivision(sq1, sq2))
+      ); 
+     return res; 
+
+   static query rowLess(m1 : Sequence, 
+                        m2 : Sequence) : Sequence
+   pre: true
+   post: true
+   activity:
+     var res : Sequence := Sequence{}; 
+ 
+     if m1->at(1)->oclIsTypeOf(Sequence)
+     then 
+       for i : Integer.subrange(1, m1->size()) 
+       do
+        (var m1i : Sequence := m1->at(i)->oclAsType(Sequence);
+         var m2i : Sequence := m2->at(i)->oclAsType(Sequence);
+         res := res->append(
+            MatrixLib.rowLess(m1i, m2i))
+        ) ;
+
+       return res
+     else skip; 
+
+     for j : Integer.subrange(1, m1->size())
+     do 
+      (var m1j : double := m1->at(j)->oclAsType(double) ; 
+       var m2j : double := m2->at(j)->oclAsType(double) ; 
+       
        res := res->append(
-                m1->at(j)->oclAsType(double) /
-                m2->at(j)->oclAsType(double));
-     return res;  
+                    if m1j < m2j then true else false endif)
+      );
 
-   static query dotDivision(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+     return res;  
+         
+
+   static query matrixLess(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity: 
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
 
      for i : Integer.subrange(1,m1->size()) 
      do 
-       res := res->append(MatrixLib.rowDotDivision(m1->at(i), m2->at(i))); 
+       (var m1i : Sequence := m1->at(i)->oclAsType(Sequence);
+        var m2i : Sequence := m2->at(i)->oclAsType(Sequence);
+         
+        res := res->append(MatrixLib.rowLess(m1i, m2i))
+       ) ; 
+ 
      return res; 
 
-   static query rowLess(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query rowGreater(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity:
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
  
      if m1->at(1)->oclIsTypeOf(Sequence)
      then 
        for i : Integer.subrange(1, m1->size()) 
        do
-         res := res->append(MatrixLib.rowLess(m1->at(i), m2->at(i))); 
+        (var m1i : Sequence := m1->at(i)->oclAsType(Sequence);
+         var m2i : Sequence := m2->at(i)->oclAsType(Sequence);
+         res := res->append(
+           MatrixLib.rowGreater(m1i, m2i))
+        ) ;
        return res
      else skip; 
 
      for j : Integer.subrange(1, m1->size())
      do 
-       res := res->append(if
-                m1->at(j)->oclAsType(double) < 
-                m2->at(j)->oclAsType(double) then true else false endif);
+      (var m1j : double := m1->at(j)->oclAsType(double) ; 
+       var m2j : double := m2->at(j)->oclAsType(double) ; 
+       
+       res := res->append(if m1j > m2j then true else false endif) );
+
      return res;  
          
 
-   static query matrixLess(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
+   static query matrixGreater(m1 : Sequence, m2 : Sequence) : Sequence
    pre: true
    post: true
    activity: 
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
 
      for i : Integer.subrange(1,m1->size()) 
      do 
-       res := res->append(MatrixLib.rowLess(m1->at(i), m2->at(i))); 
-     return res; 
+      (var r1 : Sequence := m1->at(i)->oclAsType(Sequence); 
+       var r2 : Sequence := m2->at(i)->oclAsType(Sequence); 
 
-   static query rowGreater(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
-   pre: true
-   post: true
-   activity:
-     var res : Sequence(OclAny) := Sequence{}; 
+       res := res->append(MatrixLib.rowGreater(r1, r2))
+      ) ;
  
-     if m1->at(1)->oclIsTypeOf(Sequence)
-     then 
-       for i : Integer.subrange(1, m1->size()) 
-       do
-         res := res->append(MatrixLib.rowGreater(m1->at(i), m2->at(i))); 
-       return res
-     else skip; 
-
-     for j : Integer.subrange(1, m1->size())
-     do 
-       res := res->append(if
-                m1->at(j)->oclAsType(double) > 
-                m2->at(j)->oclAsType(double) then true else false endif);
-     return res;  
-         
-
-   static query matrixGreater(m1 : Sequence(OclAny), m2 : Sequence(OclAny)) : Sequence(OclAny)
-   pre: true
-   post: true
-   activity: 
-     var res : Sequence(OclAny) := Sequence{}; 
-
-     for i : Integer.subrange(1,m1->size()) 
-     do 
-       res := res->append(MatrixLib.rowGreater(m1->at(i), m2->at(i))); 
      return res; 
 
-   static query transpose(m : Sequence(OclAny)) : Sequence(OclAny) 
+   static query transpose(m : Sequence) : Sequence 
    pre: true
    post: true
    activity: 
      if m->at(1)->oclIsTypeOf(Sequence) 
      then skip else return m; 
 
-     var res : Sequence(OclAny) := Sequence{}; 
+     var res : Sequence := Sequence{}; 
 
      for i : Integer.subrange(1, m->size())
      do 
