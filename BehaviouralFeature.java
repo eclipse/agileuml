@@ -11665,16 +11665,18 @@ public class BehaviouralFeature extends ModelElement
           ModelElement.lookupByName(vname, parameters); 
 
       if (par != null) 
-      { System.err.println("!! Code Smell (MDV): " + vname + " is both a parameter and a local variable!"); 
+      { System.err.println("!! Code Smell (MDV): " + vname + " is both a parameter and"); 
+        System.err.println("!! a local variable of operation " + this + "!"); 
         continue; 
       }
   
       if (varnames.contains(vname))
       { System.err.println("!! Code Smell (MDV): multiple declarations in same scope for variable " + vname); 
+        System.err.println("!! of operation " + this + "!"); 
         continue;
       } 
 
-      System.out.println(">>> Local declaration " + cs); 
+      // System.out.println(">>> Local declaration: " + cs); 
 
       varnames.add(vname); 
       initialDecs.add(cs.defaultVersion()); 
@@ -11688,7 +11690,7 @@ public class BehaviouralFeature extends ModelElement
     SequenceStatement ss = new SequenceStatement(initialDecs);
     ss.addStatement(newactivity); 
    
-    System.out.println(">>> New activity: " + ss); 
+    // System.out.println(">>> New activity: " + ss); 
     activity = ss; 
   } 
 

@@ -20,10 +20,18 @@ class BinaryExpression extends Expression
   String operator; 
   Expression objectRef; // just for B
 
-  String iteratorVariable = null; // for ->exists( x, ->forAll( x, etc
-  Attribute accumulator = null;      // let and ->iterate(  )
+  String iteratorVariable = null; 
+                       // for ->exists( x, ->forAll( x, etc
+
+  Attribute accumulator = null;      
+                       // let and ->iterate(  )
+                       // secondary variable y in 
+                       // col->collect( x; y : T | expr )
+
   Expression keyValue = null;   
-    // for map operators ->including(key,right), ->excluding(key,right)
+                    // for map operators ->including(key,right), 
+                    // ->excluding(key,right)
+
 
   public BinaryExpression(String op, Expression ll, Expression rr)
   { operator = op; 
@@ -566,8 +574,9 @@ class BinaryExpression extends Expression
         return res;
       }
       else
-      { System.out.println("Expression: " + this + " incomplete: updates " + v + 
-                           ", not all defined features: " + feats);
+      { System.out.println("! Expression: " + this + 
+                 " may be incomplete: updates " + v + 
+                 ", but not all defined features: " + feats);
         return new BasicExpression(false);
       }
     } 
@@ -578,7 +587,7 @@ class BinaryExpression extends Expression
     Expression r1 = right.addPreForms(v); 
     Expression res = new BinaryExpression(operator,l1,r1); 
     res.needsBracket = needsBracket; 
-	res.formalParameter = formalParameter; 
+    res.formalParameter = formalParameter; 
     return res; 
   } 
 
@@ -611,21 +620,28 @@ class BinaryExpression extends Expression
       
     if (operator.equals("!"))  // Should be no # or #1 remaining
     { res = "(forall ((" + ((BinaryExpression) left).left + " " + 
-                           ((BinaryExpression) left).right + ")) " + rightz3 + ")"; 
+               ((BinaryExpression) left).right + ")) " + rightz3 + ")"; 
       return res; 
     } 
+
     if (operator.equals("&"))
     { return "(and " + leftz3 + " " + rightz3 + ")"; } 
+
     if (operator.equals("->at") || operator.equals("->apply"))
     { return "(" + leftz3 + " " + rightz3 + ")"; } 
+
     if (operator.equals(":"))
     { return "(member" + memberEnt + " " + leftz3 + " " + rightz3 + ")"; } 
+
     if (operator.equals("/:"))
     { return "(not (member" + memberEnt + " " + leftz3 + " " + rightz3 + "))"; } 
+
     if (operator.equals("->includes"))
     { return "(member" + memberEnt + " " + rightz3 + " " + leftz3 + ")"; } 
+
     if (operator.equals("->excludes"))
     { return "(not (member" + memberEnt + " " + rightz3 + " " + leftz3 + "))"; } 
+
     if (operator.equals("->including") || operator.equals("->prepend"))
     { return "(insert " + rightz3 + " " + leftz3 + ")"; } 
  
@@ -1299,10 +1315,14 @@ class BinaryExpression extends Expression
     { basicString = left + "->including(" + keyValue + ", " + right + ")"; } 
     else if (operator.equals("->excluding") && keyValue != null) 
     { basicString = left + "->excluding(" + keyValue + ", " + right + ")"; } 
-    else if (operator.equals("->includesAll") || operator.equals("->collect") || 
-             operator.equals("->excludesAll") || operator.equals("->append") ||
-             operator.equals("->prepend") || operator.equals("->select") || 
-             operator.equals("->reject") || operator.equals("->including") ||
+    else if (operator.equals("->includesAll") || 
+             operator.equals("->collect") || 
+             operator.equals("->excludesAll") || 
+             operator.equals("->append") ||
+             operator.equals("->prepend") || 
+             operator.equals("->select") || 
+             operator.equals("->reject") || 
+             operator.equals("->including") ||
              operator.equals("->excluding") ||
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
@@ -1501,10 +1521,14 @@ class BinaryExpression extends Expression
     { basicString = left + "->including(" + keyValue + ", " + right + ")"; } 
     else if (operator.equals("->excluding") && keyValue != null) 
     { basicString = left + "->excluding(" + keyValue + ", " + right + ")"; } */ 
-    else if (operator.equals("->includesAll") || operator.equals("->collect") || 
-             operator.equals("->excludesAll") || operator.equals("->append") ||
-             operator.equals("->prepend") || operator.equals("->select") || 
-             operator.equals("->reject") || operator.equals("->including") ||
+    else if (operator.equals("->includesAll") || 
+             operator.equals("->collect") || 
+             operator.equals("->excludesAll") || 
+             operator.equals("->append") ||
+             operator.equals("->prepend") || 
+             operator.equals("->select") || 
+             operator.equals("->reject") || 
+             operator.equals("->including") ||
              operator.equals("->excluding") ||
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
@@ -1523,9 +1547,12 @@ class BinaryExpression extends Expression
              "->exists1".equals(operator) || 
              "->existsLC".equals(operator) || 
              "->any".equals(operator) ||
-             operator.equals("->selectMaximals") || operator.equals("->oclIsKindOf") || 
-             operator.equals("->oclIsTypeOf") || operator.equals("->includesKey") || 
-             operator.equals("->excludesKey") || operator.equals("->includesValue") || 
+             operator.equals("->selectMaximals") || 
+             operator.equals("->oclIsKindOf") || 
+             operator.equals("->oclIsTypeOf") || 
+             operator.equals("->includesKey") || 
+             operator.equals("->excludesKey") || 
+             operator.equals("->includesValue") || 
              operator.equals("->excludesValue") || 
              operator.equals("->restrict") ||
              operator.equals("->antirestrict") ||  
@@ -1567,13 +1594,20 @@ class BinaryExpression extends Expression
     Expression lr = left.addReference(ref,t); 
     res.left = lr; 
 
-    if ("->select".equals(operator) || "->reject".equals(operator) || 
-        "->collect".equals(operator) || "->closure".equals(operator) ||
-        "->selectMinimals".equals(operator) || "->selectMaximals".equals(operator) ||
-        "->isUnique".equals(operator) || "->sortedBy".equals(operator) || 
-        "->unionAll".equals(operator) || "->intersectAll".equals(operator) ||
-        "->concatenateAll".equals(operator) || "->existsLC".equals(operator) || 
-        "->exists".equals(operator) || "->exists1".equals(operator) || 
+    if ("->select".equals(operator) || 
+        "->reject".equals(operator) || 
+        "->collect".equals(operator) || 
+        "->closure".equals(operator) ||
+        "->selectMinimals".equals(operator) || 
+        "->selectMaximals".equals(operator) ||
+        "->isUnique".equals(operator) || 
+        "->sortedBy".equals(operator) || 
+        "->unionAll".equals(operator) || 
+        "->intersectAll".equals(operator) ||
+        "->concatenateAll".equals(operator) || 
+        "->existsLC".equals(operator) || 
+        "->exists".equals(operator) || 
+        "->exists1".equals(operator) || 
         "->forAll".equals(operator))
     { res.right = right; } // assume no objects of type t in the rhs. 
     else if ("->iterate".equals(operator))
@@ -6093,7 +6127,8 @@ public void findClones(java.util.Map clones,
 
     if (operator.equals("->append") ||
         operator.equals("->prepend") || 
-		operator.equals("^") || "->concatenate".equals(operator))
+        operator.equals("^") || 
+        "->concatenate".equals(operator))
     { if (type == null) 
       { type = new Type("Sequence", null); } 
     } 
@@ -7063,7 +7098,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludingFirst"))
       { res = "Set.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
-      { res = "Set.concatenate(" + lqf + "," + rss + ")"; }
+      { res = "Set.append(" + lqf + "," + rqf + ")"; }
       else if (operator.equals("->including") && left.isSetValued())
       { res = "Set.union(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->including") && left.isSequenceValued())
@@ -7536,7 +7571,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludingFirst"))
       { res = "Set.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
-      { res = "Set.concatenate(" + lqf + "," + rss + ")"; }
+      { res = "Set.append(" + lqf + "," + rqf + ")"; }
       else if (operator.equals("->including"))
       { res = "Set.union(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->prepend"))
@@ -7569,7 +7604,7 @@ public boolean conflictsWithIn(String op, Expression el,
         else if (operator.equals("->prepend"))
         { res = "Set.concatenate(" + rs + "," + lqf + ")"; } 
         else if (operator.equals("->append"))
-        { res = "Set.concatenate(" + lqf + "," + rs + ")"; } 
+        { res = "Set.append(" + lqf + "," + rqf + ")"; } 
         else if (operator.equals("->count"))
         { res = "Collections.frequency(" + lqf + "," + rw + ")"; } 
         else if (operator.equals("->indexOf"))
@@ -8036,7 +8071,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludingFirst"))
       { res = "Ocl.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
-      { res = "Ocl.concatenate(" + lqf + "," + rss + ")"; }
+      { res = "Ocl.append(" + lqf + "," + rqf + ")"; }
       else if (operator.equals("->including"))
       { res = "Ocl.union(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->prepend"))
@@ -8069,7 +8104,7 @@ public boolean conflictsWithIn(String op, Expression el,
         else if (operator.equals("->prepend"))
         { res = "Ocl.concatenate(" + rs + "," + lqf + ")"; } 
         else if (operator.equals("->append"))
-        { res = "Ocl.concatenate(" + lqf + "," + rs + ")"; } 
+        { res = "Ocl.append(" + lqf + "," + rqf + ")"; }
         else if (operator.equals("->count"))
         { res = "Collections.frequency(" + lqf + "," + rw + ")"; } 
         else if (operator.equals("->indexOf"))
@@ -13396,7 +13431,8 @@ public boolean conflictsWithIn(String op, Expression el,
       else 
       { res = "Ocl.union(" + lqf + "," + rqf + ")"; }
     } 
-    else if (operator.equals("/\\") || operator.equals("->intersection"))
+    else if (operator.equals("/\\") || 
+             operator.equals("->intersection"))
     { if (left.isMap() && right.isMap())
 	  { res = "Ocl.intersectionMap(" + lqf + "," + rqf + ")"; } 
 	  else 
@@ -13418,7 +13454,7 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("->prepend"))
     { res = "Ocl.concatenate(" + rqf + "," + lqf + ")"; } 
     else if (operator.equals("->append"))
-    { res = "Ocl.concatenate(" + lqf + "," + rqf + ")"; } 
+    { res = "Ocl.append(" + lqf + "," + rqf + ")"; } 
     return res; 
   } // what about comparitors? 
 

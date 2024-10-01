@@ -9707,11 +9707,13 @@ public class UCDArea extends JPanel
             if ("true".equals(rante + ""))
             { cexp = z3succ; } 
             else 
-            { cexp = new BinaryExpression("=>",rante,z3succ); } 
+            { cexp = 
+                new BinaryExpression("=>",rante,z3succ); 
+            } 
  
             z3assertions.add(new BinaryExpression("!",
-                               new BinaryExpression(":",sourceVar,
-                                 new BasicExpression(otype + "")),cexp)); 
+               new BinaryExpression(":",sourceVar,
+                    new BasicExpression(otype + "")),cexp)); 
           }  
         } 
       } 

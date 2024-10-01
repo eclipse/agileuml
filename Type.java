@@ -5445,7 +5445,7 @@ public class Type extends ModelElement
       return new Type(e);
     }
 
-    System.err.println("! Warning: Code smell (PMV): multiple types for variable: " + oldType + " " + t); 
+    System.err.println("! Warning: Code smell (PMV): multiple types for one variable: " + oldType + " " + t); 
 
     return oldType;
   }
