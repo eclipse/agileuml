@@ -352,9 +352,19 @@ class MatrixLib {
   pre: true
   post: result = x1*y2 - x2*y1; 
 
-  static query determinant2(m : Sequence(Sequence)) : double 
+  static query determinant2(m : Sequence) : double 
   pre: m->size() = 2 & m[1]->size() = 2
-  post: result = MatrixLib.detaux(m[1]->at(1)->oclAsType(double), m[1]->at(2)->oclAsType(double), m[2]->at(1)->oclAsType(double), m[2]->at(2)->oclAsType(double)); 
+  post: true
+  activity: 
+    var m1 : Sequence := m[1]->oclAsType(Sequence); 
+    var m2 : Sequence := m[2]->oclAsType(Sequence);
+
+    var d11 : double := m1->at(1)->oclAsType(double); 
+    var d12 : double := m1->at(2)->oclAsType(double); 
+    var d21 : double := m2->at(1)->oclAsType(double); 
+    var d22 : double := m2->at(2)->oclAsType(double); 
+
+    return MatrixLib.detaux(d11, d12, d21, d22); 
 
   static query determinant3(m : Sequence(Sequence)) : double 
   pre: m->size() = 3 & m[1]->size() = 3
@@ -367,9 +377,11 @@ class MatrixLib {
     var subm3 : Sequence(Sequence) := 
       MatrixLib.subMatrix(m, Sequence{2,3}, Sequence{1,2}); 
 
-    return (m[1]->at(1)->oclAsType(double))* MatrixLib.determinant2(subm1) - 
-       (m[1]->at(2)->oclAsType(double))*MatrixLib.determinant2(subm2) + 
-       (m[1]->at(3)->oclAsType(double))*MatrixLib.determinant2(subm3); 
+    var m1 : Sequence := m[1]->oclAsType(Sequence); 
+    
+    return (m1->at(1)->oclAsType(double))* MatrixLib.determinant2(subm1) - 
+       (m1->at(2)->oclAsType(double))*MatrixLib.determinant2(subm2) + 
+       (m1->at(3)->oclAsType(double))*MatrixLib.determinant2(subm3); 
 
    static query determinant(m : Sequence) : double
    pre: true
