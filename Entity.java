@@ -5336,8 +5336,8 @@ public class Entity extends ModelElement implements Comparable
           scopeVars.addAll(anames); 
           scopeVars.addAll(parnames); 
 
-         System.out.println(">> Scope variables of " + expr + ": " + scopeVars); 
-         System.out.println(">> Variable uses of " + expr + ": " + vuses); 
+          System.out.println(">> Scope variables of " + expr + ": " + scopeVars); 
+          System.out.println(">> Variable uses of " + expr + ": " + vuses); 
 
           if (VectorUtil.allElementsEqual(copies) && 
               oper != null && 

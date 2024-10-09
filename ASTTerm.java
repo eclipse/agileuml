@@ -1307,6 +1307,9 @@ public abstract class ASTTerm
 
   public abstract String lambdaParametersToKM3();
 
+  public Type toKM3CollectionType(Type innerType)
+  { return null; } 
+
   public boolean isAssignment() 
   { return false; } 
 

@@ -778,11 +778,11 @@ abstract class Statement implements Cloneable
     System.out.println(">>> Write frame of " + st + 
                        " is " + wrfr); 
     
-    for (int j = 0; j < rdfr.size(); j++) 
+    /* for (int j = 0; j < rdfr.size(); j++) 
     { String rv = rdfr.get(j) + ""; 
       if (wrfr.contains(rv)) 
       { return null; } 
-    } 
+    } */ 
 
     BasicExpression var = 
       BasicExpression.newVariableBasicExpression(vname,typ); 

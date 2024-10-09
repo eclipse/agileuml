@@ -32717,6 +32717,36 @@ public class ASTCompositeTerm extends ASTTerm
     return ""; 
   }
 
+  public Type toKM3CollectionType(Type innerType)
+  { if ("variableDeclaratorId".equals(tag))
+    { int n = terms.size(); 
+
+      if (n == 1)
+      { return null; } 
+
+      Type res = innerType; 
+      
+      for (int i = n-1; i > 0; i--) 
+      { String tm = ((ASTTerm) terms.get(i)).literalForm(); 
+        if ("]".equals(tm))
+        { Type seqtype = new Type("Sequence", null);
+          seqtype.setElementType(res); 
+          res = seqtype; 
+        } 
+      } 
+
+      return res;  
+    }
+
+    if ("variableDeclarator".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.toKM3CollectionType(innerType); 
+    } 
+ 
+    return null; 
+  } 
+
+
   public String lambdaParametersToKM3()
   { modelElements = new Vector(); 
 
@@ -32772,11 +32802,17 @@ public class ASTCompositeTerm extends ASTTerm
       String tname = typ.toKM3type(); 
 
       Type tf = (Type) typ.modelElement; 
+      Type vtyp = var.toKM3CollectionType(tf); 
+
+      if (vtyp != null)
+      { // vtyp.setElementType(tf); 
+        tf = vtyp; 
+      } 
  
       modelElement =
         new Attribute(vname,tf,ModelElement.INTERNAL);
       modelElements.add(modelElement);  
-      return vname + " : " + tname;       
+      return vname + " : " + tf;       
     }
     else // the tag is a spurious term
     { modelElement =
@@ -33924,6 +33960,11 @@ public class ASTCompositeTerm extends ASTTerm
       return "()"; 
     } 
 
+    if ("variableDeclaratorId".equals(tag))
+    { ASTTerm yt = (ASTTerm) terms.get(0);
+      return yt.literalForm(); 
+    } // ignore [] terms 
+        
 
     if ("literal".equals(tag))
     { System.out.println(">> Literal with " + terms.size() + " terms " + terms);
@@ -37156,6 +37197,8 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTCompositeTerm tv = (ASTCompositeTerm) vTerm; 
           String km3var = tv.toKM3Var(); 
           String km3init = tv.toKM3VarInit(); 
+
+          Type ctyp = tv.toKM3CollectionType(actualType); 
  
           // if (res.equals("")) { } 
           // else 
@@ -37165,23 +37208,36 @@ public class ASTCompositeTerm extends ASTTerm
  
           // if (km3init != null) 
           // { res = res + " := " + km3init; }  
+
+          String fullType = km3type; 
+          if (ctyp != null) 
+          { fullType = "" + ctyp; } 
+            // "Sequence(" + km3type + ")";  
  
-          ASTTerm.setType(km3var,km3type);
+          ASTTerm.setType(km3var,fullType);
  
           BasicExpression varbe =
             BasicExpression.newVariableBasicExpression(km3var, 
-                         km3type, 
+                         fullType, 
                          ASTTerm.enumtypes, ASTTerm.entities);  
           CreationStatement cs = 
             CreationStatement.newCreationStatement(
-                                   km3var, km3type, 
+                                   km3var, fullType, 
                        ASTTerm.enumtypes, ASTTerm.entities);
 
           Attribute att = null; 
+          Type completeType = actualType; 
+
           if (actualType != null) 
-          { varbe.setType(actualType); 
-            cs.setType(actualType); 
-            att = new Attribute(km3var, actualType, 
+          { if (ctyp != null) 
+            { // completeType = new Type("Sequence", null); 
+              // completeType.setElementType(actualType);
+              completeType = ctyp;  
+            } 
+
+            varbe.setType(completeType); 
+            cs.setType(completeType); 
+            att = new Attribute(km3var, completeType, 
                                           ModelElement.INTERNAL);
             modelElements.add(att);  
           } 
@@ -37219,6 +37275,7 @@ public class ASTCompositeTerm extends ASTTerm
            
         } 
       }  
+
       statement = sstatements;
       return statement + ""; 
     }   
@@ -37233,14 +37290,14 @@ public class ASTCompositeTerm extends ASTTerm
       } // ignore modifiers 
       
       String km3type = typeTerm.toKM3type();
-      
+      // Type vtyp = varTerm.toKM3CollectionType(); 
+
       Type actualType = null;
       if (typeTerm.modelElement instanceof Type)
       { actualType = (Type) typeTerm.modelElement; } 
       else if (typeTerm.modelElement instanceof Entity)
       { actualType = new Type((Entity) typeTerm.modelElement); } 
  
-
       String res = ""; 
 
       Vector vardeclarators = varTerm.terms; 
@@ -37250,18 +37307,23 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTCompositeTerm tv = (ASTCompositeTerm) vTerm; 
           String km3var = tv.toKM3Var(); 
           String km3init = tv.toKM3VarInit(); 
+          Type vtyp = tv.toKM3CollectionType(actualType); 
  
           if (res.equals("")) { } 
           else 
           { res = res + " ;\n"; } 
+
+          String fullType = km3type; 
+          if (vtyp != null)
+          { fullType = "" + vtyp; } 
+            // "Sequence(" + km3type + ")";  
  
-          res = res + "  attribute " + km3var + " : " + km3type; 
+          res = res + "  attribute " + km3var + " : " + fullType; 
  
           if (km3init != null) 
           { res = res + " := " + km3init; }  
 
-          
-          ASTTerm.setType(km3var,km3type);
+          ASTTerm.setType(km3var,fullType);
 
       // String km3var = varTerm.toKM3Var(); 
       // String km3init = varTerm.toKM3VarInit(); 
@@ -37270,11 +37332,20 @@ public class ASTCompositeTerm extends ASTTerm
       // { res = res + " := " + km3init; }  
       // ASTTerm.setType(km3var,km3type);
           Attribute att = Attribute.newAttribute(
-            km3var, km3type, ASTTerm.enumtypes, ASTTerm.entities); 
+            km3var, fullType, ASTTerm.enumtypes, ASTTerm.entities); 
 
           if (actualType != null) 
-          { att.setType(actualType); 
-            att.setElementType(actualType.getElementType()); 
+          { 
+            if (vtyp != null) 
+            { Type seqType = vtyp; // new Type("Sequence", null); 
+              // seqType.setElementType(actualType); 
+              att.setType(seqType); 
+              att.setElementType(seqType.getElementType()); 
+            }
+            else 
+            { att.setType(actualType); 
+              att.setElementType(actualType.getElementType());  
+            } 
           }
     
           if (tv.expression != null) 
@@ -37291,11 +37362,12 @@ public class ASTCompositeTerm extends ASTTerm
       // but can be several attributes: 
       // (variableDeclarators (variableDeclarator ...) , ...) 
 
-          System.out.println(">> Type of " + km3var + " is " + km3type + " = " + km3init); 
+          System.out.println(">> Type of " + km3var + " is " + fullType + " = " + km3init); 
           System.out.println(">> Attribute = " + att + " " + att.getType() + " (" + att.getElementType() + ")"); 
           System.out.println(">> Initialisation = " + att.getInitialExpression());
         }  
       } 
+
       System.out.println(); 
       return res + " ; \n"; 
     }   
@@ -38416,8 +38488,21 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm mname = (ASTTerm) terms.get(nTerms - 1);
       
       String typ = mtype.toKM3type(); 
-      String vv = mname.toKM3(); 
-      ASTTerm.setType(vv,typ);
+      String vv = mname.toKM3();
+
+
+      Type tf = (Type) mtype.modelElement; 
+      Type vtyp = mname.toKM3CollectionType(tf); 
+
+      if (vtyp != null)
+      { // vtyp.setElementType(tf); 
+        tf = vtyp; 
+        ASTTerm.setType(vv,"" + vtyp); 
+                           // "Sequence(" + typ + ")"
+        typ = "" + vtyp; // "Sequence(" + typ + ")"; 
+      } 
+      else 
+      { ASTTerm.setType(vv,typ); } 
 
       Type tt = 
         Type.getTypeFor(typ, 
@@ -38429,7 +38514,7 @@ public class ASTCompositeTerm extends ASTTerm
         elemT = tt.getElementType(); 
       } 
       else if (mtype.modelElement instanceof Type)
-      { tt = (Type) mtype.modelElement; 
+      { tt = tf; // (Type) mtype.modelElement; 
         System.out.println(">>> Type for parameter " + mname + " is " + tt + " ( " + tt.getElementType() + " )"); 
         elemT = tt.getElementType(); 
       }
