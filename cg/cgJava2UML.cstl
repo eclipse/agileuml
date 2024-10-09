@@ -395,6 +395,16 @@ _1 |-->_1
 _1 | _* |-->OclException
 
 
+getOclType::
+_1 [ ] [ ] |-->Sequence(Sequence(_1`type))
+_1 [ ] |-->Sequence(int)<when> _1 int
+_1 [ ] |-->Sequence(long)<when> _1 long
+_1 [ ] |-->Sequence(double)<when> _1 double
+_1 [ ] |-->Sequence(String)<when> _1 String
+_1 [ ] |-->Sequence(_1`type)
+_1 |-->_1`type
+
+
 enumDeclaration::
 enum _1 { _2 } |-->  enumeration _1 {_2 }\n\n
 enum _1 { _2 , _3 } |-->  class _1 { _2`asObjects\n_3  }\n\n
@@ -694,7 +704,23 @@ _1 |-->_1
 formalParameter::
 _1 _2 _3 _4 |--> _4 : _3
 _1 _2 _3 |--> _3 : _2
-_1 _2 |--> _2 : _1
+_1 _2 |--> _2 : _2`typQualifierLeft_1_2`typQualifierRight
+
+
+typQualifierLeft::
+_1 [ ] [ ] |-->Sequence(Sequence(
+_1 [ ] |-->Sequence(
+_1 |-->_1`typQualifierLeft<when> _1 variableDeclarator
+_1 |-->_1`typQualifierLeft<when> _1 variableDeclaratorId
+_1 |-->
+
+typQualifierRight::
+_1 [ ] |-->)
+_1 [ ] [ ] |-->))
+_1 |-->_1`typQualifierRight<when> _1 variableDeclarator
+_1 |-->_1`typQualifierRight<when> _1 variableDeclaratorId
+_1 |-->
+
 
 
 lastFormalParameter::
@@ -732,34 +758,40 @@ instanceBlockInitialisation::
 
 
 fieldDeclaration::
-_1 _2 ; |-->  attribute _2`variableName : _1_2`variableInitialValue;\n<action> _2`variableName _1
+_1 _2 ; |-->  attribute _2`variableName : _2`typQualifierLeft_1_2`typQualifierRight_2`variableInitialValue;\n<action> _2`variableName _1
 
 
 localVariableDeclaration::
-_1 _2 _3 |-->_3<action>_3`variableName _2
-_1 _2 |-->_2<action> _2`variableName _1 
+_1 _2 _3 |-->_3`processVarDecs<action> _66 _2, _3`variableName _2
+_1 _2 |-->_2`processVarDecs<action> _66 _1, _2`variableName _1 
 
 
 variableName::
 _1 |-->_1`variableName<when> _1 variableDeclarator
 _1 , _2 |-->_1`variableName<when> _1 variableDeclarator
 _1 = _2 |-->_1
+_1 [ ] |-->_1
+_1 [ ] [ ] |-->_1
 _1 |-->_1
 
 variableInitialValue::
 _1 |-->_1`variableInitialValue<when> _1 variableDeclarator
 _1 , _2 |-->_1`variableInitialValue<when> _1 variableDeclarator
 _1 = _2 |--> := _2
+_1 [ ] |-->Sequence{}
+_1 [ ] [ ] |-->Sequence{}
 _1 |-->
 
 
 variableDeclaratorId::
 _1 |-->_1
+_1 [ ] |-->_1
+_1 [ ] [ ] |-->_1
 
 
 variableDeclarator::
-_1 = _2 |-->    var _1 : _1`type ; _2`preSideEffect_1 := _2`queryForm
-_1 |-->    var _1 : _1`type
+_1 = _2 |-->    var _1 : _1`getOclType ; _2`preSideEffect_1 := _2`queryForm
+_1 |-->    var _1 : _1`getOclType
 
 
 initialisationValue::
@@ -787,6 +819,9 @@ _1 |-->
 
 
 
+processVarDecs::
+_1 |-->_1`variableDeclarator
+_1 , _* |-->_1`variableDeclarator ;\n_*`recurse
 
 
 variableDeclarators::
@@ -3342,7 +3377,8 @@ _1 |-->  for (_1) do (
 
 
 forInit::
-_1 |-->_1
+_1 |-->_1<when> _1 localVariableDeclaration
+_1 |-->_1`expressionListUpdateForm<when> _1 expressionList
 
 
 enhancedForControl::
