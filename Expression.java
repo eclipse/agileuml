@@ -2862,6 +2862,7 @@ abstract class Expression
       double v2 = convertNumber("" + e2); 
       return new BasicExpression(v1 + v2); 
     } 
+
     return new BinaryExpression("+", e1, e2); 
   }  
 
@@ -2936,16 +2937,28 @@ abstract class Expression
                                        final Expression e2)
   { if (e1 == null) { return e2; } 
     if (e2 == null) { return e1; } 
-    if (e1.equalsString("false"))
+
+    if (e1.isFalseString())
     { return new BasicExpression(false); } 
-    if (e2.equalsString("false"))
+
+    if (e2.isFalseString())
     { return new BasicExpression(false); } 
-    if (e1.equalsString("true")) 
+
+    if (e1.isTrueString()) 
     { return e2; } 
-    if (e2.equalsString("true"))
+
+    if (e2.isTrueString())
     { return e1; }
+
     if (e1.equals(e2))
     { return e1; }
+
+    if (e1.implies(e2))
+    { return e1; } 
+
+    if (e2.implies(e1))
+    { return e2; } 
+
     if (e1 instanceof BinaryExpression) 
     { BinaryExpression be1 = (BinaryExpression) e1; 
       if (be1.operator.equals("&"))
@@ -2955,6 +2968,7 @@ abstract class Expression
         { return e1; } 
       } 
     }  
+
     if (e2 instanceof BinaryExpression) 
     { BinaryExpression be2 = (BinaryExpression) e2; 
       if (be2.operator.equals("&"))
@@ -2964,8 +2978,10 @@ abstract class Expression
         { return e2; } 
       } 
     }  
+
     if (e1.conflictsWith(e2))
-    { return new BasicExpression("false"); } 
+    { return new BasicExpression(false); } 
+
     return new BinaryExpression("&",e1,e2);  
   }   // if (e1.subformulaOf(e2)) { return e2; } 
 
@@ -3084,34 +3100,56 @@ abstract class Expression
   
   public static Expression simplifyOr(final Expression e1,
                                       final Expression e2)
-  { if (e1.equalsString("true") || e2.equalsString("true"))
+  { if (e1.isTrueString() || e2.isTrueString())
     { return new BasicExpression(true); }
-    if (e1.equalsString("false"))
+
+    if (e1.isFalseString())
     { return e2; }
-    if (e2.equalsString("false"))
+
+    if (e2.isFalseString())
     { return e1; }
+
     if (e1.equals(e2))
     { return e1; }
+
     return new BinaryExpression("or",e1,e2); 
   }  // if (e1.subformulaOf(e2)) { return e1; }
 
 
   public static Expression simplifyImp(final Expression ante,
                                        final Expression succ)
-  { if (ante.equalsString("true"))
+  { if (ante.isTrueString())
     { return succ; }
-    if (succ.equalsString("true"))
+
+    if (succ.isTrueString())
     { return new BasicExpression(true); }
+
     if (ante.equals(succ))
     { return new BasicExpression(true); }
+
     if (succ instanceof BinaryExpression)
     { BinaryExpression sbe = (BinaryExpression) succ;
+
       if (sbe.operator.equals("=>"))
-      { Expression newante = simplifyAnd(ante,sbe.left); 
+      { if (ante.conflictsWith(sbe.left))
+        { return new BasicExpression(true); } 
+
+        Expression newante = simplifyAnd(ante,sbe.left); 
          // = new BinaryExpression("&",ante,sbe.left);
         return new BinaryExpression("=>",newante,sbe.right);
       }
+      else if (sbe.operator.equals("&"))
+      { // ante => A&B  is (ante => A) & (ante => B)
+        Expression e1 = 
+              Expression.simplifyImp(ante, sbe.left); 
+        e1.setBrackets(true); 
+        Expression e2 = 
+              Expression.simplifyImp(ante, sbe.right);
+        e2.setBrackets(true);  
+        return simplifyAnd(e1,e2); 
+      } 
     }
+
     return new BinaryExpression("=>",ante,succ);
   }
 
@@ -3185,38 +3223,44 @@ abstract class Expression
       if (op.equals("&"))
       { Expression nleft = negate(be.left); 
         Expression nright = negate(be.right); 
-        Expression res = new BinaryExpression("or", nleft, nright); 
+        Expression res = 
+           new BinaryExpression("or", nleft, nright); 
         res.setBrackets(true); 
         return res; 
       } 
       else if (op.equals("or"))
       { Expression nleft = negate(be.left); 
         Expression nright = negate(be.right); 
-        Expression res = new BinaryExpression("&", nleft, nright); 
+        Expression res = 
+           new BinaryExpression("&", nleft, nright); 
         res.setBrackets(true); 
         return res; 
       } 
       else if (op.equals("->exists"))
       { Expression nright = negate(be.right); 
-        Expression res = new BinaryExpression("->forAll", be.left, nright); 
+        Expression res = 
+            new BinaryExpression("->forAll", be.left, nright); 
         res.setBrackets(true); 
         return res; 
       } 
       else if (op.equals("->forAll"))
       { Expression nright = negate(be.right); 
-        Expression res = new BinaryExpression("->exists", be.left, nright); 
+        Expression res = 
+           new BinaryExpression("->exists", be.left, nright); 
         res.setBrackets(true); 
         return res; 
       } 
       else if (op.equals("#"))
       { Expression nright = negate(be.right); 
-        Expression res = new BinaryExpression("!", be.left, nright); 
+        Expression res = 
+           new BinaryExpression("!", be.left, nright); 
         res.setBrackets(true); 
         return res; 
       } 
       else if (op.equals("!"))
       { Expression nright = negate(be.right); 
-        Expression res = new BinaryExpression("#", be.left, nright); 
+        Expression res = 
+           new BinaryExpression("#", be.left, nright); 
         res.setBrackets(true); 
         return res; 
       } 
@@ -3235,9 +3279,9 @@ abstract class Expression
       { return ue.argument; } 
     } 
     else if (e instanceof BasicExpression)
-    { if ("true".equals(e + ""))
+    { if (e.isTrueString())
       { return new BasicExpression(false); } 
-      if ("false".equals(e + ""))
+      if (e.isFalseString())
       { return new BasicExpression(true); } 
     }
 
@@ -3365,6 +3409,16 @@ abstract class Expression
 
   public boolean equalsString(final String s)
   { return s.equals(toString()); }
+
+  public boolean isTrueString()
+  { String ss = toString(); 
+    return "true".equals(ss) || "(true)".equals(ss); 
+  }
+
+  public boolean isFalseString()
+  { String ss = toString(); 
+    return "false".equals(ss) || "(false)".equals(ss); 
+  }
 
   abstract public Vector splitAnd(final Vector comps); 
 

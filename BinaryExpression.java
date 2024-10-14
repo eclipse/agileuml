@@ -184,14 +184,18 @@ class BinaryExpression extends Expression
   public Expression definedness()
   { Expression dl = left.definedness();
     Expression dr = right.definedness();
-    Expression res = simplify("&",dl,dr,null);  // simplifyAnd(dl,dr); 
+    Expression res = simplify("&",dl,dr,null);  
+                     // simplifyAnd(dl,dr); 
       
     if ("/".equals(operator) || 
         "mod".equals(operator) || "div".equals(operator)) 
     { Expression zero = new BasicExpression(0);
-      Expression neqz = new BinaryExpression("/=",right,zero);
+      Expression rexpr = (Expression) right.clone(); 
+      rexpr.setBrackets(true); 
+      Expression neqz = new BinaryExpression("/=",rexpr,zero);
       return simplify("&",res,neqz,null);
     }
+
     // and case for ->pow
     if ("->pow".equals(operator))
     { Expression zero = new BasicExpression(0);
@@ -203,17 +207,20 @@ class BinaryExpression extends Expression
     }  // left < 0  =>  right->oclIsTypeOf("int")
 
     if ("->at".equals(operator))
-    { if ("String".equals(right.getType() + ""))
+    { if ("String".equals(right.getType() + "") || 
+          left.isMap())
       { UnaryExpression kexp = new UnaryExpression("->keys", left); 
         Expression inkeys = new BinaryExpression(":", right, kexp); 
         return simplify("&",res,inkeys,null); 
       } 
+
       UnaryExpression selfsize = new UnaryExpression("->size", left); 
       Expression lbnd = new BinaryExpression("<=", new BasicExpression(1), right); 
       Expression ubnd = new BinaryExpression("<=", right, selfsize); 
       Expression inrange = new BinaryExpression("&",lbnd,ubnd); 
       return simplify("&",res,inrange,null);
     } 
+
     return res;
   }
 
@@ -18544,9 +18551,15 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   }
 
   public boolean implies(final Expression e)
-  { if (equals(e)) { return true; }
-    if (e.equalsString("true")) { return true; } 
-    if (equalsString("false")) { return true; } 
+  { if (equals(e)) 
+    { return true; }
+
+    if (e.isTrueString()) 
+    { return true; }
+ 
+    if (this.isFalseString()) 
+    { return true; }
+ 
     if (operator.equals("&"))
     { if (e instanceof BinaryExpression)
       { BinaryExpression be = (BinaryExpression) e;
@@ -18607,12 +18620,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   private boolean impliesEq(String op, BinaryExpression be)
   { if (op.equals("=") || op.equals("<>="))
     { return (equals(be) || equals(be.reverse())); }
-    else if (op.equals("<=") || op.equals(">=") || 
-             op.equals("<:") ||
-             op.equals("->includesAll"))
+    
+    if (op.equals("<=") || op.equals(">=") || 
+        op.equals("<:") ||
+        op.equals("->includesAll"))
     { return (left.equals(be.left) && right.equals(be.right)) || 
              (right.equals(be.left) && left.equals(be.right));  
     }
+
     return false; 
   } 
 

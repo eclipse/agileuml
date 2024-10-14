@@ -4900,6 +4900,15 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public void checkDefinedness() 
+  { for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i);
+      Vector args = op.getParameterExpressions(); 
+      op.definedness(args);
+      op.determinate(args);  
+    } 
+  } 
+
 
   public int displayMeasures(PrintWriter out, java.util.Map clones)
   { String nme = getName(); 

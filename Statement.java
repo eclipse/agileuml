@@ -267,6 +267,9 @@ abstract class Statement implements Cloneable
 
   public abstract Statement optimiseOCL();
 
+  public Expression definedness()
+  { return new BasicExpression(true); } 
+
   public abstract Map energyUse(Map uses, 
                                 Vector rUses, Vector oUses);
 
@@ -957,10 +960,17 @@ abstract class Statement implements Cloneable
     if (st == null) 
     { return res; }
 
+    // System.out.println(">> Operation calls in " + st); 
+
     if (st instanceof InvocationStatement)
-    { res.add(st); 
+    { if ("skip".equals(st + "")) { } 
+      else 
+      { res.add(st); }  
       return res; 
     } 
+
+    // if (st instanceof ReturnStatement) 
+    // { 
  
     if (st instanceof SequenceStatement) 
     { SequenceStatement sq = (SequenceStatement) st; 
@@ -1762,6 +1772,8 @@ abstract class Statement implements Cloneable
 
   abstract Expression wpc(Expression post); 
 
+  abstract Expression wpc(Expression inv, Expression post); 
+
   // The variables in allvars whose pre-values can affect 
   // the vars post-values as a result of this 
   // statement execution
@@ -2208,6 +2220,12 @@ class ReturnStatement extends Statement
   public Expression getReturnValue() 
   { return value; } 
 
+  public Expression definedness()
+  { if (value != null) 
+    { return value.definedness(); } 
+    return new BasicExpression(true); 
+  } 
+
   public Object clone()
   { return new ReturnStatement(value); } 
 
@@ -2432,6 +2450,9 @@ class ReturnStatement extends Statement
   { } 
  
   public Expression wpc(Expression post)
+  { return post; }  
+
+  public Expression wpc(Expression inv, Expression post)
   { return post; }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
@@ -2713,6 +2734,9 @@ class BreakStatement extends Statement
   public Expression wpc(Expression post)
   { return post; }  
 
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
+
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
@@ -2907,6 +2931,10 @@ class ContinueStatement extends Statement
  
   public Expression wpc(Expression post)
   { return post; }  
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  // goes to the head of the loop again
+
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
@@ -3540,6 +3568,10 @@ class InvocationStatement extends Statement
 
   public Expression wpc(Expression post)
   { return post; }
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
+
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { if ("skip".equals(callExp + ""))
@@ -4214,6 +4246,9 @@ class ImplicitInvocationStatement extends Statement
   public Expression wpc(Expression post)
   { return post; }
 
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
+
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  // assuming no side-effect
 
@@ -4636,6 +4671,19 @@ class WhileStatement extends Statement
     return res; 
   } 
 
+  public Expression definedness()
+  { Expression rtest = new BasicExpression(true); 
+
+    if (loopRange != null) 
+    { rtest = loopRange.definedness(); } 
+    else if (loopTest != null) 
+    { rtest = loopTest.definedness(); } 
+     
+    Expression bdef = body.definedness(); 
+
+    return Expression.simplify("&", rtest, bdef, null); 
+  } 
+
   public void findClones(java.util.Map clones, String rule, String op)
   { if (loopRange != null && 
         loopRange.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
@@ -4684,14 +4732,25 @@ class WhileStatement extends Statement
 
   public Map energyUse(Map uses, Vector rUses, Vector aUses)
   { if (loopRange != null) 
-    { loopRange.energyUse(uses,rUses,aUses); }  
+    { loopRange.energyUse(uses,rUses,aUses); }
+    else if (loopTest != null)
+    { loopTest.energyUse(uses,rUses,aUses); }
+  
     body.energyUse(uses,rUses,aUses);
 
     if (loopKind == WHILE || loopKind == REPEAT)
-    { int acount = (int) uses.get("amber"); 
-      uses.set("amber", acount + 1); 
-      aUses.add("! Unbounded loops can be inefficient: " + this + 
-                "\n>> Recommend replacing by a bounded loop"); 
+    { if (loopTest != null && "true".equals("" + loopTest)) 
+      { int rcount = (int) uses.get("red"); 
+        uses.set("red", rcount + 1); 
+        rUses.add("!!! Unbounded loop with true condition: may not terminate!: " + this); 
+      }
+      else 
+      { int acount = (int) uses.get("amber"); 
+        uses.set("amber", acount + 1); 
+        aUses.add("! Unbounded loops can be inefficient: " + 
+                  this + 
+                  "\n>> Recommend replacing by a bounded loop");
+      }  
     } 
 
     if (Statement.hasLoopStatement(body))
@@ -4709,6 +4768,11 @@ class WhileStatement extends Statement
                              Vector vars)
   { if (loopRange != null) 
     { loopRange.collectionOperatorUses(nestingLevel, 
+                                       operatorsAtLevel, 
+                                       vars); 
+    }
+    else if (loopTest != null)
+    { loopTest.collectionOperatorUses(nestingLevel, 
                                        operatorsAtLevel, 
                                        vars); 
     }
@@ -5423,6 +5487,9 @@ class WhileStatement extends Statement
     { return new UnaryExpression("not", loopTest); } 
     return loopTest; 
   } // actually the invariant
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { Vector bodydeps = body.dataDependents(allvars,vars);
@@ -6474,6 +6541,12 @@ class CreationStatement extends Statement
     return res; 
   } 
 
+  public Expression definedness()
+  { if (initialExpression != null) 
+    { return initialExpression.definedness(); } 
+    return new BasicExpression(true); 
+  } 
+
   public Vector allVariableNames()
   { Vector res = new Vector(); 
     res.add(assignsTo); 
@@ -7410,6 +7483,9 @@ class CreationStatement extends Statement
   public Expression wpc(Expression post)
   { return post; }
 
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
+
   public Vector dataDependents(Vector allvars, Vector vars)
   { // System.out.println(">---- " + assignsTo + " := " + initialExpression); 
     // System.out.println(">---- " + vars + " " + allvars); 
@@ -7734,6 +7810,22 @@ class SequenceStatement extends Statement
     SequenceStatement res = new SequenceStatement(newstats);
     res.setEntity(entity); 
     res.setBrackets(brackets); 
+    return res;  
+  } 
+
+  public Expression definedness()
+  { Expression res = new BasicExpression(true); 
+    Expression post = new BasicExpression(true); 
+    
+    for (int i = statements.size() - 1; i >= 0; i--) 
+    { Statement stat = (Statement) statements.get(i); 
+      Expression def = stat.definedness();
+      def.setBrackets(true);  
+      Expression inv = stat.wpc(res, post); 
+      inv.setBrackets(true); 
+      res = Expression.simplify("&", inv, def, null); 
+    } 
+
     return res;  
   } 
 
@@ -8466,6 +8558,16 @@ class SequenceStatement extends Statement
     return e1; 
   }
 
+  public Expression wpc(Expression inv, Expression post)
+  { Expression e1 = (Expression) inv.clone();
+    for (int i = statements.size()-1; i >= 0; i--)
+    { Statement stat = (Statement) statements.get(i);
+      Expression e2 = stat.wpc(e1,post);
+      e1 = e2;
+    } 
+    return e1; 
+  }  
+
   public Vector dataDependents(Vector allvars, Vector vars)
   { Vector vbls = new Vector(); 
     vbls.addAll(vars); 
@@ -9196,6 +9298,9 @@ class CaseStatement extends Statement
   public Expression wpc(Expression post)
   { return post; }  // Will not occur in a transition action. 
 
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
+
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
@@ -9525,6 +9630,10 @@ class ErrorStatement extends Statement
   
   public Expression wpc(Expression post)
   { return post; }
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }  
+
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
@@ -9911,6 +10020,9 @@ class AssertStatement extends Statement
   
   public Expression wpc(Expression post)
   { return post; }
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
@@ -10344,6 +10456,9 @@ class CatchStatement extends Statement
   
   public Expression wpc(Expression post)
   { return post; }
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { if (action != null) 
@@ -11008,6 +11123,9 @@ class TryStatement extends Statement
   
   public Expression wpc(Expression post)
   { return post; }
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { Vector vbls = new Vector(); 
@@ -11934,6 +12052,23 @@ class IfStatement extends Statement
     return res;
   }
 
+  public Expression wpc(Expression inv, Expression post)
+  { Expression res = null;
+    for (int i = 0; i < cases.size(); i++)
+    { IfCase ic = (IfCase) cases.get(i);
+      Expression test = ic.getTest();
+      Statement ifS = ic.getIf();
+      Expression e1 = ifS.wpc(inv, post);
+      Expression disj =
+        new BinaryExpression("&",test,e1);
+      if (res == null)
+      { res = disj; }
+      else
+      { res = new BinaryExpression("or",res,disj); }
+    }
+    return res;
+  }
+
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
@@ -12412,6 +12547,14 @@ class AssignStatement extends Statement
     // rhs.elementType = t; 
   } 
 
+  public Expression definedness()
+  { Expression ldef = lhs.definedness(); 
+    Expression rdef = rhs.definedness(); 
+
+    Expression res = Expression.simplify("&", ldef, rdef, null); 
+    return res; 
+  } 
+
   public Vector cgparameters()
   { Vector args = new Vector();
     Expression rhsnopre = rhs.removePrestate(); 
@@ -12854,6 +12997,10 @@ class AssignStatement extends Statement
 
   public Expression wpc(Expression post)
   { return post.substituteEq(lhs.toString(),rhs); }
+  // But more complex than this if the lhs is an array index
+
+  public Expression wpc(Expression inv, Expression post)
+  { return inv.substituteEq(lhs.toString(),rhs); }
   // But more complex than this if the lhs is an array index
 
   public Vector dataDependents(Vector allvars, Vector vars)
@@ -13747,6 +13894,20 @@ class ConditionalStatement extends Statement
     return args;
   }
 
+  public Expression definedness()
+  { Expression testd = test.definedness(); 
+    Expression ifdef = ifPart.definedness(); 
+    Expression res = 
+      Expression.simplify("&", testd, ifdef, null); 
+    if (elsePart != null) 
+    { res = 
+        Expression.simplify("&", res, 
+                            elsePart.definedness(), null); 
+    }
+    return res; 
+  } 
+
+
   public Object clone()
   { Expression testc = (Expression) test.clone(); 
     Statement ifc = (Statement) ifPart.clone(); 
@@ -14078,15 +14239,46 @@ class ConditionalStatement extends Statement
   }
 
   public Expression wpc(Expression post)
-  { BinaryExpression ifimpl = new BinaryExpression("=>", test, ifPart.wpc(post));
+  { Expression ifwpc = ifPart.wpc(post); 
+    ifwpc.setBrackets(true); 
+
+    Expression ifimpl = 
+      Expression.simplifyImp(test, ifwpc);
+
     if (elsePart != null) 
-    { UnaryExpression ntest = new UnaryExpression("not", test); 
-      BinaryExpression elseimpl = new BinaryExpression("=>", ntest, elsePart.wpc(post)); 
-      return new BinaryExpression("&", ifimpl, elseimpl); 
+    { Expression ntest = 
+        Expression.negate(test); 
+      Expression elsewpc = elsePart.wpc(post); 
+      elsewpc.setBrackets(true);  
+      Expression elseimpl = 
+        Expression.simplifyImp(ntest, elsewpc);
+ 
+      return Expression.simplify("&", ifimpl, elseimpl, null); 
     }
+
     return ifimpl; 
   }  
-  // and else if present
+
+  public Expression wpc(Expression inv, Expression post)
+  { Expression ifwpc = ifPart.wpc(inv, post); 
+    ifwpc.setBrackets(true); 
+
+    Expression ifimpl = 
+      Expression.simplifyImp(test, ifwpc);
+
+    if (elsePart != null) 
+    { Expression ntest = 
+        Expression.negate(test); 
+      Expression elsewpc = elsePart.wpc(inv, post); 
+      elsewpc.setBrackets(true);  
+      Expression elseimpl = 
+        Expression.simplifyImp(ntest, elsewpc);
+ 
+      return Expression.simplify("&", ifimpl, elseimpl, null); 
+    }
+
+    return ifimpl; 
+  }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { if (ifPart.updates(vars))
@@ -14563,6 +14755,9 @@ class FinalStatement extends Statement
 
   public Expression wpc(Expression post)
   { return body.wpc(post); }  
+
+  public Expression wpc(Expression inv, Expression post)
+  { return body.wpc(inv, post); }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  

@@ -20498,10 +20498,13 @@ public void produceCUI(PrintWriter out)
     { Entity e = (Entity) entities.get(i); 
       res = res && e.checkAttributeRedefinitions(); 
       if (e.selfImplementing())
-      { System.err.println("!! Error: cycle of interfaces: " + e);
+      { System.err.println("!!! ERROR: cycle in interface dependencies: " + e);
         res = false; 
       } 
+
+      e.checkDefinedness(); 
     } 
+
     return res; 
   }
    

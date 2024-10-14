@@ -3094,6 +3094,38 @@ public class BehaviouralFeature extends ModelElement
     // JOptionPane.showMessageDialog(null, "Definedness obligation for " + getName() + " is:\n" + res,
     //   "Internal consistency condition", JOptionPane.INFORMATION_MESSAGE); 
     System.out.println("***> Definedness obligation for " + getName() + " is:\n" + res); 
+
+    if (activity != null) 
+    { Vector calls = 
+          Statement.getOperationCalls(activity);
+      Vector returns = 
+          Statement.getReturnValues(activity); 
+
+      String selfexpr = toString(); 
+      String selfexpr1 = selfexpr; 
+
+      if (instanceScope == false && entity != null)
+      { selfexpr1 = entity.getName() + "." + selfexpr; }
+
+
+      if (VectorUtil.containsEqualString(selfexpr, calls) ||
+          VectorUtil.containsEqualString(selfexpr1, calls))
+      { 
+        System.out.println("!! Warning: possible infinite recursion: " + 
+           selfexpr + " is in calls of activity: " + calls);
+      } 
+
+      if (VectorUtil.containsEqualString(selfexpr, returns) ||
+          VectorUtil.containsEqualString(selfexpr1, returns))
+      { 
+        System.out.println("!! Warning: possible infinite recursion: " + 
+            selfexpr + " is in returned values: " + returns);
+      }   
+
+      Expression def = activity.definedness(); 
+      System.out.println(">> Activity definedness: " + def); 
+    } 
+ 
     return substituteParameters(res, arguments);  
   } 
 
@@ -4157,7 +4189,7 @@ public class BehaviouralFeature extends ModelElement
       { Type tp = (Type) typeParameters.get(i); 
         genPars = genPars + tp.getName(); 
         if (i < typeParameters.size() - 1) 
-        { genPars = genPars + ", "; } 
+        { genPars = genPars + ","; } 
       } 
       genPars = genPars + ">"; 
     } 
@@ -4167,7 +4199,7 @@ public class BehaviouralFeature extends ModelElement
     { Attribute par = (Attribute) parameters.get(i);
       String dec = par.getName();
       if (i < parameters.size() - 1)
-      { dec = dec + ", "; }
+      { dec = dec + ","; }
       res = res + dec;
     }
     res = res + ")";
