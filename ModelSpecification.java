@@ -1941,6 +1941,10 @@ public class ModelSpecification
 
   public boolean checkConstraintInModel(Constraint con, Vector objects)
   { boolean res = true; 
+
+    if (con == null || objects == null || objects.size() == 0)
+    { return true; } 
+
     Expression cond = con.antecedent(); 
     Expression succ = con.succedent(); 
 

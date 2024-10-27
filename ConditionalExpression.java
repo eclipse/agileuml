@@ -156,6 +156,22 @@ public class ConditionalExpression extends Expression
     if ((testexpr + "").equals("false"))
     { return elsestat; } 
  
+    if (testexpr instanceof BinaryExpression && 
+        elsestat instanceof BinaryExpression)
+    { BinaryExpression testbe = (BinaryExpression) testexpr; 
+      BinaryExpression elsebe = (BinaryExpression) elsestat; 
+
+      if ("->includes".equals(testbe.getOperator()) && 
+          (testbe.getLeft() + "").equals(ifstat + "") && 
+          ifExp.hasSetType() && 
+          (testbe.getLeft() + "").equals(elsebe.getLeft() + "") && 
+          (testbe.getRight() + "").equals(elsebe.getRight() + ""))
+      { if (elsebe.getOperator().equals("->including") || 
+            elsebe.getOperator().equals("->append"))
+        { return elsebe; }
+      } 
+    }  // redundant if-then-else-endif
+
     return new ConditionalExpression(testexpr, ifstat, elsestat); 
   } 
 

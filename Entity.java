@@ -1267,7 +1267,7 @@ public class Entity extends ModelElement implements Comparable
     else 
     { Attribute supatt = getDefinedAttribute(att.getName()); 
       if (supatt != null) 
-      { System.err.println("WARNING!: " + att + " is already declared in a superclass.");  
+      { System.err.println("! WARNING!: " + att + " is already declared in a superclass.");  
         // return; 
       }
     } 
@@ -1276,7 +1276,7 @@ public class Entity extends ModelElement implements Comparable
     if (isInterface())
     { if (att.isClassScope() && att.isFrozen()) { } 
       else 
-      { System.err.println("DECLARATION ERROR: Only frozen class-scope attributes " +
+      { System.err.println("!! DECLARATION ERROR: Only frozen class-scope attributes " +
                            "are allowed in interfaces!"); 
         // return; 
       }
@@ -4909,6 +4909,25 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void checkInvariants() 
+  { for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i);
+      Statement activ = op.getActivity(); 
+      if (activ != null) 
+      { for (int j = 0; j < invariants.size(); j++) 
+        { Constraint cons = (Constraint) invariants.get(j); 
+          Expression inv = cons.toExpression(); 
+          Expression wpc = activ.wpc(inv,inv); 
+          System.out.println(">> Correctness condition for operation " + op + " of class " + getName() + " is:");
+          wpc.setBrackets(true); 
+          Expression res = Expression.simplifyImp(inv,wpc); 
+          System.out.println(">> " + res); 
+          System.out.println(); 
+        } 
+      } 
+    } 
+  } 
+
 
   public int displayMeasures(PrintWriter out, java.util.Map clones)
   { String nme = getName(); 
@@ -5321,7 +5340,9 @@ public class Entity extends ModelElement implements Comparable
           // expr variables subset of op parameters union
           // all attributes of this class. 
 
-          Vector vuses = expr.allVariableNames();
+          Vector evuses = expr.getVariableUses(); 
+          Vector vuses = // expr.allVariableNames();
+                   VectorUtil.getStrings(evuses); 
           Vector auses = expr.allAttributesUsedIn(); 
           vuses.addAll(VectorUtil.getStrings(auses)); 
 

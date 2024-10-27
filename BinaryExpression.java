@@ -27,6 +27,9 @@ class BinaryExpression extends Expression
                        // let and ->iterate(  )
                        // secondary variable y in 
                        // col->collect( x; y : T | expr )
+  Expression accumulatorRange = null; 
+                       // ->select(x; acc : range | expr)
+                       // ->collect(x; acc : range | expr)
 
   Expression keyValue = null;   
                     // for map operators ->including(key,right), 
@@ -155,6 +158,9 @@ class BinaryExpression extends Expression
 
   public void setAccumulator(Attribute acc)
   { accumulator = acc; } 
+
+  public void setAccumulatorRange(Expression rnge)
+  { accumulatorRange = rnge; } 
 
   public Attribute getAccumulator()
   { return accumulator; } 

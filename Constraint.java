@@ -1112,6 +1112,29 @@ public class Constraint extends ConstraintOrGroup
     return extra + "::\n" + res + succ + assoc;  
   } 
 
+  public Expression toExpression()
+  { Expression res = new BasicExpression(true); 
+    boolean previous = false; 
+
+    if (cond0 != null) 
+    { res = cond0; 
+      previous = true; 
+    } 
+
+    if (cond != null)
+    { if (previous) 
+      { res = Expression.simplifyAnd(res,cond); }
+      else 
+      { res = cond; } 
+      previous = true; 
+    } 
+
+    if (previous) 
+    { return Expression.simplifyImp(res,succ); } 
+
+    return succ;  
+  } 
+
   public String ucToString()
   { String res = ""; 
     boolean previous = false; 
@@ -1739,7 +1762,7 @@ public class Constraint extends ConstraintOrGroup
     // B:: BCond(self) & not(idB : E@pre.idE@pre) => self->isDeleted()
 
     if (owner == null) 
-    { // System.err.println("Cannot create delta form of type 0 constraint: " + this); 
+    { // System.err.println("! Cannot create delta form of type 0 constraint: " + this); 
       return type0delta(); 
     } 
 
@@ -1760,7 +1783,7 @@ public class Constraint extends ConstraintOrGroup
     if (succ instanceof BinaryExpression && 
         ((BinaryExpression) succ).left instanceof BinaryExpression) {}  
     else 
-    { System.err.println("Cannot create delta0 form - succedent must be B->exists(b|P): " + this); 
+    { System.err.println("! Cannot create delta0 form - succedent must be B->exists(b|P): " + this); 
       return null; 
     } 
 
@@ -1771,7 +1794,7 @@ public class Constraint extends ConstraintOrGroup
     BasicExpression lvar = (BasicExpression) left.left; 
     Entity B = ltype.getEntity(); 
     if (B == null) 
-    { System.err.println("Cannot create delta0 form - no entity->exists: " + this); 
+    { System.err.println("! Cannot create delta0 form - no entity->exists: " + this); 
       return null; 
     } 
 
@@ -1797,7 +1820,7 @@ public class Constraint extends ConstraintOrGroup
     if (besucc.operator.equals("#1") || besucc.operator.equals("#")) 
     { Attribute pk = Expression.hasPrimaryKey(ltype); 
       if (pk == null) 
-      { System.err.println("Cannot create delta0 form - no id for: " + B); 
+      { System.err.println("! Cannot create delta0 form - no id for: " + B); 
         return null; 
       } 
       else if (pk != null) 
@@ -1809,7 +1832,7 @@ public class Constraint extends ConstraintOrGroup
         BinaryExpression testid; 
 
         if (keyval == null)
-        { System.err.println("Cannot create delta0 form: no " + lvar + "." + pk + " = val");
+        { System.err.println("! Cannot create delta0 form: no " + lvar + "." + pk + " = val");
           return null;
         }
         else if (ppk != null && ppk.getName().equals(keyval + ""))
@@ -1840,7 +1863,7 @@ public class Constraint extends ConstraintOrGroup
           // System.out.println("Variables: " + variables + " " + qvars1 + " " + lvars1); 
           Expression antevars = (Expression) splitante.get(0); 
           Expression anterem = (Expression) splitante.get(1); 
-          System.out.println("Ante1: " + antevars + " Ante2: " + anterem); 
+          System.out.println(">>> Ante1: " + antevars + " Ante2: " + anterem); 
 
           Expression existsowner = Expression.simplifyAnd(keyeq,anterem);
           Expression ante1 = existsowner.addReference(ovarbe,otype);
@@ -1861,7 +1884,7 @@ public class Constraint extends ConstraintOrGroup
       return res; 
     } 
     else 
-    { System.err.println("Invalid succedent for delta: " + this); 
+    { System.err.println("!! Invalid succedent for delta: " + this); 
       return null; 
     } 
   } 
@@ -1871,7 +1894,7 @@ public class Constraint extends ConstraintOrGroup
     // qvars & lvars & idE : B@pre.id & not(Ante) & b = B@pre[idE] & BCond(b) => b->isDeleted()
 
     if (owner == null) 
-    { System.err.println("Cannot create delta form of type 0 constraint: " + this); 
+    { System.err.println("! Cannot create delta form of type 0 constraint: " + this); 
       return null; 
     } 
 
@@ -1896,7 +1919,7 @@ public class Constraint extends ConstraintOrGroup
       // System.out.println("Variables: " + variables + " " + qvars1 + " " + lvars1); 
     Expression ante1 = (Expression) splitante.get(0); 
     Expression ante2 = (Expression) splitante.get(1); 
-    System.out.println("Ante1: " + ante1 + " Ante2: " + ante2); 
+    System.out.println(">>> Ante1: " + ante1 + " Ante2: " + ante2); 
 
     if (ante2 == null || "true".equals(ante2 + ""))
     { return null; } 
@@ -1906,9 +1929,10 @@ public class Constraint extends ConstraintOrGroup
     if (succ instanceof BinaryExpression && 
         ((BinaryExpression) succ).left instanceof BinaryExpression) {}  
     else 
-    { System.err.println("Cannot create delta form - succedent must be B->exists(b|P): " + this); 
+    { System.err.println("! Cannot create delta form - succedent must be B->exists(b|P): " + this); 
       return null; 
     } 
+
     BinaryExpression besucc = (BinaryExpression) succ;  // B->exists( b | right )
     BinaryExpression left = (BinaryExpression) besucc.left; 
     Expression right = (Expression) besucc.right; 
@@ -1917,7 +1941,7 @@ public class Constraint extends ConstraintOrGroup
     Expression newsucc = new UnaryExpression("->isDeleted",lvar); 
     Entity B = ltype.getEntity(); 
     if (B == null) 
-    { System.err.println("Cannot create delta form - no entity->exists: " + this); 
+    { System.err.println("! Cannot create delta form - no entity->exists: " + this); 
       return null; 
     } 
     BasicExpression Bexp = new BasicExpression(B); 
@@ -1926,7 +1950,7 @@ public class Constraint extends ConstraintOrGroup
     if (besucc.operator.equals("#1") || besucc.operator.equals("#")) 
     { Attribute pk = Expression.hasPrimaryKey(ltype); 
       if (pk == null) 
-      { System.err.println("Cannot create delta form - no id for: " + B); 
+      { System.err.println("! Cannot create delta form - no id for: " + B); 
         return null; 
       } 
       else // if (pk != null) 
@@ -1946,13 +1970,13 @@ public class Constraint extends ConstraintOrGroup
         else 
         { Attribute ppk = owner.getPrincipalPK(); 
           if (ppk == null) 
-          { System.err.println("Cannot create delta form - no id for: " + owner); 
+          { System.err.println("! Cannot create delta form - no id for: " + owner); 
             return null; 
           } 
           BasicExpression keye = new BasicExpression(ppk); 
           testid = new BinaryExpression(":", keye, bid);
           Bexp2.setArrayIndex(keye);
-          System.err.println("WARNING: must be equation " + lvar + "." + pk + 
+          System.err.println("!! WARNING: must be equation " + lvar + "." + pk + 
                              " = " + ppk + " in the ->exists"); 
         } // not right: need to include B->exists( b bcond & b.lvar = keyval )
         newante = new BinaryExpression("&",newante,testid); 
@@ -1978,7 +2002,7 @@ public class Constraint extends ConstraintOrGroup
       return res; 
     } 
     else 
-    { System.err.println("Invalid succedent for delta: " + this); 
+    { System.err.println("! Invalid succedent for delta: " + this); 
       return null; 
     } 
   } 
@@ -1989,7 +2013,7 @@ public class Constraint extends ConstraintOrGroup
     // TCond[self/b] => owner->exists( x | x.Ante & x.Post~ ) 
 
     if (owner == null) 
-    { System.out.println("Inverting type 0 constraint: " + this); 
+    { System.out.println(">>> Inverting type 0 constraint: " + this); 
       return type0invert(); 
     } 
 
@@ -2011,7 +2035,7 @@ public class Constraint extends ConstraintOrGroup
         if (etype != null && etype.entity != null)
         { owner2 = etype.entity; } 
         else 
-        { System.err.println("Cannot invert constraint with null target entity: " + this); 
+        { System.err.println("! Cannot invert constraint with null target entity: " + this); 
           return null; 
         } 
 
@@ -2035,10 +2059,10 @@ public class Constraint extends ConstraintOrGroup
       { splitante = ante.splitToCond0Cond1(v0,pars1,qvars1,lvars1,allvars); } 
       else 
       { splitante = v0; }  
-      // System.out.println("Variables: " + variables + " " + qvars1 + " " + lvars1); 
+      // System.out.println(">>> Variables: " + variables + " " + qvars1 + " " + lvars1); 
       Expression ante1 = (Expression) splitante.get(0); 
       Expression ante2 = (Expression) splitante.get(1); 
-      System.out.println("ante1: " + ante1 + " ante2: " + ante2); 
+      System.out.println(">>> ante1: " + ante1 + " ante2: " + ante2); 
       
         String oname = owner + ""; 
         String ovar = oname.toLowerCase() + "x"; 
@@ -2117,7 +2141,7 @@ public class Constraint extends ConstraintOrGroup
               if (ranelemt != null) 
               { var1.setElementType(ranelemt.getElementType()); } 
  
-              System.out.println("Quantified variable " + var1 + 
+              System.out.println(">>> Quantified variable " + var1 + 
                                  " type = " + var1.getType());
               
               newpost = 

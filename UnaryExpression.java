@@ -410,9 +410,8 @@ public class UnaryExpression extends Expression
         "->min".equals(operator) ||
         "->any".equals(operator))
     { Expression zero = new BasicExpression(0);
-      BasicExpression orsize = new BasicExpression("size",0);
-      orsize.umlkind = FUNCTION;
-      orsize.objectRef = argument;  // clone it
+      UnaryExpression orsize = 
+        new UnaryExpression("->size", argument);
       Expression pos = 
         new BinaryExpression(">",orsize,zero);
       return simplify("&",pos,res,null);
@@ -423,13 +422,15 @@ public class UnaryExpression extends Expression
           new BinaryExpression(">=",argument,zero);
       return simplify("&",nneg,res,null);
     }
-    else if ("->log".equals(operator) || "->log10".equals(operator))
+    else if ("->log".equals(operator) || 
+             "->log10".equals(operator))
     { Expression zero = new BasicExpression(0);
       Expression nneg = 
           new BinaryExpression(">",argument,zero);
       return simplify("&",nneg,res,null);
     }
-    else if ("->acos".equals(operator) || "->asin".equals(operator))
+    else if ("->acos".equals(operator) || 
+             "->asin".equals(operator))
     { Expression minus1 = new BasicExpression(-1); 
       Expression one = new BasicExpression(1); 
       Expression pos1 = new BinaryExpression(">=",argument,minus1);
@@ -468,12 +469,11 @@ public class UnaryExpression extends Expression
 
   public Expression determinate()
   { Expression res = argument.determinate(); 
-
+    Expression one = new BasicExpression(1);
+      
     if ("->any".equals(operator))
-    { Expression one = new BasicExpression(1);
-      BasicExpression andsize = new BasicExpression("size",0);
-      andsize.umlkind = FUNCTION;
-      andsize.objectRef = argument;  // clone it
+    { UnaryExpression andsize = 
+         new UnaryExpression("->size",argument);
       Expression isone = 
         new BinaryExpression("=",andsize,one);
       return simplify("&",res,isone,null);
@@ -484,8 +484,8 @@ public class UnaryExpression extends Expression
     { if ("Set".equals(argument.getType().getName()) || 
           "Map".equals(argument.getType().getName()))
       { return new BinaryExpression("<=", 
-                      new UnaryExpression("->size",argument),
-                                    new BasicExpression(1)); 
+                 new UnaryExpression("->size",argument),
+                 one); 
       } 
       else 
       { return res; } 

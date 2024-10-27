@@ -4739,10 +4739,17 @@ class WhileStatement extends Statement
     body.energyUse(uses,rUses,aUses);
 
     if (loopKind == WHILE || loopKind == REPEAT)
-    { if (loopTest != null && "true".equals("" + loopTest)) 
+    { if (loopTest != null && loopKind == WHILE &&
+          "true".equals("" + loopTest)) 
       { int rcount = (int) uses.get("red"); 
         uses.set("red", rcount + 1); 
-        rUses.add("!!! Unbounded loop with true condition: may not terminate!: " + this); 
+        rUses.add("!!! Unbounded while loop with true condition: may not terminate!: " + this); 
+      }
+      else if (loopTest != null && loopKind == REPEAT &&
+          "false".equals("" + loopTest)) 
+      { int rcount = (int) uses.get("red"); 
+        uses.set("red", rcount + 1); 
+        rUses.add("!!! Unbounded repeat loop with false condition: may not terminate!: " + this); 
       }
       else 
       { int acount = (int) uses.get("amber"); 
@@ -4754,9 +4761,9 @@ class WhileStatement extends Statement
     } 
 
     if (Statement.hasLoopStatement(body))
-    { int rcount = (int) uses.get("red"); 
-      uses.set("red", rcount + 1); 
-      rUses.add("!!! Nested loops can be very inefficient: " + this); 
+    { int rcount = (int) uses.get("amber"); 
+      uses.set("amber", rcount + 1); 
+      aUses.add("!!! Nested loops can be very inefficient: " + this); 
     } // or indeed if there is a collection iteration expr
 
     return uses; 
@@ -4781,7 +4788,13 @@ class WhileStatement extends Statement
     newvars.addAll(vars); 
     
     if (loopVar != null) 
-    { newvars.add("" + loopVar); } 
+    { newvars.add("" + loopVar); }
+    else if (loopTest != null)
+    { Vector evuses = loopTest.getVariableUses(); 
+      Vector vuses = 
+                VectorUtil.getStrings(evuses); 
+      newvars.addAll(vuses); 
+    }  
   
     body.collectionOperatorUses(nestingLevel + 1,
                                 operatorsAtLevel, newvars);
@@ -5483,13 +5496,60 @@ class WhileStatement extends Statement
   }  
 
   public Expression wpc(Expression post)
-  { if (loopKind == REPEAT)
-    { return new UnaryExpression("not", loopTest); } 
+  { if (loopKind == WHILE)
+    { // post & (loopTest & post => wpc(body,post))
+
+      Expression bodywpc = body.wpc(post); 
+      Expression nextIter = 
+        Expression.simplifyImp(
+          Expression.simplifyAnd(loopTest,post),bodywpc); 
+      nextIter.setBrackets(true); 
+      return Expression.simplifyAnd(post, nextIter); 
+    } 
+
+    if (loopKind == REPEAT)
+    { // wpc(body,post) & 
+      // (not(loopTest) & post => wpc(body,post))
+
+      Expression bodywpc = body.wpc(post);
+      Expression ntest = Expression.negate(loopTest);  
+      Expression nextIter = 
+        Expression.simplifyImp(
+          Expression.simplifyAnd(ntest,post),bodywpc); 
+      nextIter.setBrackets(true); 
+      return Expression.simplifyAnd(bodywpc, nextIter); 
+    } 
+
     return loopTest; 
   } // actually the invariant
 
   public Expression wpc(Expression inv, Expression post)
-  { return inv; }  
+  { if (loopKind == WHILE)
+    { // inv & (loopTest & inv => wpc(body,inv,post))
+
+      Expression bodywpc = body.wpc(inv, post); 
+      Expression nextIter = 
+        Expression.simplifyImp(
+          Expression.simplifyAnd(loopTest,inv),bodywpc); 
+      nextIter.setBrackets(true); 
+      return Expression.simplifyAnd(inv, nextIter); 
+    } 
+
+    if (loopKind == REPEAT)
+    { // wpc(body,inv,post) & 
+      // (not(loopTest) & inv => wpc(body,inv,post))
+
+      Expression bodywpc = body.wpc(inv,post);
+      Expression ntest = Expression.negate(loopTest);  
+      Expression nextIter = 
+        Expression.simplifyImp(
+          Expression.simplifyAnd(ntest,inv),bodywpc); 
+      nextIter.setBrackets(true); 
+      return Expression.simplifyAnd(bodywpc, nextIter); 
+    } 
+
+    return inv; 
+  }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
   { Vector bodydeps = body.dataDependents(allvars,vars);
@@ -13931,6 +13991,32 @@ class ConditionalStatement extends Statement
     { if (elsec == null) 
       { return new InvocationStatement("skip"); } 
       return elsec; 
+    } 
+
+    Statement elseStat = Statement.getFirstStatement(elsePart); 
+ 
+    if (test instanceof BinaryExpression && 
+        elseStat instanceof AssignStatement)
+    { BinaryExpression testbe = (BinaryExpression) test;
+      AssignStatement elseassign = (AssignStatement) elseStat; 
+
+      if (elseassign.getRhs() instanceof BinaryExpression) 
+      { BinaryExpression elsebe = 
+                  (BinaryExpression) elseassign.getRhs(); 
+        Expression ifExp = elsebe.getLeft(); 
+
+        if ("->includes".equals(testbe.getOperator()) && 
+            (testbe.getLeft() + "").equals(
+                             elseassign.getLhs() + "") && 
+            ifExp.hasSetType() && 
+            (testbe.getLeft() + "").equals(ifExp + "") && 
+            (testbe.getLeft() + "").equals(elsebe.getLeft() + "") && 
+            (testbe.getRight() + "").equals(elsebe.getRight() + ""))
+        { if (elsebe.getOperator().equals("->including") || 
+              elsebe.getOperator().equals("->append"))
+          { return elseassign; }
+        } 
+      } 
     } 
 
     return new ConditionalStatement(testc, ifc, elsec); 

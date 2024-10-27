@@ -23843,6 +23843,8 @@ public void produceCUI(PrintWriter out)
   { // read in a model, and check global & class invariants
     // hold in the model. 
 
+    System.out.println(">>> Reading model output/out.txt"); 
+
     ModelSpecification modelspec = new ModelSpecification(); 
     int correspondenceCount = readModel(modelspec, "output/out.txt");
     modelspec.defineComposedFeatureValues(1,2,entities,types); 
@@ -23867,6 +23869,15 @@ public void produceCUI(PrintWriter out)
         System.out.println(">>> Value is: " + res); 
       } 
     }  
+
+    // Also, for each class, check that its operations preserve
+    // the class invariants? 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      ent.checkInvariants(); 
+    } 
+
   } 
 
 

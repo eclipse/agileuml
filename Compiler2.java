@@ -3257,7 +3257,9 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         { // It is ->iterate(v; acc = value | rght )
           Expression ee1 = null; 
           Expression ee3 = null; 
-          Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
+          Expression ee2 = 
+             parse_factor_expression(bc,pstart,i-1,
+                                     entities,types); 
           if (ee2 == null) { continue; } 
 
           boolean foundpipe = false; 
@@ -3283,6 +3285,114 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           acc.setInitialExpression(ee3); 
           be.setAccumulator(acc);                
           return be; 
+        } 
+        else if ("select".equals(ss2) && 
+                 i+7 < pend && 
+                 ";".equals(lexicals.get(i+4) + "") &&                               
+                 ":".equals(lexicals.get(i+6) + "") &&                               
+                 ")".equals(lexicals.get(pend) + ""))
+        { // It is ->select(v; acc : ss | rght )
+          // Same as ->select(v | ss->exists( acc | rght ))
+
+          Expression ee1 = null; 
+          Expression ee3 = null; 
+          Expression ee2 = 
+             parse_factor_expression(bc,pstart,i-1,
+                                     entities,types); 
+          if (ee2 == null) { continue; } 
+
+          boolean foundpipe = false; 
+          for (int t = i+7; t < pend && !foundpipe; t++) 
+          { String tlex = lexicals.get(t) + ""; 
+            if ("|".equals(tlex))
+            { ee1 = parse_expression(bc+1,t+1,pend-1,entities,types);
+              ee3 = parse_expression(bc+1,i+7,t-1,entities,types); 
+              if (ee1 != null && ee3 != null) 
+              { foundpipe = true; } 
+            } 
+          } 
+
+          if (ee1 == null || ee3 == null) { continue; } 
+
+          String var = lexicals.get(i+3) + ""; 
+          String accvar = lexicals.get(i+5) + ""; 
+          Expression existsDom = 
+            new BinaryExpression(":", 
+                                 new BasicExpression(accvar),
+                                 ee3); 
+
+          Expression selectDom = 
+            new BinaryExpression(":", 
+                                 new BasicExpression(var),
+                                 ee2); 
+          BinaryExpression existsExpr = 
+            new BinaryExpression("#", existsDom, ee1); 
+          BinaryExpression be = 
+            new BinaryExpression("|", selectDom, existsExpr); 
+          // be.setIteratorVariable(lexicals.get(i+3) + "");
+          // Vector env = new Vector(); 
+          // ee3.typeCheck(types,entities,env); 
+          // Attribute acc = 
+          //   new Attribute(lexicals.get(i+5) + "",
+          //                 ee3.getElementType(), 
+          //                 ModelElement.INTERNAL); 
+          // be.setAccumulatorRange(ee3); // domain of acc
+          // be.setAccumulator(acc);                
+          return be; 
+        } 
+        else if ("collect".equals(ss2) && 
+                 i+7 < pend && 
+                 ";".equals(lexicals.get(i+4) + "") &&                               
+                 ":".equals(lexicals.get(i+6) + "") &&                               
+                 ")".equals(lexicals.get(pend) + ""))
+        { // It is ->collect(v; acc : ss | rght )
+          // Same as ->collect(v | ss->collect( acc | rght ))->concatenateAll()
+
+          Expression ee1 = null; 
+          Expression ee3 = null; 
+          Expression ee2 = 
+             parse_factor_expression(bc,pstart,i-1,
+                                     entities,types); 
+          if (ee2 == null) { continue; } 
+
+          boolean foundpipe = false; 
+          for (int t = i+7; t < pend && !foundpipe; t++) 
+          { String tlex = lexicals.get(t) + ""; 
+            if ("|".equals(tlex))
+            { ee1 = parse_expression(bc+1,t+1,pend-1,entities,types);
+              ee3 = parse_expression(bc+1,i+7,t-1,entities,types); 
+              if (ee1 != null && ee3 != null) 
+              { foundpipe = true; } 
+            } 
+          } 
+
+          if (ee1 == null || ee3 == null) { continue; } 
+
+          String var = lexicals.get(i+3) + ""; 
+          String accvar = lexicals.get(i+5) + ""; 
+          Expression existsDom = 
+            new BinaryExpression(":", 
+                                 new BasicExpression(accvar),
+                                 ee3); 
+
+          Expression selectDom = 
+            new BinaryExpression(":", 
+                                 new BasicExpression(var),
+                                 ee2); 
+          BinaryExpression existsExpr = 
+            new BinaryExpression("|C", existsDom, ee1); 
+          BinaryExpression be = 
+            new BinaryExpression("|C", selectDom, existsExpr); 
+          // be.setIteratorVariable(lexicals.get(i+3) + "");
+          // Vector env = new Vector(); 
+          // ee3.typeCheck(types,entities,env); 
+          // Attribute acc = 
+          //   new Attribute(lexicals.get(i+5) + "",
+          //                 ee3.getElementType(), 
+          //                 ModelElement.INTERNAL); 
+          // be.setAccumulatorRange(ee3); // domain of acc
+          // be.setAccumulator(acc);                
+          return new UnaryExpression("->concatenateAll", be); 
         } 
         else if (pend == i+3) // && "(".equals(lexicals.get(i+2) + "") &&
                               //  ")".equals(lexicals.get(pend) + ""))  
