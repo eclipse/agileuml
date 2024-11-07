@@ -725,9 +725,14 @@ abstract class Statement implements Cloneable
     return st;
   } // Other cases, for all other forms of statement. 
 
-  public static Statement tryInsertCloneDeclaration(Statement st,
-                              Expression expr, Type typ, Type et)
-  { if (st == null || expr == null) 
+  public static Statement tryInsertCloneDeclaration(
+                         Statement st,
+                         Expression expr, Type typ, Type et)
+  { // The declaration of vname must immediately precede 
+    // first use of expr. 
+    // st : SequenceStatement.
+
+    if (st == null || expr == null) 
     { return st; }
 
     if (typ == null) 
@@ -740,46 +745,42 @@ abstract class Statement implements Cloneable
       CreationStatement.newCreationStatement(vname,typ,expr);
     dec.setElementType(et); 
 
-    Vector rdfr = expr.getVariableUses(); 
- 
-    System.out.println(">>> Read frame of cloned expr " + expr + 
-                       " is " + rdfr); 
+    BasicExpression var = 
+      BasicExpression.newVariableBasicExpression(vname,typ); 
 
-    /* if (st instanceof SequenceStatement) 
+    if (st instanceof SequenceStatement) 
     { SequenceStatement sq = (SequenceStatement) st; 
-      Vector newstats = new Vector(); 
-      Vector stats = sq.getStatements(); 
+      Vector stats = sq.flattenSequenceStatement(); 
+
       Vector precedingStats = new Vector(); 
+
       for (int i = 0; i < stats.size(); i++) 
-      { if (stats.get(i) instanceof Statement)
-        { Statement stat = (Statement) stats.get(i); 
-          Vector remainingStats = 
-            VectorUtil.subrange(stats,i+1,stats.size());
+      { Statement stat = (Statement) stats.get(i); 
+          
+        if (stat.containsSubexpression(expr))
+        { 
+          precedingStats.add(dec);
+             
+          for (int j = i; j < stats.size(); j++) 
+          { Statement ss = 
+                 (Statement) stats.get(j); 
+            Statement newstat = 
+                        ss.substituteEq(expr + "", var); 
+
+            precedingStats.add(newstat);
+          }  
+
           SequenceStatement remStat = 
-            new SequenceStatement(remainingStats); 
-          Vector wrfr = remStat.writeFrame(); 
-          System.out.println(">>> Write frame of " + remStat + 
-                       " is " + wrfr); 
+              new SequenceStatement(precedingStats);
 
-          if (VectorUtil.haveCommonElement(rdfr, wrfr))
-          { precedingStats.add(stat); } // no good, continue search
-          else 
-          { newstats.addAll(precedingStats); 
-            newstats.add(dec); 
-            newstats.addAll(remainingStats); 
-            SequenceStatement newsq = 
-              new SequenceStatement(newstats);
-            newsq.setBrackets(sq.hasBrackets());  
-            return newsq; 
-          }
-        }  
+          return remStat;  
+        } // insert creation statement before remainingStats
+        else 
+        { precedingStats.add(stat); }   
       } 
-      return null; 
-    } */ 
 
-    Vector wrfr = st.writeFrame(); 
-    System.out.println(">>> Write frame of " + st + 
-                       " is " + wrfr); 
+      return st; 
+    } 
     
     /* for (int j = 0; j < rdfr.size(); j++) 
     { String rv = rdfr.get(j) + ""; 
@@ -787,8 +788,6 @@ abstract class Statement implements Cloneable
       { return null; } 
     } */ 
 
-    BasicExpression var = 
-      BasicExpression.newVariableBasicExpression(vname,typ); 
 
     Statement newstat = st.substituteEq(expr + "", var); 
 
@@ -1728,6 +1727,8 @@ abstract class Statement implements Cloneable
 
   public abstract Vector cgparameters(); 
 
+  public abstract boolean containsSubexpression(Expression expr); 
+
   public abstract Vector singleMutants(); 
 
   abstract String bupdateForm(); 
@@ -2379,6 +2380,12 @@ class ReturnStatement extends Statement
     return res; 
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { if (value == null) 
+    { return false; } 
+    return value.containsSubexpression(expr); 
+  } 
+
   public Vector singleMutants()
   { if (value == null) 
     { return new Vector(); } 
@@ -2673,6 +2680,9 @@ class BreakStatement extends Statement
     return res;  
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { return false; } 
+
   public Vector singleMutants()
   { Vector res = new Vector(); 
     res.add(new ContinueStatement()); 
@@ -2870,6 +2880,9 @@ class ContinueStatement extends Statement
     return res; 
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { return false; } 
+   
   public Vector singleMutants()
   { Vector res = new Vector(); 
     res.add(new BreakStatement()); 
@@ -3452,6 +3465,9 @@ class InvocationStatement extends Statement
 
     return res;  
   } 
+
+  public boolean containsSubexpression(Expression expr) 
+  { return callExp.containsSubexpression(expr); } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -4144,6 +4160,10 @@ class ImplicitInvocationStatement extends Statement
 
     return res; 
   } 
+
+  public boolean containsSubexpression(Expression expr) 
+  { return callExp.containsSubexpression(expr); } 
+
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -5380,6 +5400,20 @@ class WhileStatement extends Statement
 
     return res;  
   }  
+
+  public boolean containsSubexpression(Expression expr) 
+  { if (loopKind == WHILE || loopKind == REPEAT)
+    { if (loopTest.containsSubexpression(expr))
+      { return true; }  
+      return body.containsSubexpression(expr); 
+    }
+
+    if (loopRange.containsSubexpression(expr))
+    { return true; } 
+
+    return body.containsSubexpression(expr); 
+  } 
+ 
 
   public Vector singleMutants()
   { Vector res = new Vector();
@@ -6868,6 +6902,12 @@ class CreationStatement extends Statement
     // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
+  } 
+
+  public boolean containsSubexpression(Expression expr)
+  { if (initialExpression != null) 
+    { return initialExpression.containsSubexpression(expr); } 
+    return false; 
   } 
 
   public Vector singleMutants()
@@ -8512,6 +8552,15 @@ class SequenceStatement extends Statement
     return res; 
   }
 
+  public boolean containsSubexpression(Expression expr)
+  { for (int i = 0; i < statements.size(); i++)
+    { Statement si = (Statement) statements.get(i);
+      if (si.containsSubexpression(expr)) 
+      { return true; }
+    }  
+    return false; 
+  } 
+
   public Vector singleMutants()
   { // a single mutant of s1 followed by seqrem, or 
     // s1 followed by single mutant of seqrem
@@ -9138,6 +9187,19 @@ class CaseStatement extends Statement
     return res; 
   } 
 
+  public boolean containsSubexpression(Expression expr)
+  { int n = cases.elements.size();
+
+    for (int i = 0; i < n; i++)
+    { Maplet mm = (Maplet) cases.elements.elementAt(i);
+      Statement ss = (Statement) mm.dest; 
+      if (ss.containsSubexpression(expr)) 
+      { return true; } 
+    } 
+
+    return false; 
+  } 
+
   public Vector singleMutants() 
   { return new Vector(); } 
 
@@ -9609,6 +9671,12 @@ class ErrorStatement extends Statement
     return res; 
   } 
 
+  public boolean containsSubexpression(Expression expr)
+  { if (thrownObject == null) 
+    { return thrownObject.containsSubexpression(expr); } 
+    return false; 
+  } 
+
   public Vector singleMutants()
   { if (thrownObject == null) 
     { return new Vector(); } 
@@ -9991,6 +10059,9 @@ class AssertStatement extends Statement
     return res; 
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { return condition.containsSubexpression(expr); } 
+
   public Vector singleMutants()
   { if (condition == null) 
     { return new Vector(); } 
@@ -10333,6 +10404,12 @@ class CatchStatement extends Statement
     return res; 
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { if (caughtObject.containsSubexpression(expr))
+    { return true; }
+    return action.containsSubexpression(expr);
+  } 
+
   public Vector singleMutants()
   { return new Vector(); }
 
@@ -10340,7 +10417,10 @@ class CatchStatement extends Statement
   { return new CatchStatement(caughtObject,action); } 
 
   public Statement dereference(BasicExpression var) 
-  { return new CatchStatement(caughtObject.dereference(var), action.dereference(var)); }
+  { return 
+      new CatchStatement(caughtObject.dereference(var), 
+                         action.dereference(var)); 
+  }
 
   public Statement optimiseOCL() 
   { Expression cobj = null; 
@@ -10877,6 +10957,24 @@ class TryStatement extends Statement
 
     if (endStatement != null) 
     { endStatement.findMagicNumbers(mgns,rule,op); } 
+  } 
+
+  public boolean containsSubexpression(Expression expr) 
+  { if (body != null) 
+    { if (body.containsSubexpression(expr))
+      { return true; }
+    } 
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement stat = (Statement) catchClauses.get(i); 
+      if (stat.containsSubexpression(expr))
+      { return true; }
+    } 
+ 
+    if (endStatement != null) 
+    { return endStatement.containsSubexpression(expr); }
+
+    return false;  
   } 
 
   public Vector singleMutants()
@@ -12074,6 +12172,9 @@ class IfStatement extends Statement
     return res; 
   }
 
+  public boolean containsSubexpression(Expression expr)
+  { return false; } 
+
   public Vector singleMutants() 
   { return new Vector(); } 
 
@@ -12863,6 +12964,9 @@ class AssignStatement extends Statement
 
     return res;  
   }  
+
+  public boolean containsSubexpression(Expression expr)
+  { return rhs.containsSubexpression(expr); } 
 
   public Vector singleMutants()
   { Vector exprs = rhs.singleMutants(); 
@@ -14155,6 +14259,21 @@ class ConditionalStatement extends Statement
     return res;
   }
 
+  public boolean containsSubexpression(Expression expr)
+  { if (test.containsSubexpression(expr))
+    { return true; } 
+
+    if (ifPart != null &&
+        ifPart.containsSubexpression(expr))
+    { return true; } 
+
+    if (elsePart != null &&
+        elsePart.containsSubexpression(expr))
+    { return true; } 
+ 
+    return false; 
+  } 
+
   public Vector singleMutants()
   { Vector res = new Vector(); 
     
@@ -14752,6 +14871,13 @@ class FinalStatement extends Statement
 
     return res;
   }
+
+  public boolean containsSubexpression(Expression expr)
+  { if (body != null) 
+    { return body.containsSubexpression(expr); } 
+
+    return false; 
+  } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 

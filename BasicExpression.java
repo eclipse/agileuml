@@ -897,6 +897,9 @@ class BasicExpression extends Expression
     return res; 
   }
 
+  public boolean containsSubexpression(Expression expr) 
+  { return (this + "").equals(expr + ""); } 
+
   public Vector singleMutants()
   { Vector res = new Vector(); 
     if ("true".equals(data))

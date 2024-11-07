@@ -5370,8 +5370,8 @@ public class Entity extends ModelElement implements Comparable
           System.out.println(">> Variable uses of " + expr + ": " + vuses); 
 
           if (VectorUtil.allElementsEqual(copies) && 
-              oper != null && 
-              scopeVars.containsAll(vuses))
+              oper != null) // && 
+              // scopeVars.containsAll(vuses))
           { System.out.println(">>> Copies in code of operation " + opername); 
 
             Statement bfactivity = oper.getActivity(); 
@@ -5387,7 +5387,8 @@ public class Entity extends ModelElement implements Comparable
               oper.setActivity(newcode); 
               return; 
             }
-            else if (bfpost != null)
+            else if (bfpost != null && 
+                     scopeVars.containsAll(vuses))
             { // new let statement: 
               Expression newpost = 
                 BinaryExpression.newLetBinaryExpression(bfpost,
@@ -5683,6 +5684,14 @@ public class Entity extends ModelElement implements Comparable
     System.out.println("++++++++ Energy analysis of class " + ename + " ++++++++++++"); 
     System.out.println(); 
 
+    String cloneLimit = 
+      JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+    if (cloneLimit != null) 
+    { try { UCDArea.CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
+      catch (Exception _ex) 
+      { UCDArea.CLONE_LIMIT = 10; } 
+    } 
+
     int n = operations.size(); 
 
     for (int i = 0; i < n; i++) 
@@ -5693,6 +5702,19 @@ public class Entity extends ModelElement implements Comparable
       Vector amberDetails = new Vector(); 
 
       Map res1 = op.energyAnalysis(redDetails, amberDetails);
+
+      java.util.Map clones = new java.util.HashMap(); 
+      java.util.Map cdefs = new java.util.HashMap(); 
+
+      op.findClones(clones,cdefs); 
+
+      if (clones.size() > 0)
+      { System.out.println("! Cloned expressions in " + op); 
+        int redcount = (int) res1.get("red");
+        redcount = redcount + clones.size(); 
+        res1.put("red", redcount); 
+        redDetails.add("!!! Expression clones!: " + clones);
+      }  
 
       op.collectionOperatorUses(1, collOps, collVars); 
  

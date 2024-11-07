@@ -880,6 +880,12 @@ class BinaryExpression extends Expression
     return id; 
   } 
   
+  public boolean containsSubexpression(Expression expr) 
+  { if (left.containsSubexpression(expr)) { return true; } 
+    if (right.containsSubexpression(expr)) { return true; } 
+    return (this + "").equals(expr + ""); 
+  } 
+
   public Vector mutantOperators(String op)
   { Vector res = new Vector(); 
     if (":".equals(op))

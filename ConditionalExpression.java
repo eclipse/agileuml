@@ -266,6 +266,14 @@ public void findClones(java.util.Map clones,
     elseExp.findMagicNumbers(mgns,rule,op);
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { if (test.containsSubexpression(expr)) { return true; } 
+    if (ifExp.containsSubexpression(expr)) { return true; } 
+    if (elseExp.containsSubexpression(expr)) { return true; } 
+
+    return (this + "").equals(expr + ""); 
+  } 
+
 public Vector mutants()
 { Vector res = new Vector(); 
   res.add(this); 

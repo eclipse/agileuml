@@ -5839,6 +5839,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     // return qf + ".get(0)"; 
   } // keys, values
   
+  public boolean containsSubexpression(Expression expr) 
+  { if (argument.containsSubexpression(expr))
+    { return true; } 
+    return (this + "").equals(expr + ""); 
+  } 
+
   public Vector mutants()
   { Vector res = new Vector(); 
     res.add(this); 

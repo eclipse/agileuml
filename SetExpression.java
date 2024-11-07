@@ -155,6 +155,16 @@ public class SetExpression extends Expression
     return null; 
   } 
 
+  public boolean containsSubexpression(Expression expr) 
+  { for (int i = 0; i < elements.size(); i++) 
+    { Expression val = (Expression) elements.get(i); 
+      if (val.containsSubexpression(expr))
+      { return true; } 
+    }
+ 
+    return (this + "").equals(expr + ""); 
+  } 
+
   public static boolean isRefSetExpression(Expression expr)
   { if (expr.type == null) 
     { return false; } 

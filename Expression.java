@@ -301,7 +301,7 @@ abstract class Expression
     return res + ""; 
   } 
 
-
+  public abstract boolean containsSubexpression(Expression expr); 
 
   public Vector mutants()
   { Vector res = new Vector(); 
