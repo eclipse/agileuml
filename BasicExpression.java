@@ -898,7 +898,21 @@ class BasicExpression extends Expression
   }
 
   public boolean containsSubexpression(Expression expr) 
-  { return (this + "").equals(expr + ""); } 
+  { if (arrayIndex != null) 
+    { if (arrayIndex.containsSubexpression(expr))
+      { return true; } 
+    } 
+
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++)
+      { Expression ee = (Expression) parameters.get(i); 
+        if (ee.containsSubexpression(expr))
+        { return true; } 
+      } 
+    } 
+ 
+    return (this + "").equals(expr + ""); 
+  } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 

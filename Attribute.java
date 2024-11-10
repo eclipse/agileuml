@@ -721,6 +721,13 @@ public class Attribute extends ModelElement
     return false; 
   }
 
+  public boolean containsSubexpression(Expression expr)
+  { if (initialExpression != null && 
+        initialExpression.containsSubexpression(expr))
+    { return true; } 
+    return false; 
+  } 
+
   public boolean equalToReverseDirection(Attribute att) 
   { if (att.getName().equals(role1 + "") && 
         elementType != null && elementType.isEntity() && 

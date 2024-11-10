@@ -881,8 +881,33 @@ class BinaryExpression extends Expression
   } 
   
   public boolean containsSubexpression(Expression expr) 
-  { if (left.containsSubexpression(expr)) { return true; } 
-    if (right.containsSubexpression(expr)) { return true; } 
+  { if (operator.equals("->iterate"))
+    { if (accumulator != null && 
+          accumulator.containsSubexpression(expr))
+      { return true; } 
+    } 
+
+    if (operator.equals("#") || "#LC".equals(operator) ||
+        operator.equals("!") || operator.equals("#1") ||
+        operator.equals("|") || operator.equals("|R") ||
+        operator.equals("|C") || operator.equals("|unionAll") ||
+        operator.equals("|intersectAll") ||
+        operator.equals("|concatenateAll") ||
+        operator.equals("|selectMaximals") ||
+        operator.equals("|selectMinimals") ||
+        operator.equals("|sortedBy"))
+    { Expression lft = ((BinaryExpression) left).right;  
+      if (lft.containsSubexpression(expr))
+      { return true; }  
+    } 
+    else 
+    { if (left.containsSubexpression(expr)) 
+      { return true; }
+    } 
+ 
+    if (right.containsSubexpression(expr)) 
+    { return true; } 
+
     return (this + "").equals(expr + ""); 
   } 
 

@@ -5840,8 +5840,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   } // keys, values
   
   public boolean containsSubexpression(Expression expr) 
-  { if (argument.containsSubexpression(expr))
-    { return true; } 
+  { if (operator.equals("lambda") && accumulator != null &&
+        accumulator.containsSubexpression(expr))
+    { return true; }
+
+    if (argument.containsSubexpression(expr))
+    { return true; }
+ 
     return (this + "").equals(expr + ""); 
   } 
 
