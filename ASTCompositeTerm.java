@@ -7317,7 +7317,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       Expression patt = 
         BasicExpression.newValueBasicExpression(
-                                      "\"0x[0-9A-F]+|0[0-7]*|[1-9][0-9]*\""); 
+                     "\"0x[0-9A-F]+|0[0-7]*|[1-9][0-9]*\""); 
       patt.setType(new Type("String", null)); 
 
       Expression firstmatch = 
