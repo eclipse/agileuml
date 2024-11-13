@@ -116,6 +116,37 @@ def byte2char(bb) :
     return ""
   return chr(bb)
 
+def ord(lit) : 
+  if type(lit) == type(' ') : 
+    return ord(ch)
+  ind = 0
+  lst = list(type(lit))
+  for x in lst : 
+    if x == lit :
+      return ind
+    ind = ind + 1
+  return None 
+
+def succ(lit) : 
+  ind = 0
+  lst = list(type(lit))
+  litIndex = ord(lit)
+  for x in lst : 
+    if ind == litIndex :
+      return lst[ind + 1]
+    ind = ind + 1
+  return None 
+
+def pred(lit) : 
+  ind = 0
+  lst = list(type(lit))
+  litIndex = ord(lit)
+  for x in lst : 
+    if ind == litIndex :
+      return lst[ind - 1]
+    ind = ind + 1
+  return None 
+
 def asBag(sq) : 
 #  ln = len(sq)
 #  if ln == 0 : 
