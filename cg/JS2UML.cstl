@@ -735,7 +735,7 @@ yield _1 ; |-->    if _yieldCount_ < _position_ then _1`updateForm  _yieldCount_
 Atomics.add _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`firstArg->at(_1`secondArg+1) + _1`thirdArg ;\n 
 Atomics.and _1 |-->    _1`firstArg->at(_1`secondArg+1) := MathLib.bitwiseAnd(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
 Atomics.or _1 |-->    _1`firstArg->at(_1`secondArg+1) := MathLib.bitwiseOr(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
-Atomics.xor _1 |-->    _1`firstArg->at(_1`secondArg+1) :=  := MathLib.bitwiseOr(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
+Atomics.xor _1 |-->    _1`firstArg->at(_1`secondArg+1) :=  := MathLib.bitwiseXor(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
 Atomics.sub _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`firstArg->at(_1`secondArg+1) - _1`thirdArg ;\n 
 Atomics.store _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`thirdArg ; \n
 
