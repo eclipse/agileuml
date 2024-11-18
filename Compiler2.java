@@ -2746,27 +2746,27 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   { // There must be a logical operator at top level in the expression
     Expression e1 = null; 
     Expression e2 = null;
-    // System.out.println("Trying to parse logical expression"); 
-    // System.out.println("Trying at: " + pos + " " + op); 
+    // System.out.println(">> Trying to parse logical expression"); 
+    // System.out.println(">> Trying at: " + pos + " " + op); 
     Vector env = new Vector(); 
     e1 = parse_expression(bcount,pstart,pos-1,env,env); 
 
     // if (e1 == null) 
-    // { System.err.println("Invalid expression: " + showLexicals(pstart, pos-1)); }
+    // { System.err.println("!! Invalid expression: " + showLexicals(pstart, pos-1)); }
  
     e2 = parse_expression(bcount,pos+1,pend,env,env); 
 
     // if (e2 == null) 
-    // { System.err.println("Invalid expression: " + showLexicals(pos + 1, pend)); }
+    // { System.err.println("!! Invalid expression: " + showLexicals(pos + 1, pend)); }
 
     if (e1 == null || e2 == null)
     { 
-      // System.out.println("Failed to parse: " + showLexicals(pstart, pend)); 
+      // System.out.println("!! Failed to parse: " + showLexicals(pstart, pend)); 
       return null; 
     }
     else 
     { BinaryExpression ee = new BinaryExpression(op,e1,e2);
-      // System.out.println("Parsed implies expression: " + ee); 
+      // System.out.println(">> Parsed implies expression: " + ee); 
       return ee; 
     } 
   }
@@ -2867,7 +2867,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         { } // return null; }
         else 
         { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed equality expression: " + ee); 
+          // System.out.println(">> Parsed equality expression: " + ee); 
           return ee; 
         }
       }
@@ -2891,7 +2891,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         else
         { BinaryExpression ee = 
             new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed additive expression: " + ee);
+          // System.out.println(">> Parsed additive expression: " + ee);
           return ee;
         } 
       }
@@ -2906,7 +2906,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         { } // return null; }
         else
         { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed additive expression: " + ee);
+          // System.out.println(">> Parsed additive expression: " + ee);
           return ee;
         } 
       }
@@ -2954,7 +2954,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         { } // return null; }
         else
         { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed factor expression: " + ee);
+          // System.out.println(">> Parsed factor expression: " + ee);
           return ee;
         } 
       }     
@@ -2981,7 +2981,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           { BasicExpression be = (BasicExpression) ee2;
             
             be.setArrayIndex(ee1);  
-            System.out.println(">>> Parsed at expression: " + be); 
+            // System.out.println(">>> Parsed at expression: " + be); 
             return be;
           }  
         } 
@@ -3102,7 +3102,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
             continue; 
           }
           UnaryExpression ue = new UnaryExpression(ss+ss2,ee2);
-          // System.out.println("Parsed unary expression: " + ue); 
+          // System.out.println(">> Parsed unary expression: " + ue); 
           return ue;   // This excludes additional operators to the ones listed above.  
         } 
         else if ("exists".equals(ss2) && 
@@ -3134,7 +3134,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
             new BasicExpression(lexicals.get(i+3) + "",0);
           BinaryExpression be = 
             new BinaryExpression("#1",new BinaryExpression(":",bevar,ee2),ee1); 
-          // System.out.println("Parsed: " + be); 
+          // System.out.println(">> Parsed: " + be); 
           return be; 
         } 
         else if ("existsLC".equals(ss2) && 
@@ -3405,11 +3405,31 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         else if (i + 3 <= pend) // && "(".equals(lexicals.get(i+2) + "") &&
                                 //   ")".equals(lexicals.get(pend) + "")) 
         // this should allow new Binary operators 
-        { // System.out.println("Tring tp parse at " + ss2); 
+        { // System.out.println(">> Trying to parse at " + ss2); 
           Expression ee1 = parse_expression(bc+1,i+3,pend-1,entities,types); 
           if (ee1 == null) { continue; } 
           Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
-          if (ee2 == null) { continue; } 
+          if (ee2 == null) { continue; }
+          if ("selectRows".equals(ss2))
+          { // convert it
+            BasicExpression realarg = 
+              BasicExpression.newStaticCallBasicExpression(
+                 "rowsOfDataTable", "MathLib", ee2);
+            BasicExpression svar =
+              BasicExpression.newVariableBasicExpression("$row");
+            svar.isEvent = false;  
+            Expression subee1 = 
+                ee1.substituteEq("" + ee2, svar);  
+            BinaryExpression domain = 
+              new BinaryExpression(":", svar, realarg); 
+            BinaryExpression be = 
+              new BinaryExpression("|", domain, subee1);
+            BasicExpression res = 
+              BasicExpression.newStaticCallBasicExpression(
+                 "dataTableFromRows", "MathLib", be); 
+            return res; 
+          }  
+ 
           BinaryExpression be = new BinaryExpression(ss+ss2,ee2,ee1); 
           // System.out.println(">>> Parsed binary -> expression: " + be); 
           return be; 
@@ -3592,7 +3612,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           { beop.setIsEvent(); } 
  
           beop.setParameters(ve); 
-        // System.out.println("Parsed call expression: " + beop);
+        // System.out.println(">> Parsed call expression: " + beop);
           return beop;  
         }
       } 
@@ -3899,7 +3919,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     if (ve == null) 
     { return null; } 
     Expression res = new SetExpression(ve,true); 
-    // System.out.println("Parsed sequence expression: " + res); 
+    // System.out.println(">> Parsed sequence expression: " + res); 
     return res; 
   } 
 
@@ -3943,7 +3963,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return null; } 
     Expression res = new SetExpression(ve,true);
     res.setType(new Type("Ref", null));  
-    // System.out.println("Parsed set expression: " + res); 
+    // System.out.println(">> Parsed set expression: " + res); 
     return res; 
   } 
 
@@ -3953,7 +3973,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return null; } 
     Expression res = new SetExpression(ve,true); 
     res.setType(new Type("Map",null)); 
-    // System.out.println("Parsed map expression: " + res); 
+    // System.out.println(">> Parsed map expression: " + res); 
     return res; 
   } 
 
@@ -3976,7 +3996,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return null; } 
     Expression res = new SetExpression(ve,true); 
     res.setType(new Type("Map",null)); 
-    // System.out.println("Parsed map expression: " + res); 
+    // System.out.println(">> Parsed map expression: " + res); 
     return res; 
   } 
 
@@ -4140,7 +4160,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
        res.add(exp);
      }
      else
-     { // System.err.println("Not fe sequence: " + showLexicals(st,en)); 
+     { // System.err.println("!! Not fe sequence: " + showLexicals(st,en)); 
        return null;
      }
      return res; 
@@ -4716,7 +4736,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
          
         if (opref instanceof BasicExpression)
         { ((BasicExpression) opref).setParameters(args); } 
-        // System.out.println("parsed call expression: " + opref); 
+        // System.out.println(">> parsed call expression: " + opref); 
         return opref; 
       } 
     }
@@ -5061,7 +5081,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     }
     else 
     { BinaryExpression ee = new BinaryExpression(op,e1,e2);
-      // System.out.println("Parsed implies expression: " + ee); 
+      // System.out.println(">> Parsed implies expression: " + ee); 
       return ee; 
     } 
   }
@@ -5085,7 +5105,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { } // return null; }
         else 
         { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed equality expression: " + ee); 
+          // System.out.println(">> Parsed equality expression: " + ee); 
           return ee; 
         }
       }
@@ -5104,7 +5124,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { } // return null; }
         else
         { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed additive expression: " + ee);
+          // System.out.println(">> Parsed additive expression: " + ee);
           return ee;
         } 
       }     
@@ -5128,7 +5148,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { } // return null; }
         else
         { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
-          // System.out.println("Parsed factor expression: " + ee);
+          // System.out.println(">> Parsed factor expression: " + ee);
           return ee;
         } 
       }     
@@ -5186,7 +5206,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             continue; 
           }
           UnaryExpression ue = new UnaryExpression(ss+ss2,ee2);
-          // System.out.println("Parsed unary expression: " + ue); 
+          // System.out.println(">> Parsed unary expression: " + ue); 
           return ue;   // This excludes additional operators to the ones listed above.  
         } 
         else if ("exists".equals(ss2) && 
@@ -5363,7 +5383,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             new BasicExpression(lexicals.get(i+3) + "",0);
           BinaryExpression be = 
             new BinaryExpression("|selectMinimals",new BinaryExpression(":",bevar,ee2),ee1); 
-          // System.out.println("Parsed: " + be); 
+          // System.out.println(">> Parsed: " + be); 
           return be; 
         } 
         else if ("iterate".equals(ss2) && 
@@ -5400,19 +5420,19 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
           if (ee2 == null) { continue; } 
           UnaryExpression be = new UnaryExpression(ss+ss2,ee2); 
-          // System.out.println("Parsed new unary -> expression: " + be); 
+          // System.out.println(">> Parsed new unary -> expression: " + be); 
           return be; 
         } 
         else if (i + 3 <= pend) // && "(".equals(lexicals.get(i+2) + "") &&
                                 //   ")".equals(lexicals.get(pend) + "")) 
         // this should allow new Binary operators 
-        { // System.out.println("Tring tp parse at " + ss2); 
+        { // System.out.println(">> Trying to parse at " + ss2); 
           Expression ee1 = parse_ATLexpression(bc+1,i+3,pend-1,entities,types); 
           if (ee1 == null) { continue; } 
           Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
           if (ee2 == null) { continue; } 
           BinaryExpression be = new BinaryExpression(ss+ss2,ee2,ee1); 
-          // System.out.println("Parsed binary -> expression: " + be); 
+          // System.out.println(">> Parsed binary -> expression: " + be); 
           return be; 
         } 
       }     
@@ -5426,12 +5446,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if (pstart == pend)
     { String ss = lexicals.elementAt(pstart).toString(); 
       if (invalidBasicExp(ss))
-      { System.err.println(">> Invalid ATL basic expression: " + ss); 
+      { System.err.println("!! Invalid ATL basic expression: " + ss); 
         return null; 
       } 
 
       if (isKeyword(ss))
-      { System.err.println(">> Invalid ATL basic expression: keyword: " + ss); 
+      { System.err.println("!! Invalid ATL basic expression: keyword: " + ss); 
         return null;
       } 
   
@@ -5460,7 +5480,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       // if (ef instanceof BasicExpression) 
       // { ((BasicExpression) ef).setPrestate(ee.getPrestate()); } 
 
-      // System.out.println("Parsed basic expression: " + ss + " " + ee + " " + ef); 
+      // System.out.println("! Parsed basic expression: " + ss + " " + ee + " " + ef); 
       return ef;
     }
 
@@ -5482,7 +5502,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if (pstart < pend && "-".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_ATLadditive_expression(bc,pstart+1,pend,entities,types); 
       if (arg == null) 
-      { // System.err.println("Not ATL additive expression: " + showLexicals(pstart+1, pend)); 
+      { // System.err.println("! Not ATL additive expression: " + showLexicals(pstart+1, pend)); 
         return null; 
       } 
       return new UnaryExpression("-",arg); 
@@ -5502,7 +5522,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { beop.setIsEvent(); } 
  
         beop.setParameters(ve); 
-        // System.out.println("Parsed call expression: " + beop);
+        // System.out.println(">> Parsed call expression: " + beop);
         return beop;  
       } 
       // return null; 
@@ -5527,7 +5547,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
  
         beop.setParameters(ve);
         beop.setObjectRef(beopref);  
-        // System.out.println("Parsed call expression: " + beop);
+        // System.out.println(">> Parsed call expression: " + beop);
         return beop;  
       } 
       // return null; 
@@ -5540,7 +5560,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if (arg != null && op != null && op instanceof BasicExpression) // must be
       { BasicExpression beop = (BasicExpression) op;  
         beop.setArrayIndex(arg); 
-        // System.out.println("Parsed array expression: " + beop);
+        // System.out.println(">> Parsed array expression: " + beop);
         return beop;  
       } 
       // return null; 
@@ -5554,7 +5574,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       Expression op = parse_ATLbasic_expression(bc,pstart,pstart,entities,types); 
       Expression arg = parse_ATLfactor_expression(bc,pstart+2,pend-2,entities,types); 
       if (arg == null) 
-      { System.err.println("Invalid ATL array argument: " + showLexicals(pstart+2,pend-2)); } 
+      { System.err.println("!! Invalid ATL array argument: " + showLexicals(pstart+2,pend-2)); } 
       else if (op != null && op instanceof BasicExpression) // must be
       { BasicExpression beop = (BasicExpression) op;  
         beop.setArrayIndex(arg); 
@@ -5562,7 +5582,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         BasicExpression ef = (BasicExpression) te.checkIfSetExpression(); 
         if (ef != null) 
         { ef.setInnerObjectRef(beop); }  
-        // System.out.println("Parsed array 1 expression: " + ef);
+        // System.out.println(">> Parsed array 1 expression: " + ef);
         return ef;  
       } 
       // return null; 
@@ -5580,7 +5600,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           { BasicExpression beop = (BasicExpression) op;
             beop.setIsEvent();
             beop.setParameters(ve);
-            // System.out.println("Parsed extended call expression " + beop);
+            // System.out.println(">> Parsed extended call expression " + beop);
             return beop;
           }
         }
@@ -5609,7 +5629,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         lexicals.get(pstart).toString().equals("(") &&
         lexicals.get(pend).toString().equals(")"))
     { Expression eg = parse_ATLexpression(bcount+1, pstart+1, pend-1,entities,types);
-      // System.out.println("parsed bracketed expression: " + eg);  
+      // System.out.println(">> parsed bracketed expression: " + eg);  
       if (eg != null)
       { eg.setBrackets(true); }
       return eg; 
@@ -5625,7 +5645,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if (ve == null) 
     { return null; } 
     Expression res = new SetExpression(ve,false); 
-    // System.out.println("Parsed set expression: " + res); 
+    // System.out.println("!! Parsed set expression: " + res); 
     return res; 
   } 
 
@@ -5634,7 +5654,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if (ve == null) 
     { return null; } 
     Expression res = new SetExpression(ve,true); 
-    // System.out.println("Parsed sequence expression: " + res); 
+    // System.out.println("!! Parsed sequence expression: " + res); 
     return res; 
   } 
 
@@ -5678,7 +5698,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
          { // top-level ,
            Expression exp = parse_ATLadditive_expression(bc,st0,i-1,entities,types);
            if (exp == null) 
-           { // System.out.println("Invalid ATL additive exp: " + buff);
+           { // System.out.println("!! Invalid ATL additive exp: " + buff);
              return null;
            }
            res.add(exp);
@@ -11277,13 +11297,14 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // c.nospacelexicalanalysis("(!a).f(1)"); 
     // c.nospacelexicalanalysis("(OclFile[\"SYSOUT\"]).println(x)");
 
-    c.nospacelexicalanalysis("Map{ \"Name\" |-> Sequence{\"Braund, Mr. Owen Harris\"}->union(Sequence{\"Allen, Mr. William Henry\"}->union(Sequence{ \"Bonnell, Miss. Elizabeth\" })) }->union(Map{ \"Age\" |-> Sequence{22}->union(Sequence{35}->union(Sequence{ 58 })) }->union(Map{ \"Sex\" |-> Sequence{\"male\"}->union(Sequence{\"male\"}->union(Sequence{ \"female\" })) }->union(Map{ \"Fare\" |-> Sequence{102.0}->union(Sequence{99.0}->union(Sequence{ 250.0 })) }) ) )"); 
- 
+    // c.nospacelexicalanalysis("Map{ \"Name\" |-> Sequence{\"Braund, Mr. Owen Harris\"}->union(Sequence{\"Allen, Mr. William Henry\"}->union(Sequence{ \"Bonnell, Miss. Elizabeth\" })) }->union(Map{ \"Age\" |-> Sequence{22}->union(Sequence{35}->union(Sequence{ 58 })) }->union(Map{ \"Sex\" |-> Sequence{\"male\"}->union(Sequence{\"male\"}->union(Sequence{ \"female\" })) }->union(Map{ \"Fare\" |-> Sequence{102.0}->union(Sequence{99.0}->union(Sequence{ 250.0 })) }) ) )"); 
+
+     c.nospacelexicalanalysis("table->selectRows(table->at(p) > v)");  
     Expression zz = c.parseExpression(); 
 
     System.out.println(zz); 
 
-    zz.typeCheck(new Vector(), new Vector(), new Vector(), new Vector()); 
+    /* zz.typeCheck(new Vector(), new Vector(), new Vector(), new Vector()); 
 
     Expression pp = zz.simplifyOCL(); 
 
@@ -11291,7 +11312,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     pp.typeCheck(new Vector(), new Vector(), new Vector(), new Vector()); 
 
-    System.out.println(">>> " + pp.getType()); 
+    System.out.println(">>> " + pp.getType()); */ 
 
     // Compiler2 ccx = new Compiler2(); 
     // ccx.nospacelexicalanalysis("x : int"); 
