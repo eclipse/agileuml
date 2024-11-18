@@ -491,6 +491,40 @@ class MathLib:
     result = lambda x : MathLib.definiteIntegral(0, x, f)
     return result
 
+  def rowsOfDataTable(table) : 
+    res = []
+    keyset = ocl.keys(table)
+    if len(keyset) == 0 : 
+      return res
+    key0 = ocl.any(keyset)
+    col0 = table[key0] 
+    nrows = len(col0)
+
+    for i in range(0,nrows) : 
+      row = dict({})
+      for key in keyset : 
+        col = table[key] 
+        row[key] = col[i]
+      res.append(row)
+
+    return res
+
+  def dataTableFromRows(rows) : 
+    table = dict({})
+
+    nrows = len(rows)
+    row0 = rows[0]
+    keyset = ocl.keys(row0)
+
+    for key in keyset :  
+      col = []
+      for i in range(0,nrows) : 
+        row = rows[i]
+        col.append(row[key])
+      table[key] = col
+
+    return table
+
 
   def killMathLib(mathlib_x) :
     mathlib_instances = ocl.excludingSet(mathlib_instances, mathlib_x)
@@ -505,6 +539,8 @@ def allInstances_MathLib():
   return MathLib.mathlib_instances
 
 MathLib.initialiseMathLib()
+
+
 
 
 class FinanceLib : 
@@ -774,6 +810,13 @@ class FinanceLib :
 
 
 # Examples: 
+
+# table = dict({"name" : ["Tom", "Sara"], "age" : [33,42]})
+# sq = MathLib.rowsOfDataTable(table)
+# print(sq)
+# res = MathLib.dataTableFromRows(sq)
+# print(res)
+
 # print(MathLib.bytes2integer([1,1,10]))
 # print(MathLib.integer2bytes(2147483647))
 # print(MathLib.integer2Nbytes(65802,4))

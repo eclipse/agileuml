@@ -3,6 +3,11 @@ import java.util.List;
 import java.util.Vector; 
 import java.util.ArrayList; 
 import java.util.Arrays; 
+
+import java.util.Set; 
+import java.util.Map; 
+import java.util.HashMap; 
+
 import java.util.function.Function;
 
 
@@ -622,15 +627,91 @@ class MathLib
     result = (x) -> { return MathLib.definiteIntegral(0, x, f); };
     return result;
   }
+  
+  public static ArrayList<HashMap<String,Object>> rowsOfDataTable(Map<String,ArrayList> table)
+  { // obtains rows from the table 
+    ArrayList<HashMap<String,Object>> res = new ArrayList<HashMap<String,Object>>(); 
+	
+	Set<String> keys = table.keySet(); 
+	ArrayList<String> kseq = new ArrayList<String>(); 
+	kseq.addAll(keys); 
+	
+	if (kseq.size() == 0)
+	{ return res; } // empty table
+	
+	String key0 = (String) kseq.get(0); 
+	ArrayList col0 = table.get(key0); 
+	int nrows = col0.size(); 
+	
+	for (int i = 0; i < nrows; i++)
+	{ HashMap<String,Object> row = new HashMap<String,Object>(); 
+	    
+	  for (int j = 0; j < kseq.size(); j++) 
+	  { String key = (String) kseq.get(j); 
+	    ArrayList col = table.get(key);
+		row.put(key,col.get(i)); 
+	  }
+	  
+	  res.add(row); 
+	} 
+    
+	return res; 
+  }
+  
+  public static HashMap<String,ArrayList> dataTableFromRows(ArrayList<HashMap<String,Object>> rows)
+  { // obtains table from rows
+    HashMap<String,ArrayList> table = new HashMap<String,ArrayList>();
+	
+	int nrows = rows.size(); 
+	if (nrows == 0)
+	{ return table; }
+	
+	HashMap<String,Object> row0 = rows.get(0); 
+	Set<String> keys = row0.keySet(); 
+	ArrayList<String> kseq = new ArrayList<String>(); 
+	kseq.addAll(keys); 
+	
+  
+	for (int j = 0; j < kseq.size(); j++) 
+	{ String key = (String) kseq.get(j); 
+	  ArrayList col = new ArrayList();
+		
+      for (int i = 0; i < nrows; i++)
+      { HashMap<String,Object> row = rows.get(i); 
+        col.add(row.get(key)); 
+      } 
+		
+      table.put(key, col); 
+    }
+	  
+    return table; 
+  }
+  
 
   public static void main(String[] args)
   { 
-    System.out.println(MathLib.bitwiseRotateRight(1024,2)); 
-    System.out.println(MathLib.bitwiseRotateLeft(10,2));
+    // System.out.println(MathLib.bitwiseRotateRight(1024,2)); 
+    // System.out.println(MathLib.bitwiseRotateLeft(10,2));
 	
 	// print(MathLib.rotleft(10000000000,2))
-    System.out.println(MathLib.bitwiseRotateLeft(1000000000,2)); 
+    // System.out.println(MathLib.bitwiseRotateLeft(1000000000,2)); 
  
+	Map<String,ArrayList> table = new HashMap<String,ArrayList>(); 
+	ArrayList names = new ArrayList(); 
+	names.add("Jim"); names.add("Sara"); 
+	ArrayList ages = new ArrayList(); 
+	ages.add(34); ages.add(29);
+	
+	table.put("Name", names); table.put("Age", ages); 
+	System.out.println(table); 
+	
+	ArrayList res = MathLib.rowsOfDataTable(table); 
+	System.out.println(res); 
+	
+	Map mapres = MathLib.dataTableFromRows(res); 
+	System.out.println(mapres); 
+	
+	 
 	
     /* Function<Double,Double> f = (x) -> { return x*x*x - 0.5; };
      

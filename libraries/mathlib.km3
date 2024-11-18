@@ -392,7 +392,52 @@ package mathlib {
        (res := res->append(x) ; 
         x := x + step); 
      return res; 
- 
+
+  static query rowsOfDataTable(table : Map(String, Sequence)) : Sequence(Map(String,OclAny))
+  pre: true 
+  post: true
+  activity: 
+    var res : Sequence(Map(String,OclAny)); 
+
+    if table->size() = 0 
+    then return res
+    else skip; 
+
+    var col0 : Sequence := table->values()->any(); 
+    var nrows = col0->size(); 
+
+    var keys : Set(String) := table->keys(); 
+
+    for i : Integer.subrange(1,nrows) 
+    do 
+      (var row : Map(String,OclAny); 
+       for key : keys 
+       do 
+         row[key] := table->at(key)->at(i);
+       res := res->append(row)
+      ); 
+
+    return res;  
+
+  static query dataTableFromRows(rows : Sequence(Map(String,OclAny))) : Map(String, Sequence)
+  pre: true 
+  post: true
+  activity: 
+    var table : Map(String, Sequence); 
+
+    if rows->size() = 0 then return table else skip; 
+
+    var row0 : Map(String,OclAny) := rows->at(1); 
+
+    for key : row0->keys() 
+    do 
+      (var col : Sequence := Sequence{}; 
+       for row : rows 
+       do
+         col := col->append(row->at(key)); 
+       table[key] := col); 
+
+    return table; 
  }
 
 
