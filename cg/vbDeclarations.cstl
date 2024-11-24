@@ -334,6 +334,11 @@ defaultValue::
 AS _1 |-->_1`defaultValue
 AS NEW _1 |-->_1.new_1()
 AS _1 _2 |-->_1`defaultValue
+
+As _1 |-->_1`defaultValue
+As New _1 |-->_1.new_1()
+As _1 _2 |-->_1`defaultValue
+
 DATE |-->null
 Date |-->null
 % |-->0

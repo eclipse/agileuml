@@ -85,15 +85,27 @@ _1 |-->_1
 functionStmt::
 FUNCTION _1 _2 \r\n \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1 : OclAny;\n_3`VB2UML\n    return _1;\n\n
 
+Function _1 _2 \r\n \r\n _3 _* End Function |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1 : OclAny;\n_3`VB2UML\n    return _1;\n\n
+
 FUNCTION _1 _2 \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1`VB2UML : OclAny;\n_3`VB2UML\n    return _1;\n\n
+
+Function _1 _2 \r\n _3 _* End Function |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1`VB2UML : OclAny;\n_3`VB2UML\n    return _1;\n\n
 
 FUNCTION _1 _2 _3 \r\n \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
 
+Function _1 _2 _3 \r\n \r\n _4 _* End Function |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+
 FUNCTION _1 _2 _3 \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+
+Function _1 _2 _3 \r\n _4 _* End Function |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
 
 _1 FUNCTION _2 _3 _4 \r\n \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
 
+_1 Function _2 _3 _4 \r\n \r\n _5 _* End Function |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+
 _1 FUNCTION _2 _3 _4 \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+
+_1 Function _2 _3 _4 \r\n _5 _* End Function |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
 
 STATIC FUNCTION _1 _2 _3 \r\n \r\n _4 _* END FUNCTION |-->static operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
 
@@ -307,11 +319,20 @@ subStmt::
 SUB _1 \r\n \r\n _2 _* END SUB |-->  operation _1()\n pre: true post: true\n activity: _2`VB2UML\n\n
 SUB _1 _2 \r\n \r\n _3 _* END SUB |-->  operation _1_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
 
+Sub _1 \r\n \r\n _2 _* End Sub |-->  operation _1()\n pre: true post: true\n activity: _2`VB2UML\n\n
+Sub _1 _2 \r\n \r\n _3 _* End Sub |-->  operation _1_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
+
 SUB _1 \r\n _2 _* END SUB |-->  operation _1()\n pre: true post: true\n activity: _2`VB2UML\n\n
 SUB _1 _2 \r\n _3 _* END SUB |-->  operation _1_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
 
+Sub _1 \r\n _2 _* End Sub |-->  operation _1()\n pre: true post: true\n activity: _2`VB2UML\n\n
+Sub _1 _2 \r\n _3 _* End Sub |-->  operation _1_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
+
 SUB _1 \r\n END SUB |-->  operation _1()\n pre: true post: true;\n\n
 SUB _1 _2 \r\n END SUB |-->  operation _1_2`VB2UML\n pre: true post: true;\n\n
+
+Sub _1 \r\n End Sub |-->  operation _1()\n pre: true post: true;\n\n
+Sub _1 _2 \r\n End Sub |-->  operation _1_2`VB2UML\n pre: true post: true;\n\n
 
 STATIC SUB _1 \r\n \r\n _2 _* END SUB |-->static operation _1`VB2UML()\n pre: true post: true\n activity: _2`VB2UML\n\n
 STATIC SUB _1 _2 \r\n \r\n _3 _* END SUB |-->static operation _1`VB2UML_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
@@ -422,12 +443,18 @@ $ |-->: Sequence(String)
 AS _1 |-->: Sequence(_1)
 AS NEW _1 |-->: Sequence(_1)
 AS _1 _2 |-->: Sequence(_1)
+As _1 |-->: Sequence(_1)
+As New _1 |-->: Sequence(_1)
+As _1 _2 |-->: Sequence(_1)
 
 
 asTypeType::
 AS _1 |-->_1`VB2UML
 AS NEW _1 |-->_1`VB2UML
 AS _1 _2 |-->_1`VB2UML
+As _1 |-->_1`VB2UML
+As New _1 |-->_1`VB2UML
+As _1 _2 |-->_1`VB2UML
 
 typeHintDec::
 % |--> : int

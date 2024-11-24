@@ -1222,8 +1222,8 @@ _1 ? _2 : _3 |-->if _1`queryForm then _2`queryForm else _3`queryForm endif
 ( short ) _1 |-->(_1`queryForm)->char2byte()<when> _1 String
 ( long ) _1 |-->(_1`queryForm)->char2byte()<when> _1 String
 
-( byte ) _1 |-->(_1 mod 128)
-( short ) _1 |-->(_1 mod 32768)
+( byte ) _1 |-->(_1`queryForm mod 128)
+( short ) _1 |-->(_1`queryForm mod 32768)
 
 ( _1 ) _2 |-->_2`queryForm->oclAsType(_1)
 
@@ -1286,6 +1286,12 @@ _1 . class |-->OclType["_1"]
 _1 . new _2 |-->_1`queryForm._2
 
 { _1 } |-->Sequence{_1}
+
+{ _1, _2 } |-->Sequence{_1,_2}
+{ _1, _2, _3 } |-->Sequence{_1,_2,_3}
+{ _1, _2, _3, _4 } |-->Sequence{_1,_2,_3,_4}
+{ _1, _2, _3, _4, _5 } |-->Sequence{_1,_2,_3,_4,_5}
+{ _1, _2, _3, _4, _5, _6 } |-->Sequence{_1,_2,_3,_4,_5,_6}
 
 { _1, _* } |-->Sequence{_1,_*}
 
@@ -1472,9 +1478,10 @@ _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
 
 _1 |-->_1`queryForm<when> _1 multiple
+_1 |-->_1`queryForm<when> _1 arrayInitializer
+_1 |-->_1`queryForm<when> _1 expression
 
-_1 |-->_1
-
+_0 |-->_0
 
 
 enumsetMethodCall::
@@ -2490,9 +2497,10 @@ _1 ( ) |-->
 _1 ( _2 ) |-->_2`expressionListPreSideEffect
 
 _1 |-->_1`preSideEffect<when> _1 multiple
-
+_1 |-->_1`preSideEffect<when> _1 arrayInitializer
 
 _1 |-->
+_* |-->
 
 
 postSideEffect::
@@ -2592,6 +2600,7 @@ _1 *= _2 |-->    _1 := _1 * (_2`queryForm) ; _2`sideEffect<when> _2 updatesObjec
 _1 *= _2 |-->    _2`preSideEffect _1 := _1 * (_2`queryForm) _2`postSideEffect<when> _2 hasSideEffect
 _1 *= _2 |-->    _1 := _1*(_2)
 
+( _1 ) |-->_1`updateForm
 
 _1 /= _2 |-->    _1 := _1/(_2)
 _1 &= _2 |-->    _1 := MathLib.bitwiseAnd(_1, _2)
@@ -2601,6 +2610,12 @@ _1 ^= _2 |-->    _1 := MathLib.bitwiseXor(_1,_2)
 _1 <<= _2 |-->    _1 := _1*(2->pow(_2))
 _1 >>= _2 |-->    _1 := _1/(2->pow(_2))
 _1 >>>= _2 |-->    _1 := _1/(2->pow(_2))
+
+_1 < _2 |-->    _1`updateForm ; _2`updateForm
+_1 > _2 |-->    _1`updateForm ; _2`updateForm
+_1 <= _2 |-->    _1`updateForm ; _2`updateForm
+_1 >= _2 |-->    _1`updateForm ; _2`updateForm
+_1 == _2 |-->    _1`updateForm ; _2`updateForm
 
 
 Collections . _1 |-->_1`collectionsMethodCall
@@ -2631,8 +2646,8 @@ _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm_2<when> _2 methodCa
 
 _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm._2
 
-_1 |-->    _1
-
+_1 |-->    skip
+_* |-->    skip
 
 
 updatedObject::
@@ -3314,7 +3329,7 @@ synchronized _1 _2 |-->_2
 _1 : _2 |-->_2
 _1 : _2 ; |-->_2
 
-while _1 _2 |-->    while _1 do _2 ; 
+while _1 _2 |-->    while _1 do (_1`updateForm ; _2 ) ; 
 
 if _1 _2 else _3 |-->    if _1 then _2 else _3 ; 
 

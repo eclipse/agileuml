@@ -148,6 +148,7 @@ MKDIR _1 |-->  OclFile.mkdir(_1)
 
 nameStmt::
 NAME _1 AS _2 |-->  OclFile.renameFile(_1,_2)
+Name _1 As _2 |-->  OclFile.renameFile(_1,_2)
 
 randomizeStmt::
 RANDOMIZE |-->  MathLib.setSeeds((OclDate.getSystemTime() mod 30269), (OclDate.getSystemTime() mod 30307), (OclDate.getSystemTime() mod 30323))
@@ -314,6 +315,7 @@ SENDKEYS _* |-->
 
 variableStmt::
 DIM _1 |-->_1
+Dim _1 |-->_1
 PUBLIC _1 |-->_1
 PRIVATE _1 |-->_1
 GLOBAL _1 |-->_1`variableListInitialisation
@@ -908,7 +910,7 @@ FileLen ( _1 ) |-->(OclFile.newOclFile(_1)).length()
 LOF ( _1 ) |-->(OclFile.newOclFile(_1)).length()
 EOF ( _1 ) |-->(_1.getEof() = true)
 InputBox ( _1 ) |-->(OclFile["System.in"]).readLine() 
-MsgBox ( _1 ) |-->(OclFile["System.in"]).readLine()
+MsgBox ( _1 ) |-->("" + _1)->display()
 GetAttr ( _1 ) |-->Sequence{ (if (OclFile.newOclFile(_1)).canWrite() then 0 else 1 endif), (if (OclFile.newOclFile(_1)).isHidden() then 2 else 0 endif), (if (OclFile.newOclFile(_1)).isDirectory() then 16 else 0 endif) }->sum() 
 GetObject ( _1 ) |-->(OclFile.newOclFile_Read(OclFile.newOclFile(_1))).readObject()
 Input ( _1 ) |-->_1`last.readN(_1`first)->sum()
@@ -1372,6 +1374,11 @@ FUNCTION _* |-->  skip;
 _1 FUNCTION _* |-->  skip;
 STATIC FUNCTION _* |-->  skip;
 _1 STATIC FUNCTION _* |-->  skip;
+
+Function _* |-->  skip; 
+_1 Function _* |-->  skip;
+Static Function _* |-->  skip;
+_1 Static Function _* |-->  skip;
 
  
 forEachStmt::
