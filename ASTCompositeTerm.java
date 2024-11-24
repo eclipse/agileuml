@@ -306,10 +306,10 @@ public class ASTCompositeTerm extends ASTTerm
         ASTTerm ntrm = trm.replaceCobolIdentifiers(); 
         if (ntrm != null) 
         { newterms.add(ntrm); }
-        JOptionPane.showMessageDialog(null, this + 
-              " replaced redefines term " + trm + " by " +
-              ntrm, 
-              " ", JOptionPane.INFORMATION_MESSAGE);
+        // JOptionPane.showMessageDialog(null, this + 
+        //       " replaced redefines term " + trm + " by " +
+        //       ntrm, 
+        //       " ", JOptionPane.INFORMATION_MESSAGE);
       }  
       return new ASTCompositeTerm(tag,newterms); 
     } 
@@ -23666,7 +23666,8 @@ public class ASTCompositeTerm extends ASTTerm
                                   "getRuntime", "OclProcess"); 
           return "OclProcess.getRuntime()"; 
         } 
-        else if ("println".equals(called) && 
+        else if (("println".equals(called) || 
+                  "print".equals(called)) && 
                  "System.out".equals(argliteral.trim()))
         { if (cargs.size() == 0)
           { Vector pars = new Vector(); 
@@ -23706,7 +23707,8 @@ public class ASTCompositeTerm extends ASTTerm
             
           return "execute (" + res + ")->display()"; 
         } 
-        else if ("println".equals(called) && 
+        else if (("println".equals(called) || 
+                  "print".equals(called)) && 
                  "System.err".equals(argliteral.trim()))
         { if (cargs.size() == 0)
           { Vector pars = new Vector(); 
@@ -35227,7 +35229,7 @@ public class ASTCompositeTerm extends ASTTerm
           // post sideeffect of e1 -- the e1.toKM3()          
           // post sideeffect of e2 -- the e2.toKM3()
 
-          System.out.println(">>> Expression with side effects on LHS and RHS: " + this); 
+          // System.out.println(">>> Expression with side effects on LHS and RHS: " + this); 
 
           String prese1 = e1.preSideEffect();
           Statement preStat1 = e1.statement; 
@@ -35332,7 +35334,7 @@ public class ASTCompositeTerm extends ASTTerm
           // e1x := result of e2 ; 
           // post sideeffect of e2 -- the e2.toKM3()
 
-          System.out.println(">>> Expression with side effect: " + this); 
+          // System.out.println(">>> Expression with side effect: " + this); 
 
           String prese = e2.preSideEffect();
           Statement preStat = e2.statement; 
@@ -36148,7 +36150,7 @@ public class ASTCompositeTerm extends ASTTerm
           String e1xx = e1.toKM3(); 
           String e2xx = e2.toKM3(); 
        
-          JOptionPane.showInputDialog("bitwiseOr for " + e1 + " " + e2 + " " + e1.expression + " " + e2.expression); 
+          // JOptionPane.showInputDialog("bitwiseOr for " + e1 + " " + e2 + " " + e1.expression + " " + e2.expression); 
 
           if (e1.expression != null && 
               e2.expression != null) 
@@ -36572,19 +36574,30 @@ public class ASTCompositeTerm extends ASTTerm
           bdy = bdy + "    " + bstat;
         } 
 
-        System.out.println("+++ While test: " + test); 
-        System.out.println("+++ While test side effect: " + texpr.statement); 
+        // System.out.println("+++ While test: " + test); 
+        // JOptionPane.showInputDialog("+++ While test side effect: " + texpr.hasSideEffect() + " " + texpr.preSideEffect() + " " + texpr.postSideEffect()); 
 
         String pse = ""; 
         if (texpr.hasSideEffect())
         { pse = texpr.preSideEffect(); 
-          body.addStatement(texpr.statement);
-          bdy = bdy + " ; " + pse;
-          pse = pse + " ; "; 
-          statement = new SequenceStatement(); 
-          ((SequenceStatement) statement).addStatement(
+          if (texpr.statement != null) 
+          { body.addStatement(texpr.statement); 
+            bdy = bdy + " ; " + pse;
+            pse = pse + " ; "; 
+            statement = new SequenceStatement(); 
+            ((SequenceStatement) statement).addStatement(
                                        texpr.statement);
-          ((SequenceStatement) statement).addStatement(ws);   
+            ((SequenceStatement) statement).addStatement(ws);
+          }    
+          else 
+          { pse = texpr.postSideEffect(); 
+            if (texpr.statement != null) 
+            { body.addStatement(0,texpr.statement);
+              body.setBrackets(true);  
+              bdy = pse + " ; " + bdy;
+              statement = ws;
+            }
+          } 
         } 
         else 
         { statement = ws; } 
@@ -36596,8 +36609,7 @@ public class ASTCompositeTerm extends ASTTerm
                      "\n    do\n  " + bdy + "\n";
 
 
-
-        System.out.println(">>*** While body: " + statement); 
+        // JOptionPane.showInputDialog(">>*** While body: " + statement); 
 
         return res; 
       } 
@@ -36650,7 +36662,7 @@ public class ASTCompositeTerm extends ASTTerm
           stat.statement.setBrackets(true); 
           statement = new WhileStatement(invtest,stat.statement);  
           ((WhileStatement) statement).setLoopKind(Statement.REPEAT); 
-          System.out.println(">>> Repeat statement: " + statement); 
+          // System.out.println(">>> Repeat statement: " + statement); 
 
           return "  repeat\n"  + 
             "    " + statcode + "\n" + 
@@ -36672,16 +36684,16 @@ public class ASTCompositeTerm extends ASTTerm
         String init = forControl.toKM3Init(); 
         String incr = forControl.toKM3Incr();
 
-        if (forTst != null) 
-        { System.out.println("+++ For test: " + forTst.expression); 
-          System.out.println("+++ For test statement: " + forTst.statement); 
-        } 
+        // JOptionPane.showInputDialog("for test: " + forTst + " " + forTst.expression + " / " + forIni + " " + init + " / " + forInc + " " + incr); 
 
-        if (forIni != null) 
+        if (forTst != null && forTst.expression == null) 
+        { forTst.expression = new BasicExpression(true); } 
+
+        /* if (forIni != null) 
         { System.out.println("+++ For init: " + forIni.statement); } 
 
         if (forInc != null)
-        { System.out.println("+++ For incr: " + forInc.statement); } 
+        { System.out.println("+++ For incr: " + forInc.statement); } */  
  
 		
         String loopKind = "while"; 
@@ -36695,39 +36707,41 @@ public class ASTCompositeTerm extends ASTTerm
               betest.getRight().getElementType() + ""); 
           }  
         } 
-        System.out.println("+++ Loop statement of kind " + loopKind); 
+        // System.out.println("+++ Loop statement of kind " + loopKind); 
 
         statement = new SequenceStatement(); 
+        SequenceStatement lBody = new SequenceStatement(); 
           
         if (forIni != null && forIni.statement != null) 
         { ((SequenceStatement) statement).addStatement(forIni.statement); 
         } 
 
-        String res = "  "; 
-        if (init != null) 
-        {  res = res + init + " ;\n  "; } 
-
         Statement testStatement = null;
+        boolean preside = false; 
+
         if (forTst != null && forTst.hasSideEffect())
-        { forTst.toKM3(); 
+        { forTst.preSideEffect(); 
           testStatement = forTst.statement;
           if (testStatement != null) 
           { ((SequenceStatement) statement).addStatement(
                                               testStatement); 
-          
-            res = res + testStatement + " ;\n  ";
-          }
+            preside = true; 
+          } // and at end of loopBody
+          else 
+          { forTst.postSideEffect(); 
+            testStatement = forTst.statement;
+            if (testStatement != null) 
+            { lBody.addStatement(testStatement); } 
+          } 
         }
         // else if (forTst != null) 
         // { tst = forTst.queryForm(); } 
 		
-        SequenceStatement lBody = new SequenceStatement(); 
-
-        res = res + "  " + loopKind + " " + tst + "\n    do\n    ( ";
 		 
         for (int i = 4; i < terms.size(); i++) 
         { ASTTerm tt = (ASTTerm) terms.get(i); 
-          res = res + "  " + tt.toKM3();
+          // res = res + "  " + tt.toKM3();
+          tt.toKM3(); 
           if (tt.statement != null) 
           { lBody.addStatement(tt.statement); }
           if (tt.modelElements != null) 
@@ -36736,15 +36750,15 @@ public class ASTCompositeTerm extends ASTTerm
           // must be preceded by incr, if you change
           // for to while.  
 		
-        if (incr == null) 
-        { res = res + " )"; }
-        else 
-        { res = res + " ; \n    " + forControl.toKM3Incr() + "\n" + 
-          "  )";
-        }   
+        if (incr != null && forInc != null) 
+        { forControl.toKM3Incr(); }   
 
-        if (forInc != null && forInc.statement != null) 
+        if (incr != null && forInc != null && 
+            forInc.statement != null) 
         { lBody.addStatement(forInc.statement); }
+
+        if (preside && testStatement != null) 
+        { lBody.addStatement(testStatement); } 
 
         lBody.setBrackets(true); 
 
@@ -36790,10 +36804,9 @@ public class ASTCompositeTerm extends ASTTerm
           ((WhileStatement) statement).setLoopRange(forTst.expression);
         } 
 
-        System.out.println("+++ " + loopKind + " statement is: " + statement); 
-        System.out.println(); 
+        // JOptionPane.showInputDialog(">>*** for body: " + statement); 
     
-        return res; 
+        return "" + statement; 
       } 
       else if (terms.size() >= 3 && ":".equals(terms.get(1) + ""))
       { // label : stat ...
@@ -39478,6 +39491,13 @@ public class ASTCompositeTerm extends ASTTerm
         ASTTerm call = (ASTTerm) terms.get(3); 
         return call.hasSideEffect(); 
       } 
+      else if (terms.size() == 3 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { // casting 
+        ASTTerm call = (ASTTerm) terms.get(1); 
+        return call.hasSideEffect(); 
+      } 
       else if (terms.size() == 4 && 
           "[".equals(terms.get(1) + "") && 
           "]".equals(terms.get(3) + "")) // array access
@@ -39881,6 +39901,15 @@ public class ASTCompositeTerm extends ASTTerm
           ")".equals(terms.get(2) + ""))
       { // casting 
         ASTTerm call = (ASTTerm) terms.get(3);
+        String res = call.postSideEffect();
+        statement = call.statement; 
+        return res;  
+      } 
+      else if (terms.size() == 3 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { 
+        ASTTerm call = (ASTTerm) terms.get(1);
         String res = call.postSideEffect();
         statement = call.statement; 
         return res;  

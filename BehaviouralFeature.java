@@ -1761,7 +1761,7 @@ public class BehaviouralFeature extends ModelElement
   { return parameters.size() == 0; } 
 
   public Statement extendBehaviour()
-  { System.out.println(">>> Operation activity = " + activity); 
+  { // System.out.println(">>> Operation activity = " + activity); 
 
     if (activity == null)
     { return new SequenceStatement(); } 
@@ -1781,7 +1781,7 @@ public class BehaviouralFeature extends ModelElement
       att.setElementType(elementType); 
         // newparams.add(att);
 
-      System.out.println(">>> Enhanced activity = " + stat);   Vector contexts = new Vector(); 
+      // System.out.println(">>> Enhanced activity = " + stat);   Vector contexts = new Vector(); 
       // newparams.addAll(ownedAttribute); 
 
       Statement newstat = new SequenceStatement(); 
@@ -1798,8 +1798,8 @@ public class BehaviouralFeature extends ModelElement
         // if (returnstat != null) 
 	   // { ((SequenceStatement) newstat).addStatement(returnstat); }
       
-      JOptionPane.showMessageDialog(null, "Result declaration:  result : " + resultType + "(" + elementType + ")", 
-                                      "", JOptionPane.INFORMATION_MESSAGE);  
+      // JOptionPane.showMessageDialog(null, "Result declaration:  result : " + resultType + "(" + elementType + ")", 
+      //        "", JOptionPane.INFORMATION_MESSAGE);  
          
       // newstat.typeCheck(types,entities,contexts,newparams); 
       return newstat; 

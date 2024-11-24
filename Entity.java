@@ -5708,12 +5708,20 @@ public class Entity extends ModelElement implements Comparable
 
       op.findClones(clones,cdefs); 
 
-      if (clones.size() > 0)
-      { System.out.println("! Cloned expressions in " + op); 
+      java.util.Set ks = clones.keySet(); 
+      Vector actualClones = new Vector(); 
+      for (Object k : ks) 
+      { Vector cs = (Vector) clones.get(k); 
+        if (cs.size() > 1) 
+        { actualClones.add(k); } 
+      } 
+
+      if (actualClones.size() > 0)
+      { System.out.println("! Cloned expressions " + actualClones + " in " + op); 
         int redcount = (int) res1.get("red");
-        redcount = redcount + clones.size(); 
+        redcount = redcount + actualClones.size(); 
         res1.put("red", redcount); 
-        redDetails.add("!!! Expression clones!: " + clones);
+        redDetails.add("!!! Expression clones!: " + actualClones);
       }  
 
       op.collectionOperatorUses(1, collOps, collVars); 

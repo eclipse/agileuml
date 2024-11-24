@@ -5253,6 +5253,9 @@ public class UCDArea extends JPanel
     out.println("import java.io.Serializable;"); 
     out.println(); 
 		 
+
+    java.util.Date d1 = new java.util.Date(); 
+    long t1 = d1.getTime(); 
     
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
@@ -5276,6 +5279,11 @@ public class UCDArea extends JPanel
       String entcode = ee.cg(cgs);
       CGSpec.displayText(entcode,out); 
     }
+
+    java.util.Date d2 = new java.util.Date(); 
+    long t2 = d2.getTime(); 
+
+    System.out.println(">>> Code generation took " + (t2-t1) + " ms"); 
 
     out.close();
   } 
@@ -7214,6 +7222,18 @@ public class UCDArea extends JPanel
     System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
   }
 
+  public void makeOperationCached(Entity ent)
+  { String nme = 
+          JOptionPane.showInputDialog("Enter operation name:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+
+    bf.setCached(true); 
+  } 
+
   public void hoistOperationLocalDecs(Entity ent)
   { String nme = 
           JOptionPane.showInputDialog("Enter operation name:");
@@ -8957,7 +8977,7 @@ public class UCDArea extends JPanel
     if (effect != null) 
     { boolean tc2 = effect.typeCheck(types,entities,contexts,vars); 
       if (!tc2) 
-      { System.err.println("Warning: unable to type postcondition: " + effect); 
+      { System.err.println("! Warning: unable to type postcondition: " + effect); 
         // return null; 
       }
     }
@@ -8973,7 +8993,7 @@ public class UCDArea extends JPanel
     for (int i = 0; i < associations.size(); i++) 
     { Association ast = (Association) associations.get(i); 
       paths.addNewAssociation(ast.getEntity1(),ast.getEntity2(),ast); 
-      System.out.println("Shortest paths: " + paths); 
+      System.out.println(">> Shortest paths: " + paths); 
     }
   } 
 
@@ -9003,7 +9023,7 @@ public class UCDArea extends JPanel
   { RectData src = (RectData) flw.getSource();
     RectData trg = (RectData) flw.getTarget();
     if (src == null || trg == null)
-    { System.out.println("Line start or end not over a class");
+    { System.out.println("! Line start or end not over a class");
       return null;
     }
     ModelElement me1 = src.getModelElement();
@@ -9012,7 +9032,7 @@ public class UCDArea extends JPanel
     { Entity ent1 = (Entity) me1; 
       Entity ent2 = (Entity) me2; 
       if (ent1.isInterface())
-      { System.err.println("Warning: defining association from interface");
+      { System.err.println("! Warning: defining association from interface");
         // return null; 
       }
       // Prompt user for target role name and both cards
@@ -9043,13 +9063,13 @@ public class UCDArea extends JPanel
       String nme = astDialog.getName(); 
       { Association def0 = (Association) ModelElement.lookupByName(nme,associations);
         if (def0 != null)
-        { System.err.println("ERROR: Association with this name already exists!"); 
+        { System.err.println("!! ERROR: Association with this name already exists!"); 
           return null; 
         }
       }
 
       if (ent1.hasRole(role2))
-      { System.err.println("ERROR: " + ent1 + " already has role with name " + role2 + "!"); 
+      { System.err.println("!! ERROR: " + ent1 + " already has role with name " + role2 + "!"); 
         return null; 
       } 
 
@@ -9064,7 +9084,7 @@ public class UCDArea extends JPanel
       else if (c1 == ModelElement.AGGREGATION01)
       { ast.setCard1(ModelElement.ZEROONE); 
         ast.setAggregation(true); 
-        System.out.println("Creating aggregation"); 
+        System.out.println(">> Creating aggregation"); 
       }
       else if (c1 == ModelElement.QUALIFIER)
       { ast.setCard1(ModelElement.MANY); // assume
@@ -9094,7 +9114,7 @@ public class UCDArea extends JPanel
       return ast;
     } 
     else 
-    { System.out.println("Association must be drawn between classes"); 
+    { System.out.println("! Association must be drawn between classes"); 
       return null; 
     } 
   }  // must use these in drawing the line.
@@ -9103,7 +9123,7 @@ public class UCDArea extends JPanel
   { RectData src = (RectData) flw.getSource();
     RectData trg = (RectData) flw.getTarget();
     if (src == null || trg == null) 
-    { System.out.println("ERROR: Line start or end not over a class"); 
+    { System.out.println("!! ERROR: Line start or end not over a class"); 
       return null; 
     } 
 
@@ -9115,21 +9135,21 @@ public class UCDArea extends JPanel
     { Entity e1 = (Entity) me1;
       Entity e2 = (Entity) me2;
       if (e2.isLeaf())
-      { System.err.println("ERROR: Cannot have subclass of leaf class!"); 
+      { System.err.println("!! ERROR: Cannot have subclass of leaf class!"); 
         return null; 
       }
 
       if (e1.isInterface() && !e2.isInterface())
-      { System.err.println("ERROR: Cannot have subinterface of class!"); 
+      { System.err.println("!! ERROR: Cannot have subinterface of class!"); 
         return null; 
       }
 
       if (e2.isAbstract() || e2.isInterface()) { } 
       else 
-      { System.err.println("Warning: Superclass should be abstract!"); } 
+      { System.err.println("! Warning: Superclass should be abstract!"); } 
 
       if (e1.getSuperclass() != null)
-      { System.err.println("Warning: Multiple inheritance not permitted in Java/C#/C!"); 
+      { System.err.println("! Warning: Multiple inheritance not permitted in Java/C#/C!"); 
         // return null; 
       } 
        
@@ -9138,7 +9158,7 @@ public class UCDArea extends JPanel
       { Generalisation def0 =
           (Generalisation) ModelElement.lookupByName(nme,generalisations);
         if (def0 != null)
-        { System.err.println("ERROR: Inheritance with this name already exists!"); 
+        { System.err.println("!! ERROR: Inheritance with this name already exists!"); 
           return null; 
         }
       }
@@ -9146,7 +9166,7 @@ public class UCDArea extends JPanel
       if (e2.isInterface() || e1.getSuperclass() != null)
       { e1.addInterface(e2); 
         if (e2.selfImplementing())
-        { System.err.println("ERROR: Cycle of realizations: not allowed!"); 
+        { System.err.println("!! ERROR: Cycle of realizations: not allowed!"); 
           e1.removeInterface(e2); 
           return null; 
         } // and remove e2 from e1
@@ -9158,7 +9178,7 @@ public class UCDArea extends JPanel
         e2.addSubclass(e1); 
         boolean valid = formFamilies(g); 
         if (!valid) 
-        { System.err.println("ERROR: Invalid inheritance structure"); 
+        { System.err.println("!! ERROR: Invalid inheritance structure"); 
           e2.removeSubclass(e1); 
           e1.setSuperclass(null); 
           return null; 
@@ -9166,7 +9186,7 @@ public class UCDArea extends JPanel
       }
       return g;
     }
-    System.out.println("ERROR: Generalisation must be drawn " +
+    System.out.println("!! ERROR: Generalisation must be drawn " +
                        "between different classes");
     return null;
   }

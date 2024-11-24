@@ -998,6 +998,14 @@ public void findPlugins()
       "Replaces self calls of operation by loop code where possible");
     qualityMenu.add(removeRecursionop);
 
+    JMenuItem makeOpCached = 
+      new JMenuItem("Make operation cached"); 
+    makeOpCached.addActionListener(this);
+    makeOpCached.setToolTipText(
+      "Makes operation cached");
+    qualityMenu.add(makeOpCached);
+
+
     JMenuItem splitSegmentsop = 
       new JMenuItem("Split operation"); 
     splitSegmentsop.addActionListener(this);
@@ -2855,6 +2863,8 @@ public void findPlugins()
       { this.replaceCallByDefinition(); } 
       else if (label.equals("Replace recursion by loops"))
       { this.transformOperationActivity(); } 
+      else if (label.equals("Make operation cached"))
+      { this.makeOperationCached(); } 
       else if (label.equals("Split operation"))
       { this.splitOperationActivity(); } 
       else if (label.equals("Hoist local declarations"))
@@ -3668,6 +3678,26 @@ public void findPlugins()
         vals[0] instanceof Entity)
     { Entity ent = (Entity) vals[0];
       ucdArea.transformOperationActivity(ent);
+    } 
+  }
+
+  private void makeOperationCached()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
+    thisLabel.setText("Select entity to make operation cached"); 
+    System.out.println(">> Select entity to make operation cached");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.makeOperationCached(ent);
     } 
   }
 
