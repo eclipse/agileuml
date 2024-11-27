@@ -83,27 +83,27 @@ _1 |-->_1
 
 
 functionStmt::
-FUNCTION _1 _2 \r\n \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1 : OclAny;\n_3`VB2UML\n    return _1;\n\n
+FUNCTION _1 _2 \r\n \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1 : OclAny;\n_3`VB2UML\n    return _1;\n\n<action> _88 _1
 
 Function _1 _2 \r\n \r\n _3 _* End Function |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1 : OclAny;\n_3`VB2UML\n    return _1;\n\n
 
-FUNCTION _1 _2 \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1`VB2UML : OclAny;\n_3`VB2UML\n    return _1;\n\n
+FUNCTION _1 _2 \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1`VB2UML : OclAny;\n_3`VB2UML\n    return _1;\n\n<action> _88 _1
 
 Function _1 _2 \r\n _3 _* End Function |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1`VB2UML : OclAny;\n_3`VB2UML\n    return _1;\n\n
 
-FUNCTION _1 _2 _3 \r\n \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+FUNCTION _1 _2 _3 \r\n \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n<action> _88 _1
 
 Function _1 _2 _3 \r\n \r\n _4 _* End Function |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
 
-FUNCTION _1 _2 _3 \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+FUNCTION _1 _2 _3 \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n<action> _88 _1
 
 Function _1 _2 _3 \r\n _4 _* End Function |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
 
-_1 FUNCTION _2 _3 _4 \r\n \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+_1 FUNCTION _2 _3 _4 \r\n \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n<action> _88 _1
 
 _1 Function _2 _3 _4 \r\n \r\n _5 _* End Function |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
 
-_1 FUNCTION _2 _3 _4 \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+_1 FUNCTION _2 _3 _4 \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n<action> _88 _1
 
 _1 Function _2 _3 _4 \r\n _5 _* End Function |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
 

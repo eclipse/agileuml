@@ -820,6 +820,7 @@ trailer::
 . upper _1 |-->->toUpperCase()
 . lower _1 |-->->toLowerCase()
 . strip _1 |-->->trim()
+. split _1 |-->->split_1
 . replace _1 |-->.replace_1
 . find _1 |-->->indexOf_1 - 1
 . startswith _1 |-->->hasPrefix_1
@@ -2157,6 +2158,7 @@ trailerOclType::
 
 . upper _1 |-->String
 . lower _1 |-->String
+. split _1 |-->Sequence
 . strip _1 |-->String
 . replace _1 |-->String
 . find _1 |-->int

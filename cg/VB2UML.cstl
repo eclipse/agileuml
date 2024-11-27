@@ -1361,7 +1361,7 @@ END |-->  OclProcess.exit(1)
 exitStmt::
 EXIT DO |-->    break
 EXIT FOR |-->    break
-EXIT FUNCTION |-->    return result
+EXIT FUNCTION |-->    return _88
 EXIT PROPERTY |-->    return result
 EXIT SUB |-->  return
 
