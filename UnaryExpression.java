@@ -741,6 +741,18 @@ public void findClones(java.util.Map clones,
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     }
+    else if (("->last".equals(operator) || 
+              "->first".equals(operator) || 
+              "->front".equals(operator) || 
+              "->tail".equals(operator)) && 
+             argument instanceof BasicExpression && 
+             ((BasicExpression) argument).isOperationCall())
+    { // redundant results computation
+      aUses.add("! Redundant results computation in: " + this);
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1); 
+    } 
+
 
     return res; 
   } 

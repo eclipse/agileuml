@@ -3312,14 +3312,15 @@ public class BehaviouralFeature extends ModelElement
     } 
   } 
 
-  public void checkParameterNames()
-  { if (parameters == null) 
-    { return; }
+  public Vector checkParameterNames()
+  { Vector unusedVars = new Vector(); 
+
+    if (parameters == null) 
+    { return unusedVars; }
  
     Vector pnames = new Vector(); 
 
     int UVA = 0; 
-    Vector unusedVars = new Vector(); 
 
     for (int i = 0; i < parameters.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
@@ -3347,7 +3348,7 @@ public class BehaviouralFeature extends ModelElement
         if (puses.size() == 0) 
         { System.err.println("!! Code smell (UVA): parameter " + pname + " is unused in operation " + getName() + " postcondition.");
           UVA++; 
-          unusedVars.add(pname); 
+          unusedVars.add(par); 
         } 
       } 
 
@@ -3356,7 +3357,7 @@ public class BehaviouralFeature extends ModelElement
         if (actuses.size() == 0) 
         { System.err.println("!! Code smell (UVA): parameter " + pname + " is unused in operation " + getName() + " activity.");
           UVA++; 
-          unusedVars.add(pname); 
+          unusedVars.add(par); 
         } 
       } 
     } 
@@ -3366,7 +3367,14 @@ public class BehaviouralFeature extends ModelElement
       System.out.println("!! Unused parameters: " + unusedVars); 
       System.out.println(); 
     } 
+
+    return unusedVars; 
   }
+
+  public void removeUnusedParameters()
+  { Vector unusedVars = checkParameterNames(); 
+    parameters.removeAll(unusedVars); 
+  } 
 
 
   public void splitIntoSegments()
@@ -4341,13 +4349,22 @@ public class BehaviouralFeature extends ModelElement
         } 
 
         if (actualClones.size() > 0)
-        { amberUses.add("!!! Cloned expressions could be repeated evaluations: " + actualClones + "\n" + 
+        { amberUses.add("!! Cloned expressions could be repeated evaluations: " + actualClones + "\n" + 
              ">>> Use Extract Local Variable refactoring"); 
           int ascore = (int) res.get("amber");
           ascore = ascore + actualClones.size();
           res.set("amber", ascore);
         } 
       } // In a postcondition they usually are repeats.
+    } 
+
+    Vector unusedVars = checkParameterNames(); 
+    if (unusedVars.size() > 0) 
+    { amberUses.add("!! Unused parameters: " + unusedVars + "\n" + 
+             ">>> Use remove unused parameters refactoring"); 
+      int ascore = (int) res.get("amber");
+      ascore = ascore + unusedVars.size();
+      res.set("amber", ascore);
     } 
 
     return res; 

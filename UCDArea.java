@@ -7342,6 +7342,20 @@ public class UCDArea extends JPanel
     System.out.println(">> Set activity for operation " + op + " of entity " + ent); 
   }
 
+  public void removeUnusedParameters(Entity ent)
+  { String nme = 
+          JOptionPane.showInputDialog("Enter operation name:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+
+    bf.removeUnusedParameters();
+    System.err.println("! Warning: operation calls of: " + nme + " may need to be corrected!"); 
+    repaint();  
+  }
+  
   public void splitOperationActivity(Entity ent)
   { String nme = 
           JOptionPane.showInputDialog("Enter operation name:");

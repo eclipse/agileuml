@@ -5575,6 +5575,7 @@ class BasicExpression extends Expression
         !data.equals("setSubrange") && 
         !data.equals("insertAt") && 
         !data.equals("insertInto") && 
+        // !(data.equals("split")) && 
         !(data.equals("replace")) && 
         !(data.equals("replaceFirstMatch")) && 
         !(data.equals("replaceAll")) && 
@@ -6330,6 +6331,15 @@ class BasicExpression extends Expression
        
     return true;
   }
+
+  public boolean isOperationCall()
+  { if (isEvent && parameters != null) 
+    { return true; } 
+    if (umlkind == UPDATEOP ||
+        umlkind == QUERY)
+    { return true; } 
+    return false; 
+  } 
 
   private void setObjectRefType()
   { if (entity != null && objectRef != null && objectRef.umlkind == VARIABLE &&

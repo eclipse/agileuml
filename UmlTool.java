@@ -1005,6 +1005,12 @@ public void findPlugins()
       "Makes operation cached");
     qualityMenu.add(makeOpCached);
 
+    JMenuItem removeUnusedPars = 
+      new JMenuItem("Remove unused parameters"); 
+    removeUnusedPars.addActionListener(this);
+    removeUnusedPars.setToolTipText(
+      "Removes unused operation parameters");
+    qualityMenu.add(removeUnusedPars);
 
     JMenuItem splitSegmentsop = 
       new JMenuItem("Split operation"); 
@@ -2865,6 +2871,8 @@ public void findPlugins()
       { this.transformOperationActivity(); } 
       else if (label.equals("Make operation cached"))
       { this.makeOperationCached(); } 
+      else if (label.equals("Remove unused parameters"))
+      { this.removeUnusedParameters(); } 
       else if (label.equals("Split operation"))
       { this.splitOperationActivity(); } 
       else if (label.equals("Hoist local declarations"))
@@ -3698,6 +3706,26 @@ public void findPlugins()
         vals[0] instanceof Entity)
     { Entity ent = (Entity) vals[0];
       ucdArea.makeOperationCached(ent);
+    } 
+  }
+
+  private void removeUnusedParameters()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
+    thisLabel.setText("Select entity to remove unused operation parameters"); 
+    System.out.println(">> Select entity to remove unused operation parameters");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.removeUnusedParameters(ent);
     } 
   }
 

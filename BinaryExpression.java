@@ -5690,6 +5690,11 @@ public void findClones(java.util.Map clones,
       if (type == null) 
       { type = new Type("int", null); } 
     } 
+    /* else if (operator.equals("->split"))
+    { elementType = new Type("String",null); 
+      type = new Type("Sequence", null);
+      type.setElementType(elementType);  
+    } */ 
     else if ("->hasPrefix".equals(operator) || 
              "->hasSuffix".equals(operator) ||
              "->hasMatch".equals(operator) || 
@@ -20655,6 +20660,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "->intersectAll".equals(operator) || 
              "|intersectAll".equals(operator))
     { aUses.add("! High-cost operator in: " + this);
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1); 
+    } 
+    else if ("->at".equals(operator) && 
+             left instanceof BasicExpression && 
+             ((BasicExpression) left).isOperationCall())
+    { // redundant results computation
+      aUses.add("! Redundant results computation in: " + this);
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 

@@ -23757,6 +23757,50 @@ public class ASTCompositeTerm extends ASTTerm
             
           return "execute (OclFile[\"System.err\"].println(" + res + "))"; 
         } 
+        else if ("println".equals(called) || 
+                 "print".equals(called))
+        { if (cargs.size() == 0)
+          { Vector pars = new Vector(); 
+            Expression par = 
+              BasicExpression.newValueBasicExpression("\"\""); 
+            expression = 
+              new UnaryExpression("->display", par); 
+            statement = 
+              new ImplicitInvocationStatement(expression); 
+
+            return "execute (\"\")->display()"; 
+          }
+
+          ASTTerm arg1 = (ASTTerm) cargs.get(0); 
+          String callp = arg1.toKM3();
+
+          Statement sideEffect = arg1.statement; 
+          if (arg1.hasSideEffect()) { } 
+          else 
+          { sideEffect = null; } 
+
+          JOptionPane.showInputDialog(">>> Side effect of println is: " + sideEffect); 
+
+          String res = arg1.queryForm(); 
+
+          if (argexpr != null && arg1.expression != null) 
+          { arg1.expression.setBrackets(true);
+            expression = 
+              BasicExpression.newCallBasicExpression(
+                called, argexpr, arg1.expression); 
+            Statement stat = 
+                new ImplicitInvocationStatement(expression); 
+          
+            if (sideEffect == null) 
+            { statement = stat; } 
+            else 
+            { statement = 
+                  new SequenceStatement(stat,sideEffect); 
+            }
+          } 
+            
+          return "" + statement; 
+        } 
         else if ("exec".equals(called) && 
                  "OclProcess".equals(ASTTerm.getType(arg)))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
@@ -34006,24 +34050,24 @@ public class ASTCompositeTerm extends ASTTerm
       expression = t.expression;  // queryForm
         
       if (t.updatesObject(null))
-      { System.out.println(">> Expression returning value, and with side-effect: " + t); 
+      { // System.out.println(">> Expression returning value, and with side-effect: " + t); 
         statement = t.statement;    // updateForm
-        System.out.println(">> Update form: >> " + statement); 
+        // System.out.println(">> Update form: >> " + statement); 
         System.out.println(); 
         String qf = t.queryForm(); 
         expression = t.expression; 
-        System.out.println(">> Query form: >> " + expression); 
+        // System.out.println(">> Query form: >> " + expression); 
         
         return qf + " ; " + initexpr; 
       }
       else if (t.hasSideEffect())
       { System.out.println(">> Expression returning value, and with side-effect: " + t); 
         statement = t.statement;    // updateForm
-        System.out.println(statement); 
-        System.out.println(); 
+        // System.out.println(statement); 
+        // System.out.println(); 
         String qf = t.queryForm(); 
         expression = t.expression; 
-        System.out.println(">> Query form: >> " + expression); 
+        // System.out.println(">> Query form: >> " + expression); 
         
         return qf + " ; " + initexpr; 
       } 
@@ -39494,7 +39538,7 @@ public class ASTCompositeTerm extends ASTTerm
       else if (terms.size() == 3 && 
           "(".equals(terms.get(0) + "") &&
           ")".equals(terms.get(2) + ""))
-      { // casting 
+      { // brackets
         ASTTerm call = (ASTTerm) terms.get(1); 
         return call.hasSideEffect(); 
       } 
@@ -39520,6 +39564,10 @@ public class ASTCompositeTerm extends ASTTerm
         return (condx || ifx || elsex);  
       } 
     } 
+
+    if ("methodCall".equals(tag))
+    { return false; } 
+
     return false; 
   } 
 
@@ -39663,6 +39711,15 @@ public class ASTCompositeTerm extends ASTTerm
         statement = call.statement;
         return res;  
       } 
+      else if (terms.size() == 3 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { // brackets
+        ASTTerm call = (ASTTerm) terms.get(1);
+        String res = call.preSideEffect();
+        statement = call.statement;
+        return res;  
+      } 
       else if (terms.size() == 4 && 
           "[".equals(terms.get(1) + "") && 
           "]".equals(terms.get(3) + "")) // array access
@@ -39800,6 +39857,7 @@ public class ASTCompositeTerm extends ASTTerm
         }
         return callp1;  
       }
+
       return null; 
     } 
     
