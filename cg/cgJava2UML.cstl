@@ -251,7 +251,7 @@ Comparator _1 |-->Function(_1,(_1,boolean))
 
 Collection _1 |-->Sequence_1`collectionParameters
 Iterable _1 |-->Sequence_1`collectionParameters
-Class _1 |-->OclType
+Class _1 |-->OclType 
 
 Map _1 |-->Map_1`collectionParameters
 HashMap _1 |-->Map_1`collectionParameters
@@ -402,7 +402,7 @@ _1 [ ] |-->Sequence(long)<when> _1 long
 _1 [ ] |-->Sequence(double)<when> _1 double
 _1 [ ] |-->Sequence(String)<when> _1 String
 _1 [ ] |-->Sequence(_1`type)
-_1 |-->_1`type
+_1 |-->_66
 
 
 enumDeclaration::
@@ -1066,6 +1066,8 @@ push ( _1 ) |-->->append(_1)
 offer ( _1 ) |-->->including(_1)
 
 remove ( ) |-->.remove()
+set ( _1 ) |-->.setAt(_1`first+1,_1`last)<when> _1 multiple
+set ( _1 ) |-->.setAt(_1+1, true)
 
 putChar ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,2))<when> _1 multiple
 putShort ( _1 ) |-->.insertInto((_1`first)+1, MathLib.integer2bytes(_1`last,2))<when> _1 multiple
@@ -1272,7 +1274,8 @@ _1 > > _2 |-->(_1`queryForm/(2->pow(_2`queryForm)))->oclAsType(long)
 
 _1 && _2 |-->_1`queryForm & _2`queryForm
 _1 || _2 |-->_1`queryForm or _2`queryForm
-_1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 integer
+_1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 int
+_1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 long
 _1 & _2 |-->_1`queryForm & _2`queryForm
 _1 | _2 |-->MathLib.bitwiseOr(_1`queryForm,_2`queryForm)<when> _1 integer 
 _1 | _2 |-->_1`queryForm or _2`queryForm 
@@ -1490,6 +1493,14 @@ range ( _1 ) |-->(_1`first->oclType()).allInstances()->select(_x | _x >= _1`firs
 copyOf ( _1 ) |-->(_1)->copy()
 complementOf ( _1 ) |-->((_1->any()->oclType()).allInstances() - _1)
 of ( _1 ) |-->Set{_1}
+
+
+enumsetMethodType::
+allOf ( _1 ) |-->Sequence(_1)
+range ( _1 ) |-->Sequence
+copyOf ( _1 ) |-->_1`ocltype
+complementOf ( _1 ) |-->Sequence
+of ( _1 ) |-->Set
 
 
 
@@ -1747,6 +1758,16 @@ _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
 
 
+byteMethodType::
+decode ( _1 ) |-->int
+parseByte ( _1 ) |-->int
+toString ( _1 ) |-->String
+valueOf ( _1 ) |-->int
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
+
+
 characterMethodCall::
 toUpperCase ( _1 ) |-->(_1 + "")->toUpperCase()
 toLowerCase ( _1 ) |-->(_1 + "")->toLowerCase()
@@ -1765,18 +1786,46 @@ forDigit ( _1 ) |-->(_1`first + "")
 getNumericValue ( _1 ) |-->("" + _1`first)->toInteger()
 
 
+characterMethodType::
+toUpperCase ( _1 ) |-->String
+toLowerCase ( _1 ) |-->String
+isDigit ( _1 ) |-->boolean
+isLetter ( _1 ) |-->boolean
+isLetterOrDigit ( _1 ) |-->boolean
+isLowerCase ( _1 ) |-->boolean
+isUpperCase ( _1 ) |-->boolean
+isJavaIdentifierPart ( _1 ) |-->boolean
+isJavaIdentifierStart ( _1 ) |-->boolean
+isSpaceChar ( _1 ) |-->boolean
+isWhitespace ( _1 ) |-->boolean
+toString ( _1 ) |-->String
+digit ( _1 ) |-->int
+forDigit ( _1 ) |-->String
+getNumericValue ( _1 ) |-->int
+
+
 classMethodCall::
 forName ( _1 ) |-->OclType[_1`first]
 
 
+classMethodType::
+forName ( _1 ) |-->OclType
+
 
 calendarMethodCall::
- 
 getInstance ( _1 ) |-->OclDate.newOclDate(_1)
 getInstance ( ) |-->OclDate.newOclDate()
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+calendarMethodType::
+getInstance ( _1 ) |-->OclDate
+getInstance ( ) |-->OclDate
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 collectionsMethodCall::
@@ -1827,6 +1876,49 @@ _1 ( _2 ) |-->_1(_2)
 _1 _2 |-->_2
 
 
+collectionsMethodType::
+list ( _1 ) |-->Sequence
+singletonList ( _1 ) |-->Sequence(_1`ocltype)
+singletonMap ( _1 ) |-->Map
+singleton ( _1 ) |-->Set(_1`ocltype)
+min ( _1 ) |-->OclAny
+max ( _1 ) |-->OclAny
+enumeration ( _1 ) |-->OclIterator
+replaceAll ( _1 ) |-->boolean
+swap ( _1 ) |-->void
+rotate ( _1 ) |-->void  
+shuffle ( _1 ) |-->void
+reverse ( _1 ) |-->void
+sort ( _1 ) |-->void
+copy ( _1 ) |-->void
+fill ( _1 ) |-->void
+ 
+binarySearch ( _1 ) |-->int
+indexOfSubList ( _1 ) |-->int
+lastIndexOfSubList ( _1 ) |-->int
+nCopies ( _1 ) |-->Sequence
+
+synchronizedCollection ( _1 ) |-->_1`ocltype
+synchronizedList ( _1 ) |-->_1`ocltype
+synchronizedSet ( _1 ) |-->_1`ocltype
+synchronizedMap ( _1 ) |-->_1`ocltype
+synchronizedSortedSet ( _1 ) |-->_1`ocltype
+synchronizedSortedMap ( _1 ) |-->_1`ocltype
+
+unmodifiableCollection ( _1 ) |-->_1`ocltype
+unmodifiableList ( _1 ) |-->_1`ocltype
+unmodifiableSet ( _1 ) |-->_1`ocltype
+unmodifiableMap ( _1 ) |-->_1`ocltype
+immutableMap ( _1 ) |-->_1`ocltype
+unmodifiableSortedSet ( _1 ) |-->_1`ocltype
+unmodifiableSortedMap ( _1 ) |-->_1`ocltype
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
+
+_1 _2 |-->_2`ocltype
+
+
 doubleMethodCall::
 compare ( _1 ) |-->(_1`first)->compareTo(_1`last)
 isInfinite ( _1 ) |-->((_1) = Math_PINFINITY or (_1) = Math_NINFINITY)
@@ -1837,6 +1929,18 @@ valueOf ( _1 ) |-->(_1)->toReal()
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+doubleMethodType::
+compare ( _1 ) |-->int
+isInfinite ( _1 ) |-->boolean
+isNaN ( _1 ) |-->boolean
+parseDouble ( _1 ) |-->double
+toString ( _1 ) |-->String
+valueOf ( _1 ) |-->double
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 integerMethodCall::
@@ -1855,8 +1959,25 @@ _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
 
 
+integerMethodType::
+decode ( _1 ) |-->int
+parseInt ( _1 ) |-->int
+toString ( _1 ) |-->String
+valueOf ( _1 ) |-->int
+toBinaryString ( _1 ) |-->String
+toHexString ( _1 ) |-->String
+toOctalString ( _1 ) |-->String
+rotateRight ( _1 ) |-->int
+rotateLeft ( _1 ) |-->int
+
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
+
+
 longMethodCall::
 decode ( _1 ) |-->(_1)->toLong()
+parseLong ( _1 ) |-->(_1`first)->toLong()
 parseInt ( _1 ) |-->(_1`first)->toLong()
 toString ( _1 ) |-->((_1`first) + "")
 valueOf ( _1 ) |-->(_1`first)->toLong()
@@ -1866,6 +1987,20 @@ toOctalString ( _1 ) |-->(MathLib.decimal2octal(_1) + "")
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+longMethodType::
+decode ( _1 ) |-->long
+parseLong ( _1 ) |-->long
+parseInt ( _1 ) |-->long
+toString ( _1 ) |-->String
+valueOf ( _1 ) |-->long
+toBinaryString ( _1 ) |-->String
+toHexString ( _1 ) |-->String
+toOctalString ( _1 ) |-->String
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 filesMethodCall::
@@ -1973,6 +2108,37 @@ _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
 
 
+mathMethodType::
+cos ( _1 ) |-->double
+sin ( _1 ) |-->double
+tan ( _1 ) |-->double
+acos ( _1 ) |-->double
+asin ( _1 ) |-->double
+atan ( _1 ) |-->double
+floor ( _1 ) |-->double
+abs ( _1 ) |-->_1`ocltype
+round ( _1 ) |-->double
+cosh ( _1 ) |-->double
+sinh ( _1 ) |-->double
+tanh ( _1 ) |-->double
+ceil ( _1 ) |-->double
+exp ( _1 ) |-->double
+log ( _1 ) |-->double
+log10 ( _1 ) |-->double
+sqrt ( _1 ) |-->double
+cbrt ( _1 ) |-->double
+pow ( _1 ) |-->double
+max ( _1 ) |-->double
+min ( _1 ) |-->double
+toDegrees ( _1 ) |-->double
+toRadians ( _1 ) |-->double
+rint ( _1 ) |-->double
+random ( ) |-->double
+
+_1 ( ) |-->double
+_1 ( _2 ) |-->double
+
+
 shortMethodCall::
 decode ( _1 ) |-->(_1)->toInteger()
 parseShort ( _1 ) |-->(_1`first)->toInteger()
@@ -1981,6 +2147,16 @@ valueOf ( _1 ) |-->(_1`first)->toInteger()
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+shortMethodType::
+decode ( _1 ) |-->int
+parseShort ( _1 ) |-->int
+toString ( _1 ) |-->String
+valueOf ( _1 ) |-->int
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 stringMethodCall::
@@ -1994,6 +2170,17 @@ getByName ( _1 ) |-->_1
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+stringMethodType::
+copyValueOf ( _1 ) |-->String
+valueOf ( _1 ) |-->String
+format ( _1 ) |-->String
+getByName ( _1 ) |-->_1`ocltype
+join ( _1 ) |-->String
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 assertMethodCall::
@@ -2016,6 +2203,11 @@ is ( _1 ) |-->_1`assertMatcherCondition
 not ( _1 ) |-->/= _1`queryForm
 _1 |-->= _1`queryForm<when> _1 expression
 _1 |-->_1`assertMatcherCondition
+
+
+assertMethodType::
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 firstQueryForm::
@@ -2045,6 +2237,28 @@ setLong ( _1 ) |-->    _1`first[_1`third+1] := _1`last
 setShort ( _1 ) |-->    _1`first[_1`third+1] := _1`last
 
 
+arrayMethodType::
+get ( _1 ) |-->OclAny
+getBoolean ( _1 ) |-->boolean
+getByte ( _1 ) |-->int
+getChar ( _1 ) |-->int
+getDouble ( _1 ) |-->double
+getFloat ( _1 ) |-->double
+getInt ( _1 ) |-->int
+getLength ( _1 ) |-->int
+getLong ( _1 ) |-->long
+getShort ( _1 ) |-->int
+set ( _1 ) |-->OclAny
+setBoolean ( _1 ) |-->boolean
+setByte ( _1 ) |-->int
+setChar ( _1 ) |-->int
+setDouble ( _1 ) |-->double
+setFloat ( _1 ) |-->double
+setInt ( _1 ) |-->int
+setLong ( _1 ) |-->long
+setShort ( _1 ) |-->int
+
+
 systemMethodCall::
 currentTimeMillis ( ) |-->OclDate.getSystemTime()
 getenv ( _1 ) |-->OclProcess.getEnvironmentProperty(_1)
@@ -2057,6 +2271,20 @@ arraycopy ( _1 ) |-->    for _x : Integer.subrange(1,_1`last) do _1`fifth[_1`sev
 
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
+
+systemMethodType::
+currentTimeMillis ( ) |-->long
+getenv ( _1 ) |-->String
+getProperty ( _1 ) |-->String
+getProperties ( ) |-->Map(String,String)
+exit ( _1 ) |-->int
+setProperty ( _1 ) |-->String
+clearProperty ( _1 ) |-->String
+arraycopy ( _1 ) |-->void
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
 
 
 
@@ -2404,11 +2632,14 @@ _1 > > _2 |-->(_1/(2->pow(_2)))->oclAsType(long)
 
 _1 && _2 |-->_1 & _2
 _1 || _2 |-->_1 or _2
-_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)<when> _1 integer
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)<when> _1`ocltype int
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)<when> _1`ocltype long
 _1 & _2 |-->_1 & _2
-_1 | _2 |-->MathLib.bitwiseOr(_1,_2)<when> _1 integer 
+_1 | _2 |-->MathLib.bitwiseOr(_1,_2)<when> _1`ocltype int
+_1 | _2 |-->MathLib.bitwiseOr(_1,_2)<when> _1`ocltype long
 _1 | _2 |-->_1 or _2 
-_1 ^ _2 |-->MathLib.bitwiseXor(_1,_2)<when> _1 integer
+_1 ^ _2 |-->MathLib.bitwiseXor(_1,_2)<when> _1`ocltype int
+_1 ^ _2 |-->MathLib.bitwiseXor(_1,_2)<when> _1`ocltype long
 _1 ^ _2 |-->_1 xor _2 
 
 _1 instanceof _2 |-->_1->oclIsKindOf(_2)
@@ -2424,6 +2655,257 @@ _1 . _2 |-->_1._2
 ( _1 ) |-->(_1)
 
 _1 |-->_1
+
+
+ocltype::
+- _1 |-->_1`ocltype
++ _1 |-->_1`ocltype
+! _1 |-->boolean
+~ _1 |-->_1`ocltype
+
+-- _1 |-->_1`ocltype
+++ _1 |-->_1`ocltype
+
+
+_1 ? _2 : _3 |-->_2`ocltype
+
+( int ) _1 |-->int
+( byte ) _1 |-->int
+( short ) _1 |-->int
+( long ) _1 |-->int
+
+( byte ) _1 |-->int
+( short ) _1 |-->int
+
+( _1 ) _2 |-->_1
+
+_1 instanceof _2 |-->boolean
+
+_1 . new _2 |-->_2
+
+_1 . this |-->_1
+_1 . length |-->int
+_1 . elementCount |-->int
+_1 . elementData |-->_1`ocltype
+_1 . first |-->OclAny
+_1 . second |-->OclAny
+_1 . third |-->OclAny
+
+_1 :: _2 |-->Function(OclAny,OclAny)
+
+System.out |-->OclFile
+System.in |-->OclFile
+System.err |-->OclFile
+
+System.out . _1 |-->OclFile["System.out"]._1`systemMethodType
+System.in . _1 |-->OclFile["System.in"]._1`systemMethodType
+System.err . _1 |-->OclFile["System.err"]._1`systemMethodType
+
+System . _1 |-->_1`systemMethodType
+Array . _1 |-->_1`arrayMethodType
+java.lang.reflect.Array . _1 |-->_1`arrayMethodType
+Assert . _1 |-->_1`assertMethodType
+
+Math . PI |-->double
+Math . E |-->double
+
+Math . _1 |-->_1`mathMethodType
+
+EnumSet . _1 |-->_1`enumsetMethodType
+
+Byte . MIN_VALUE |-->int
+Byte . MAX_VALUE |-->int
+Byte . SIZE |-->int
+Byte . TYPE |-->OclType
+byte . class |-->OclType
+
+Byte . _1 |-->_1`byteMethodType
+
+Short . MIN_VALUE |-->int
+Short . MAX_VALUE |-->int
+Short . SIZE |-->int
+Short . TYPE |-->OclType
+short . class |-->OclType
+
+Short . _1 |-->_1`shortMethodType
+
+Float . MAX_VALUE |-->double
+Float . MIN_VALUE |-->double
+Float . SIZE |-->int
+Float . MAX_EXPONENT |-->int
+Float . MIN_EXPONENT |-->int
+Float . MIN_NORMAL |-->double
+Float . NaN |-->double
+Float . POSITIVE_INFINITY |-->double
+Float . NEGATIVE_INFINITY |-->double
+Float . TYPE |-->OclType
+float . class |-->OclType
+
+Float . _1 |-->_1`doubleMethodType
+
+Double . MAX_VALUE |-->double
+Double . MIN_VALUE |-->double
+Double . MIN_NORMAL |-->double
+Double . MAX_EXPONENT |-->int
+Double . MIN_EXPONENT |-->int
+Double . SIZE |-->int
+Double . NaN |-->double
+Double . POSITIVE_INFINITY |-->double
+Double . NEGATIVE_INFINITY |-->double
+Double . TYPE |-->OclType
+double . class |-->OclType
+
+Double . _1 |-->_1`doubleMethodType
+
+Integer . MAX_VALUE |-->int
+Integer . MIN_VALUE |-->int
+Integer . SIZE |-->int
+Integer . TYPE |-->OclType
+int . class |-->OclType
+
+Integer . _1 |-->_1`integerMethodType
+
+Long . MAX_VALUE |-->long
+Long . MIN_VALUE |-->long
+Long . SIZE |-->int
+Long . TYPE |-->OclType
+long . class |-->OclType
+
+Long . _1 |-->_1`longMethodType
+
+GregorianCalendar . ERA |-->int
+GregorianCalendar . YEAR |-->int
+GregorianCalendar . MONTH |-->int
+GregorianCalendar . DAY_OF_MONTH |-->int
+GregorianCalendar . WEEK_OF_MONTH |-->int
+GregorianCalendar . DAY_OF_WEEK_IN_MONTH |-->int
+GregorianCalendar . AM_PM |-->int
+GregorianCalendar . HOUR |-->int
+GregorianCalendar . HOUR_OF_DAY |-->int
+GregorianCalendar . MINUTE |-->int
+GregorianCalendar . SECOND |-->int
+GregorianCalendar . MILLISECOND |-->int
+
+Calendar . _1 |-->_1`calendarMethodType
+GregorianCalendar . _1 |-->_1`calendarMethodType
+
+
+Collections . EMPTY_LIST |-->Sequence
+Collections . EMPTY_MAP |-->Map
+Collections . EMPTY_SET |-->Set
+
+Collections . _1 |-->_1`collectionsMethodType
+
+Boolean . TRUE |-->boolean
+Boolean . FALSE |-->boolean
+Boolean . TYPE |-->OclType
+boolean . class |-->OclType
+
+Boolean . _1 |-->_1`booleanMethodType
+
+Arrays . _1 |-->_1`arraysMethodType
+
+Pattern . _1 |-->_1`patternMethodType
+
+String . class |-->OclType
+
+String . _1 |-->_1`stringMethodType
+
+InetAddress . _1 |-->_1`stringMethodType
+
+BigInteger . ZERO |-->int
+BigInteger . ONE |-->int
+BigInteger . TEN |-->int
+
+BigInteger . _1 |-->_1`bigIntegerMethodType
+
+BigDecimal . ZERO |-->double
+BigDecimal . ONE |-->double
+BigDecimal . TEN |-->double
+
+BigDecimal . _1 |-->_1`bigDecimalMethodType
+
+Character . MAX_VALUE |-->String
+Character . MIN_VALUE |-->String
+Character . TYPE |-->OclType
+char . class |-->OclType
+
+Character . _1 |-->_1`characterMethodType
+
+Class . _1 |-->_1`classMethodType
+
+Thread . MAX_PRIORITY |-->int
+Thread . MIN_PRIORITY |-->int
+Thread . NORM_PRIORITY |-->int
+Thread . _1 |-->_1`threadMethodType
+
+Void . TYPE |-->OclType
+void . class |-->OclType
+
+_1 . new _2 |-->_2
+_1 . new _2 _3 |-->_3
+
+new _1 |-->_1
+new _1 _2 |-->_1
+
+
+_1 [ _2 ] |-->_1`elementType
+_1 ++ |-->_1`ocltype
+_1 -- |-->_1`ocltype
+
+_1 > _2 |-->boolean
+_1 < _2 |-->boolean
+_1 >= _2 |-->boolean
+_1 != _2 |-->boolean
+_1 <= _2 |-->boolean
+_1 == _2 |-->boolean
+
+_1 = _2 |-->_1`ocltype
+_1 += _2 |-->_1`ocltype
+_1 -= _2 |-->_1`ocltype
+_1 *= _2 |-->_1`ocltype
+_1 /= _2 |-->_1`ocltype
+_1 &= _2 |-->_1`ocltype
+_1 |= _2 |-->_1`ocltype
+_1 ^= _2 |-->_1`ocltype
+_1 <<= _2 |-->_1`ocltype
+_1 >>= _2 |-->_1`ocltype
+_1 >>>= _2 |-->_1`ocltype
+_1 %= _2 |-->_1`ocltype
+
+_1 + _2 |-->_1`ocltype
+
+_1 - _2 |-->int<when> _1 String, _2 String
+_1 - _2 |-->_1`ocltype<when> _2 String
+_1 - _2 |-->int<when> _1 String
+_1 - _2 |-->_1`ocltype
+
+_1 * _2 |-->_1`ocltype
+_1 % _2 |-->_1`ocltype
+_1 / _2 |-->_1`ocltype
+_1 < < _2 |-->long
+_1 > > > _2 |-->long
+_1 > > _2 |-->long
+
+_1 && _2 |-->boolean
+_1 || _2 |-->boolean
+_1 & _2 |-->_1`ocltype
+_1 | _2 |-->_1`ocltype 
+_1 ^ _2 |-->_1`ocltype 
+
+_1 instanceof _2 |-->boolean
+
+_1 . _2 |-->_2`mapMethodCallType<when> _1 Map
+_1 . _2 |-->_2`fileMethodCallType<when> _1 File
+_1 . _2 |-->_2`dateMethodCallType<when> _1 Date
+
+_1 . _2 |-->_2`methodCallType<when> _2 methodCall
+
+_1 . _2 |-->OclAny
+
+( _1 ) |-->_1`ocltype
+
+_1 |-->_1`type
 
 
 sideEffect::
@@ -2646,6 +3128,7 @@ _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm_2<when> _2 methodCa
 
 _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm._2
 
+_1 |-->    execute _1`queryForm<when> _1 methodCall
 _1 |-->    skip
 _* |-->    skip
 
@@ -2731,6 +3214,8 @@ String _1 |-->StringLib.newString_1
 StringBuilder _1 |-->StringLib.newString_1
 StringBuffer _1 |-->StringLib.newString_1
 URL _1 |-->OclDatasource.newURL_1
+
+BitSet _1 |-->MathLib.toBitSequence_1
 
 Set _1 |-->Set{}_1`collectionCreationRest
 HashSet _1 |-->Set{}_1`collectionCreationRest
@@ -3346,8 +3831,11 @@ return ; |-->    return
 assert _1 : _2 ; |-->    assert _1 do _2 ; 
 assert _1 ; |-->    assert _1 ;
 
+try _1 _2 _* |-->    try (_1 _2) _* <when> _1 resourceSpecification
+try _1 _2 |-->    try (_1 _2) <when> _1 resourceSpecification
 try _1 _2 _* |-->    try _1 _2 _*
 try _1 _2 |-->    try _1 _2
+
 
 do _1 while _2 ; |-->  while true do (_1    if _2 then skip else break) ;
   
