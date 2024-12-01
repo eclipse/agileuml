@@ -10818,6 +10818,22 @@ class TryStatement extends Statement
     }  
   }
 
+  public void addBody(Statement stat)
+  { if (stat == null) 
+    { return; } 
+
+    if (body == null) 
+    { body = stat; } 
+    else if (body instanceof SequenceStatement)
+    { ((SequenceStatement) body).addStatement(stat); } 
+    else 
+    { SequenceStatement ss = new SequenceStatement(); 
+      ss.addStatement(body);  
+      ss.addStatement(stat); 
+      body = ss; 
+    } 
+  } 
+
   public void setClauses(Vector stats)
   { catchClauses = stats; } 
 
