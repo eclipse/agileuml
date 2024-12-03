@@ -6046,13 +6046,15 @@ public class ASTCompositeTerm extends ASTTerm
       if ("<<".equals(op) && res1 != null)
       { Expression resx = 
           new BinaryExpression("*", res1, res2pow2); 
-        resx.setType(res1.getType()); 
+        resx.setType(res1.getType());
+        resx.setBrackets(true);  
         return resx; 
       } 
       
       if (">>".equals(op))
       { Expression resx =
-          new BinaryExpression("div", res1, res2pow2); 
+          new BinaryExpression("div", res1, res2pow2);
+        resx.setBrackets(true);  
         resx.setType(new Type("int", null)); 
         return resx; 
       } 
@@ -22701,7 +22703,8 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if (("newBufferedWriter".equals(called) || 
-         "newByteChannel".equals(called) || 
+         "newByteChannel".equals(called) ||
+         "newPrintWriter".equals(called) ||  
          "newOutputStream".equals(called)) && 
         cargs.size() >= 1)
     { // OclFile.newOclFile_Write(OclFile.newOclFile(carg1) 
@@ -23468,6 +23471,7 @@ public class ASTCompositeTerm extends ASTTerm
 
     if (("newBufferedWriter".equals(called) || 
          "newByteChannel".equals(called) || 
+         "newPrintWriter".equals(called) || 
          "newOutputStream".equals(called)) && 
         cargs.size() >= 1)
     { // OclFile.newOclFile_Write(OclFile.newOclFile(carg1) 
@@ -23685,9 +23689,8 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm arg1 = (ASTTerm) cargs.get(0); 
           String callp = arg1.toKM3();
 
-          Statement sideEffect = arg1.statement; 
+          Statement sideEffect = null;
 
-          System.out.println(">>> Side effect of println is: " + sideEffect); 
 
           String res = arg1.queryForm(); 
 
@@ -23698,6 +23701,15 @@ public class ASTCompositeTerm extends ASTTerm
                                     arg1.expression); 
             Statement stat = 
                 new ImplicitInvocationStatement(expression); 
+
+
+            if (arg1.hasSideEffect())
+            { arg1.postSideEffect(); 
+              sideEffect = arg1.statement; 
+            }   
+
+            System.out.println(">>> Side effect of println is: " + sideEffect); 
+
             if (sideEffect == null) 
             { statement = stat; } 
             else 
@@ -23724,11 +23736,9 @@ public class ASTCompositeTerm extends ASTTerm
           }
 
           ASTTerm arg1 = (ASTTerm) cargs.get(0); 
-          String callp = arg1.toKM3();
+          // String callp = arg1.toKM3();
 
-          Statement sideEffect = arg1.statement; 
-
-          System.out.println(">>> Side effect of println is: " + sideEffect); 
+          Statement sideEffect = null; 
 
           String res = arg1.queryForm(); 
 
@@ -23748,6 +23758,14 @@ public class ASTCompositeTerm extends ASTTerm
                 "println", errfile, arg1.expression); 
             Statement stat = 
                 new ImplicitInvocationStatement(expression); 
+          
+            if (arg1.hasSideEffect())
+            { arg1.postSideEffect(); 
+              sideEffect = arg1.statement; 
+            }   
+
+            System.out.println(">>> Side effect of println is: " + sideEffect); 
+     
             if (sideEffect == null) 
             { statement = stat; } 
             else 
@@ -23773,13 +23791,14 @@ public class ASTCompositeTerm extends ASTTerm
           }
 
           ASTTerm arg1 = (ASTTerm) cargs.get(0); 
-          String callp = arg1.toKM3();
+          // String callp = arg1.toKM3();
 
-          Statement sideEffect = arg1.statement; 
-          if (arg1.hasSideEffect()) { } 
-          else 
-          { sideEffect = null; } 
-
+          Statement sideEffect = null; 
+          if (arg1.hasSideEffect()) 
+          { arg1.postSideEffect(); 
+            sideEffect = arg1.statement; 
+          } 
+ 
           // JOptionPane.showInputDialog(">>> Side effect of println is: " + sideEffect); 
 
           String res = arg1.queryForm(); 
@@ -31806,7 +31825,8 @@ public class ASTCompositeTerm extends ASTTerm
         return "OclFile.newOclFile_Write(OclFile.newOclFile(\"_tmp.txt\"))"; 
       }
 
-      if ("FileWriter".equals(cls.literalForm()))
+      if ("FileWriter".equals(cls.literalForm()) ||
+          "PrintWriter".equals(cls.literalForm()))
       { ASTTerm.setType(this,"OclFile");
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         if (arg1.isString())
@@ -36008,6 +36028,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               new BinaryExpression("/", 
                            e1.expression, twopow);
+            expression.setBrackets(true); 
             expression.setType(new Type("long", null)); 
           }
           return "(" + e1x + "/(2->pow(" + e2x + ")))->oclAsType(long)"; 
