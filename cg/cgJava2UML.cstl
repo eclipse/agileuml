@@ -713,6 +713,7 @@ _1 [ ] |-->Sequence(
 _1 |-->_1`typQualifierLeft<when> _1 variableDeclarator
 _1 |-->_1`typQualifierLeft<when> _1 variableDeclaratorId
 _1 |-->
+_* |-->
 
 typQualifierRight::
 _1 [ ] |-->)
@@ -720,7 +721,7 @@ _1 [ ] [ ] |-->))
 _1 |-->_1`typQualifierRight<when> _1 variableDeclarator
 _1 |-->_1`typQualifierRight<when> _1 variableDeclaratorId
 _1 |-->
-
+_* |-->
 
 
 lastFormalParameter::
@@ -1197,6 +1198,9 @@ _1 |-->._1
 
 dcolonObject::
 System . out |-->OclFile["System.out"]
+System . in |-->OclFile["System.in"]
+System . err |-->OclFile["System.err"]
+
 _1 |-->_1.new_1()
 
 
@@ -2425,6 +2429,10 @@ _1 . third |-->_1->at("third")
 
 _1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
 
+System . out |-->OclFile["System.out"]
+System . in |-->OclFile["System.in"]
+System . err |-->OclFile["System.err"]
+
 System.out |-->OclFile["System.out"]
 System.in |-->OclFile["System.in"]
 System.err |-->OclFile["System.err"]
@@ -3270,6 +3278,7 @@ BufferedReader _1 |-->_1`newTextReader
 BufferedWriter _1 |-->_1`newTextWriter
 
 FileWriter _1 |-->_1`newTextWriter
+PrintWriter _1 |-->_1`newTextWriter
 StringWriter _1 |-->_1`newTextWriter
 Formatter _1 |-->_1`newTextWriter
 OutputStreamWriter _1 |-->_1`newTextWriter
