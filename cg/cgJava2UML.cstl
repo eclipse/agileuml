@@ -917,11 +917,13 @@ _1 |-->_1
 
 mapMethodCallQueryForm::
 put ( _1 ) |-->->at(_1`first)
+putIfAbsent ( _1 ) |-->->at(_1`first)
 putAll ( _1 ) |-->
 removeAll ( _1 ) |-->
 retainAll ( _1 ) |-->
 remove ( _1 ) |-->->at(_1)
 get ( _1 ) |-->->at(_1)
+getOrDefault ( _1 ) |-->->at(_1`first)
 getProperty ( _1 ) |-->->at(_1)
 getString ( _1 ) |-->->at(_1)->toString()
 getJsonString ( _1 ) |-->->at(_1)->toString()
@@ -959,6 +961,7 @@ _1 |-->._1
 
 mapMethodCallSideEffect::
 put ( _1 ) |-->->union(Map{_1`first |-> _1`last})
+putIfAbsent ( _1 ) |-->->union(Map{_1`first |-> _1`last})
 setProperty ( _1 ) |-->->union(Map{_1`first |-> _1`last})
 putAll ( _1 ) |-->->union(_1)
 removeAll ( _1 ) |--> - _1
@@ -3126,7 +3129,7 @@ _1 . _2 |-->    _1 := _1_2`mapMethodCallSideEffect<when> _1 Map
 
 _1 . _2 |-->    _1 := _1_2`collectionMethodCallSideEffect<when> _1 Collection
 
-_1 . _2 |-->    _1_2`methodCallSideEffect<when> _1 File
+_1 . _2 |-->    skip<when> _1 File
     
 _1 . _2 |-->    _1`updatedObject := _1_2`methodCallSideEffect<when> _2 updatesObject
 
@@ -3823,7 +3826,9 @@ synchronized _1 _2 |-->_2
 _1 : _2 |-->_2
 _1 : _2 ; |-->_2
 
-while _1 _2 |-->    while _1 do (_1`updateForm ; _2 ) ; 
+while _1 _2 |-->    while _1 do (_1`updateForm ; _2 ) ; <when> _1 hasSideEffect
+while _1 _2 |-->    while _1 do (_2) ; 
+
 
 if _1 _2 else _3 |-->    if _1 then _2 else _3 ; 
 
