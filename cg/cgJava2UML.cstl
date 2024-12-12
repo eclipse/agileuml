@@ -67,6 +67,10 @@ FloatBuffer |-->Sequence(double)
 DoubleBuffer |-->Sequence(double)
 
 Stream |-->Sequence
+IntStream |-->Sequence(int)
+LongStream |-->Sequence(long)
+DoubleStream |-->Sequence(double)
+
 JsonArray |-->Sequence
 JSONArray |-->Sequence
 Multiset |-->Sequence
@@ -103,6 +107,13 @@ StringBuilder |-->String
 CharSequence |-->String
 Character |-->String
 InetAddress |-->String
+
+AtomicBoolean |-->boolean
+AtomicInteger |-->int
+AtomicLong |-->long
+AtomicIntegerArray |-->Sequence
+AtomicLongArray |-->Sequence
+AtomicReferenceArray |-->Sequence
 
 File |-->OclFile
 FileDescriptor |-->OclFile
@@ -173,6 +184,7 @@ ListIterator |-->OclIterator
 StringTokenizer |-->OclIterator
 Enumeration |-->OclIterator
 Cursor |-->OclIterator
+Spliterator |-->OclIterator
 
 Pattern |-->OclRegex
 FileFilter |-->OclRegex
@@ -248,9 +260,11 @@ ThreadGroup |-->OclProcessGroup
 Predicate _1 |-->Function(_1,boolean)
 Function _1 |-->Function_1
 Comparator _1 |-->Function(_1,(_1,boolean))
+AtomicReference _1 |-->_1
 
 Collection _1 |-->Sequence_1`collectionParameters
 Iterable _1 |-->Sequence_1`collectionParameters
+AtomicReferenceArray _1 |-->Sequence_1`collectionParameters
 Class _1 |-->OclType 
 
 Map _1 |-->Map_1`collectionParameters
@@ -458,6 +472,7 @@ _1 _2 _3 _4 |-->
 _1 _2 _3 |-->
 _1 _2 |-->
 _1 |-->
+_* |-->
 
 
 typeDeclaration::
@@ -724,6 +739,21 @@ _1 |-->
 _* |-->
 
 
+extractElementType::
+_1 [ ] [ ] |-->Sequence
+_1 [ ] |-->_1
+ArrayList _1 |-->_1`extractElementType
+HashMap _1 |-->_1`extractElementType
+< _1 , _2 > |-->_2
+< _1 > |-->_1
+
+_1 |-->_1`extractElementType<when> _1 variableDeclarator
+_1 |-->_1`extractElementType<when> _1 variableDeclaratorId
+String |-->String
+_1 |-->
+_* |-->
+
+
 lastFormalParameter::
 _1 _2 _3 ... _4 |--> _4 : Sequence(_3)
 _1 _2 ... _3 |--> _3 : Sequence(_2)
@@ -759,12 +789,12 @@ instanceBlockInitialisation::
 
 
 fieldDeclaration::
-_1 _2 ; |-->  attribute _2`variableName : _2`typQualifierLeft_1_2`typQualifierRight_2`variableInitialValue;\n<action> _2`variableName _1
+_1 _2 ; |-->  attribute _2`variableName : _2`typQualifierLeft_1_2`typQualifierRight_2`variableInitialValue;\n<action> _2`variableName _1, _2`elemType _1`extractElementType
 
 
 localVariableDeclaration::
-_1 _2 _3 |-->_3`processVarDecs<action> _66 _2, _3`variableName _2
-_1 _2 |-->_2`processVarDecs<action> _66 _1, _2`variableName _1 
+_1 _2 _3 |-->_3`processVarDecs<action> _66 _2, _3`variableName _2, _3`elemType _2`extractElementType
+_1 _2 |-->_2`processVarDecs<action> _66 _1, _2`variableName _1,  _2`elemType _1`extractElementType 
 
 
 variableName::
@@ -791,8 +821,8 @@ _1 [ ] [ ] |-->_1
 
 
 variableDeclarator::
-_1 = _2 |-->    var _1 : _1`getOclType ; _2`preSideEffect_1 := _2`queryForm
-_1 |-->    var _1 : _1`getOclType
+_1 = _2 |-->    var _1 : _1`getOclType ; _2`preSideEffect_1 := _2`queryForm<action> _1 _1`getOclType
+_1 |-->    var _1 : _1`getOclType<action> _1 _1`getOclType
 
 
 initialisationValue::
@@ -959,6 +989,50 @@ _1 ( _2 ) |-->._1(_2)
 _1 |-->._1
 
 
+mapMethodCallType::
+put ( _1 ) |-->OclAny
+putIfAbsent ( _1 ) |-->OclAny
+putAll ( _1 ) |-->void
+removeAll ( _1 ) |-->void
+retainAll ( _1 ) |-->void
+remove ( _1 ) |-->OclAny
+get ( _1 ) |-->OclAny
+getOrDefault ( _1 ) |-->OclAny
+getProperty ( _1 ) |-->OclAny
+getString ( _1 ) |-->String
+getJsonString ( _1 ) |-->String
+getInt ( _1 ) |-->int
+getBoolean ( _1 ) |-->boolean
+getLong ( _1 ) |-->long
+isNull ( _1 ) |-->boolean
+contains ( _1 ) |-->boolean
+containsAll ( _1 ) |-->boolean
+containsKey ( _1 ) |-->boolean
+containsValue ( _1 ) |-->boolean
+isEmpty ( ) |-->boolean
+clear ( ) |-->void
+clone ( ) |-->Map
+
+keys ( ) |-->OclIterator
+values ( ) |-->Sequence
+keySet ( ) |-->Set
+entrySet ( ) |-->Set
+elements ( ) |-->OclIterator
+
+getKey ( ) |-->OclAny
+getValue ( ) |-->OclAny
+
+firstKey ( ) |-->OclAny
+lastKey ( ) |-->OclAny
+headMap ( _1 ) |-->Map
+tailMap ( _1 ) |-->Map
+subMap ( _1 ) |-->Map
+ 
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
+_1 |-->OclAny
+
+
 mapMethodCallSideEffect::
 put ( _1 ) |-->->union(Map{_1`first |-> _1`last})
 putIfAbsent ( _1 ) |-->->union(Map{_1`first |-> _1`last})
@@ -979,6 +1053,7 @@ close ( ) |-->.closeFile()
 ready ( ) |-->.canRead()
 next ( ) |-->.getCurrent()
 nextInt ( ) |-->.getCurrent()->toInteger()
+nextLong ( ) |-->.getCurrent()->toLong()
 nextDouble ( ) |-->.getCurrent()->toReal()
 nextBoolean ( ) |-->.getCurrent()->toBoolean()
 readObject ( ) |-->.readObject()
@@ -994,7 +1069,6 @@ _1 ( _2 ) |-->._1(_2)
 
 
 collectionMethodCallQueryForm::
-
 replaceAll ( _1 ) |-->_1`first->includes( _1`third )
 put ( _1 ) |-->->at(_1)
 removeAll ( _1 ) |-->->intersection(_1)->notEmpty()
@@ -1022,18 +1096,70 @@ _1 ( _2 ) |-->._1(_2)
 _1 _2 |-->_2
 
 
-streamMethodCallQueryForm::
+collectionMethodCallType::
+replaceAll ( _1 ) |-->boolean
+put ( _1 ) |-->OclAny
+removeAll ( _1 ) |-->boolean
+retainAll ( _1 ) |-->boolean
+add ( _1 ) |-->boolean
+addAll ( _1 ) |-->boolean
+push ( _1 ) |-->boolean
 
+removeElementAt ( _1 ) |-->Sequence
+removeElement ( _1 ) |-->Sequence
+remove ( ) |-->OclIterator
+remove ( _1 ) |-->boolean<when> _1 multiple
+remove ( _1 ) |-->OclAny<when> _1 integer
+remove ( _1 ) |-->boolean
+removeFirst ( ) |-->OclAny
+removeLast ( ) |-->OclAny
+set ( _1 ) |-->OclAny
+pop ( ) |-->OclAny
+take ( ) |-->OclAny
+poll ( ) |-->OclAny
+
+_1 ( ) |-->OclAny
+_1 ( _2 ) |-->OclAny
+
+_1 _2 |-->_2`ocltype
+
+
+streamMethodCallQueryForm::
 empty ( ) |-->Sequence{}
 concat ( _1 ) |-->(_1`first)->union(_1`third)
 of ( _1 ) |-->Sequence{_1}
+range ( _1 ) |-->Integer.subrange(_1`first, _1`last-1)
+rangeClosed ( _1 )  |-->Integer.subrange(_1`first, _1`last)
+
+_1 ( ) |-->._1()
+_1 ( _2 ) |-->._1(_2)
+
+
+streamSupportQueryForm::
+doubleStream ( _1 ) |-->(_1`first).elements
+intStream ( _1 ) |-->(_1`first).elements
+longStream ( _1 ) |-->(_1`first).elements
+stream ( _1 ) |-->(_1`first).elements
+
+_1 ( ) |-->._1()
+_1 ( _2 ) |-->._1(_2)
+
+
+spliteratorsQueryForm::
+emptyDoubleSpliterator ( ) |-->OclIterator.newOclIterator_Sequence(Sequence{})
+emptyIntSpliterator ( ) |-->OclIterator.newOclIterator_Sequence(Sequence{})
+emptyLongSpliterator ( ) |-->OclIterator.newOclIterator_Sequence(Sequence{})
+emptySpliterator ( ) |-->OclIterator.newOclIterator_Sequence(Sequence{})
+
+iterator ( _1 ) |-->_1
+
+spliterator ( _1 ) |-->OclIterator.newOclIterator_Sequence(_1`first)
 
 _1 ( ) |-->._1()
 _1 ( _2 ) |-->._1(_2)
 
 
 collectionMethodCallSideEffect::
-
 pop ( ) |-->->front()
 take ( ) |-->->front()
 removeAll ( _1 ) |--> - _1
@@ -1238,6 +1364,10 @@ _1 ? _2 : _3 |-->if _1`queryForm then _2`queryForm else _3`queryForm endif
 
 _1 instanceof _2 |-->_1`queryForm->oclIsKindOf(_2)
 
+_1 :: parseInt |-->lambda _s : String in _s->toInteger()
+_1 :: parseLong |-->lambda _s : String in _s->toLong()
+_1 :: parseDouble |-->lambda _s : String in _s->toReal()
+
 _1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
 
 _1 . new _2 |-->(_1`queryForm)._2
@@ -1284,9 +1414,11 @@ _1 || _2 |-->_1`queryForm or _2`queryForm
 _1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 int
 _1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 long
 _1 & _2 |-->_1`queryForm & _2`queryForm
-_1 | _2 |-->MathLib.bitwiseOr(_1`queryForm,_2`queryForm)<when> _1 integer 
+_1 | _2 |-->MathLib.bitwiseOr(_1`queryForm,_2`queryForm)<when> _1 int
+_1 | _2 |-->MathLib.bitwiseOr(_1`queryForm,_2`queryForm)<when> _1 long
 _1 | _2 |-->_1`queryForm or _2`queryForm 
-_1 ^ _2 |-->MathLib.bitwiseXor(_1`queryForm,_2`queryForm)<when> _1 integer
+_1 ^ _2 |-->MathLib.bitwiseXor(_1`queryForm,_2`queryForm)<when> _1 int
+_1 ^ _2 |-->MathLib.bitwiseXor(_1`queryForm,_2`queryForm)<when> _1 long
 _1 ^ _2 |-->_1`queryForm xor _2`queryForm 
 
 _1 = _2 |-->_1`queryForm
@@ -1356,6 +1488,7 @@ Thread . MIN_PRIORITY |-->1
 Thread . NORM_PRIORITY |-->5
 Thread . _1 |-->OclProcess._1
 
+ThreadLocalRandom . _1 |-->MathLib
 
 Void . TYPE |-->OclType["void"]
 void . class |-->OclType["void"]
@@ -1469,6 +1602,12 @@ Collections . EMPTY_MAP |-->Map{}
 Collections . EMPTY_SET |-->Set{}
 
 Stream . _1 |-->_1`streamMethodCallQueryForm
+IntStream . _1 |-->_1`streamMethodCallQueryForm
+LongStream . _1 |-->_1`streamMethodCallQueryForm
+DoubleStream . _1 |-->_1`streamMethodCallQueryForm
+StreamSupport . _1 |-->_1`streamSupportQueryForm
+
+Spliterators . _1 |-->_1`spliteratorsQueryForm
 
 java.lang.reflect.Array . _1 |-->_1`arrayMethodCall
 
@@ -1479,6 +1618,7 @@ _1 . _2 |-->_1`queryForm_2`fileMethodCallQueryForm<when> _1 File
 _1 . _2 |-->_1`queryForm_2`dateMethodCallQueryForm<when> _1 Date
 
 _1 . _2 |-->_1`queryForm_2`methodCallQueryForm
+_1 . _2 . _3 |-->_1`queryForm_2`methodCallQueryForm_3`methodCallQueryForm
 
 
 new _1 |-->_1
@@ -1599,6 +1739,12 @@ flatMapToLong ( _1 ) |-->->concatenateAll( _x1 | (_1)->apply(_x1) )
 flatMapToDouble ( _1 ) |-->->concatenateAll( _x1 | (_1)->apply(_x1) )
 map ( _1 ) |-->->collect( _x1 | (_1)->apply(_x1) )
 stream ( ) |-->
+asDoubleStream ( ) |-->
+asLongStream ( ) |-->
+boxed ( ) |-->
+parallel ( ) |-->
+sequential ( ) |-->
+unordered ( ) |-->
 sum ( ) |-->->sum()
 max ( _1 ) |-->->max()
 min ( _1 ) |-->->min()
@@ -1609,6 +1755,7 @@ distinct ( ) |-->->asOrderedSet()
 
 allMatch ( _1 ) |-->->forAll( _x2 | (_1)->apply(_x2) )
 anyMatch ( _1 ) |-->->exists( _x2 | (_1)->apply(_x2) )
+forEach ( _1 ) |-->->forAll( _x2 | (_1)->apply(_x2) )
 noneMatch ( _1 ) |-->->forAll( _x2 | not((_1)->apply(_x2)) )
 sorted ( ) |-->->sort()
 sorted ( _1 ) |-->->sort()
@@ -1691,7 +1838,11 @@ clone ( ) |-->->copy()
 isNaN ( ) |-->->oclIsInvalid()
 isInfinite ( ) |-->->abs() = Math_PINFINITY
 
+incrementAndGet ( ) |-->+1
+decrementAndGet ( ) |-->-1
+
 scheduledExecutionTime ( ) |-->.getDeadline()
+run ( ) |-->.run()
 
 Stream . _1 |-->_1`streamMethodCallQueryForm
 
@@ -1715,6 +1866,8 @@ _1 |-->_1
 
 arraysMethodCall::
 toString ( _1 ) |-->(_1 + "")
+deepToString ( _1 ) |-->(_1 + "")
+
 asList ( _1 ) |-->_1`arrayAsList
 binarySearch ( _1 ) |-->(_1`first->indexOf(_1`last) - 1)
 equals ( _1 ) |-->_1`first = _1`last
@@ -1722,12 +1875,17 @@ equals ( _1 ) |-->_1`first = _1`last
 copyOf ( _1 ) |-->_1`first.subrange(1,_1`third)
 copyOfRange ( _1 ) |-->_1`first.subrange(_1`third+1,_1`last)
 
-sort ( _1 ) |-->    _1`first := _1`first.subrange(1,_1`third)^(_1`first.subrange(_1`third+1,_1`last)->sort())^_1`first.subrange(_1`last+1,_1`first.size)<when>_1 multiple
+sort ( _1 ) |-->    _1`first := OclComparator.sortWith(_1`first, _1`last)<when> _1 3ary
+sort ( _1 ) |-->    _1`first := _1`first.subrange(1,_1`third)^(_1`first.subrange(_1`third+1,_1`last)->sort())^_1`first.subrange(_1`last+1,_1`first.size)<when>_1 5ary
 sort ( _1 ) |-->    _1 := _1->sort()
+
+parallelSort ( _1 ) |-->    _1`first := _1`first->sort()
+
 fill ( _1 ) |-->    _1`first := _1`first->collect(_1`last)
  
 _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
+
 
 
 bigIntegerMethodCall::
@@ -1961,9 +2119,7 @@ toOctalString ( _1 ) |-->(MathLib.decimal2octal(_1) + "")
 rotateRight ( _1 ) |-->MathLib.bitwiseRotateRight(_1)
 rotateLeft ( _1 ) |-->MathLib.bitwiseRotateLeft(_1)
 
-
-_1 ( ) |-->_1()
-_1 ( _2 ) |-->_1(_2)
+_0 |-->_0
 
 
 integerMethodType::
@@ -1991,9 +2147,9 @@ valueOf ( _1 ) |-->(_1`first)->toLong()
 toBinaryString ( _1 ) |-->(MathLib.decimal2binary(_1) + "")
 toHexString ( _1 ) |-->(MathLib.decimal2hex(_1) + "")
 toOctalString ( _1 ) |-->(MathLib.decimal2octal(_1) + "")
+min ( _1 ) |-->Set{_1`first, _1`last}->min()
 
-_1 ( ) |-->_1()
-_1 ( _2 ) |-->_1(_2)
+_0 |-->_0
 
 
 longMethodType::
@@ -2005,6 +2161,7 @@ valueOf ( _1 ) |-->long
 toBinaryString ( _1 ) |-->String
 toHexString ( _1 ) |-->String
 toOctalString ( _1 ) |-->String
+min ( _1 ) |-->long
 
 _1 ( ) |-->OclAny
 _1 ( _2 ) |-->OclAny
@@ -2323,6 +2480,11 @@ _1 |-->_1`fithArgument<when> _1 expressionList
 _1 |-->_1
 
 
+isForEachCall:: 
+forEach ( _1 ) |-->true
+_* |-->false
+
+
 methodCall::
 super ( ) |-->super.initialise()
 super ( _1 ) |-->super.initialise(_1)
@@ -2330,11 +2492,14 @@ super ( _1 ) |-->super.initialise(_1)
 this ( ) |-->self.initialise()
 this ( _1 ) |-->self.initialise(_1) 
 
-println ( _1 ) |-->(_1) 
+parseInt ( _1 ) |-->(_1 + "")->toInteger()
+println ( _1 ) |-->(_1)
+deepToString ( _1 ) |-->(_1 + "")
+ 
 length ( ) |-->size
 size ( ) |-->size
-max ( _1 ) |-->max(Set{_1})
-min ( _1 ) |-->min(Set{_1})
+max ( _1 ) |-->Set{_1}->max()
+min ( _1 ) |-->Set{_1}->min()
 get ( _1 ) |-->at(_1+1)
 charAt ( _1 ) |-->at(_1+1)
 getTimeInMillis ( ) |-->time
@@ -2343,6 +2508,10 @@ computeTime ( ) |-->time
 exec ( _1 ) |-->OclProcess.newOclProcess(null,_1`first)
 schedule ( _1 ) |-->setTask(_1`first) ; _1`first.setSchedule(_1`tailtail)
 scheduleAtFixedRate ( _1 ) |-->setTask(_1`first) ; _1`first.setSchedule(_1`tailtail)
+
+allMatch ( _1 ) |-->->forAll( _x0 | (_1)->apply(_x0) )
+anyMatch ( _1 ) |-->->exists( _x0 | (_1)->apply(_x0) )
+distinct ( ) |-->->asOrderedSet()
 
 filter ( _1 ) |-->->select( _x1 | (_1)->apply(_x1) )
 mapToInt ( _1 ) |-->->collect( _x1 | (_1)->apply(_x1) )
@@ -2378,14 +2547,14 @@ _1 ( _2 ) |-->_1(_2)
 
 
 lambdaParameters::
-( _1 ) |-->_1
-( _1 , _* ) |-->_1 : OclAny, _*`lambdaParameter
-_1 |-->_1 : OclAny
+( _1 ) |-->lambda _1 : OclAny in 
+( _* ) |-->_*`lambdaParameter
+_1 |-->lambda _1 : OclAny in
 
 
 lambdaParameter::
-, |--> ,
-_1 |-->_1 : OclAny
+, |-->
+_1 |-->lambda _1 : OclAny in
 
 
 lambdaBody::
@@ -2393,7 +2562,30 @@ _1 |-->_1
 
 
 lambdaExpression::
-_1 -> _2 |-->lambda _1 in _2
+_1 -> _2 |-->lambda _1 in (_2`updateForm & _2`queryForm)<when> _2`isAssignment true
+_1 -> _2 |-->_1 _2
+
+
+forEachVariable::
+forEach ( _1 ) |-->_1`forEachVariable
+_1 -> _2 |-->_1`name
+
+_1 |-->_1`forEachVariable<when> _1 lambdaExpression
+_1 |-->_1`forEachVariable<when> _1 expression
+_1 |-->_1`forEachVariable<when> _1 expressionList
+
+_* |-->_forEach
+
+
+forEachUpdateForm::
+forEach ( _1 ) |-->_1`forEachUpdateForm
+_1 -> _2 |-->_2`updateForm
+
+_1 |-->_1`forEachUpdateForm<when> _1 lambdaExpression
+_1 |-->_1`forEachUpdateForm<when> _1 expression
+_1 |-->_1`forEachUpdateForm<when> _1 expressionList
+
+_* |-->    skip ; 
 
 
 expression::
@@ -2430,6 +2622,9 @@ _1 . first |-->_1->at("first")
 _1 . second |-->_1->at("second")
 _1 . third |-->_1->at("third")
 
+_1 :: parseLong |-->lambda _s : String in _s->toLong()
+_1 :: parseInt |-->lambda _s : String in _s->toInteger()
+_1 :: parseDouble |-->lambda _s : String in _s->toReal()
 _1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
 
 System . out |-->OclFile["System.out"]
@@ -2555,7 +2750,6 @@ Boolean . _1 |-->_1`booleanMethodCall
 
 Arrays . _1 |-->_1`arraysMethodCall
 
-
 Pattern . _1 |-->OclRegex_1`methodCallQueryForm
 
 
@@ -2587,11 +2781,20 @@ Character . _1 |-->_1`characterMethodCall
 
 Class . _1 |-->_1`classMethodCall
 
+Stream . _1 |-->_1`streamMethodCallQueryForm
+IntStream . _1 |-->_1`streamMethodCallQueryForm
+LongStream . _1 |-->_1`streamMethodCallQueryForm
+DoubleStream . _1 |-->_1`streamMethodCallQueryForm
+StreamSupport . _1 |-->_1`streamSupportQueryForm
+
+Spliterators . _1 |-->_1`spliteratorsQueryForm
+
 Thread . MAX_PRIORITY |-->10
 Thread . MIN_PRIORITY |-->1
 Thread . NORM_PRIORITY |-->5
 Thread . _1 |-->OclProcess._1
 
+ThreadLocalRandom . _1 |-->MathLib
 
 Void . TYPE |-->OclType["void"]
 void . class |-->OclType["void"]
@@ -2860,7 +3063,7 @@ new _1 |-->_1
 new _1 _2 |-->_1
 
 
-_1 [ _2 ] |-->_1`elementType
+_1 [ _2 ] |-->_1`elemType
 _1 ++ |-->_1`ocltype
 _1 -- |-->_1`ocltype
 
@@ -2909,12 +3112,22 @@ _1 instanceof _2 |-->boolean
 _1 . _2 |-->_2`mapMethodCallType<when> _1 Map
 _1 . _2 |-->_2`fileMethodCallType<when> _1 File
 _1 . _2 |-->_2`dateMethodCallType<when> _1 Date
+_1 . _2 |-->_2`collectionMethodCallType<when> _1 Collection
 
 _1 . _2 |-->_2`methodCallType<when> _2 methodCall
 
 _1 . _2 |-->OclAny
 
 ( _1 ) |-->_1`ocltype
+
+_1 |-->int<when> _1 int
+_1 |-->long<when> _1 long
+_1 |-->boolean<when> _1 boolean
+_1 |-->String<when> _1 String
+_1 |-->Sequence<when> _1 Sequence
+_1 |-->Set<when> _1 Set
+_1 |-->Map<when> _1 Map
+_1 |-->Function<when> _1 Function
 
 _1 |-->_1`type
 
@@ -2961,6 +3174,11 @@ _1 | _2 |-->_1`preSideEffect_2`preSideEffect
 _1 & _2 |-->_1`preSideEffect_2`preSideEffect
 
 _1 = _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm := _2`queryForm ;\n
+_1 += _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm := _1`queryForm + _2`queryForm ;\n
+_1 -= _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm := _1`queryForm - _2`queryForm ;\n
+_1 *= _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm := _1`queryForm * _2`queryForm ;\n
+_1 /= _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm := _1`queryForm / _2`queryForm ;\n
+_1 %= _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm := _1`queryForm mod _2`queryForm ;\n
 
 _1 ++ |-->_1`preSideEffect
 _1 -- |-->_1`preSideEffect
@@ -2969,6 +3187,8 @@ _1 < < _2 |-->_1`preSideEffect_2`preSideEffect
 _1 > > > _2 |-->_1`preSideEffect_2`preSideEffect
 _1 > > _2 |-->_1`preSideEffect_2`preSideEffect
 
+_1 . incrementAndGet ( ) |-->    _1 := _1 + 1 ;\n
+_1 . decrementAndGet ( ) |-->    _1 := _1 - 1 ;\n
 _1 . new _2 |-->
 
 _1 . class |-->_1`preSideEffect
@@ -3110,6 +3330,7 @@ _1 <= _2 |-->    _1`updateForm ; _2`updateForm
 _1 >= _2 |-->    _1`updateForm ; _2`updateForm
 _1 == _2 |-->    _1`updateForm ; _2`updateForm
 
+_1 ? _2 : _3 |-->    _2`updateForm ; _3`updateForm
 
 Collections . _1 |-->_1`collectionsMethodCall
 Arrays . _1 |-->_1`arraysMethodCall
@@ -3125,6 +3346,8 @@ System.err . _1 |-->    OclFile["System.err"]._1`systemMethodCall
 System . _1 |-->_1`systemMethodCall
 
 
+_1 . _2 |-->    for _2`forEachVariable : _1 do\n    (_2`forEachUpdateForm)<when> _2 methodCall, _2`isForEachCall true
+
 _1 . _2 |-->    _1 := _1_2`mapMethodCallSideEffect<when> _1 Map
 
 _1 . _2 |-->    _1 := _1_2`collectionMethodCallSideEffect<when> _1 Collection
@@ -3134,11 +3357,12 @@ _1 . _2 |-->    skip<when> _1 File
 _1 . _2 |-->    _1`updatedObject := _1_2`methodCallSideEffect<when> _2 updatesObject
 
 
-_1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm_2<when> _2 methodCall
+_1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm_2`methodCallQueryForm<when> _2 methodCall
 
 
 _1 . _2 |-->_1`preSideEffect_2`preSideEffect    _1`queryForm._2
 
+_1 |-->_1`updateForm<when> _1 expression
 _1 |-->    execute _1`queryForm<when> _1 methodCall
 _1 |-->    skip
 _* |-->    skip
@@ -3226,6 +3450,10 @@ StringBuilder _1 |-->StringLib.newString_1
 StringBuffer _1 |-->StringLib.newString_1
 URL _1 |-->OclDatasource.newURL_1
 
+AtomicInteger _1 |-->_1
+AtomicLong _1 |-->_1
+AtomicBoolean _1 |-->_1
+
 BitSet _1 |-->MathLib.toBitSequence_1
 
 Set _1 |-->Set{}_1`collectionCreationRest
@@ -3260,6 +3488,7 @@ HashBag _1 |-->Sequence{}_1`collectionCreationRest
 TreeList _1 |-->Sequence{}_1`collectionCreationRest
 
 Stream _1 |-->Sequence{}_1`collectionCreationRest
+
 JsonArray _1 |-->Sequence{}_1`collectionCreationRest
 JSONArray _1 |-->Sequence{}_1`collectionCreationRest
 
@@ -3471,6 +3700,10 @@ TreeList |-->Sequence
 
 BitSet |-->Sequence(boolean)
 Stream |-->Sequence
+IntStream |-->Sequence(int)
+LongStream |-->Sequence(long)
+DoubleStream |-->Sequence(double)
+
 JsonArray |-->Sequence
 JSONArray |-->Sequence
 
@@ -3502,6 +3735,13 @@ StringBuilder |-->String
 CharSequence |-->String
 Character |-->String
 InetAddress |-->String
+
+AtomicBoolean |-->boolean
+AtomicInteger |-->int
+AtomicLong |-->long
+AtomicIntegerArray |-->Sequence
+AtomicLongArray |-->Sequence
+AtomicReferenceArray |-->Sequence
 
 File |-->OclFile
 Formatter |-->OclFile
@@ -3567,6 +3807,7 @@ ListIterator |-->OclIterator
 StringTokenizer |-->OclIterator
 Enumeration |-->OclIterator
 Cursor |-->OclIterator
+Spliterator |-->OclIterator
 
 Pattern |-->OclRegex
 FileFilter |-->OclRegex
@@ -3777,10 +4018,11 @@ _1 |-->_1
 _1 ; _* |-->_1 _*`recurse
 
 resource::
-_1 _2 = _3 |-->    var _2 : _1 := _3 ;\n
-_1 _2 _3 = _4 |-->    var _3 : _2 = _4 ;\n
-_1 _2 _3 _4 = _5 |-->    var _4 : _3 = _5 ;\n
-_1 _2 _3 _4 _5 = _6 |-->    var _5 : _4 = _6 ;\n
+_1 _2 = _3 |-->    var _2 : _1 := _3 ;\n<action> _2`variableName _1
+_1 _2 _3 = _4 |-->    var _3 : _2 = _4 ;\n<action> _3`variableName _2
+_1 _2 _3 _4 = _5 |-->    var _4 : _3 = _5 ;\n<action> _4`variableName _3
+_1 _2 _3 _4 _5 = _6 |-->    var _5 : _4 = _6 ;\n<action> _5`variableName _4
+
 _1 _* |-->_*`recurse<when> _1 variableModifier
 
 
@@ -3796,6 +4038,7 @@ _* |-->
 explicitGenericInvocation::
 _1 _2 |-->_2
 
+
 explicitGenericInvocationSuffix::
 singleton _1 |-->Set{_1}
 
@@ -3806,28 +4049,39 @@ methodBody::
 ; |-->
 _1 |-->\n  activity: _1
 
+
 lambdaDefinitionFromMethodBody::
 ; |-->null
 _1 |-->_1
 
 
+isAssignment::
+_1 = _2 |-->true
+_1 += _2 |-->true
+_1 -= _2 |-->true
+
+_1 |-->_1`isAssignment<when> _1 expression
+
+_1 |-->false
+_* |-->false
+
+
 statement::
-break ; |-->    break
-break _1 ; |-->    break
+break ; |-->    break 
+break _1 ; |-->    break 
+continue ; |-->    continue 
+continue _1 ; |-->    continue 
 
-continue ; |-->    continue
-continue _1 ; |-->    continue
-
-throw _1 ; |-->    error _1
-throw ; |-->    error null
+throw _1 ; |-->    error _1 ;
+throw ; |-->    error null ;
 
 synchronized _1 _2 |-->_2
 
 _1 : _2 |-->_2
 _1 : _2 ; |-->_2
 
-while _1 _2 |-->    while _1 do (_1`updateForm ; _2 ) ; <when> _1 hasSideEffect
-while _1 _2 |-->    while _1 do (_2) ; 
+while _1 _2 |-->    _1`preSideEffect    while _1 do (_1`updateForm ; _2 ; _1`preSideEffect ) ; <when> _1 hasSideEffect
+while _1 _2 |-->    while _1 do _2 ; 
 
 
 if _1 _2 else _3 |-->    if _1 then _2 else _3 ; 
@@ -3839,8 +4093,8 @@ for ( _1 ) _2 |-->  _1 _2 _1`forIncrement ) ;
 switch _1 { _2 _* } |-->\n    for _x : Integer.subrange(1,1) do\n      ( var _switchval : _1`type ;\n        _switchval := _1 ; \n_2\n_* )\n
 switch _1 { _2 } |-->\n    for _x : Integer.subrange(1,1) do\n      ( var _switchval : _1`type ;\n        _switchval := _1 ; \n_2\n      )\n
 
-return _1 ; |-->    return _1
-return ; |-->    return
+return _1 ; |-->    return _1 
+return ; |-->    return 
 
 assert _1 : _2 ; |-->    assert _1 do _2 ; 
 assert _1 ; |-->    assert _1 ;
@@ -3850,8 +4104,9 @@ try _1 _2 |-->    try (_1 _2) <when> _1 resourceSpecification
 try _1 _2 _* |-->    try _1 _2 _*
 try _1 _2 |-->    try _1 _2
 
+do _1 while _2 ; |-->  while true do (_1 ;\n    if _2 then\n  _2`updateForm else break) ; <when> _2 hasSideEffect
 
-do _1 while _2 ; |-->  while true do (_1    if _2 then skip else break) ;
+do _1 while _2 ; |-->  while true do (_1 ;\n    if _2 then skip else break) ;
   
 _1 ; |-->_1`updateForm ;<when> _1 expression
 _1 ; |-->_1
