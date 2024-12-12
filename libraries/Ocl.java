@@ -1467,9 +1467,9 @@ class OclMaplet<K,T>
   { int ind = s.indexOf(sep);
     int seplength = sep.length();
     if (ind < 0) 
-	{ return ""; }
+    { return ""; }
     if (seplength == 0) 
-	{ return ""; }
+    { return ""; }
     return s.substring(ind + seplength, s.length()); 
   }
   

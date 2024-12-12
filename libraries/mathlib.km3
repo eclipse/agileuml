@@ -63,6 +63,10 @@ package mathlib {
     pre: true
     post: r = MathLib.nrandom() & result = ( r - r->floor() );
 
+    static query nextBoolean() : boolean
+    pre: true
+    post: r = MathLib.random() & result = (if r > 0.5 then true else false endif); 
+
     static query combinatorial(n : int , m : int ) : long
     pre: n >= m & m >= 0
     post: ( n - m < m => result = Integer.Prd(m + 1,n,i,i) / Integer.Prd(1,n - m,j,j) ) & ( n - m >= m => result = Integer.Prd(n - m + 1,n,i,i) / Integer.Prd(1,m,j,j) );

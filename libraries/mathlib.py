@@ -91,6 +91,12 @@ class MathLib:
     result = (r - int(math.floor(r)))
     return result
 
+  def nextBoolean() : 
+    r = MathLib.random()
+    if r > 0.5 : 
+      return True
+    return False
+
   def combinatorial(n,m) :
     result = 0
     if n - m < m :
@@ -853,12 +859,13 @@ class FinanceLib :
 # print(MathLib.truncateN(-2.126, 2))
 # print(MathLib.roundN(-2.126, 2))
 
-# tt = ocldate.OclDate.getSystemTime()
+# tt = OclDate.getSystemTime()
 # print(tt)
+
 # MathLib.setSeeds(tt % 30269, tt % 30307, tt % 30323)
-# print(MathLib.random())
-# print(MathLib.random())
-# print(MathLib.random())
+# print(MathLib.nextBoolean())
+# print(MathLib.nextBoolean())
+# print(MathLib.nextBoolean())
 
 # m1 = [[1,2], [2,3]]
 # m2 = [[3,4], [4,5]]
