@@ -248,6 +248,9 @@ public class ASTSymbolTerm extends ASTTerm
   public Type deduceType()
   { return new Type("void", null); } 
 
+  public Type deduceElementType()
+  { return new Type("void", null); } 
+
   public Vector tokenSequence()
   { Vector res = new Vector(); 
     res.add("\"" + symbol + "\""); 
@@ -456,6 +459,7 @@ public class ASTSymbolTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement);
       return res;  
     } 
+
     return res; 
   } 
 
@@ -522,7 +526,28 @@ public class ASTSymbolTerm extends ASTTerm
     { statement = new ContinueStatement(); 
       return "  continue "; 
     } 
+
+    if ("Integer".equals(symbol) || 
+        "AtomicInteger".equals(symbol))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    }
+
+    if ("Long".equals(symbol) || 
+        "AtomicLong".equals(symbol))
+    { modelElement = new Type("long", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "long"; 
+    }
  
+    if ("Boolean".equals(symbol) || 
+        "AtomicBoolean".equals(symbol))
+    { modelElement = new Type("boolean", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "boolean"; 
+    }
+
     if ("Date".equals(symbol))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -559,6 +584,32 @@ public class ASTSymbolTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
+
+    if ("AtomicLongArray".equals(symbol) || 
+        "LongStream".equals(symbol))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(
+                              new Type("long", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(long)"; 
+    } 
+
+    if ("AtomicIntegerArray".equals(symbol) || 
+        "IntStream".equals(symbol))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(
+                              new Type("int", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(int)"; 
+    } 
+
+    if ("DoubleStream".equals(symbol))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(
+                              new Type("double", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(double)"; 
+    } 
 
     if ("List".equals(symbol) || "ArrayList".equals(symbol))
         // "Array".equals(symbol)) 
@@ -752,7 +803,8 @@ public class ASTSymbolTerm extends ASTTerm
       return "OclIterator"; 
     } 
     
-    if ("StringTokenizer".equals(symbol))
+    if ("StringTokenizer".equals(symbol) || 
+        "Spliterator".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; 

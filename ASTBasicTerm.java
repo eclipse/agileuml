@@ -512,6 +512,13 @@ public class ASTBasicTerm extends ASTTerm
     return new Type("OclAny", null); 
   } 
 
+  public Type deduceElementType()
+  { if (Expression.isString(value))
+    { return new Type("String",null); }
+   
+    return new Type("OclAny", null); 
+  } 
+
 
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)
@@ -1073,7 +1080,8 @@ public class ASTBasicTerm extends ASTTerm
       return "int"; 
     }
  
-    if ("Integer".equals(value))
+    if ("Integer".equals(value) || 
+        "AtomicInteger".equals(value))
     { modelElement = new Type("int", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "int"; 
@@ -1152,13 +1160,15 @@ public class ASTBasicTerm extends ASTTerm
       return "long"; 
     }
  
-    if ("Long".equals(value))
+    if ("Long".equals(value) ||
+        "AtomicLong".equals(value))
     { modelElement = new Type("long", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "long"; 
     } 
 
-    if ("Boolean".equals(value) || "boolean".equals(value))
+    if ("Boolean".equals(value) || "boolean".equals(value) ||
+        "AtomicBoolean".equals(value))
     { modelElement = new Type("boolean", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "boolean"; 
@@ -1337,6 +1347,32 @@ public class ASTBasicTerm extends ASTTerm
       return "Sequence(boolean)";
     } 
 
+    if ("DoubleStream".equals(value))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(
+                              new Type("double", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(double)"; 
+    } 
+
+    if ("AtomicLongArray".equals(value) || 
+        "LongStream".equals(value))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(
+                              new Type("long", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(long)"; 
+    } 
+
+    if ("AtomicIntegerArray".equals(value) || 
+        "IntStream".equals(value))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(
+                              new Type("int", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(int)"; 
+    } 
+
     if ("ByteBuffer".equals(value) || 
         "IntBuffer".equals(value) ||
         "ShortBuffer".equals(value) || 
@@ -1439,7 +1475,8 @@ public class ASTBasicTerm extends ASTTerm
       return "OclIterator"; 
     }
  
-    if ("StringTokenizer".equals(value))
+    if ("StringTokenizer".equals(value) ||  
+        "Spliterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; 

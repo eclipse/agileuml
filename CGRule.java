@@ -1407,6 +1407,23 @@ public class CGRule
             if (repl != null)   
             { res = replaceByMetafeatureValue(res,mf,repl); }  
           }   
+          else if ("elementType".equals(mffeat))
+          { String repl = ASTTerm.getElementType(term);
+            if (repl == null) 
+            { repl = 
+                ASTTerm.getTaggedValue(term,"elementType"); 
+              if (repl == null)
+              { Type tt = term.deduceElementType();
+                repl = tt + "";
+              } 
+            } 
+
+            JOptionPane.showInputDialog(">-->--> Element type of " + term + " is " + repl); 
+            System.out.println(); 
+ 
+            if (repl != null)   
+            { res = replaceByMetafeatureValue(res,mf,repl); }  
+          }   
           else if ("trimQuotes".equals(mffeat)) 
           { String rep = term.cg(cgs); 
             if (rep.endsWith("\""))

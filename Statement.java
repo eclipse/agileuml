@@ -12700,6 +12700,59 @@ class AssignStatement extends Statement
     rhs = right; 
   } 
 
+  public AssignStatement(String op, Expression left, Expression right)
+  { if ("=".equals(op))
+    { lhs = left; 
+      rhs = right; 
+    } 
+    else if ("+=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("+", left, right); 
+    } 
+    else if ("-=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("-", left, right); 
+    }  
+    else if ("*=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("*", left, right); 
+    } 
+    else if ("/=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("/", left, right); 
+    } 
+    else if ("|=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("or", left, right); 
+    } 
+    else if ("&=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("&", left, right); 
+    } 
+    else if ("^=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("xor", left, right); 
+    } 
+    else if ("%=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("mod", left, right); 
+    } 
+    else if ("<<=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("*", left, 
+              new BinaryExpression("->pow", 
+                new BasicExpression(2), right)); 
+    } 
+    else if (">>=".equals(op) || ">>>=".equals(op))
+    { lhs = left; 
+      rhs = new BinaryExpression("/", left, 
+              new BinaryExpression("->pow", 
+                new BasicExpression(2), right)); 
+    } 
+    lhs = left; 
+    rhs = right;
+  } 
+
   public String getOperator() 
   { return ":="; } 
 

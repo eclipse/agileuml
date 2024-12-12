@@ -1007,6 +1007,8 @@ public abstract class ASTTerm
 
   public abstract Type deduceType(); 
 
+  public abstract Type deduceElementType(); 
+
   public static String getElementType(ASTTerm t) 
   { String val = ASTTerm.getType(t);
     if (val != null)
