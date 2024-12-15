@@ -102,6 +102,10 @@ class OclIteratorResult
     pre: true 
     post: OclIterator->exists( ot | ot.elements = sq & ot.position = 0 & ot.columns = Sequence{} & result = ot); 
 
+    operation trySplit() : OclIterator
+    pre: true 
+    post: OclIterator->exists( ot | ot.elements = elements.subrange(1,position) & ot.position = 0 & ot.columns = Sequence{} & markedPosition = 0 & elements = elements.subrange(position+1) & position = 0 & result = ot); 
+
     static operation newOclIterator_Set(st : Set) : OclIterator
     pre: true 
     post: OclIterator->exists( ot | ot.elements = Sequence{}->union(st->sort()) & ot.position = 0 & ot.columns = Sequence{} & result = ot ); 
@@ -136,12 +140,30 @@ class OclIteratorResult
     pre: true
     post: elements[position] = null & elements[position]->isDeleted();
  
+    operation tryAdvance(f : Function) : boolean
+    pre: true 
+    post: true
+    activity: 
+      if position + 1 <= elements->size() 
+      then 
+       (var x : OclAny := next() ; 
+        execute f->apply(x); 
+        return true)
+      else return false; 
 
     operation next() : OclAny
     pre: true
     post: true
     activity: 
       ( moveForward() ; return getCurrent() ); 
+
+    operation forEachRemaining(f : Function) : void
+    pre: true 
+    post: true
+    activity: 
+      for x : elements.subrange(position)
+      do 
+        execute f->apply(x); 
 
     operation nextResult() : OclIteratorResult
     pre: true

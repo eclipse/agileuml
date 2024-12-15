@@ -47,6 +47,8 @@ class MathLib
 
   static double random();
 
+  static bool nextBoolean(); 
+
   static long combinatorial(int n,int m);
 
   static long factorial(int x);

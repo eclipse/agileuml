@@ -43,10 +43,19 @@ MathLib::setix(( MathLib::getix() * 171 ) % 30269);
     return result;
   }
 
+  bool MathLib::nextBoolean()
+  { double r = MathLib::random(); 
+    if (r > 0.5) 
+    { return true; } 
+    return false;
+  }
 
   long MathLib::combinatorial(int n,int m)
   { long result = 0;
-    if (n < m || m < 0) { return result; } 
+
+    if (n < m || m < 0) 
+    { return result; } 
+
     if (n - m < m) 
     { result = UmlRsdsLib<int>::prd(UmlRsdsLib<int>::integerSubrange(m + 1,n)) / UmlRsdsLib<int>::prd(UmlRsdsLib<int>::integerSubrange(1,n - m)); 
     }  

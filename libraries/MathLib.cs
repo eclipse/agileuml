@@ -184,6 +184,12 @@
             return result;
         }
 
+  public static boolean nextBoolean()
+  { double r = MathLib.random(); 
+    if (r > 0.5) 
+    { return true; } 
+    return false;
+  }
 
         public static long combinatorial(int n, int m)
         {

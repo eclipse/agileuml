@@ -186,6 +186,13 @@ class OclIterator :
     result = ot
     return result
 
+  def trySplit(self) : 
+    firstpart = self.elements[0:self.position]
+    self.elements = self.elements[self.position:]
+    self.position = 0
+    self.markedPosition = 0
+    return OclIterator.newOclIterator_Sequence(firstpart)
+
   def getCurrent(self) :
     result = None
     if self.position <= len(self.elements) and self.position >= 1 : 
@@ -201,6 +208,13 @@ class OclIterator :
   def remove(self) :
     self.elements[self.position -1] = None
     del self.elements[self.position -1]
+
+  def tryAdvance(self, f) : 
+    if self.position + 1 <= len(self.elements) : 
+      x = self.next()  
+      f(x) 
+      return True
+    return False 
 
   def next(self) :
     result = None
@@ -222,6 +236,9 @@ class OclIterator :
         self.elements.append(r)
       return OclIteratorResult.newOclIteratorResult(r)
 
+  def forEachRemaining(self, f) : 
+    for x in self.elements[self.position:] :
+      f(x) 
 
   def previous(self) :
     result = None

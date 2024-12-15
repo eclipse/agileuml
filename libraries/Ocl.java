@@ -1010,8 +1010,13 @@ class OclMaplet<K,T>
 
   public static <T> ArrayList<T> subrange(List<T> l, int i, int j)
   { ArrayList<T> tmp = new ArrayList<T>();
-    if (i < 0) { i = l.size() + i; } 
-    if (j < 0) { j = l.size() + j; }
+    if (i < 0) 
+    { i = l.size() + i; }
+    else if (i == 0)
+    { i = 1; }  
+    if (j < 0) 
+    { j = l.size() + j; }
+
  
     for (int k = i-1; k < j; k++)
     { tmp.add(l.get(k)); } 
@@ -1029,7 +1034,11 @@ class OclMaplet<K,T>
 
   public static <T> ArrayList<T> subrange(List<T> l, int i)
   { ArrayList<T> tmp = new ArrayList<T>(); 
-    if (i < 0) { i = l.size() + i; } 
+    if (i < 0) 
+    { i = l.size() + i; }
+    else if (i == 0)
+    { i = 1; } 
+ 
     for (int k = i-1; k < l.size(); k++)
     { tmp.add(l.get(k)); } 
     return tmp; 

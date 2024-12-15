@@ -194,6 +194,15 @@ using System.Collections;
             return ot;
         }
 
+        public OclIterator trySplit()
+        {
+            ArrayList firstpart = SystemTypes.subrange(elements, 1, position - 1);
+            elements = SystemTypes.subrange(elements, position, elements.Count);
+            position = 0;
+            markedPosition = 0;
+            return OclIterator.newOclIterator_Sequence(firstpart);
+        }
+
         public object getCurrent()
         {
             object result = null;
@@ -244,6 +253,24 @@ using System.Collections;
             else
             { elements.Add(res); }
             return OclIteratorResult.newOclIteratorResult(res);
+        }
+
+        public bool tryAdvance(Func<Object, Object> f)
+        {
+            if (position + 1 <= elements.Count)
+            {
+                Object x = this.next();
+                f(x);
+                return true;
+            }
+            return false;
+        }
+
+        public void forEachRemaining(Func<Object, Object> f)
+        {
+            ArrayList remainingElements = SystemTypes.subrange(elements, position, elements.Count);
+            foreach (Object x in remainingElements)
+            { f(x); }
         }
 
 
