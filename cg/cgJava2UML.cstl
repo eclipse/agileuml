@@ -261,6 +261,7 @@ Predicate _1 |-->Function(_1,boolean)
 Function _1 |-->Function_1
 Comparator _1 |-->Function(_1,(_1,boolean))
 AtomicReference _1 |-->_1
+Consumer _1 |-->Function(_1, void)
 
 Collection _1 |-->Sequence_1`collectionParameters
 Iterable _1 |-->Sequence_1`collectionParameters
@@ -1411,12 +1412,15 @@ _1 > > _2 |-->(_1`queryForm/(2->pow(_2`queryForm)))->oclAsType(long)
 
 _1 && _2 |-->_1`queryForm & _2`queryForm
 _1 || _2 |-->_1`queryForm or _2`queryForm
+
 _1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 int
 _1 & _2 |-->MathLib.bitwiseAnd(_1`queryForm,_2`queryForm)<when> _1 long
 _1 & _2 |-->_1`queryForm & _2`queryForm
+
 _1 | _2 |-->MathLib.bitwiseOr(_1`queryForm,_2`queryForm)<when> _1 int
 _1 | _2 |-->MathLib.bitwiseOr(_1`queryForm,_2`queryForm)<when> _1 long
 _1 | _2 |-->_1`queryForm or _2`queryForm 
+
 _1 ^ _2 |-->MathLib.bitwiseXor(_1`queryForm,_2`queryForm)<when> _1 int
 _1 ^ _2 |-->MathLib.bitwiseXor(_1`queryForm,_2`queryForm)<when> _1 long
 _1 ^ _2 |-->_1`queryForm xor _2`queryForm 
@@ -1613,6 +1617,8 @@ java.lang.reflect.Array . _1 |-->_1`arrayMethodCall
 
 Collections . _1 |-->_1`collectionMethodCallQueryForm
 
+_1 . _2 |-->(if _1`queryForm->keys()->contains(_2`keyvalue) then _1`queryForm_2`mapMethodCallQueryForm else _2`testdefault endif)<when> _1 Map, _2`methodName getOrDefault
+ 
 _1 . _2 |-->_1`queryForm_2`mapMethodCallQueryForm<when> _1 Map
 _1 . _2 |-->_1`queryForm_2`fileMethodCallQueryForm<when> _1 File
 _1 . _2 |-->_1`queryForm_2`dateMethodCallQueryForm<when> _1 Date
@@ -1632,6 +1638,22 @@ _1 |-->_1`queryForm<when> _1 arrayInitializer
 _1 |-->_1`queryForm<when> _1 expression
 
 _0 |-->_0
+
+methodName::
+_1 ( ) |-->_1
+_1 ( _2 ) |-->_1
+
+_* |-->
+
+
+keyvalue::
+getOrDefault ( _1 ) |-->_1`first
+putIfAbsent ( _1 ) |-->_1`first
+_* |-->
+
+testdefault::
+getOrDefault ( _1 ) |-->_1`last
+_* |-->
 
 
 enumsetMethodCall::
@@ -1660,6 +1682,10 @@ shortValue ( ) |-->->oclAsType(int)
 byteValue ( ) |-->->oclAsType(int)
 longValue ( ) |-->->oclAsType(long)
 charValue ( ) |-->+""
+
+test ( _1 ) |-->->apply(_1)
+accept ( _1 ) |-->->apply(_1)
+apply ( _1 ) |-->->apply(_1)
 
 toString ( ) |-->+""
 compareTo ( _1 ) |-->->compareTo(_1)
@@ -1763,14 +1789,14 @@ limit ( _1 ) |-->.subrange(1,_1)
 skip ( _1 ) |-->.subrange(_1+1)
 reduce ( _1 ) |-->->iterate( _var; _acc : OclAny | _1->apply((_acc,_var)) )
 
-apply ( _1 ) |-->->apply(_1)
-
 add ( _1 ) |-->->excludes(_1)
 addAll ( _1 ) |-->->intersection(_1`last) /= _1`last
 push ( _1 ) |-->true
 
 size ( ) |-->->size()
 length ( ) |-->->size()
+estimateSize ( ) |-->->size()
+getExactSizeIfKnown ( ) |-->->size()
 capacity ( ) |-->->size()
 getFirst ( ) |-->->first()
 firstElement ( ) |-->->first()
@@ -1828,6 +1854,7 @@ listIterator ( _1 ) |-->.subrange(_1+1)->iterator()
 
 
 get ( _1 ) |-->->at(_1+1)
+getOrDefault ( _1 ) |-->->at(_1+1)
 elementAt ( _1 ) |-->->at(_1+1)
 charAt ( _1 ) |-->->at(_1+1)
 printStackTrace ( ) |-->.printStackTrace()
@@ -1847,6 +1874,8 @@ run ( ) |-->.run()
 Stream . _1 |-->_1`streamMethodCallQueryForm
 
 Collections . _1 |-->_1`collectionMethodCallQueryForm
+
+_1 . _2 |-->if _1`queryForm->keys()->contains(_2`keyvalue) then _1`queryForm_2`mapMethodCallQueryForm else _2`testdefault endif<when> _2`methodName getOrDefault
 
 _1 . _2 |-->_1_2`mapMethodCallQueryForm<when> _1 Map
 _1 . _2 |-->_1_2`fileMethodCallQueryForm<when> _1 File
@@ -2546,6 +2575,73 @@ _1 ( ) |-->_1()
 _1 ( _2 ) |-->_1(_2)
 
 
+methodCallType::
+super ( ) |-->OclType
+super ( _1 ) |-->OclType
+
+this ( ) |-->OclType
+this ( _1 ) |-->OclType 
+
+parseInt ( _1 ) |-->int
+println ( _1 ) |-->void
+deepToString ( _1 ) |-->String
+ 
+length ( ) |-->int
+size ( ) |-->int
+estimateSize ( ) |-->long
+getExactSizeIfKnown ( ) |-->long
+tryAdvance ( _1 ) |-->boolean
+capacity ( ) |-->int
+
+max ( _1 ) |-->OclAny
+min ( _1 ) |-->OclAny
+get ( _1 ) |-->OclAny
+charAt ( _1 ) |-->String
+getTimeInMillis ( ) |-->long
+setTimeInMillis ( _1 ) |-->void
+computeTime ( ) |-->long
+exec ( _1 ) |-->OclProcess
+schedule ( _1 ) |-->void
+scheduleAtFixedRate ( _1 ) |-->void
+
+allMatch ( _1 ) |-->boolean
+anyMatch ( _1 ) |-->boolean
+distinct ( ) |-->Sequence
+
+filter ( _1 ) |-->Sequence
+mapToInt ( _1 ) |-->Sequence
+stream ( ) |-->Sequence
+forEach ( _1 ) |-->void
+
+absolute ( _1 ) |-->void
+updateString ( _1 ) |-->void
+relative ( _1 ) |-->void
+
+assertTrue ( _1 ) |-->void
+assertFalse ( _1 ) |-->void
+assertEquals ( _1 ) |-->void
+assertNotEquals ( _1 ) |-->void
+assertNotNull ( _1 ) |-->void
+assertSame ( _1 ) |-->void
+assertNotSame ( _1 ) |-->void
+assertArrayEquals ( _1 ) |-->void
+fail ( ) |-->void
+fail ( _1 ) |-->void
+assertThat ( _1 ) |-->void
+
+writeBoolean ( _1 ) |-->void
+writeChar ( _1 ) |-->void
+writeShort ( _1 ) |-->void
+writeInt ( _1 ) |-->void
+writeLong ( _1 ) |-->void
+writeFloat ( _1 ) |-->void
+writeDouble ( _1 ) |-->void
+skipBytes ( _1 ) |-->int
+
+_1 ( ) |-->_1()
+_1 ( _2 ) |-->_1(_2)
+
+
 lambdaParameters::
 ( _1 ) |-->lambda _1 : OclAny in 
 ( _* ) |-->_*`lambdaParameter
@@ -2857,6 +2953,9 @@ _1 ^ _2 |-->MathLib.bitwiseXor(_1,_2)<when> _1`ocltype long
 _1 ^ _2 |-->_1 xor _2 
 
 _1 instanceof _2 |-->_1->oclIsKindOf(_2)
+
+
+_1 . _2 |-->(if _1`queryForm->keys()->contains(_2`keyvalue) then _1`queryForm_2`mapMethodCallQueryForm else _2`testdefault endif)<when> _1 Map, _2`methodName getOrDefault
 
 _1 . _2 |-->_1_2`mapMethodCallQueryForm<when> _1 Map
 _1 . _2 |-->_1_2`fileMethodCallQueryForm<when> _1 File
@@ -3348,6 +3447,8 @@ System . _1 |-->_1`systemMethodCall
 
 _1 . _2 |-->    for _2`forEachVariable : _1 do\n    (_2`forEachUpdateForm)<when> _2 methodCall, _2`isForEachCall true
 
+_1 . _2 |-->    if _1->keys()->includes(_2`keyvalue) then skip else _1 := _1_2`mapMethodCallSideEffect<when> _1 Map, _2`methodName putIfAbsent 
+
 _1 . _2 |-->    _1 := _1_2`mapMethodCallSideEffect<when> _1 Map
 
 _1 . _2 |-->    _1 := _1_2`collectionMethodCallSideEffect<when> _1 Collection
@@ -3488,6 +3589,9 @@ HashBag _1 |-->Sequence{}_1`collectionCreationRest
 TreeList _1 |-->Sequence{}_1`collectionCreationRest
 
 Stream _1 |-->Sequence{}_1`collectionCreationRest
+IntStream _1 |-->Sequence{}
+LongStream _1 |-->Sequence{}
+DoubleStream _1 |-->Sequence{}
 
 JsonArray _1 |-->Sequence{}_1`collectionCreationRest
 JSONArray _1 |-->Sequence{}_1`collectionCreationRest
@@ -3526,6 +3630,8 @@ RandomAccessFile _1 |-->_1`newRAFile
 
 Socket _1 |-->OclDatasource.newSocket_1
 
+StringTokenizer _1 |-->OclIterator.newOclIterator_String_1`stringTokenizerArguments
+
 Thread _1 |-->OclProcess.newOclProcess_1
 Timer _1 |-->OclProcess.newOclProcess("","TimerTask")
 TimerTask _1 |-->OclProcess.newOclProcess_1
@@ -3545,6 +3651,13 @@ _1 _2 |-->_1_2`collectionCreationRest<when> _1 multiple, _1`isCollectionCreatedN
 
 _1 _2 |-->_1_2
 _1 |-->_1
+
+
+stringTokenizerArguments::
+( _1 ) |-->_String(_1)<when> _1 multiple
+( _1 ) |-->(_1)
+_1 |-->_1`stringTokenizerArguments<when> _1 arguments
+
 
 
 isCollectionCreatedName::
@@ -3633,6 +3746,7 @@ intArrayInit::
 [ _1 ] [ _2 ] [ _3 ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Integer.subrange(1,_3)->collect(0)))
 [ _1 ] [ _2 ] [ ] |-->Integer.subrange(1,_1)->collect(Integer.subrange(1,_2)->collect(Sequence{}))
 [ ] [ ] [ ] _1 |-->_1
+
 
 doubleArrayInit::
 [ ] |-->Sequence{}
@@ -4127,12 +4241,12 @@ _1 |-->_1
 
 
 forIncrement::
-_1 ; _2 ; _3 |-->  ; _3`expressionListUpdateForm
-_1 ; ; _2 |-->  ; _2`expressionListUpdateForm
+_1 ; _2 ; _3 |--> ; _3`expressionListUpdateForm
+_1 ; ; _2 |--> ; _2`expressionListUpdateForm
 _1 ; ; |-->
-; _1 ; _2 |-->  ; _2`expressionListUpdateForm
+; _1 ; _2 |--> ; _2`expressionListUpdateForm
 ; _1 ; |-->
-; ; _1 |-->  ; _1`expressionListUpdateForm
+; ; _1 |--> ; _1`expressionListUpdateForm
 ; ; |-->
 _1 |-->
 
