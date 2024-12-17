@@ -192,6 +192,17 @@ OclIterator<T>* newOclIterator_Function(function<T (int)> f)
 }
 
 template<class T>
+OclIterator<T> OclIterator<T>::trySplit()
+{
+  vector<T>* firstpart = UmlRsdsLib<T>::subrange(elements, 1, position - 1);
+  elements = UmlRsdsLib<T>::subrange(elements, position, elements->size());
+  position = 0;
+  markedPosition = 0;
+  return OclIterator.newOclIterator_Sequence(firstpart);
+}
+
+
+template<class T>
 T OclIterator<T>::getCurrent()
 {
     T result;
@@ -251,6 +262,29 @@ T OclIterator<T>::next()
     return ocliteratorx->getCurrent();
 }
 
+template<class T>
+bool OclIterator<T>::tryAdvance(function<void*(void*)> f)
+{
+    if (this->position + 1 <= this->elements->size())
+    {
+        void* x = this->next();
+        f(x);
+        return true;
+    }
+    return false;
+}
+
+
+template<class T>
+void OclIterator<T>::forEachRemaining(function<void*(void*)> f)
+{
+  vector<T>* remainingElements = UmlRsdsLib<T>::subrange(elements, position, elements->size());
+  for (int i = 0; i < remainingElements->size(); i++)
+  {
+      T x = remainingElements->at(i); 
+      f(x);
+  }
+}
 
 template<class T>
 T OclIterator<T>::previous()

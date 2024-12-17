@@ -116,6 +116,8 @@ public:
 
     static OclIterator* newOclIterator_Function(function<T(int)> f);
 
+    OclIterator<T> trySplit();
+
     T getCurrent();
 
     void set(T x);
@@ -127,6 +129,10 @@ public:
     T next();
 
     OclIteratorResult<T> nextResult();
+
+    bool tryAdvance(function<void* (void*)> f);
+
+    void forEachRemaining(function<void* (void*)> f); 
 
     T previous();
 
