@@ -1044,6 +1044,7 @@ numpyTrailer::
 . linspace _1 |-->MathLib.numericSeries(_1`firstArg, _1`secondArg, 50)<when> _1`argCount 3
 . linspace _1 |-->MathLib.numericSeries(_1`firstArg, _1`secondArg, _1`thirdArg->oclAsType(int))<when> _1`argCount 5
 
+. matmul _1 |-->MatrixLib.matrixMultiplication(_1`firstArg,_1`secondArg)
 . prod _1 |-->MatrixLib.prdMatrix(_1`firstArg)
 . sum _1 |-->MatrixLib.sumMatrix(_1`firstArg)
 

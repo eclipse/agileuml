@@ -4181,6 +4181,7 @@ _* |-->false
 
 
 statement::
+; |-->
 break ; |-->    break 
 break _1 ; |-->    break 
 continue ; |-->    continue 
@@ -4197,7 +4198,7 @@ _1 : _2 ; |-->_2
 while _1 _2 |-->    _1`preSideEffect    while _1 do (_1`updateForm ; _2 ; _1`preSideEffect ) ; <when> _1 hasSideEffect
 while _1 _2 |-->    while _1 do _2 ; 
 
-
+if _1 _2 else _3 |-->    if _1 then _2`noSemiStatement else _3 ; <when> _2 statement
 if _1 _2 else _3 |-->    if _1 then _2 else _3 ; 
 
 if _1 _2 |-->    if _1 then _2 else skip ; 
@@ -4227,14 +4228,71 @@ _1 ; |-->_1
 _1 |-->_1
 
 
+noSemiStatement::
+; |-->
+break ; |-->    break 
+break _1 ; |-->    break 
+continue ; |-->    continue 
+continue _1 ; |-->    continue 
+
+throw _1 ; |-->    error _1 
+throw ; |-->    error null 
+
+synchronized _1 _2 |-->_2
+
+_1 : _2 |-->_2
+_1 : _2 ; |-->_2
+
+while _1 _2 |-->    _1`preSideEffect    while _1 do (_1`updateForm ; _2 ; _1`preSideEffect )<when> _1 hasSideEffect
+while _1 _2 |-->    while _1 do _2
+
+
+if _1 _2 else _3 |-->    if _1 then _2 else _3
+
+if _1 _2 |-->    if _1 then _2 else skip
+
+for ( _1 ) _2 |-->  _1 _2 _1`forIncrement ) 
+ 
+switch _1 { _2 _* } |-->\n    for _x : Integer.subrange(1,1) do\n      ( var _switchval : _1`type ;\n        _switchval := _1 ; \n_2\n_* )\n
+switch _1 { _2 } |-->\n    for _x : Integer.subrange(1,1) do\n      ( var _switchval : _1`type ;\n        _switchval := _1 ; \n_2\n      )\n
+
+return _1 ; |-->    return _1 
+return ; |-->    return 
+
+assert _1 : _2 ; |-->    assert _1 do _2
+assert _1 ; |-->    assert _1
+
+try _1 _2 _* |-->    try (_1 _2) _* <when> _1 resourceSpecification
+try _1 _2 |-->    try (_1 _2) <when> _1 resourceSpecification
+try _1 _2 _* |-->    try _1 _2 _*
+try _1 _2 |-->    try _1 _2
+
+do _1 while _2 ; |-->  while true do (_1 ;\n    if _2 then\n  _2`updateForm else break)<when> _2 hasSideEffect
+
+do _1 while _2 ; |-->  while true do (_1 ;\n    if _2 then skip else break)
+  
+_1 ; |-->_1`updateForm<when> _1 expression
+_1 ; |-->_1
+_1 |-->_1`noSemiStatement<when> _1 statement
+_1 |-->_1
+
+
 blockStatement::
 _1 ; |-->_1 ;\n   
 _1 |-->_1 \n   
 
 
 block::
-{ _1 _* } |-->( _1 _* )
+{ _1 } |-->( _1`noSemiStatement )<when> _1 blockStatement
 { _1 } |-->( _1 )
+{ _1 _2 } |-->( _1 _2`noSemiStatement )<when> _2 blockStatement
+{ _1 _2 } |-->( _1 _2 )
+{ _1 _2 _3 } |-->( _1 _2 _3`noSemiStatement )<when> _3 blockStatement
+{ _1 _2 _3 } |-->( _1 _2 _3 )
+{ _1 _2 _3 _4 } |-->( _1 _2 _3 _4`noSemiStatement )<when> _4 blockStatement
+{ _1 _2 _3 _4 } |-->( _1 _2 _3 _4 )
+
+{ _1 _* } |-->( _1 _* )
 { } |-->skip
 
 _1 |-->_1
