@@ -1349,7 +1349,7 @@ public class UCDArea extends JPanel
     opDialog.setVisible(true);
    
     String nme = opDialog.getName(); 
-    String typ = opDialog.getType(); 
+    String typ = opDialog.getOperationType(); 
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)
@@ -1638,7 +1638,7 @@ public class UCDArea extends JPanel
     opDialog.setVisible(true);
    
     String nme = opDialog.getName(); 
-    String typ = opDialog.getType(); 
+    String typ = opDialog.getOperationType(); 
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)
@@ -6592,7 +6592,7 @@ public class UCDArea extends JPanel
     opDialog.setVisible(true);
    
     String nme = opDialog.getName(); 
-    String typ = opDialog.getType(); 
+    String typ = opDialog.getOperationType(); 
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)  // cancelled 
@@ -6800,7 +6800,7 @@ public class UCDArea extends JPanel
 
     opDialog.setVisible(true);
     nme = opDialog.getName(); 
-    typ = opDialog.getType(); 
+    typ = opDialog.getOperationType(); 
 
     if (nme == null)  // cancelled 
     { System.err.println("Edit cancelled. No name specified"); 

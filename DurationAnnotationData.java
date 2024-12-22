@@ -9,7 +9,7 @@
       * lines for lifelines
       */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -157,6 +157,9 @@ public class DurationAnnotationData extends VisualData
     if (res) { selected = ENDSELECTED; } 
     return res; 
   } 
+
+  public boolean isNearEnd(int x, int y) 
+  { return false; } 
 
   void SetName(String s, int x, int y) 
   { label = s; 

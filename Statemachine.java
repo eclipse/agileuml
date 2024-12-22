@@ -11,7 +11,7 @@
  package: Statemachine
 */
 /******************************
-* Copyright (c) 2003-2021 Kevin Lano
+* Copyright (c) 2003-2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -3210,7 +3210,7 @@ public Vector retrieveEventlist(String fileName)
     { // termination of the operation
       st.setStateKind(State.FINALSTATE); 
       if (tp == null) 
-      { return new ReturnStatement(null); }
+      { return new ReturnStatement(new BasicExpression("null")); }
       return new ReturnStatement(new BasicExpression("result"));  
     }
     if (outtrs.size() >= 1)        
@@ -3244,8 +3244,8 @@ public Vector retrieveEventlist(String fileName)
                               java.util.Map looppaths,Type tp)
   { Vector bodypaths = (Vector) looppaths.get(st); 
     if (bodypaths == null || bodypaths.size() == 0)
-    { return new WhileStatement(new BasicExpression("false"),
-                                new ErrorStatement());
+    { return new WhileStatement(new BasicExpression(false),
+                                new ErrorStatement(null));
     }
     Expression test = makeLoopTest(bodypaths); 
     IfStatement body = new IfStatement(); 
@@ -3847,7 +3847,7 @@ public Vector retrieveEventlist(String fileName)
     if (outt.size() == 0)
     { st.setStateKind(State.FINALSTATE); 
       if (tp == null)
-      { return new ReturnStatement(null); }
+      { return new ReturnStatement(new BasicExpression("null")); }
       return new ReturnStatement(new BasicExpression("result"));
     }
     else if (loops.contains(st))

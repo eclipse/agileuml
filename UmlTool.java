@@ -2911,7 +2911,7 @@ public void findPlugins()
         oed.pack();
         oed.setVisible(true);
         String opname = oed.getName(); 
-        String optype = oed.getType();  
+        String optype = oed.getOperatorType();  
         String opjava = oed.getPre(); 
         String opcsharp = oed.getPost(); 
         // Type t = ucdArea.lookupType(optype);

@@ -3,7 +3,7 @@ import java.util.List;
 
 /* package: B */ 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -13,12 +13,12 @@ import java.util.List;
 
 public class BOp extends ModelElement
 { private String result = null;
-  private List params = new Vector(); // of String
+  private Vector params = new Vector(); // of String
   private BExpression pre;
   private BStatement code;
   private String signature; 
 
-  public BOp(String nme, String res, List pars, 
+  public BOp(String nme, String res, Vector pars, 
              BExpression p, BStatement s)
   { super(nme);
     result = res;
@@ -36,8 +36,11 @@ public class BOp extends ModelElement
   public String getResult()
   { return result; } 
 
-  public List getParameters()
+  public Vector getParameters()
   { return params; } 
+
+  public void addParameter(Attribute att)
+  { params.add(att.getName()); } 
 
   public BExpression getPre()
   { return pre; } 
@@ -47,6 +50,12 @@ public class BOp extends ModelElement
 
   public BStatement getCode()
   { return code; } 
+
+  public Type getType()
+  { return null; } 
+
+  public void setType(Type t)
+  { } 
 
   public void generateJava(java.io.PrintWriter out)  // not used
   { out.println("  public void " + getName() + "()"); } 

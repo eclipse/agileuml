@@ -10,7 +10,7 @@
       */
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -92,6 +92,8 @@ class EORectData extends RectForm
             y >= sourcey && y <= sourcey + height); 
   } 
 
+  public boolean isNearEnd(int x, int y) 
+  { return false; } 
 }
 
 

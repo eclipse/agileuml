@@ -9,7 +9,7 @@
       * transitions (lines) in the statechart diagram.
 */
 /******************************
-* Copyright (c) 2003-2023 Kevin Lano
+* Copyright (c) 2003-2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -450,12 +450,17 @@ class Transition extends Named implements Serializable
     generations = res; 
   }
 
+  public void setGenerations(String s, Vector events)
+  { setGenerations(s,events,null); } 
+
   public void setGenerations(String s, Vector events, Statemachine module)
   { Vector res = new Vector();
+
     if (s == null || s.equals("") || s.equals("null")) 
     { generations = res; 
       return; 
     } 
+
     if (s.charAt(0) == '/')
     { System.err.println("invalid generation: " + s); 
       s = s.substring(1,s.length());
@@ -465,19 +470,19 @@ class Transition extends Named implements Serializable
     comp.nospacelexicalanalysis(s); 
     Expression gen = comp.parse(); 
     if (gen == null)
-    { System.out.println("Unrecognised generation expression: " + s); } 
+    { System.out.println("!! Unrecognised generation expression: " + s); } 
     else 
     { res.add(gen); 
-	  if (module != null && (module.modelElement instanceof Entity))
-	  { Entity owner = (Entity) module.modelElement;
-	    Vector types = new Vector(); 
-		Vector entities = new Vector();
-		Vector contexts = new Vector(); 
-		contexts.add(owner); 
-		Vector env = new Vector();   
-	    gen.typeCheck(types,entities,contexts,env); 
+      if (module != null && (module.modelElement instanceof Entity))
+      { Entity owner = (Entity) module.modelElement;
+        Vector types = new Vector(); 
+        Vector entities = new Vector();
+        Vector contexts = new Vector(); 
+        contexts.add(owner); 
+        Vector env = new Vector();   
+        gen.typeCheck(types,entities,contexts,env); 
       }
-	}  
+    }  
     generations = res; 
   }
 

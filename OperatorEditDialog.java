@@ -9,7 +9,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2024 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -79,7 +79,7 @@ public class OperatorEditDialog extends JDialog
   }
 
   public String getName() { return newName; }
-  public String getType() { return newType; }
+  public String getOperatorType() { return newType; }
   public String getParams() { return newParams; } 
   public String getPre() { return newPre; }
   public String getPost() { return newPost; }
