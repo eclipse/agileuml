@@ -314,6 +314,8 @@ _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 _1 _2 _3 |-->_1_2<when> _2`isBasicTypeTrailer true, _3 matches .value
 
 _1 _2 |-->MatrixLib.shape(_1)<when> _2 matches .shape
+_1 _2 |-->MatrixLib.shape(_1)->size()<when> _2 matches .ndim
+_1 _2 |-->MatrixLib.shape(_1)->prd()<when> _2 matches .size
 
 _1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 trailer
 
@@ -875,6 +877,7 @@ trailer::
 
 . maxlen |-->->size()
 
+
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
@@ -1037,6 +1040,11 @@ numpyTrailer::
 . e |-->MathLib.eValue()
 . euler_gamma |-->MathLib.gammaValue()
 
+. int32 |-->OclType["int"]
+. int64 |-->OclType["long"]
+. float32 |-->OclType["double"]
+. float64 |-->OclType["double"]
+
 . arange _1 |-->MathLib.numericRange(0, _1, 1)<when> _1`argCount 1
 . arange _1 |-->MathLib.numericRange(_1`firstArg, _1`secondArg, 1)<when> _1`argCount 3
 . arange _1 |-->MathLib.numericRange(_1`firstArg, _1`secondArg, _1`thirdArg)<when> _1`argCount 5
@@ -1048,10 +1056,13 @@ numpyTrailer::
 . prod _1 |-->MatrixLib.prdMatrix(_1`firstArg)
 . sum _1 |-->MatrixLib.sumMatrix(_1`firstArg)
 
+. sort _1 |-->_1->sort()
+
 . shape _1 |-->MatrixLib.shape_1
 
 . array _1 |-->_1
 
+. concatenate _1 |-->_1->concatenateAll()
 . copyto _1 |-->_1`firstArg := (_1`secondArg)->copy()
 
 . empty _1 |-->MatrixLib.singleValueMatrix(_1`firstArg, 0.0)
