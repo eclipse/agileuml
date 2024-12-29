@@ -18,5 +18,11 @@ class MatrixLib :
      res = np.matmul(m1array, m2array)
      return res.tolist()
 
+  def subRows(m: list, s: list[int]) -> list:
+    result = []
+    for integer in s:
+      if 0 <= integer <= len(m) - 1: # OCL starts indexing at 1, Python starts indexing at 0
+        result.append(m[integer])
+    return result
 
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
