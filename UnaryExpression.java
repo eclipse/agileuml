@@ -65,6 +65,7 @@ public class UnaryExpression extends Expression
     for (int i = pars.size()-1; i >= 0; i--) 
     { Attribute p = (Attribute) pars.get(i);
       Type oldtype = res.getType();  
+      res.setBrackets(true); 
       res = new UnaryExpression("lambda", res); 
       ((UnaryExpression) res).setAccumulator(p); 
       Type ftype = new Type("Function", null);
@@ -87,6 +88,7 @@ public class UnaryExpression extends Expression
     for (int i = pars.size()-1; i >= 0; i--) 
     { Attribute p = (Attribute) pars.get(i);
       Type oldtype = res.getType();  
+      res.setBrackets(true); 
       res = new UnaryExpression("lambda", res); 
       ((UnaryExpression) res).setAccumulator(p); 
       Type ftype = new Type("Function", null);
@@ -96,8 +98,25 @@ public class UnaryExpression extends Expression
     } 
     return res; 
   } 
-
       
+  public static Expression newLambdaUnaryExpression(
+                         String var, Type typ, 
+                         Expression body)
+  { // lambda var : typ in ... in body
+
+    Attribute par = 
+      new Attribute(var, typ, ModelElement.INTERNAL); 
+    body.setBrackets(true); 
+    UnaryExpression res = new UnaryExpression("lambda", body); 
+    res.setAccumulator(par); 
+
+    Type ftype = new Type("Function", null);
+    ftype.setKeyType(typ); 
+    ftype.setElementType(body.getType()); 
+    res.type = ftype; 
+     
+    return res; 
+  } 
 
   public static UnaryExpression newUnaryExpression(String op, Expression expr) 
   { if (expr == null) 
@@ -396,6 +415,32 @@ public class UnaryExpression extends Expression
     }
     return res;   
   }  
+
+  public Expression transformPythonSelectExpressions()
+  { Expression newarg = 
+        argument.transformPythonSelectExpressions();
+    UnaryExpression res = new UnaryExpression(operator,newarg); 
+    res.needsBracket = needsBracket; 
+    res.umlkind = umlkind; 
+    res.type = type; 
+    res.elementType = elementType;  // type of elements if a set
+    res.entity = entity; 
+    res.multiplicity = multiplicity;
+    res.formalParameter = formalParameter;
+    res.refactorELV = refactorELV; 
+ 
+    if (accumulator != null) 
+    { Attribute newacc = 
+         new Attribute(accumulator.getName(), 
+                 accumulator.getType(), 
+                 ModelElement.INTERNAL); 
+      res.accumulator = newacc; 
+    }
+    return res;   
+  }  
+
+     
+    
 
   public boolean isLambdaExpression()
   { return "lambda".equals(operator); } 
@@ -6464,9 +6509,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   public String toString()  // RSDS version of expression
   { if (operator.equals("lambda") && accumulator != null)
     { String res = "lambda " + accumulator.getName() + " : " + accumulator.getType() + " in " + argument;
-      if (needsBracket)
-      { return "(" + res + ")"; }
-      return res; 
+      return "(" + res + ")";
     } 
   
     if (operator.equals("-"))

@@ -18624,6 +18624,7 @@ public void produceCUI(PrintWriter out)
 
     Compiler2 comp = new Compiler2();  
     comp.nospacelexicalanalysis(xmlstring);
+    comp.filterLexicals(); 
 
     Vector xentities = new Vector(); 
     Vector xtypes = new Vector(); 
