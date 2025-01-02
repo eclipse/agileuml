@@ -3758,7 +3758,7 @@ public void findClones(java.util.Map clones,
       return true; 
     }
 
-    if ("->restrict".equals(operator) && left.isSequence())
+ /*   if ("->restrict".equals(operator) && left.isSequence())
     { JOptionPane.showInputDialog("Converting Python expression " + this); 
       BinaryExpression pyexpr = 
         (BinaryExpression) transformPythonSelectExpressions();
@@ -3766,7 +3766,7 @@ public void findClones(java.util.Map clones,
       left = pyexpr.left; 
       right = pyexpr.right;
       return true;   
-    } 
+    } */ 
 
     if (operator.equals("->exists") || 
         operator.equals("->exists1") ||
@@ -5159,6 +5159,7 @@ public void findClones(java.util.Map clones,
       return true; 
     }
 
+/*
     if ("->restrict".equals(operator) && left.isSequence())
     { BinaryExpression pyexpr = 
         (BinaryExpression) transformPythonSelectExpressions();
@@ -5167,7 +5168,7 @@ public void findClones(java.util.Map clones,
       left = pyexpr.left; 
       right = pyexpr.right;  
       return true; 
-    } 
+    } */ 
 
     if (operator.equals("->iterate") && 
         iteratorVariable != null && 
