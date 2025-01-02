@@ -3,10 +3,7 @@
     {
 
         public MatrixLib()
-        {
-
-        }
-
+        { }
 
 
         public override string ToString()
@@ -96,13 +93,13 @@
         {
             ArrayList res = MatrixLib_Aux.collect_10((new ArrayList()));
 
-            if ((x is ArrayList))
+            if (x is ArrayList)
             {
                 ArrayList sq = ((ArrayList)x);
 
                 res = SystemTypes.addSet((new ArrayList()), ((int)(sq).Count));
                 if ((sq).Count > 0)
-                { res = SystemTypes.concatenate(res, MatrixLib.shape((sq)[1 - 1])); }
+                { res = SystemTypes.concatenate(res, MatrixLib.shape((sq)[0])); }
                 else { return res; }
 
 
@@ -119,20 +116,14 @@
         {
             if ((sh).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if ((sh).Count == 1)
             { return MatrixLib_Aux.collect_11(SystemTypes.integerSubrange(1, ((int)sh[1 - 1])), x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList res = (new ArrayList());
 
             res = MatrixLib_Aux.collect_12(SystemTypes.integerSubrange(1, ((int)sh[1 - 1])), sh, x);
             return res;
-
-
-
-
         }
 
 
@@ -140,12 +131,10 @@
         {
             if ((sh).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
-
+            
             if ((sh).Count == 1)
             { return SystemTypes.subrange(sq, 1, ((int)sh[1 - 1])); }
-            else { { } /* No update form for: skip */ }
-
+            
             ArrayList res = (new ArrayList());
 
             int prod = SystemTypes.prdint(SystemTypes.tail(sh));
@@ -160,11 +149,6 @@
 
             }
             return res;
-
-
-
-
-
         }
 
 
@@ -179,21 +163,18 @@
 
         public static ArrayList flattenMatrix(ArrayList m)
         {
-            if ((m).Count == 0)
+            if (m.Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
-            if (((m)[1 - 1] is ArrayList))
+            if (m[0] is ArrayList)
             {
-                ArrayList sq = ((ArrayList)(m)[1 - 1]);
+                ArrayList sq = ((ArrayList) m[0]);
 
                 return SystemTypes.union(MatrixLib.flattenMatrix(sq), MatrixLib.flattenMatrix(SystemTypes.tail(m)));
 
             }
-            else { { } /* No update form for: skip */ }
 
             return m;
-
 
         }
 
@@ -202,16 +183,14 @@
         {
             if ((m).Count == 0)
             { return 0.0; }
-            else { { } /* No update form for: skip */ }
 
-            if (((m)[1 - 1] is ArrayList))
+            if (((m)[0] is ArrayList))
             {
-                ArrayList sq = ((ArrayList)(m)[1 - 1]);
+                ArrayList sq = ((ArrayList)(m)[0]);
 
                 return MatrixLib.sumMatrix(sq) + MatrixLib.sumMatrix(SystemTypes.tail(m));
 
             }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = SystemTypes.concatenate(SystemTypes.addSet((new ArrayList()), ((double)0.0)), m);
 
@@ -226,7 +205,6 @@
         {
             if ((m).Count == 0)
             { return 1.0; }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             {
@@ -235,7 +213,6 @@
                 return MatrixLib.prdMatrix(sq) * MatrixLib.prdMatrix(SystemTypes.tail(m));
 
             }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = SystemTypes.concatenate(SystemTypes.addSet((new ArrayList()), ((double)1.0)), m);
 
@@ -248,11 +225,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_15(m, f); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_16((new ArrayList()));
 
@@ -274,11 +249,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_17(m, x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_16((new ArrayList()));
 
@@ -300,11 +273,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_18(m, x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_16((new ArrayList()));
 
@@ -326,11 +297,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_19(m, x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_16((new ArrayList()));
 
@@ -352,11 +321,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_20(m, x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_21((new ArrayList()));
 
@@ -377,11 +344,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_22(m, x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_21((new ArrayList()));
 
@@ -403,11 +368,9 @@
         {
             if ((m).Count == 0)
             { return (new ArrayList()); }
-            else { { } /* No update form for: skip */ }
 
             if (((m)[1 - 1] is ArrayList))
             { return MatrixLib_Aux.collect_23(m, x); }
-            else { { } /* No update form for: skip */ }
 
             ArrayList dmat = MatrixLib_Aux.collect_21((new ArrayList()));
 
@@ -468,15 +431,12 @@
 
             if (n == 1)
             { return ((double)(m)[1 - 1]); }
-            else { { } /* No update form for: skip */ }
 
             if (n == 2)
             { return MatrixLib.determinant2(m); }
-            else { { } /* No update form for: skip */ }
 
             if (n == 3)
             { return MatrixLib.determinant3(m); }
-            else { { } /* No update form for: skip */ }
 
             double res = 0.0;
 
@@ -507,7 +467,7 @@
         {
             ArrayList res = (new ArrayList());
 
-            if (((m1)[1 - 1] is ArrayList))
+            if (((m1)[0] is ArrayList))
             {
                 ArrayList _range23 = SystemTypes.integerSubrange(1, (m1).Count);
                 for (int _i22 = 0; _i22 < _range23.Count; _i22++)
@@ -523,7 +483,6 @@
                 }
                 return res;
             }
-            else { { } /* No update form for: skip */ }
 
             ArrayList _range25 = SystemTypes.integerSubrange(1, (m1).Count);
             for (int _i24 = 0; _i24 < _range25.Count; _i24++)
@@ -582,7 +541,6 @@
                 }
                 return res;
             }
-            else { { } /* No update form for: skip */ }
 
             ArrayList _range31 = SystemTypes.integerSubrange(1, (m1).Count);
             for (int _i30 = 0; _i30 < _range31.Count; _i30++)
@@ -679,8 +637,6 @@
 
             }
             return res;
-
-
         }
 
 
@@ -873,7 +829,7 @@
         public static ArrayList transpose(ArrayList m)
         {
             if (((m)[0] is ArrayList))
-            { { } /* No update form for: skip */ }
+            { }
             else { return m; }
 
             ArrayList res = (new ArrayList());
@@ -890,13 +846,32 @@
 
         }
 
+        public static ArrayList selectElements(ArrayList m, Func<Double, Boolean> f)
+        {
+            if (m.Count == 0)
+            { return new ArrayList(); }
 
+            if (m[0] is ArrayList)
+            { return MatrixLib_Aux.collect_selectElements(m, f); }
 
+            ArrayList dmat = new ArrayList();
+
+            ArrayList _range7 = new ArrayList();
+            _range7.AddRange(m);
+            for (int _i6 = 0; _i6 < _range7.Count; _i6++)
+            {
+                Object x = _range7[_i6];
+                double y = (double) x;
+                if (f(y))
+                { dmat.Add(y); }
+            }
+            return dmat;
+        }
     }
 
 
-class MatrixLib_Aux
-    {
+  class MatrixLib_Aux
+  {
         public static ArrayList select_3(ArrayList _l, ArrayList m)
         { // Implements: s->select(i | 1 <= i & i <= m->size())
             ArrayList _results_3 = new ArrayList();
@@ -1072,6 +1047,18 @@ class MatrixLib_Aux
             return _results_14;
         }
 
+        public static ArrayList collect_selectElements(ArrayList _l, Func<Double, Boolean> f)
+        { // Implements: m->collect( _r | MatrixLib.selectElements(_r->oclAsType(Sequence),f) )
+
+            ArrayList _results_15 = new ArrayList();
+            foreach (Object _i in _l)
+            {
+                Object _r = (Object)_i;
+                _results_15.Add(MatrixLib.selectElements(((ArrayList)_r), f));
+            }
+            return _results_15;
+        }
+
         public static ArrayList collect_15(ArrayList _l, Func<double, double> f)
         { // Implements: m->collect( _r | MatrixLib.elementwiseApply(_r->oclAsType(Sequence),f) )
             ArrayList _results_15 = new ArrayList();
@@ -1170,5 +1157,7 @@ class MatrixLib_Aux
             }
             return _results_23;
         }
+
+
 
     }
