@@ -3,7 +3,7 @@ import numpy as np
 
 class MatrixLib :
 
-  def rowMult(s, m) :   
+  def rowMult(s: list, m: list) -> list:   
     result = []
     for i in range(0, len(s)) :
       sum = 0 
@@ -12,7 +12,7 @@ class MatrixLib :
       result.append(sum)
     return result
 
-  def matrixMultiplication(m1, m2) : 
+  def matrixMultiplication(m1: list, m2: list) -> list: 
      m1array = np.array(m1)
      m2array = np.array(m2)
      res = np.matmul(m1array, m2array)
