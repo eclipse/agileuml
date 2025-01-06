@@ -57,4 +57,13 @@ class MatrixLib :
   def column(m: list, i: int) -> list:
     return [m[i]] if isinstance(m[i], list) else m[i]
 
+  def shape(x) -> list:
+    result: list = [0]
+    if isinstance(x, list):
+      sq: list = list(x)
+      result = [len(x)]
+      if len(sq) > 0:
+        result = ocl.union(result, MatrixLib.shape(sq[0]))
+    return result
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
