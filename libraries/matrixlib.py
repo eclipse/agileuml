@@ -53,5 +53,8 @@ class MatrixLib :
             res.append(subrow)
       
     return res
+  
+  def column(m: list, i: int) -> list:
+    return [m[i]] if isinstance(m[i], list) else m[i]
 
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
