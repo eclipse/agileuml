@@ -32,5 +32,26 @@ class MatrixLib :
         result.append(subRows(m[row], cols))
     return result
 
+  def matrixExcludingRowColumn(m: list, row: int, col: int) -> list:
+    result = []
+
+    # Original note-for-note adaption (as much as possible) of OCL code
+    # for i in range(len(m)):
+    #   if i != row:
+    #     r: list = m[i]
+    #     for i in range(len(r)):
+    #       if j != col:
+    #         subrow: list = r[j]
+    #         res.append(subrow)
+    
+    # Better, more "pythonic" approach
+    for r, i in enumerate(m):
+      # not doing an "if i != row and j != col" check prevents us from checking every single column in every single row
+      if i != row:
+        for subrow, j in enumerate(r):
+          if j != col:
+            res.append(subrow)
+      
+    return res
 
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
