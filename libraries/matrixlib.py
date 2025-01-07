@@ -66,4 +66,12 @@ class MatrixLib :
         result = ocl.union(result, MatrixLib.shape(sq[0]))
     return result
 
+  def singleValueMatrix(sh: list, x) -> list:
+    if len(sh) == 0:
+      return []
+    elif len(sh) == 1:
+      return [x for i in range(1, sh[0], 1)]
+    else:
+      return [MatrixLib.singleValueMatrix(ocl.tail(sh), x) for i in range(1, sh[0], 1)]
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
