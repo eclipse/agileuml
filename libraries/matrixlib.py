@@ -86,4 +86,44 @@ class MatrixLib :
   #     for i in range(sh[0]):
   #       rowi: list = MatrixLib.fillMatrixForm
 
+  def identityMatrix(n: int) -> list:
+    result: list = []
+    for i in range(n):
+      result.append([]) # Need to append lists instead of assigning via result[i][j]
+      for j in range(n):
+        if i == j:
+          result[i].append(1.0)
+        else:
+          result[i].append(0.0)
+    return result
+
+  def flattenMatrix(m: list) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      sq: list = m[0]
+      return [ocl.union(MatrixLib.flattenMatrix(sq), MatrixLib.flattenMatrix(ocl.tail(m)))]
+    else:
+      return m
+
+  def sumMatrix(m: list) -> float:
+    if len(m) == 0:
+      return 0.0
+    elif isinstance(m[0], list):
+      sq: list = m[0]
+      return MatrixLib.sumMatrix(sq) + MatrixLib.sumMatrix(ocl.tail(m))
+    else:
+      dmat: list = ocl.union([0.0], m)
+      return sum(dmat) # Python has a built-in sum function ready to use on a list
+
+  def prdMatrix(m: list) -> float:
+    if len(m) == 0:
+      return 0.0
+    elif isinstance(m[0], list):
+      sq: list = m[0]
+      return MatrixLib.prdMatrix(sq) * MatrixLib.prdMatrix(ocl.tail(m))
+    else:
+      dmat: list = ocl.union([1.0], m)
+      return np.prod(dmat) # Faster solution, see https://stackoverflow.com/a/55297341
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
