@@ -74,4 +74,16 @@ class MatrixLib :
     else:
       return [MatrixLib.singleValueMatrix(ocl.tail(sh), x) for i in range(1, sh[0], 1)]
 
+  # TODO: Complete and perfect fillMatrixForm implementation
+  # def fillMatrixForm(sq: list, sh: list) -> list:
+  #   if len(sh) == 0: 
+  #     return []
+  #   elif len(sh) == 1:
+  #     return [sq[i] for i in range(len(sh))]
+  #   else:
+  #     result = []
+  #     prod: int = ocl.prd(ocl.tail(sh))
+  #     for i in range(sh[0]):
+  #       rowi: list = MatrixLib.fillMatrixForm
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
