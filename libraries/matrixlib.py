@@ -127,5 +127,51 @@ class MatrixLib :
       dmat: list = ocl.union([1.0], m)
       return np.prod(dmat) # Faster solution (mainly for very large lists), see https://stackoverflow.com/a/55297341
 
+  def elementwiseApply(m: list, f: callable) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseApply(list(_r), f) for _r in m]
+    else:
+      dmat: list = [0.0]
+      for x in m:
+        y: float = float(x)
+        dmat.append(f(y))
+      return dmat
+
+  def elementwiseMult(m: list, x: float) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseMult(list(_r), x) for _r in m]
+    else:
+      dmat: list = [0.0]
+      for z in m:
+        y: float = float(z)
+        dmat.append(y * x)
+      return dmat
+
+  def elementwiseAdd(m: list, x: float) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseAdd(list(_r), x) for _r in m]
+    else:
+      dmat: list = [0.0]
+      for z in m:
+        y: float = float(z)
+        dmat.append(y + x)
+      return dmat
+
+  def elementwiseDivide(m: list, x: float) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseDivide(list(_r), x) for _r in m]
+    else:
+      dmat: list = [0.0]
+      dmat.append(y / x)
+    return dmat
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
