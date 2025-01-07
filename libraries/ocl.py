@@ -527,6 +527,17 @@ def setSubrange(x,i,j,v) :
   x1 = x[0:i-1] + str(v) + x[j:]
   return x1
 
+def listSubrange(l: list, i: int, j: int) -> list:
+  # For lists
+  result = []
+  if i < 0:
+    i = (len(l) - 1) + i
+  if j < 0:
+    j = (len(l) - 1) + j
+  for k in range(i, j+1):
+    result.append(l[k])
+  return result
+
 def insertAt(x,i,s) :
   # i must be > 0
   if i <= 0 : 
