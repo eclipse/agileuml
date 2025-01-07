@@ -124,7 +124,7 @@ class MatrixLib :
       return MatrixLib.prdMatrix(sq) * MatrixLib.prdMatrix(ocl.tail(m))
     else:
       dmat: list = ocl.union([1.0], m)
-      return np.prod(dmat) # Faster solution, see https://stackoverflow.com/a/55297341
+      return np.prod(dmat) # Faster solution (mainly for very large lists), see https://stackoverflow.com/a/55297341
 
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
