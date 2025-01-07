@@ -170,8 +170,10 @@ class MatrixLib :
       return [MatrixLib.elementwiseDivide(list(_r), x) for _r in m]
     else:
       dmat: list = [0.0]
-      dmat.append(y / x)
-    return dmat
+      for z in m:
+        y: float = float(z)
+        dmat.append(y / x)
+      return dmat
 
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
