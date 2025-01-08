@@ -306,5 +306,10 @@ class MatrixLib :
   def matrixGreater(m1: list, m2: list) -> list:
     return [MatrixLib.rowGreater(r1, r2) for r1, r2 in zip(m1, m2)]
 
+  def transpose(m: list) -> list:
+    if not isinstance(m[0], list):
+      return m
+    return [MatrixLib.column(m, i) for i, _ in enumerate(m)]
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
