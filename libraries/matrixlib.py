@@ -133,7 +133,7 @@ class MatrixLib :
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseApply(list(_r), f) for _r in m]
     else:
-      dmat: list = [0.0]
+      dmat: list = []
       for x in m:
         y: float = float(x)
         dmat.append(f(y))
@@ -145,7 +145,7 @@ class MatrixLib :
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseMult(list(_r), x) for _r in m]
     else:
-      dmat: list = [0.0]
+      dmat: list = []
       for z in m:
         y: float = float(z)
         dmat.append(y * x)
@@ -157,7 +157,7 @@ class MatrixLib :
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseAdd(list(_r), x) for _r in m]
     else:
-      dmat: list = [0.0]
+      dmat: list = []
       for z in m:
         y: float = float(z)
         dmat.append(y + x)
@@ -169,7 +169,7 @@ class MatrixLib :
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseDivide(list(_r), x) for _r in m]
     else:
-      dmat: list = [0.0]
+      dmat: list = []
       for z in m:
         y: float = float(z)
         dmat.append(y / x)
