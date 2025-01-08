@@ -258,5 +258,21 @@ class MatrixLib :
         factor = -factor
       return result
 
+  def rowAddition(m1: list, m2: list) -> list:
+    if isinstance(m1[0], list):
+      return [MatrixLib.rowAddition(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
+    return [float(m1j) + float(m2j) for m1j, m2j in zip(m1, m2)]
+
+  def matrixAddition(m1: list, m2: list) -> list:
+    return [MatrixLib.rowAddition(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
+
+  def rowSubtraction(m1: list, m2: list) -> list:
+    if isinstance(m1[0], list):
+      return [MatrixLib.rowSubtraction(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
+    return [float(m1j) - float(m2j) for m1j, m2j in zip(m1, m2)]
+
+  def matrixSubtraction(m1: list, m2: list) -> list:
+    return [MatrixLib.rowSubtraction(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
