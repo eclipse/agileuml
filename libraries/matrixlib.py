@@ -214,5 +214,49 @@ class MatrixLib :
   def detaux(x1: float, x2: float, y1: float, y2: float) -> float:
     return x1*y2 - x2*y1
 
+  def determinant2(m: list) -> float:
+    if len(m) == 2 and len(m[0]) == 2:
+      m1: list = list(m[0])
+      m2: list = list(m[1])
+
+      d11: float = float(m[0][1])
+      d12: float = float(m[0][1])
+      d21: float = float(m[1][0])
+      d22: float = float(m[1][1])
+
+      return MatrixLib.detaux(d11, d12, d21, d22)
+
+  def determinant3(m: list) -> float:
+    if len(m) == 3 and len(m[0]) == 3:
+      subm1: list = MatrixLib.subMatrix(m, [2, 3], [2, 3])
+      subm2: list = MatrixLib.subMatrix(m, [2, 3], [1, 3])
+      subm3: list = MatrixLib.subMatrix(m, [2, 3], [1, 2])
+
+      m1: list = list(m[0])
+
+      return (float(m1[0]) * MatrixLib.determinant2(subm1)) + \
+             (float(m1[1]) * MatrixLib.determinant2(subm2)) + \
+             (float(m1[2]) * MatrixLib.determinant2(subm3))
+
+  def determinant(m: list) -> float:
+    n = len(m)
+    if n == 1:
+      return float(m[0])
+    elif n == 2:
+      return MatrixLib.determinant2(m)
+    elif n == 3:
+      return MatrixLib.determinant3(m)
+    else:
+      result: float = 0.0
+      row: list = list(m[0])
+      factor: int = 1
+      for i in range(n):
+        submat: list = MatrixLib.matrixExcludingRowColumn(m, 1, i)
+        det: float = MatrixLib.determinant(submat)
+        rowi: float = float(row[i])
+        result += factor * rowi * det
+        factor = -factor
+      return result
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
