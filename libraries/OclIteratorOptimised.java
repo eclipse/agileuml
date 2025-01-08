@@ -43,7 +43,7 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
    int markedPosition = 0;
    Function<Integer,Object> generatorFunction = null; 
 
-  ArrayList<Object> elements = (new ArrayList());
+  Object[] elements;
   ArrayList<String> columnNames = (new ArrayList<String>());
  
   String ocliteratorId = ""; /* primary */
@@ -70,21 +70,13 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
   public  boolean hasNext()
   {
-     boolean result = false;
-    if (position >= 0 && position < elements.size())
-    {
-      result = true;
-    }
-    else {
-      result = false;
-    }
-    return result;
+    return (position >= 0 && position < elements.length); 
   }
 
 
   public boolean isAfterLast() 
   { boolean result = false; 
-    if (position > elements.size())
+    if (position > elements.length)
     { return true; } 
     return result; 
   } 
@@ -98,8 +90,8 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
   public boolean hasPrevious()
   {
-     boolean result = false;
-    if (position > 1 && position <= elements.size() + 1)
+    boolean result = false;
+    if (position > 1 && position <= elements.length + 1)
     {
       result = true;
     }
@@ -170,7 +162,7 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
   public void moveToLast()
   {
-    position = elements.size();
+    position = elements.length;
   }
 
 
@@ -182,22 +174,30 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
   public void moveToEnd()
   {
-    position = elements.size() + 1;
+    position = elements.length + 1;
   }
 
 
   public static OclIterator newOclIterator_Sequence(ArrayList sq)
   { OclIterator ot = null;
     ot = OclIterator.createOclIterator();
-    ot.elements = sq;
+	int n = sq.size(); 
+    ot.elements = new Object[n];
+	for (int i = 0; i < n; i++)
+	{ ot.elements[i] = sq.get(i); }
     ot.position = 0;
     return ot; 
   }
-
+ 
   public static OclIterator newOclIterator_String(String str)
   { OclIterator ot = null;
     ot = OclIterator.createOclIterator();
-    ot.elements.addAll(Ocl.split(str, "[ \n\t\r]+"));
+	ArrayList<String> chars = Ocl.split(str, "[ \n\t\r]+"); 
+    int n = chars.size(); 
+	ot.elements = new Object[n];
+	for (int i = 0; i < n; i++)
+	{ ot.elements[i] = chars.get(i); }
+    
     ot.position = 0;
     return ot; 
   }
@@ -205,7 +205,11 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   public static OclIterator newOclIterator_String_String(String str, String seps)
   { OclIterator ot = null;
     ot = OclIterator.createOclIterator();
-    ot.elements.addAll(Ocl.split(str, "[" + seps + "]+"));
+    ArrayList<String> chars = Ocl.split(str, "[" + seps + "]+");
+    int n = chars.size(); 
+	ot.elements = new Object[n];
+	for (int i = 0; i < n; i++)
+	{ ot.elements[i] = chars.get(i); }
     ot.position = 0;
     return ot; 
   }
@@ -215,13 +219,17 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   { ArrayList elems = new ArrayList(); 
     elems.addAll(st); 
     Collections.sort(elems); 
-     OclIterator ot = null;
+    OclIterator ot = null;
     ot = OclIterator.createOclIterator();
-    ot.elements = elems;
+    int n = elems.size(); 
+	ot.elements = new Object[n];
+	for (int i = 0; i < n; i++)
+	{ ot.elements[i] = elems.get(i); }
     ot.position = 0;
     return ot; 
   }
 
+/*
   public static OclIterator newOclIterator_Function(Function<Integer,Object> f)
   { OclIterator ot = null;
     ot = OclIterator.createOclIterator();
@@ -236,24 +244,24 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
     position = 0;
 	markedPosition = 0; 
     return OclIterator.newOclIterator_Sequence(firstpart); 
-  } 
+  } */ 
 
   public Object getCurrent()
   {
     Object result = null;
-    if (position > 0 && position <= elements.size())
-    { result = ((Object) elements.get(position - 1)); } 
+    if (position > 0 && position <= elements.length)
+    { result = elements[position - 1]; } 
     return result;
   }
 
 
   public void set(Object x)
   {
-    elements.set(position - 1,x);
+    elements[position - 1] = x;
   }
 
 
-  public void insert(Object x)
+  /* public void insert(Object x)
   { elements.add(position-1,x); }
 
 
@@ -289,10 +297,10 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
     else
     { elements.add(res); } 
     return OclIteratorResult.newOclIteratorResult(res); 
-  } 
+  } */ 
       
   public Object next()
-  { if (generatorFunction != null) 
+  { /* if (generatorFunction != null) 
     { Object res = generatorFunction.apply(new Integer(position)); 
       position++; 
       if (position <= elements.size())  
@@ -300,9 +308,8 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
       else
       { elements.add(res); } 
       return res; 
-    } 
+    } */ 
      
-    Object result = null;
     moveForward();
     return getCurrent();
   }
@@ -310,16 +317,15 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
   public Object previous()
   {
-    Object result = null;
     moveBackward();
     return getCurrent();
   }
 
   public Object at(int i)
-  { return elements.get(i-1); } 
+  { return elements[i-1]; } 
 
   public int length()
-  { return elements.size(); } 
+  { return elements.length; } 
 
   public int getPosition()
   { return position; } 
@@ -351,20 +357,20 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   public void close()
   { position = 0;
     markedPosition = 0;
-    elements = (new ArrayList());
+    elements = null;
     columnNames = new ArrayList<String>(); 
   } 
   
   
   public static void main(String[] args)
   { ArrayList lst = new ArrayList(); 
-    for (int i = 0; i < 1000000; i++)
+    for (int i = 0; i < 100000; i++)
     { lst.add(i); } 
     OclIterator iter1 = OclIterator.newOclIterator_Sequence(lst); 
 	java.util.Date d1 = new java.util.Date(); 
 	long t1 = d1.getTime(); 
 	
-	for (int j = 0; j < 1000000; j++) 
+	for (int j = 0; j < 100000; j++) 
 	{ iter1.next(); 
 	  iter1.set(1); 
 	}
@@ -373,21 +379,6 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 	long t2 = d2.getTime();
 	System.out.println(t2-t1);  
   }  
-
-  /*
-  public static void main(String[] args)
-  { ArrayList lst = new ArrayList(); 
-    lst.add(1); lst.add(2); lst.add(3); lst.add(4); lst.add(5); 
-    OclIterator iter1 = OclIterator.newOclIterator_Sequence(lst); 
-	System.out.println(iter1.elements); 
-	iter1.setPosition(3); 
-	OclIterator iter2 = iter1.trySplit(); 
-	System.out.println(iter1.elements); 
-	System.out.println(iter2.elements); 
-	
-	Function<Object,Object> ff = (y)->{ System.out.println(y); return y; }; 
-	iter1.forEachRemaining(ff); 
-  } */ 
 
 }
 
