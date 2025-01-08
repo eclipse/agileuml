@@ -175,5 +175,41 @@ class MatrixLib :
         dmat.append(y / x)
       return dmat
 
+  def elementwiseLess(m: list, x: float) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseLess(list(_r), x) for _r in m]
+    else:
+      dmat: list = []
+      for z in m:
+        y: float = float(z)
+        dmat.append(y < x)
+      return dmat
+
+  def elementwiseGreater(m: list, x: float) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseGreater(list(_r), x) for _r in m]
+    else:
+      dmat: list = []
+      for z in m:
+        y: float = float(z)
+        dmat.append(y > x)
+      return dmat
+
+  def elementwiseEqual(m: list, x: float) -> list:
+    if len(m) == 0:
+      return []
+    elif isinstance(m[0], list):
+      return [MatrixLib.elementwiseEqual(list(_r), x) for _r in m]
+    else:
+      dmat: list = []
+      for z in m:
+        y: float = float(z)
+        dmat.append(y == x)
+      return dmat
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
