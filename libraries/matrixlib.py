@@ -290,5 +290,21 @@ class MatrixLib :
   def dotDivision(m1: list, m2: list) -> list:
     return [MatrixLib.rowDotDivision(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
 
+  def rowLess(m1: list, m2: list) -> list:
+    if isinstance(m1[0], list):
+      return [MatrixLib.rowLess(m1i, m2i) for m1i, m2i in zip(m1, m2)]
+    return [m1j < m2j for m1j, m2j in zip(m1, m2)]
+
+  def matrixLess(m1: list, m2: list) -> list:
+    return [MatrixLib.rowLess(m1i, m2i) for m1i, m2i in zip(m1, m2)]
+
+  def rowGreater(m1: list, m2: list) -> list:
+    if isinstance(m1[0], list):
+      return [MatrixLib.rowGreater(m1i, m2i) for m1i, m2i in zip(m1, m2)]
+    return [m1j > m2j for m1j, m2j in zip(m1, m2)]
+
+  def matrixGreater(m1: list, m2: list) -> list:
+    return [MatrixLib.rowGreater(r1, r2) for r1, r2 in zip(m1, m2)]
+
 print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
 print(MatrixLib.identityMatrix(5))
