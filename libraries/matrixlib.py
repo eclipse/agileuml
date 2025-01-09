@@ -132,84 +132,49 @@ class MatrixLib :
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseApply(list(_r), f) for _r in m]
-    else:
-      dmat: list = []
-      for x in m:
-        y: float = float(x)
-        dmat.append(f(y))
-      return dmat
+    return [f(float(z)) for z in m]
 
   def elementwiseMult(m: list, x: float) -> list:
     if len(m) == 0:
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseMult(list(_r), x) for _r in m]
-    else:
-      dmat: list = []
-      for z in m:
-        y: float = float(z)
-        dmat.append(y * x)
-      return dmat
+    return [float(z) * x for z in m]
 
   def elementwiseAdd(m: list, x: float) -> list:
     if len(m) == 0:
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseAdd(list(_r), x) for _r in m]
-    else:
-      dmat: list = []
-      for z in m:
-        y: float = float(z)
-        dmat.append(y + x)
-      return dmat
+    return [float(z) + x for z in m]
 
   def elementwiseDivide(m: list, x: float) -> list:
     if len(m) == 0:
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseDivide(list(_r), x) for _r in m]
-    else:
-      dmat: list = []
-      for z in m:
-        y: float = float(z)
-        dmat.append(y / x)
-      return dmat
+    return [float(z) / x for z in m]
 
   def elementwiseLess(m: list, x: float) -> list:
     if len(m) == 0:
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseLess(list(_r), x) for _r in m]
-    else:
-      dmat: list = []
-      for z in m:
-        y: float = float(z)
-        dmat.append(y < x)
-      return dmat
+    return [float(z) < x for z in m]
 
   def elementwiseGreater(m: list, x: float) -> list:
     if len(m) == 0:
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseGreater(list(_r), x) for _r in m]
-    else:
-      dmat: list = []
-      for z in m:
-        y: float = float(z)
-        dmat.append(y > x)
-      return dmat
+    return [float(z) > x for z in m]
 
   def elementwiseEqual(m: list, x: float) -> list:
     if len(m) == 0:
       return []
     elif isinstance(m[0], list):
       return [MatrixLib.elementwiseEqual(list(_r), x) for _r in m]
-    else:
-      dmat: list = []
-      for z in m:
-        y: float = float(z)
-        dmat.append(y == x)
-      return dmat
+    return [float(z) == x for z in m]
 
   def detaux(x1: float, x2: float, y1: float, y2: float) -> float:
     return x1*y2 - x2*y1
