@@ -226,7 +226,7 @@ class MatrixLib :
 
       return MatrixLib.detaux(d11, d12, d21, d22)
 
-  def determinant3(m: list) -> float:
+  def determinant3(m: list[list]) -> float:
     if len(m) == 3 and len(m[0]) == 3:
       subm1: list = MatrixLib.subMatrix(m, [2, 3], [2, 3])
       subm2: list = MatrixLib.subMatrix(m, [2, 3], [1, 3])
