@@ -88,15 +88,7 @@ class MatrixLib :
       return result
 
   def identityMatrix(n: int) -> list:
-    result: list = []
-    for i in range(n):
-      result.append([]) # Need to append lists instead of assigning via result[i][j]
-      for j in range(n):
-        if i == j:
-          result[i].append(1.0)
-        else:
-          result[i].append(0.0)
-    return result
+    return [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
 
   def flattenMatrix(m: list) -> list:
     if len(m) == 0:
