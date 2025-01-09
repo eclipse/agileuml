@@ -50,9 +50,9 @@ class MatrixLib :
       if i != row:
         for subrow, j in enumerate(r):
           if j != col:
-            res.append(subrow)
+            result.append(subrow)
       
-    return res
+    return result
   
   def column(m: list, i: int) -> list:
     return [m[i]] if isinstance(m[i], list) else m[i]
