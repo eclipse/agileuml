@@ -268,5 +268,9 @@ class MatrixLib :
       return m
     return [MatrixLib.column(m, i) for i, _ in enumerate(m)]
 
-print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
-print(MatrixLib.identityMatrix(5))
+def main():
+  print(MatrixLib.matrixMultiplication([[1,2], [3,4]], [[5,6], [7,8]]))
+  print(MatrixLib.identityMatrix(5))
+
+if __name__=="__main__":
+  main()
