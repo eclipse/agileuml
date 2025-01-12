@@ -90,31 +90,19 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
   public boolean hasPrevious()
   {
-    boolean result = false;
-    if (position > 1 && position <= elements.length + 1)
-    {
-      result = true;
-    }
-    else {
-      result = false;
-    }
-    return result;
+    return (position > 1 && position <= elements.length + 1);
   }
 
 
   public int nextIndex()
   {
-    int result = 0;
-    result = position + 1;
-    return result;
+    return position + 1;
   }
 
 
   public int previousIndex()
   {
-    int result = 0;
-    result = position - 1;
-    return result;
+    return position - 1;
   }
 
 
@@ -236,15 +224,20 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
     ot.generatorFunction = f; 
     ot.position = 0;
     return ot; 
-  }
+  } */ 
 
   public OclIterator trySplit()  
-  { ArrayList firstpart = Ocl.subrange(elements,1,position-1); 
-    elements = Ocl.subrange(elements, position); 
+  { ArrayList firstpart = new ArrayList(); 
+    for (int i = 0; i < position; i++)
+	{ firstpart.add(elements[i]); } 
+    Object[] newelements = new Object[elements.length - position]; 
+	for (int i = 0; i + position < elements.length; i++) 
+	{ newelements[i] = elements[i + position]; } 
+	elements = newelements;  
     position = 0;
 	markedPosition = 0; 
     return OclIterator.newOclIterator_Sequence(firstpart); 
-  } */ 
+  } 
 
   public Object getCurrent()
   {
@@ -264,12 +257,11 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   /* public void insert(Object x)
   { elements.add(position-1,x); }
 
-
   public void remove()
-  { elements.remove(position - 1); }
+  { elements.remove(position - 1); } */ 
 
   public boolean tryAdvance(Function<Object,Object> f) 
-  { if (position + 1 <= elements.size())  
+  { if (position + 1 <= elements.length)  
     { Object x = this.next();   
       f.apply(x);  
       return true; 
@@ -278,12 +270,14 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   }  
   
   public void forEachRemaining(Function<Object,Object> f)  
-  { ArrayList remainingElements = Ocl.subrange(elements, position); 
-    for (Object x : remainingElements)
-    { f.apply(x); } 
+  { // ArrayList remainingElements = Ocl.subrange(elements, position);
+    for (int i = position; i < elements.length; i++) 
+    { Object x = elements[i]; 
+	  f.apply(x); 
+    } 
   }  
 
-
+/*
   public OclIteratorResult nextResult()
   { if (generatorFunction == null) 
     { Object v = next();
@@ -363,7 +357,7 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   
   
   public static void main(String[] args)
-  { ArrayList lst = new ArrayList(); 
+  { /* ArrayList lst = new ArrayList(); 
     for (int i = 0; i < 100000; i++)
     { lst.add(i); } 
     OclIterator iter1 = OclIterator.newOclIterator_Sequence(lst); 
@@ -377,7 +371,25 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 	
 	java.util.Date d2 = new java.util.Date(); 
 	long t2 = d2.getTime();
-	System.out.println(t2-t1);  
+	System.out.println(t2-t1); */ 
+
+	Function<Object,Object> ff = (y)->{ System.out.println(y); return y; }; 
+	
+	ArrayList lst = new ArrayList(); 
+    lst.add(1); lst.add(2); lst.add(3); lst.add(4); lst.add(5); 
+    OclIterator iter1 = OclIterator.newOclIterator_Sequence(lst); 
+	iter1.forEachRemaining(ff); 
+    System.out.println(); 
+	// System.out.println(iter1.elements); 
+	iter1.setPosition(3); 
+	OclIterator iter2 = iter1.trySplit(); 
+	// System.out.println(iter1.elements); 
+	// System.out.println(iter2.elements); 
+	
+	iter1.forEachRemaining(ff); 
+    System.out.println(); 
+	iter2.forEachRemaining(ff); 
+   
   }  
 
 }
