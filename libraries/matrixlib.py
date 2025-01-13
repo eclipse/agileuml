@@ -3,8 +3,8 @@ import ocl
 
 class MatrixLib :
 
-  def rowMult(s: list, m: list) -> list:   
-    result = []
+  def rowMult(s: list[float], m: list[list[float]]) -> list[float]:   
+    result: list[float] = []
     for i in range(0, len(s)) :
       sum = 0 
       for k in range(0, len(m)) : 
@@ -12,28 +12,28 @@ class MatrixLib :
       result.append(sum)
     return result
 
-  def matrixMultiplication(m1: list, m2: list) -> list: 
+  def matrixMultiplication(m1: list[list[float]], m2: list[list[float]]) -> list[list[float]]: 
      m1array = np.array(m1)
      m2array = np.array(m2)
      res = np.matmul(m1array, m2array)
      return res.tolist()
 
   def subRows(m: list, s: list[int]) -> list:
-    result = []
+    result: list = []
     for integer in s:
       if 0 <= integer <= len(m) - 1: # OCL starts indexing at 1, Python starts indexing at 0
         result.append(m[integer])
     return result
 
   def subMatrix(m: list[list], rows: list[int], cols: list[int]) -> list:
-    result = []
+    result: list = []
     for row in rows:
       if 0 <= row <= len(m) - 1: # OCL starts indexing at 1, Python starts indexing at 0
         result.append(subRows(m[row], cols))
     return result
 
   def matrixExcludingRowColumn(m: list, row: int, col: int) -> list:
-    result = []
+    result: list = []
 
     # Original note-for-note adaption (as much as possible) of OCL code
     # for i in range(len(m)):
@@ -57,7 +57,7 @@ class MatrixLib :
   def column(m: list, i: int) -> list:
     return [m[i]] if isinstance(m[i], list) else m[i]
 
-  def shape(x) -> list:
+  def shape(x) -> list[int]:
     result: list = [0]
     if isinstance(x, list):
       sq: list = list(x)
