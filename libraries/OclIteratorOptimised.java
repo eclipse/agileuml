@@ -67,6 +67,8 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
     OclIterator_allInstances.removeAll(remd);
   }
 
+  public List getElements()
+  { return Arrays.asList(elements); } 
 
   public  boolean hasNext()
   {
@@ -169,10 +171,11 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   public static OclIterator newOclIterator_Sequence(ArrayList sq)
   { OclIterator ot = null;
     ot = OclIterator.createOclIterator();
-	int n = sq.size(); 
-    ot.elements = new Object[n];
-	for (int i = 0; i < n; i++)
-	{ ot.elements[i] = sq.get(i); }
+    // int n = sq.size(); 
+    // ot.elements = new Object[n];
+    // for (int i = 0; i < n; i++)
+    // { ot.elements[i] = sq.get(i); }
+    ot.elements = sq.toArray(); 
     ot.position = 0;
     return ot; 
   }
@@ -229,13 +232,13 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
   public OclIterator trySplit()  
   { ArrayList firstpart = new ArrayList(); 
     for (int i = 0; i < position; i++)
-	{ firstpart.add(elements[i]); } 
+    { firstpart.add(elements[i]); } 
     Object[] newelements = new Object[elements.length - position]; 
-	for (int i = 0; i + position < elements.length; i++) 
-	{ newelements[i] = elements[i + position]; } 
-	elements = newelements;  
+    for (int i = 0; i + position < elements.length; i++) 
+    { newelements[i] = elements[i + position]; } 
+    elements = newelements;  
     position = 0;
-	markedPosition = 0; 
+    markedPosition = 0; 
     return OclIterator.newOclIterator_Sequence(firstpart); 
   } 
 
@@ -375,21 +378,26 @@ class OclIterator { static ArrayList<OclIterator> OclIterator_allInstances = new
 
 	Function<Object,Object> ff = (y)->{ System.out.println(y); return y; }; 
 	
-	ArrayList lst = new ArrayList(); 
+    ArrayList lst = new ArrayList(); 
     lst.add(1); lst.add(2); lst.add(3); lst.add(4); lst.add(5); 
     OclIterator iter1 = OclIterator.newOclIterator_Sequence(lst); 
-	iter1.forEachRemaining(ff); 
+    iter1.forEachRemaining(ff); 
     System.out.println(); 
 	// System.out.println(iter1.elements); 
-	iter1.setPosition(3); 
-	OclIterator iter2 = iter1.trySplit(); 
+    iter1.setPosition(3); 
+    OclIterator iter2 = iter1.trySplit(); 
 	// System.out.println(iter1.elements); 
 	// System.out.println(iter2.elements); 
 	
-	iter1.forEachRemaining(ff); 
+    iter1.forEachRemaining(ff); 
     System.out.println(); 
-	iter2.forEachRemaining(ff); 
-   
+    iter2.forEachRemaining(ff);
+
+    List lst2 = iter2.getElements(); 
+    System.out.println(lst2); 
+    iter2.setPosition(2); 
+    iter2.set(5); 
+    System.out.println(lst2);  
   }  
 
 }

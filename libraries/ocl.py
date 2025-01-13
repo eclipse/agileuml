@@ -527,17 +527,18 @@ def setSubrange(x,i,j,v) :
   x1 = x[0:i-1] + str(v) + x[j:]
   return x1
 
-def listSubrange(l, i, j) :
+def sequenceSubrange(l, i, j) :
   # For lists. OCL indexing used for i, j
   result = []
   if j < 0 : 
-    j = len(l) + 1 + j
+    j = len(l) + j
   # eg: -1 is the last element of l
-  if i < 1:
+  if i == 0 : 
     i = 1
-  i = i - 1
-  j = j - 1
-  for k in range(i, j+1):
+  if i < 0:
+    i = len(l) + i
+  
+  for k in range(i-1, j):
     result.append(l[k])
   return result
 
