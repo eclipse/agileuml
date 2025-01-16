@@ -160,6 +160,7 @@ OutputStreamWriter |-->OclFile
 PrintWriter |-->OclFile
 RandomAccessFile |-->OclFile
 
+DriverManager |-->OclDatasource
 Socket |-->OclDatasource
 BluetoothSocket |-->OclDatasource
 URL |-->OclDatasource
@@ -1455,7 +1456,10 @@ EnumSet . _1 |-->_1`enumsetMethodCall
 
 Arrays . _1 |-->_1`arraysMethodCall
 
-Files . _1 |-->_1`filesMethodCallQueryForm
+DriverManager . _1 |-->OclDatasource._1
+
+Files . _1 |-->_1`filesQueryForm
+Paths . _1 |-->_1`pathsQueryForm
 
 Pattern . _1 |-->OclRegex_1`methodCallQueryForm
 
@@ -1584,6 +1588,7 @@ long . class |-->OclType["long"]
 Long . _1 |-->_1`longMethodCall
 
 Files . _1 |-->_1`filesMethodCall
+Paths . _1 |-->_1`pathsMethodCall
 
 GregorianCalendar . ERA |-->AD
 GregorianCalendar . YEAR |-->1970
@@ -2226,14 +2231,27 @@ newInputStream ( _1 ) |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`first))
 newOutputStream ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first))
 notExists ( _1 ) |-->not(OclFile.newOclFile(_1`first).exists())
 probeContentType ( _1 ) |-->"text/plain"
+
+readString ( _1 ) |-->OclFile.newOclFile(_1).readLine()
 readAllBytes ( _1 ) |-->OclFile.newOclFile(_1).readNbytes(OclFile.newOclFile(_1).length())
 readAllLines ( _1 ) |-->OclFile.newOclFile(_1`first).readAll()->split("\n\r")
 size ( _1 ) |-->OclFile.newOclFile(_1).length()
 write ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first)).writeNbytes(_1`third,_1`third->size())
 
+_1 ( _2 ) |-->OclFile._1(_2)
 
 
-filesMethodCallQueryForm::
+pathsQueryForm::
+get ( _1 ) |-->_1`pathsArguments
+
+
+pathsArguments::
+_1 |-->_1
+_1 , _2 |-->_1 + "/" + _2
+_1 , _* |-->_1 + "/" + _*`recurse
+
+
+filesQueryForm::
 copy ( _1 ) |-->_1`first.length()
 createDirectory ( _1 ) |-->_1`first
 createFile ( _1 ) |-->_1`first
@@ -2260,15 +2278,19 @@ newInputStream ( _1 ) |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`first))
 newOutputStream ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first))
 notExists ( _1 ) |-->not(OclFile.newOclFile(_1`first).exists())
 probeContentType ( _1 ) |-->"text/plain"
+
+readString ( _1 ) |-->OclFile.newOclFile(_1).readLine()
 readAllBytes ( _1 ) |-->OclFile.newOclFile(_1).readNbytes(OclFile.newOclFile(_1).length())
 readAllLines ( _1 ) |-->OclFile.newOclFile(_1`first).readAll()->split("\n\r")
 size ( _1 ) |-->OclFile.newOclFile(_1).length()
 write ( _1 ) |-->_1`first
 
+_1 ( _2 ) |-->OclFile._1(_2)
 
 
 
-
+pathsMethodCall::
+get ( _1 ) |-->_1`pathsArguments
 
 
 mathMethodCall::
@@ -2748,6 +2770,8 @@ Math . _1 |-->_1`mathMethodCall
 
 EnumSet . _1 |-->_1`enumsetMethodCall
 
+DriverManager . _1 |-->OclDatasource._1
+
 Byte . MIN_VALUE |-->-128
 Byte . MAX_VALUE |-->127
 Byte . SIZE |-->8
@@ -2846,6 +2870,7 @@ Boolean . _1 |-->_1`booleanMethodCall
 
 
 Arrays . _1 |-->_1`arraysMethodCall
+Paths . _1 |-->_1`pathsMethodCall
 
 Pattern . _1 |-->OclRegex_1`methodCallQueryForm
 
@@ -3234,7 +3259,7 @@ _1 |-->_1`type
 
 sideEffect::
 _1 . _2 |-->    _1 := _1_2`methodCallSideEffect
-
+( _1 ) _2 |-->_2`sideEffect
 _1 |-->    _1
 
 
@@ -3438,6 +3463,7 @@ Boolean . _1 |-->_1`booleanMethodCall
 Thread . _1 |-->    OclProcess._1
 Assert . _1 |-->_1`assertMethodCall
 Files . _1 |-->_1`filesMethodCall
+Paths . _1 |-->_1`pathsMethodCall
 
 System.out . _1 |-->    execute (OclFile["System.out"])._1`systemMethodCall
 System.in . _1 |-->    execute (OclFile["System.in"])._1`systemMethodCall
@@ -3903,6 +3929,7 @@ LittleEndianOutput |-->OclFile
 BigEndianInput |-->OclFile
 BigEndianOutput |-->OclFile
 
+DriverManager |-->OclDatasource
 Socket |-->OclDatasource
 BluetoothSocket |-->OclDatasource
 URL |-->OclDatasource
