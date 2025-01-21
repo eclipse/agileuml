@@ -6,7 +6,7 @@ import javax.swing.JTextArea;
 import java.awt.*; 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -11386,8 +11386,11 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // c.nospacelexicalanalysis("Map{ \"Name\" |-> Sequence{\"Braund, Mr. Owen Harris\"}->union(Sequence{\"Allen, Mr. William Henry\"}->union(Sequence{ \"Bonnell, Miss. Elizabeth\" })) }->union(Map{ \"Age\" |-> Sequence{22}->union(Sequence{35}->union(Sequence{ 58 })) }->union(Map{ \"Sex\" |-> Sequence{\"male\"}->union(Sequence{\"male\"}->union(Sequence{ \"female\" })) }->union(Map{ \"Fare\" |-> Sequence{102.0}->union(Sequence{99.0}->union(Sequence{ 250.0 })) }) ) )"); 
 
   
+c.nospacelexicalanalysis("arr[i].x"); 
+Expression zz = c.parseExpression(); 
+System.out.println(zz); 
 
- c.nospacelexicalanalysis("table->restrict(table > v)");  
+ /* c.nospacelexicalanalysis("table->restrict(table > v)");  
  BinaryExpression zz = (BinaryExpression) c.parseExpression(); 
 
  Expression zleft = zz.getLeft(); 
@@ -11397,7 +11400,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
  Expression yy = zz.transformPythonSelectExpressions(); 
 
- System.out.println(yy);
+ System.out.println(yy); */ 
  
  /* 
     c.nospacelexicalanalysis("execute (OclFile[\"system.in\"]).println(x)"); 
