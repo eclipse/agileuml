@@ -160,6 +160,7 @@ OutputStreamWriter |-->OclFile
 PrintWriter |-->OclFile
 RandomAccessFile |-->OclFile
 
+DriverManager |-->OclDatasource
 Socket |-->OclDatasource
 BluetoothSocket |-->OclDatasource
 URL |-->OclDatasource
@@ -265,6 +266,7 @@ Consumer _1 |-->Function(_1, void)
 
 Collection _1 |-->Sequence_1`collectionParameters
 Iterable _1 |-->Sequence_1`collectionParameters
+Stream _1 |-->Sequence_1`collectionParameters
 AtomicReferenceArray _1 |-->Sequence_1`collectionParameters
 Class _1 |-->OclType 
 
@@ -668,7 +670,7 @@ _1 _2 |-->  operation _2`second_1_2`third : _2`first\n  pre: true\n  post: true;
 
 
 lambdaDefinitionFromOperation::
-_1 _2 _3 _4 |-->  lambda _3 in _4`lambdaDefinitionFromMethodBody
+_1 _2 _3 _4 |-->  lambda _3 in (_4`lambdaDefinitionFromMethodBody)
 _1 |-->_1`lambdaDefinitionFromOperation
 
 
@@ -1365,11 +1367,11 @@ _1 ? _2 : _3 |-->if _1`queryForm then _2`queryForm else _3`queryForm endif
 
 _1 instanceof _2 |-->_1`queryForm->oclIsKindOf(_2)
 
-_1 :: parseInt |-->lambda _s : String in _s->toInteger()
-_1 :: parseLong |-->lambda _s : String in _s->toLong()
-_1 :: parseDouble |-->lambda _s : String in _s->toReal()
+_1 :: parseInt |-->(lambda _s : String in (_s->toInteger()))
+_1 :: parseLong |-->(lambda _s : String in (_s->toLong()))
+_1 :: parseDouble |-->(lambda _s : String in (_s->toReal()))
 
-_1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
+_1 :: _2 |-->(lambda _pars : OclAny in (_1`dcolonObject._2(_pars)))
 
 _1 . new _2 |-->(_1`queryForm)._2
 
@@ -1454,7 +1456,10 @@ EnumSet . _1 |-->_1`enumsetMethodCall
 
 Arrays . _1 |-->_1`arraysMethodCall
 
-Files . _1 |-->_1`filesMethodCallQueryForm
+DriverManager . _1 |-->OclDatasource._1
+
+Files . _1 |-->_1`filesQueryForm
+Paths . _1 |-->_1`pathsQueryForm
 
 Pattern . _1 |-->OclRegex_1`methodCallQueryForm
 
@@ -1497,13 +1502,13 @@ ThreadLocalRandom . _1 |-->MathLib
 Void . TYPE |-->OclType["void"]
 void . class |-->OclType["void"]
 
-System.out |-->OclFile["System.out"]
-System.in |-->OclFile["System.in"]
-System.err |-->OclFile["System.err"]
+System.out |-->(OclFile["System.out"])
+System.in |-->(OclFile["System.in"])
+System.err |-->(OclFile["System.err"])
 
-System.out . _1 |-->OclFile["System.out"]._1`systemMethodCall
-System.in . _1 |-->OclFile["System.in"]._1`systemMethodCall
-System.err . _1 |-->OclFile["System.err"]._1`systemMethodCall
+System.out . _1 |-->(OclFile["System.out"])._1`systemMethodCall
+System.in . _1 |-->(OclFile["System.in"])._1`systemMethodCall
+System.err . _1 |-->(OclFile["System.err"])._1`systemMethodCall
 
 System . _1 |-->_1`systemMethodCall
 Array . _1 |-->_1`arrayMethodCall
@@ -1583,6 +1588,7 @@ long . class |-->OclType["long"]
 Long . _1 |-->_1`longMethodCall
 
 Files . _1 |-->_1`filesMethodCall
+Paths . _1 |-->_1`pathsMethodCall
 
 GregorianCalendar . ERA |-->AD
 GregorianCalendar . YEAR |-->1970
@@ -2225,14 +2231,27 @@ newInputStream ( _1 ) |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`first))
 newOutputStream ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first))
 notExists ( _1 ) |-->not(OclFile.newOclFile(_1`first).exists())
 probeContentType ( _1 ) |-->"text/plain"
+
+readString ( _1 ) |-->OclFile.newOclFile(_1).readLine()
 readAllBytes ( _1 ) |-->OclFile.newOclFile(_1).readNbytes(OclFile.newOclFile(_1).length())
 readAllLines ( _1 ) |-->OclFile.newOclFile(_1`first).readAll()->split("\n\r")
 size ( _1 ) |-->OclFile.newOclFile(_1).length()
 write ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first)).writeNbytes(_1`third,_1`third->size())
 
+_1 ( _2 ) |-->OclFile._1(_2)
 
 
-filesMethodCallQueryForm::
+pathsQueryForm::
+get ( _1 ) |-->_1`pathsArguments
+
+
+pathsArguments::
+_1 |-->_1
+_1 , _2 |-->_1 + "/" + _2
+_1 , _* |-->_1 + "/" + _*`recurse
+
+
+filesQueryForm::
 copy ( _1 ) |-->_1`first.length()
 createDirectory ( _1 ) |-->_1`first
 createFile ( _1 ) |-->_1`first
@@ -2259,15 +2278,19 @@ newInputStream ( _1 ) |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`first))
 newOutputStream ( _1 ) |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`first))
 notExists ( _1 ) |-->not(OclFile.newOclFile(_1`first).exists())
 probeContentType ( _1 ) |-->"text/plain"
+
+readString ( _1 ) |-->OclFile.newOclFile(_1).readLine()
 readAllBytes ( _1 ) |-->OclFile.newOclFile(_1).readNbytes(OclFile.newOclFile(_1).length())
 readAllLines ( _1 ) |-->OclFile.newOclFile(_1`first).readAll()->split("\n\r")
 size ( _1 ) |-->OclFile.newOclFile(_1).length()
 write ( _1 ) |-->_1`first
 
+_1 ( _2 ) |-->OclFile._1(_2)
 
 
 
-
+pathsMethodCall::
+get ( _1 ) |-->_1`pathsArguments
 
 
 mathMethodCall::
@@ -2659,7 +2682,7 @@ _1 |-->_1
 
 lambdaExpression::
 _1 -> _2 |-->lambda _1 in (_2`updateForm & _2`queryForm)<when> _2`isAssignment true
-_1 -> _2 |-->_1 _2
+_1 -> _2 |-->_1 (_2)
 
 
 forEachVariable::
@@ -2718,22 +2741,22 @@ _1 . first |-->_1->at("first")
 _1 . second |-->_1->at("second")
 _1 . third |-->_1->at("third")
 
-_1 :: parseLong |-->lambda _s : String in _s->toLong()
-_1 :: parseInt |-->lambda _s : String in _s->toInteger()
-_1 :: parseDouble |-->lambda _s : String in _s->toReal()
-_1 :: _2 |-->lambda _pars : OclAny in _1`dcolonObject._2(_pars)
+_1 :: parseLong |-->(lambda _s : String in (_s->toLong()))
+_1 :: parseInt |-->(lambda _s : String in (_s->toInteger()))
+_1 :: parseDouble |-->(lambda _s : String in (_s->toReal()))
+_1 :: _2 |-->(lambda _pars : OclAny in (_1`dcolonObject._2(_pars)))
 
-System . out |-->OclFile["System.out"]
-System . in |-->OclFile["System.in"]
-System . err |-->OclFile["System.err"]
+System . out |-->(OclFile["System.out"])
+System . in |-->(OclFile["System.in"])
+System . err |-->(OclFile["System.err"])
 
 System.out |-->OclFile["System.out"]
 System.in |-->OclFile["System.in"]
 System.err |-->OclFile["System.err"]
 
-System.out . _1 |-->OclFile["System.out"]._1`systemMethodCall
-System.in . _1 |-->OclFile["System.in"]._1`systemMethodCall
-System.err . _1 |-->OclFile["System.err"]._1`systemMethodCall
+System.out . _1 |-->(OclFile["System.out"])._1`systemMethodCall
+System.in . _1 |-->(OclFile["System.in"])._1`systemMethodCall
+System.err . _1 |-->(OclFile["System.err"])._1`systemMethodCall
 
 System . _1 |-->_1`systemMethodCall
 Array . _1 |-->_1`arrayMethodCall
@@ -2746,6 +2769,8 @@ Math . E |-->2.718281828459045
 Math . _1 |-->_1`mathMethodCall
 
 EnumSet . _1 |-->_1`enumsetMethodCall
+
+DriverManager . _1 |-->OclDatasource._1
 
 Byte . MIN_VALUE |-->-128
 Byte . MAX_VALUE |-->127
@@ -2845,6 +2870,7 @@ Boolean . _1 |-->_1`booleanMethodCall
 
 
 Arrays . _1 |-->_1`arraysMethodCall
+Paths . _1 |-->_1`pathsMethodCall
 
 Pattern . _1 |-->OclRegex_1`methodCallQueryForm
 
@@ -3233,7 +3259,7 @@ _1 |-->_1`type
 
 sideEffect::
 _1 . _2 |-->    _1 := _1_2`methodCallSideEffect
-
+( _1 ) _2 |-->_2`sideEffect
 _1 |-->    _1
 
 
@@ -3437,10 +3463,11 @@ Boolean . _1 |-->_1`booleanMethodCall
 Thread . _1 |-->    OclProcess._1
 Assert . _1 |-->_1`assertMethodCall
 Files . _1 |-->_1`filesMethodCall
+Paths . _1 |-->_1`pathsMethodCall
 
-System.out . _1 |-->    OclFile["System.out"]._1`systemMethodCall
-System.in . _1 |-->    OclFile["System.in"]._1`systemMethodCall
-System.err . _1 |-->    OclFile["System.err"]._1`systemMethodCall
+System.out . _1 |-->    execute (OclFile["System.out"])._1`systemMethodCall
+System.in . _1 |-->    execute (OclFile["System.in"])._1`systemMethodCall
+System.err . _1 |-->    execute (OclFile["System.err"])._1`systemMethodCall
 
 System . _1 |-->_1`systemMethodCall
 
@@ -3902,6 +3929,7 @@ LittleEndianOutput |-->OclFile
 BigEndianInput |-->OclFile
 BigEndianOutput |-->OclFile
 
+DriverManager |-->OclDatasource
 Socket |-->OclDatasource
 BluetoothSocket |-->OclDatasource
 URL |-->OclDatasource

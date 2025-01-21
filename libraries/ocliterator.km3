@@ -26,6 +26,10 @@ class OclIteratorResult
     attribute columns : Sequence(OclAttribute); 
 
 
+    query getElements() : Sequence
+    pre: true 
+    post: result = elements; 
+
     query hasNext() : boolean
     pre: true
     post: if position >= 0 & position < elements.size then result = true else result = false endif;

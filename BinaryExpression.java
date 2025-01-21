@@ -291,6 +291,33 @@ class BinaryExpression extends Expression
     // return new BasicExpression("false",0);
   }
 
+  public Expression transformPythonSelectExpressions()
+  { 
+  //   s->selectRows(P) is transformed to 
+  //   s->select( $x | P[$x/s] ) 
+  //   s->restrict(P) for Sequence s is transformed to 
+  //   s->select( _x | P[_x/s] )
+  //   but actually nested.
+
+     if ("->restrict".equals(operator) && left.isSequence())
+     { String fvar = left + ""; 
+       Expression avar = 
+         BasicExpression.newVariableBasicExpression("$x"); 
+       Expression newright = 
+         right.substituteEq(fvar, avar); 
+       Expression newleft =
+         new BinaryExpression(":", avar, left); 
+       return new BinaryExpression("|", 
+                                   newleft, newright); 
+     } 
+ 
+     BinaryExpression res = (BinaryExpression) clone(); 
+     res.left = left.transformPythonSelectExpressions(); 
+     res.right = right.transformPythonSelectExpressions(); 
+     return res; 
+  } 
+
+
   public Expression firstConjunct()
   { if ("&".equals(operator))
     { return left.firstConjunct(); } 
@@ -3677,7 +3704,7 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("&") || operator.equals("or"))
     { return typeCheckAnd(sms); }
     else 
-    { System.out.println("Unexpected operator: " + operator);
+    { System.out.println("!! ERROR: Unexpected operator: " + operator);
       modality = ERROR; 
       return ERROR; 
     }
@@ -3730,6 +3757,16 @@ public void findClones(java.util.Map clones,
       System.out.println(">>> Typechecked let expression: let " + vname + " : " + accumulator.getType() + " = " + left + " in (" + type + ")"); 
       return true; 
     }
+
+ /*   if ("->restrict".equals(operator) && left.isSequence())
+    { JOptionPane.showInputDialog("Converting Python expression " + this); 
+      BinaryExpression pyexpr = 
+        (BinaryExpression) transformPythonSelectExpressions();
+      operator = pyexpr.operator; 
+      left = pyexpr.left; 
+      right = pyexpr.right;
+      return true;   
+    } */ 
 
     if (operator.equals("->exists") || 
         operator.equals("->exists1") ||
@@ -5121,6 +5158,17 @@ public void findClones(java.util.Map clones,
       System.out.println(">>> Typechecked let expression: " + lrt + " " + rtc + " " + type); 
       return true; 
     }
+
+/*
+    if ("->restrict".equals(operator) && left.isSequence())
+    { BinaryExpression pyexpr = 
+        (BinaryExpression) transformPythonSelectExpressions();
+      JOptionPane.showInputDialog("Converting Python expression " + this + " to " + pyexpr); 
+      operator = pyexpr.operator; 
+      left = pyexpr.left; 
+      right = pyexpr.right;  
+      return true; 
+    } */ 
 
     if (operator.equals("->iterate") && 
         iteratorVariable != null && 

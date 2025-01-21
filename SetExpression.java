@@ -114,7 +114,7 @@ public class SetExpression extends Expression
 
     // Else - maps
 
-    System.out.println("*** Merging maps " + left + " and " + right); 
+    // System.out.println("*** Merging maps " + left + " and " + right); 
 
     Vector mapelems = new Vector(); 
     for (int i = 0; i < elems1.size(); i++) 
@@ -122,7 +122,7 @@ public class SetExpression extends Expression
           (BinaryExpression) elems1.get(i); 
       Expression key1 = maplet1.getLeft();
 
-      System.out.println("*** KEY 1: " + key1); 
+      // System.out.println("*** KEY 1: " + key1); 
 
       boolean foundkey1 = false;  
       for (int j = 0; j < elems2.size(); j++) 
@@ -154,6 +154,19 @@ public class SetExpression extends Expression
     { return (Expression) elements.get(i); } 
     return null; 
   } 
+
+  public Expression transformPythonSelectExpressions()
+  { SetExpression res = new SetExpression(ordered); 
+
+    for (int i = 0; i < elements.size(); i++) 
+    { Expression val = (Expression) elements.get(i);
+      Expression nval = val.transformPythonSelectExpressions();  
+      res.addElement(nval);  
+    }
+
+    return res; 
+  } 
+ 
 
   public boolean containsSubexpression(Expression expr) 
   { for (int i = 0; i < elements.size(); i++) 

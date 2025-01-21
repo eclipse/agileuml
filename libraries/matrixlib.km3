@@ -198,6 +198,32 @@ class MatrixLib {
       );
     return dmat; 
  
+  static query selectElements(m : Sequence, 
+                      f : Function(double,boolean)) : Sequence
+  pre: true 
+  post: true
+  activity: 
+    if m->size() = 0 
+    then 
+      return Sequence{}
+    else skip; 
+
+    if m->at(1)->oclIsTypeOf(Sequence) 
+    then 
+      return m->collect( _r | 
+         MatrixLib.selectElements(_r->oclAsType(Sequence), f))
+    else 
+      skip;
+
+    var dmat : Sequence(double) := Sequence{}->collect(0.0);
+
+    for x : m 
+    do 
+      (var y : double := x->oclAsType(double);  
+       if (f->apply(y)) then dmat := dmat->append(y)
+       else skip
+      );
+    return dmat; 
 
    static query elementwiseMult(m : Sequence, x : double) : Sequence
   pre: true 

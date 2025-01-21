@@ -301,6 +301,8 @@ abstract class Expression
     return res + ""; 
   } 
 
+  public abstract Expression transformPythonSelectExpressions(); 
+
   public abstract boolean containsSubexpression(Expression expr); 
 
   public Vector mutants()

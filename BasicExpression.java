@@ -897,6 +897,30 @@ class BasicExpression extends Expression
     return res; 
   }
 
+  public Expression transformPythonSelectExpressions()
+  { BasicExpression res = (BasicExpression) clone();
+    if (arrayIndex != null) 
+    { res.arrayIndex = 
+        arrayIndex.transformPythonSelectExpressions(); 
+    }
+
+    if (parameters != null) 
+    { res.parameters = new Vector(); 
+      for (int i = 0; i < parameters.size(); i++) 
+      { if (parameters.get(i) instanceof Expression)
+	    { Expression par = (Expression) parameters.get(i); 
+          Expression pclone = 
+             par.transformPythonSelectExpressions(); 
+          res.parameters.add(pclone); 
+        }
+        else 
+        { res.parameters.add(parameters.get(i)); }
+      } 
+    } 
+
+    return res; 
+  }
+
   public boolean containsSubexpression(Expression expr) 
   { if (arrayIndex != null) 
     { if (arrayIndex.containsSubexpression(expr))

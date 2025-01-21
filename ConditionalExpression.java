@@ -54,6 +54,13 @@ public class ConditionalExpression extends Expression
   public Vector getParameters() 
   { return new Vector(); } 
 
+  public Expression transformPythonSelectExpressions()
+  { Expression tqf = test.transformPythonSelectExpressions();
+    Expression lqf = ifExp.transformPythonSelectExpressions();
+    Expression rqf = elseExp.transformPythonSelectExpressions();
+    return new ConditionalExpression(tqf, lqf, rqf); 
+  } 
+
   public String queryForm(java.util.Map env, boolean local)
   { String tqf = test.queryForm(env, local);
     String lqf = ifExp.queryForm(env, local);

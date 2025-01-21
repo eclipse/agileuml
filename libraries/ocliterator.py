@@ -64,6 +64,8 @@ class OclIterator :
     self.generatorFunction = None
     OclIterator.ocliterator_instances.append(self)
 
+  def getElements(self) : 
+    return self.elements
 
   def getPosition(self) : 
     return self.position

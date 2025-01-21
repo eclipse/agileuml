@@ -4,12 +4,21 @@ import os
 import pickle
 import socket
 import tempfile
+import gc
 
 from enum import Enum
 
 
 def free(x):
   del x
+
+  # Garbage Collection
+  try:
+    gc.collect()
+  except Exception as e:
+    pass 
+  else:
+    pass
 
 
 class OclFile:

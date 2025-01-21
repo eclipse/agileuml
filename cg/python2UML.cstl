@@ -316,12 +316,13 @@ _1 _2 _3 |-->_1_2<when> _2`isBasicTypeTrailer true, _3 matches .value
 _1 _2 |-->MatrixLib.shape(_1)<when> _2 matches .shape
 _1 _2 |-->MatrixLib.shape(_1)->size()<when> _2 matches .ndim
 _1 _2 |-->MatrixLib.shape(_1)->prd()<when> _2 matches .size
+_1 _2 |-->MatrixLib.flattenMatrix(_1)->first()->oclType()<when> _2 matches .dtype
+_1 _2 |-->_1<when> _1 atom, _2 matches .head\(\)
 
 _1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 trailer
 
 _1 _2 |-->(_1.new_1()).initialise_2<when> _1 Class, _2 trailer
 
-_1 _2 |-->_1<when> _1 atom, _2 matches .head\(\)
 _1 _2 |-->MathLib.mean(_1)<when> _1 atom, _2 matches .mean\(\)
 _1 _2 |-->MathLib.median(_1)<when> _1 atom, _2 matches .median\(\)
 _1 _2 _3 |-->MathLib.median(_1_2)<when> _1 atom, _3 matches .median\(\)
@@ -338,6 +339,9 @@ _1 _2 |-->StringLib.padRightWithInto(_1,_2`justificationArguments)<when> _1 atom
 _1 _2 |-->StringLib.interpolateStrings(_1, _2`formatArguments)<when> _1 atom, _2`second format
 
 _1 _* |-->_1->apply_*<when> _1 Function
+
+_1 _2 |-->_1_2`mapQueryForm<when> _1 Map
+_1 _2 |-->_1_2`sequenceQueryForm<when> _1 Sequence
 
 _1 _* |-->_1_*<when> _1 atom
 _1 |-->_1
@@ -398,6 +402,44 @@ f _1 |-->StringLib.formattedString(_1)
 _1 |-->_1
 
 
+removeAtomBrackets::
+( ) |-->()
+( _1 ) |-->_1`first<when> _1 multiple
+( _1 ) |-->_1
+[ ] |-->Sequence{}
+{ } |-->Set{}
+[ _1 ] |-->_1`sequenceFormation
+{ _1 } |-->_1
+` _1 ` |-->"_1"
+- _1 |-->-_1
+
+None |-->null
+True |-->true
+False |-->false
+inf |-->Math_PINFINITY
+Infinity |-->Math_PINFINITY
+nan |-->Math_NaN
+
+... |-->...
+print |-->print
+exec |-->exec
+
+int |-->OclType["int"]
+float |-->OclType["double"]
+str |-->OclType["String"]
+bool |-->OclType["boolean"]
+dict |-->OclType["Map"]
+list |-->OclType["Sequence"]
+set |-->OclType["Set"]
+
+R _1 |-->StringLib.rawString(_1)
+r _1 |-->StringLib.rawString(_1)
+f _1 |-->StringLib.formattedString(_1)
+
+_1 |-->_1`removeAtomBrackets<when> _1 arguments
+_1 |-->_1
+
+
 dictorsetmaker::
 _1 : _2 |-->Map{ _1 |-> _2 }
 _1 : _2 _3 |-->_3`domainPart->select(_3`variablePart | _3`selectPart)->collect(_3`variablePart | Map{_1 |-> _2})->unionAll()<when> _3 comp_for
@@ -405,6 +447,7 @@ _1 : _2 _3 |-->_3`domainPart->select(_3`variablePart | _3`selectPart)->collect(_
 _1 : _2 , _* |-->Map{ _1 |-> _2 }->union(_*`recurse)
 ** _1 , _* |-->_1->union(_*`recurse)
 _1 |-->_1`setFormation
+
 
 isMapAtomExpression::
 _1 : _2 |-->true
@@ -522,12 +565,17 @@ del _1 |-->    execute _1->isDeleted()
 await asyncio _1 |-->    _1`asyncioTrailer<when> _1 trailer
 await _1 |-->    _1.join()
 
-_1 _2 |-->    _1.closeFile()<when> _1 atom, _2`second close
-_1 _2 |-->    _1.write_2`third<when> _1 atom, _2`second write
+np _1 |-->    _1`removeTrailerBrackets := _1`numpyTrailer
+np _1 _2 |-->_2`npRandomTrailer<when> _1 matches .random
+
 pickle _1 |-->    _1`thirdSecondArg.writeObject(_1`thirdFirstArg)<when> _1`second dump
 asyncio _1 |-->    _1`asyncioTrailer
-numpy _1 |-->    _1`numpyTrailer
 
+numpy _1 |-->    _1`removeTrailerBrackets := _1`numpyTrailer
+numpy _1 _2 |-->_2`npRandomTrailer<when> _1 matches .random
+
+_1 _2 |-->    _1.closeFile()<when> _1 atom, _2`second close
+_1 _2 |-->    _1.write_2`third<when> _1 atom, _2`second write
 
 _1 _2 |-->    execute (_2`third : _1)<when> _1 atom, _2`second append
 _1 _2 |-->    execute (_2`third : _1)<when> _1 atom, _2`second add
@@ -539,7 +587,7 @@ _1 _2 |-->    execute ((_1 - _2`third) /<: _1)<when> _1 atom, _2`second intersec
 _1 _2 |-->    execute (_1 /<: _1)<when> _1 atom, _2`second clear
 
 
-_1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer, _2`isUpdating true
+_1 _2 |-->    _1`removeAtomBrackets := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer, _2`isUpdating true
 
 _1 _2 |-->    _1_2<when> _1 atom, _2 trailer
 
@@ -795,6 +843,9 @@ _1 _* |-->_1
 _1 |-->_1
 
 
+removeTrailerBrackets::
+. _1 _2 |-->_2`removeAtomBrackets
+
 
 trailer::
 . count _1 |-->->count_1
@@ -877,10 +928,157 @@ trailer::
 
 . maxlen |-->->size()
 
-
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
+
+mapQueryForm::
+. count _1 |-->->count_1
+. index _1 |-->->indexOf_1 - 1
+. sort _1 |-->->sort()
+. reverse _1 |-->->reverse()
+. pop _1 |-->_1`popArguments
+. popleft _1 |-->_1`popleftArguments
+. add _1 |-->->including_1
+. copy _1 |-->->copy()
+. intersection _1 |-->->intersection_1
+. intersection_update _1 |-->->intersection_1
+. difference _1 |--> - _1
+. difference_update _1 |--> - _1
+. isdisjoint _1 |-->->intersection_1->isEmpty()
+. issubset _1 |--> <: _1
+. issuperset _1 |-->->includesAll_1
+. symmetric_difference _1 |-->->symmetricDifference_1
+. update _1 |-->_1`allUnion
+. remove _1 |-->->excludingFirst_1
+. discard _1 |-->->excluding_1
+. clear _1 |-->->intersection(Set{})
+. items _1 |-->->asSequence()->collect( _mx | Sequence{_mx->keys()->any(), _mx->values()->any()})
+
+
+. max _1 |-->->max()
+. min _1 |-->->min()
+. head _1 |-->->collect( _ser | _ser.subrange(1,_1))
+. tail _1 |-->->collect( _ser | _ser.subrange(_1, _ser->size()))
+. at _1 |-->_1`reversedAccess
+
+. maxlen |-->->size()
+
+. _1 |-->._1
+. _1 _* |-->._1_*
+_1 |-->_1`mapArgumentsQueryForm<when> _1 arguments
+_1 |-->_1
+
+
+mapTrailerType::
+. count _1 |-->int
+. index _1 |-->int
+. sort _1 |-->Map
+. reverse _1 |-->Map
+. add _1 |-->Map
+. copy _1 |-->Map
+. intersection _1 |-->Map
+. intersection_update _1 |-->Map
+. difference _1 |-->Map
+. difference_update _1 |-->Map
+. isdisjoint _1 |-->boolean
+. issubset _1 |-->boolean
+. issuperset _1 |-->boolean
+. symmetric_difference _1 |-->Map
+. update _1 |-->Map
+. remove _1 |-->Map
+. discard _1 |-->Map
+. clear _1 |-->Map
+. items _1 |-->Sequence
+
+. max _1 |-->OclAny
+. min _1 |-->OclAny
+. head _1 |-->Map
+. tail _1 |-->
+. at _1 |-->OclAny
+
+. maxlen |-->int
+
+. _1 |-->OclAny
+. _1 _* |-->OclAny
+_1 |-->_1`mapArgumentsType<when> _1 arguments
+_1 |-->_1`ocltype
+
+
+sequenceQueryForm::
+. count _1 |-->->count_1
+. index _1 |-->->indexOf_1 - 1
+. sort _1 |-->->sort()
+. reverse _1 |-->->reverse()
+. pop _1 |-->_1`popArguments
+. popleft _1 |-->_1`popleftArguments
+. add _1 |-->->including_1
+. copy _1 |-->->copy()
+. intersection _1 |-->->intersection_1
+. intersection_update _1 |-->->intersection_1
+. difference _1 |--> - _1
+. difference_update _1 |--> - _1
+. isdisjoint _1 |-->->intersection_1->isEmpty()
+. issubset _1 |--> <: _1
+. issuperset _1 |-->->includesAll_1
+. symmetric_difference _1 |-->->symmetricDifference_1
+. update _1 |-->_1`allUnion
+. remove _1 |-->->excludingFirst_1
+. discard _1 |-->->excluding_1
+. clear _1 |-->->intersection(Set{})
+. items _1 |-->->asSequence()->collect( _mx | Sequence{_mx->keys()->any(), _mx->values()->any()})
+
+
+. max _1 |-->->max()
+. min _1 |-->->min()
+. head _1 |-->->collect( _ser | _ser.subrange(1,_1))
+. tail _1 |-->->collect( _ser | _ser.subrange(_1, _ser->size()))
+. at _1 |-->_1`reversedAccess
+
+. maxlen |-->->size()
+
+. _1 |-->._1
+. _1 _* |-->._1_*
+_1 |-->_1`sequenceArgumentsQueryForm<when> _1 arguments
+_1 |-->_1
+
+
+sequenceTrailerType::
+. count _1 |-->int
+. index _1 |-->int
+. sort _1 |-->Sequence
+. reverse _1 |-->Sequence
+. pop _1 |-->OclAny
+. popleft _1 |-->OclAny
+. add _1 |-->Sequence
+. copy _1 |-->Sequence
+. intersection _1 |-->Sequence
+. intersection_update _1 |-->Sequence
+. difference _1 |-->Sequence
+. difference_update _1 |-->Sequence
+. isdisjoint _1 |-->boolean
+. issubset _1 |-->boolean
+. issuperset _1 |-->boolean
+. symmetric_difference _1 |-->Sequence
+. update _1 |-->Sequence
+. remove _1 |-->Sequence
+. discard _1 |-->Sequence
+. clear _1 |-->Sequence
+. items _1 |-->Sequence
+
+. max _1 |-->OclAny
+. min _1 |-->OclAny
+. head _1 |-->Sequence
+. tail _1 |-->Sequence
+. at _1 |-->OclAny
+
+. maxlen |-->int
+
+. _1 |-->OclAny
+. _1 _* |-->OclAny
+_1 |-->_1`sequenceArgumentsType<when> _1 arguments
+_1 |-->_1`ocltype
 
 
 asyncioTrailer::
@@ -1232,8 +1430,14 @@ numpyType::
 . e |-->double
 . euler_gamma |-->double
 
+. int32 |-->OclType
+. int64 |-->OclType
+. float32 |-->OclType
+. float64 |-->OclType
+
 . array _1 |-->Sequence
 . arange _1 |-->Sequence
+. concatenate _1 |-->Sequence
 . shape _1 |-->Sequence
 . empty _1 |-->Sequence
 . empty_like _1 |-->Sequence
@@ -1286,6 +1490,8 @@ numpyType::
 . subtract _1 |-->Sequence
 . multiply _1 |-->Sequence
 . divide _1 |-->Sequence
+. matmul _1 |-->Sequence
+. sort _1 |-->Sequence
 
 . sum _1 |-->double
 . prod _1 |-->double
@@ -1400,15 +1606,51 @@ sortedTrailer::
 _1 |-->_1`sortedArguments
 
 
-
 justificationArguments::
 . ljust _1 |-->_1`justificationArguments
 . rjust _1 |-->_1`justificationArguments
 ( _1 ) |--> _1`third, _1`first
 
+
 formatArguments::
 . format _1 |-->_1`formatArguments
 ( _1 ) |-->Sequence{_1}
+
+
+mapArgumentsQueryForm::
+( ) |-->()
+( _1 ) |-->(_1)
+[ ] |-->()
+[ _1 ] |-->->selectRows(_1`literalSubscript)<when> _1`ocltype boolean
+[ _1 ] |-->->restrict(_1`literalSubscript)<when> _1`ocltype Sequence
+[ _1 ] |-->->at(_1`literalSubscript)
+
+
+mapArgumentsType::
+( ) |-->OclAny
+( _1 ) |-->_1`ocltype
+[ ] |-->OclAny
+[ _1 ] |-->Map<when> _1`ocltype boolean
+[ _1 ] |-->Map<when> _1`ocltype Sequence
+[ _1 ] |-->OclAny
+
+
+sequenceArgumentsQueryForm::
+( ) |-->()
+( _1 ) |-->(_1)
+[ ] |-->()
+[ _1 ] |-->->selectElements(_1`literalSubscript)<when> _1`ocltype boolean
+[ _1 ] |-->->restrict(_1`literalSubscript->collect(_ind | _ind+1))<when> _1`ocltype Sequence
+[ _1 ] |-->->at(_1`literalSubscript+1)
+
+
+sequenceArgumentsType::
+( ) |-->OclAny
+( _1 ) |-->_1`ocltype
+[ ] |-->OclAny
+[ _1 ] |-->Sequence<when> _1`ocltype boolean
+[ _1 ] |-->Sequence<when> _1`ocltype Sequence
+[ _1 ] |-->OclAny
 
 
 arguments::
@@ -1416,6 +1658,7 @@ arguments::
 ( _1 ) |-->(_1)
 [ ] |-->()
 [ _1 ] |-->_1
+
 
 firstArg::
 ( ) |-->
@@ -1584,11 +1827,35 @@ _1 : _2 |-->.subrange(_1+1, _2)<when> _2 test
 : -2 |-->->front()->front()
 : _1 |-->.subrange(1,_1)<when> _1 test
 1 : |-->->tail()
+
 _1 : |-->.subrange(_1+1)<when> _1 test
 _1 |-->->at(_1)<when> _1 String
 _1 |-->->selectRows(_1)<when> _1`ocltype boolean
 _1 |-->->restrict(_1)<when> _1`ocltype Sequence
 _1 |-->[_1+1]
+
+
+literalSubscript::
+... |-->
+0 |-->1
+-1 |-->-1
+-2 |-->-2
+_1 |-->_1<when> _1 matches -.*
+
+_1 : _2 |-->Integer.subrange(_1+1, _2)<when> _2 test
+: -1 |-->
+: -2 |-->
+: _1 |-->Integer.subrange(1,_1)<when> _1 test
+1 : |-->
+
+_1 : |--><when> _1 test
+_1 |-->_1`literalSubscript<when> _1 subscriptlist
+_1 |-->_1`literalSubscript<when> _1 subscript
+
+_1 |-->_1<when> _1 String
+_1 |-->_1<when> _1`ocltype boolean
+_1 |-->_1<when> _1`ocltype Sequence
+_1 |-->_1+1
 
 
 sliceop::
@@ -1605,8 +1872,10 @@ yield_arg::
 from _1 |-->_1
 _1 |-->_1
 
+
 stmt::
 _1 |-->_1
+
 
 compound_stmt::
 if _1 : _2 |-->    if _1 then (\n  _2\n    ) else skip
@@ -2070,9 +2339,7 @@ not _1 |-->boolean
 _1 and _2 |-->boolean
 _1 or _2 |-->boolean
 
-_1 < _2 |-->Sequence<when> _1 Sequence
 _1 < _2 |-->boolean
-_1 > _2 |-->Sequence<when> _1 Sequence
 _1 > _2 |-->boolean
 _1 == _2 |-->boolean
 _1 >= _2 |-->boolean
@@ -2098,6 +2365,9 @@ _1 _2 |-->OclIterator<when> _1 generator, _2 trailer
 
 _1 _2 |-->_1<when> _1 Class, _2 trailer
 
+_1 _2 |-->_2`mapTrailerType<when> _1 Map, _2 trailer
+_1 _2 |-->_2`sequenceTrailerType<when> _1 Sequence, _2 trailer
+
 _1 _2 |-->_2`trailerOclType<when> _1 atom, _2 trailer
 
 _1 |-->int<when> _1 int
@@ -2117,6 +2387,8 @@ _1 |-->_1`ocltype<when> _1 comparison
 _1 |-->_1`ocltype<when> _1 expr
 _1 |-->_1`ocltype<when> _1 atom
 _1 |-->_1`ocltype<when> _1 name
+_1 |-->_1`ocltype<when> _1 subscriptlist
+_1 |-->_1`ocltype<when> _1 subscript
 _1 |-->_1`numberType<when> _1 number
 
 _1 |-->OclAny

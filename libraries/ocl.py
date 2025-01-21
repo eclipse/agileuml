@@ -280,7 +280,7 @@ def insertAtString(x,i,s) :
   return x1 + s + x2
 
 def setAtString(x,i,s) :
-  # i must be > 0, s is length 1
+  # i must be > 0, s has length 1
   if i <= 0 : 
     return x
   x1 = x[0:i-1]
@@ -527,14 +527,18 @@ def setSubrange(x,i,j,v) :
   x1 = x[0:i-1] + str(v) + x[j:]
   return x1
 
-def listSubrange(l: list, i: int, j: int) -> list:
-  # For lists
+def sequenceSubrange(l, i, j) :
+  # For lists. OCL indexing used for i, j
   result = []
+  if j < 0 : 
+    j = len(l) + j
+  # eg: -1 is the last element of l
+  if i == 0 : 
+    i = 1
   if i < 0:
-    i = (len(l) - 1) + i
-  if j < 0:
-    j = (len(l) - 1) + j
-  for k in range(i, j+1):
+    i = len(l) + i
+  
+  for k in range(i-1, j):
     result.append(l[k])
   return result
 
@@ -1134,6 +1138,9 @@ def values(m) :
 # ss = "a long string"
 # pp = setSubrange(ss, 3, 5, "and")
 # print(pp)
+
+# ss = [1, 4, 6, 7, 2]
+# print(listSubrange(ss, 2, -1))
 
 
 
