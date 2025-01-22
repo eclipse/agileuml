@@ -5,7 +5,7 @@ import javax.swing.*;
 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -342,9 +342,9 @@ public class ASTCompositeTerm extends ASTTerm
 
       String fld = ntrm.literalForm(); 
       if (ASTTerm.cobolDataDescriptionDataNames.contains(fld))
-      { JOptionPane.showMessageDialog(null, this + 
+      { /* JOptionPane.showMessageDialog(null, this + 
               " Ambiguous field name: " + fld, 
-              " ", JOptionPane.INFORMATION_MESSAGE);
+              " ", JOptionPane.INFORMATION_MESSAGE); */ 
         ASTTerm.setTaggedValue(fld, "ambiguousName", 
                                "true");  
         ASTTerm.cobolAmbiguousDataNames.add(fld);
@@ -29134,8 +29134,8 @@ public class ASTCompositeTerm extends ASTTerm
           String callp = callarg.toKM3();
           String tt = ASTTerm.getType(args); 
           String pt = ASTTerm.getType(callarg); 
-          System.out.println(">>> Type of " + args + " is: " + tt);  
-          System.out.println(">>> Type of " + callp + " is: " + pt);  
+          // System.out.println(">>> Type of " + args + " is: " + tt);  
+          // System.out.println(">>> Type of " + callp + " is: " + pt);  
           if (cargs.size() == 0) // it.remove() for iterator
           { if (arg.expression != null) 
             { expression = 
@@ -34648,8 +34648,9 @@ public class ASTCompositeTerm extends ASTTerm
       if (t.updatesObject(null))
       { // System.out.println(">> Expression returning value, and with side-effect: " + t); 
         statement = t.statement;    // updateForm
-        // System.out.println(">> Update form: >> " + statement); 
-        System.out.println(); 
+        /* JOptionPane.showInputDialog(">> Update form of " + 
+                                    this + " : >> " + statement); */  
+        // System.out.println(); 
         String qf = t.queryForm(); 
         expression = t.expression; 
         // System.out.println(">> Query form: >> " + expression); 
@@ -35902,6 +35903,11 @@ public class ASTCompositeTerm extends ASTTerm
 
         if ("=".equals(op + "") && e2.updatesObject(null))
         { // e1x := result of e2x ; postsideeffect of e2x
+          String postEffect = e2.postSideEffect(); 
+
+          // JOptionPane.showInputDialog(">> Update form of " + 
+          //                this + " : >> " + e2.statement); 
+        
           Statement updateF = e2.statement; 
           String qf = e2.queryForm(); 
 
@@ -35922,7 +35928,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression = e1.expression; 
           }
  
-          return "(" + e1x + " := " + qf + " ; " + e2x + ")"; 
+          return "(" + e1x + " := " + qf + " ; " + postEffect + ")"; 
         } 
 
         if ("=".equals(op + "") && e1.hasSideEffect() &&
@@ -37997,19 +38003,24 @@ public class ASTCompositeTerm extends ASTTerm
             if (att != null) 
             { att.setInitialExpression(vInit.expression); }
           
-            String prese = vInit.preSideEffect(); 
-            if (vInit.statement != null) 
-            { sstatements.addStatement(0, vInit.statement); } 
+            if (vInit.hasPreSideEffect())
+            { String prese = vInit.preSideEffect(); 
+              if (vInit.statement != null) 
+              { sstatements.addStatement(0, vInit.statement); } 
 
-            System.out.println(">+++> Pre side-effect of " + vInit + " : " + vInit.statement);
+              /* JOptionPane.showInputDialog(">+++> Pre side-effect of " + vInit + " : " + vInit.statement); */ 
+            }
 
             vInit.statement = null; 
-            String postse = vInit.postSideEffect(); 
 
-            if (vInit.statement != null) // post side-effect 
-            { sstatements.addStatement(tv.statement); } 
+            if (vInit.hasSideEffect())
+            { String postse = vInit.postSideEffect(); 
 
-            System.out.println(">+++> Post side-effect: " + tv.statement);
+              if (vInit.statement != null) // post side-effect 
+              { sstatements.addStatement(tv.statement); } 
+
+             /* JOptionPane.showInputDialog(">+++> Post side-effect: " + tv.statement); */ 
+            }
           }
 
           System.out.println(">+++> Declaration statements: " + statement);
@@ -40116,11 +40127,14 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm call = (ASTTerm) terms.get(2); 
         return call.updatesObject((ASTTerm) terms.get(0)); 
       } 
+
       if (terms.size() == 4 && 
           "(".equals(terms.get(0) + "") &&
           ")".equals(terms.get(2) + ""))
       { // casting 
-        ASTTerm call = (ASTTerm) terms.get(3); 
+        ASTTerm call = (ASTTerm) terms.get(3);
+        // JOptionPane.showInputDialog(this + " updates object: " +
+        //                             call.updatesObject(null));   
         return call.updatesObject(null); 
       } 
     } 
@@ -40135,6 +40149,16 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm obj = (ASTTerm) terms.get(0); 
         return obj.updatedObject(); 
       } 
+
+      if (terms.size() == 4 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { // casting 
+        ASTTerm call = (ASTTerm) terms.get(3);
+        // JOptionPane.showInputDialog(this + " updated object: " +
+        //                            call.updatedObject());   
+        return call.updatedObject(); 
+      }
     }
     
     if (terms.size() == 4 && "primary".equals(tag) && 
@@ -40217,7 +40241,12 @@ public class ASTCompositeTerm extends ASTTerm
           "(".equals(terms.get(0) + "") &&
           ")".equals(terms.get(2) + ""))
       { // casting 
-        ASTTerm call = (ASTTerm) terms.get(3); 
+        ASTTerm call = (ASTTerm) terms.get(3);
+
+        // JOptionPane.showInputDialog(this + 
+        //                         " has side effect: " +
+        //                         call.hasSideEffect());   
+        
         return call.hasSideEffect(); 
       } 
       else if (terms.size() == 3 && 
@@ -40252,6 +40281,205 @@ public class ASTCompositeTerm extends ASTTerm
 
     if ("methodCall".equals(tag))
     { return false; } 
+
+    return false; 
+  } 
+
+  public boolean hasPreSideEffect()
+  { if (terms.size() == 3 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+    { // brackets
+      ASTTerm call = (ASTTerm) terms.get(1);
+      return call.hasPreSideEffect(); 
+    } 
+     
+    if ("primary".equals(tag) || "parExpression".equals(tag)) 
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i);
+        if (tt.hasPreSideEffect()) 
+        { return true; }
+      } 
+    } 
+
+    if ("variableInitializer".equals(tag))
+    { ASTTerm t = (ASTTerm) terms.get(0); 
+      return t.hasPreSideEffect();          
+    }
+
+
+    if ("expression".equals(tag))
+    { if (terms.size() == 1) // Identifier or literal
+      { 
+        ASTTerm t = (ASTTerm) terms.get(0); 
+        return t.hasPreSideEffect();           
+      } 
+   
+      if (terms.size() == 2) // UnaryExpression
+      { ASTTerm op = (ASTTerm) terms.get(0); 
+        ASTTerm arg = (ASTTerm) terms.get(1);
+
+        String op1 = op.toKM3(); 
+        String arg1 = arg.toKM3(); 
+
+        if ("++".equals(op.literalForm()))
+        { if (arg.expression != null) 
+          { return true; }  
+        }
+ 
+        if ("--".equals(op.literalForm()))
+        { if (arg.expression != null) 
+          { return true; }  
+        }
+      }  
+      else if (terms.size() == 3) // BinaryExpression
+      { ASTTerm op = (ASTTerm) terms.get(1); 
+        ASTTerm arg1 = (ASTTerm) terms.get(0);
+        ASTTerm arg2 = (ASTTerm) terms.get(2); 
+
+        if (".".equals(op) && 
+            "methodCall".equals(arg2.getTag()))
+        { return false; }  
+
+        SequenceStatement ssres = new SequenceStatement(); 
+
+        return arg1.hasPreSideEffect() || 
+               arg2.hasPreSideEffect();        
+      } 
+      else if (terms.size() == 4 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { // casting 
+        ASTTerm call = (ASTTerm) terms.get(3);
+        return call.hasPreSideEffect();
+      } 
+      else if (terms.size() == 3 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { // brackets
+        ASTTerm call = (ASTTerm) terms.get(1);
+        return call.hasPreSideEffect();
+      } 
+      else if (terms.size() == 4 && 
+          "[".equals(terms.get(1) + "") && 
+          "]".equals(terms.get(3) + "")) // array access
+      { ASTTerm arr = (ASTTerm) terms.get(0); 
+        ASTTerm ind = (ASTTerm) terms.get(2);
+
+        return arr.hasPreSideEffect() ||
+               ind.hasPreSideEffect(); 
+      }
+      else if (terms.size() == 5 && "?".equals(terms.get(1) + ""))
+      { // ConditionalExpression
+        ASTTerm cond = (ASTTerm) terms.get(0); 
+        ASTTerm ifoption = (ASTTerm) terms.get(2);
+        ASTTerm elseoption = (ASTTerm) terms.get(4);
+
+        return cond.hasPreSideEffect() || 
+               ifoption.hasPreSideEffect() || 
+               elseoption.hasPreSideEffect();
+          
+      } 
+    } 
+
+    return false; 
+  } 
+
+  public boolean hasPostSideEffect()
+  { if ("methodCall".equals(tag))
+    { 
+      String called = terms.get(0) + "";
+      // ASTTerm callargs = (ASTTerm) terms.get(2);
+      // Vector cargs = getCallArguments(callargs); 
+
+      if ("replaceAll".equals(called))
+      { // System.out.println(">>> methodCall " + called + " has side-effect."); 
+
+        return true;  
+      }
+
+      return false; 
+    } 
+    
+    if ("primary".equals(tag) || "parExpression".equals(tag)) 
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if (tt.hasPostSideEffect())
+        { return true; }  
+      } 
+    } 
+
+    if ("variableInitializer".equals(tag))
+    { ASTTerm t = (ASTTerm) terms.get(0); 
+      return t.hasPostSideEffect(); 
+    }
+
+    if ("expression".equals(tag))
+    { if (terms.size() == 1) // Identifier or literal
+      { 
+        ASTTerm t = (ASTTerm) terms.get(0); 
+        return t.hasPostSideEffect();         
+      } 
+   
+      if (terms.size() == 2) // UnaryExpression
+      { ASTTerm op = (ASTTerm) terms.get(0); 
+        ASTTerm arg = (ASTTerm) terms.get(1);
+       
+        if ("++".equals(arg.literalForm()))
+        { return true; }
+ 
+        if ("--".equals(arg.literalForm()))
+        { return true; }
+      }  
+      else if (terms.size() == 3) // BinaryExpression
+      { ASTTerm op = (ASTTerm) terms.get(1); 
+        ASTTerm arg1 = (ASTTerm) terms.get(0);
+        ASTTerm arg2 = (ASTTerm) terms.get(2); 
+
+        if (".".equals(op + ""))
+        { if ("Collections".equals(arg1.literalForm()) && 
+              arg2.hasPostSideEffect())
+          { return true; }  
+          return false; 
+        } 
+      
+        return arg1.hasPostSideEffect() ||
+               arg2.hasPostSideEffect();
+      } 
+      else if (terms.size() == 4 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { // casting 
+        ASTTerm call = (ASTTerm) terms.get(3);
+        return call.hasPostSideEffect();
+      } 
+      else if (terms.size() == 3 && 
+          "(".equals(terms.get(0) + "") &&
+          ")".equals(terms.get(2) + ""))
+      { 
+        ASTTerm call = (ASTTerm) terms.get(1);
+        return call.hasPostSideEffect();
+      } 
+      else if (terms.size() == 4 && 
+          "[".equals(terms.get(1) + "") && 
+          "]".equals(terms.get(3) + "")) // array access
+      { ASTTerm arr = (ASTTerm) terms.get(0); 
+        ASTTerm ind = (ASTTerm) terms.get(2);
+
+        return arr.hasPostSideEffect() || 
+               ind.hasPostSideEffect();         
+      }
+      else if (terms.size() == 5 && "?".equals(terms.get(1) + ""))
+      { // ConditionalExpression
+        ASTTerm cond = (ASTTerm) terms.get(0); 
+        ASTTerm ifoption = (ASTTerm) terms.get(2);
+        ASTTerm elseoption = (ASTTerm) terms.get(4);
+        return cond.hasPostSideEffect() ||
+               ifoption.hasPostSideEffect() || 
+               elseoption.hasPostSideEffect();
+          
+      } 
+    } 
 
     return false; 
   } 
@@ -40653,6 +40881,9 @@ public class ASTCompositeTerm extends ASTTerm
         ASTTerm call = (ASTTerm) terms.get(3);
         String res = call.postSideEffect();
         statement = call.statement; 
+        /* JOptionPane.showInputDialog("Post side effect of " + 
+                    this + 
+                    " = " + res + " " + statement); */  
         return res;  
       } 
       else if (terms.size() == 3 && 
@@ -40748,6 +40979,7 @@ public class ASTCompositeTerm extends ASTTerm
         return res; 
       } 
     } 
+
     return null; 
   } 
 
@@ -43086,12 +43318,12 @@ public class ASTCompositeTerm extends ASTTerm
             if (multiplicity == 1 && contMult == 1)
             { // fieldName = owner.subrange(startPos,endPos)
 
-              JOptionPane.showMessageDialog(null, 
+              /* JOptionPane.showMessageDialog(null, 
                  progname + ":: " + fieldName + 
                  " = " + ownername + 
                  ".subrange(" + startPos + "," + endPos + ")", 
                           "", 
-                          JOptionPane.INFORMATION_MESSAGE);
+                          JOptionPane.INFORMATION_MESSAGE); */ 
               BasicExpression owner = 
                 BasicExpression.newAttributeBasicExpression(
                                    ownername, stringType);  
@@ -43120,12 +43352,12 @@ public class ASTCompositeTerm extends ASTTerm
             { // fieldName = owner.subrange(startPos,endPos)
 
               int fwdth = wdth/multiplicity; 
-              JOptionPane.showMessageDialog(null, 
+              /* JOptionPane.showMessageDialog(null, 
                  progname + ":: " + fieldName + 
                  "[i] = " + ownername + 
                  ".subrange(" + startPos + " + (i-1)*" + fwdth + ",  i*" + fwdth + ")", 
                           "", 
-                          JOptionPane.INFORMATION_MESSAGE);
+                          JOptionPane.INFORMATION_MESSAGE); */ 
               BasicExpression owner = 
                 BasicExpression.newAttributeBasicExpression(
                                    ownername, stringType);  
@@ -43151,11 +43383,11 @@ public class ASTCompositeTerm extends ASTTerm
             else if (multiplicity == 1 & contMult > 1)
             { // fieldName[i] = owner[i].subrange(...)
 
-              JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
+              /* JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
                  "[i] = " + ownername + 
                  "[i].subrange(" + startPos + "," + endPos + ")", 
                           "", 
-                          JOptionPane.INFORMATION_MESSAGE);
+                          JOptionPane.INFORMATION_MESSAGE); */ 
 
               BasicExpression indx = 
                 BasicExpression.newVariableBasicExpression(
@@ -43452,12 +43684,12 @@ public class ASTCompositeTerm extends ASTTerm
             Expression dataValueConstraint = 
               ((ASTCompositeTerm) t3).cobolDataValue(vattr); 
              
-            JOptionPane.showMessageDialog(null, 
+            /* JOptionPane.showMessageDialog(null, 
                 "Type of " + condName + " is boolean" +  
                 " (" + dataValueConstraint + " => " + 
                     condName + " = true)", 
                 "", 
-                JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.INFORMATION_MESSAGE); */ 
 
             Attribute condAttr = 
                new Attribute(condName, 
@@ -43700,7 +43932,7 @@ public class ASTCompositeTerm extends ASTTerm
             // { fieldName = "FILLER$" + startPos + "$" + endPosn; }
 
             
-            JOptionPane.showMessageDialog(null, 
+            /* JOptionPane.showMessageDialog(null, 
                "Type of " + fieldName + " is " + typ + 
                " Signed: " + isSigned + 
                " Width: " + wdth + 
@@ -43709,7 +43941,7 @@ public class ASTCompositeTerm extends ASTTerm
                " Multiplicity: " + multiplicity + 
                " Container multiplicity: " + contMult, 
                "", 
-               JOptionPane.INFORMATION_MESSAGE);  
+               JOptionPane.INFORMATION_MESSAGE); */  
          
             ASTTerm.setTaggedValue(fieldName, "startPosition", 
                                      "" + startPos); 
