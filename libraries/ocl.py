@@ -542,7 +542,6 @@ def sequenceSubrange(l, i, j) :
     result.append(l[k])
   return result
 
-
 def insertAt(x,i,s) :
   # i must be > 0
   if i <= 0 : 
