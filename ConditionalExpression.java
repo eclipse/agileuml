@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -183,7 +183,14 @@ public class ConditionalExpression extends Expression
   } 
 
   public Map energyUse(Map res, Vector rUses, Vector oUses) 
-  { test.energyUse(res,rUses,oUses); 
+  { int syn = syntacticComplexity(); 
+    if (syn > TestParameters.syntacticComplexityLimit)
+    { oUses.add("! Excessive expression size (MEL) in " + this + " : try to simplify OCL expression");
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1);
+    } 
+
+    test.energyUse(res,rUses,oUses); 
     ifExp.energyUse(res,rUses,oUses); 
     elseExp.energyUse(res,rUses,oUses);
 

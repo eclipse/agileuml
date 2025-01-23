@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -20657,6 +20657,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   { // Double iterations ->select(...)->select(...)
     // are amber flags.
     // ->select(...)->any() is a red flag.  
+
+    int syn = syntacticComplexity(); 
+    if (syn > TestParameters.syntacticComplexityLimit)
+    { aUses.add("! Excessive expression size (MEL) in " + this + " : try to simplify OCL expression");
+      int ascore = (int) res.get("amber"); 
+      res.set("amber", ascore+1);
+    } 
 
     left.energyUse(res, rUses, aUses); 
     right.energyUse(res, rUses, aUses); 

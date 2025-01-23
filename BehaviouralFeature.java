@@ -7,7 +7,7 @@ import java.util.HashSet;
 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -4421,6 +4421,7 @@ public class BehaviouralFeature extends ModelElement
 
       int acomp = activity.syntacticComplexity(); 
       out.println("*** Activity syntactic complexity = " + acomp); 
+
       if (acomp > TestParameters.operationSizeLimit) 
       { System.err.println("!!! Code smell (EOS): too high activity complexity (" + acomp + ") for " + nme); 
         System.err.println(">>> Recommend refactoring by splitting operation"); 
@@ -4474,7 +4475,7 @@ public class BehaviouralFeature extends ModelElement
       Vector postvars = new Vector(); 
       postvars.add("result"); 
       Vector deps = activity.dataDependents(
-                       allvars,postvars);
+                                   allvars,postvars);
       System.out.println();  
       System.out.println(">***> result is derived from:\n  " + deps);
 

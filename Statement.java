@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane;
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2267,7 +2267,7 @@ class ReturnStatement extends Statement
   }
 
   public Map energyUse(Map uses, 
-                                Vector rUses, Vector oUses)
+                       Vector rUses, Vector oUses)
   { if (value == null) 
     { return uses; } 
     value.energyUse(uses, rUses, oUses); 
@@ -2569,7 +2569,15 @@ class ReturnStatement extends Statement
   public int syntacticComplexity()
   { if (value == null) 
     { return 1; } 
-    return value.syntacticComplexity() + 1; 
+
+    int syncomp = value.syntacticComplexity(); 
+
+    if (syncomp > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + value); 
+      System.err.println(">>> Recommend OCL refactoring"); 
+    } 
+
+    return syncomp + 1; 
   } 
 
   public int cyclomaticComplexity()
@@ -3921,7 +3929,14 @@ class InvocationStatement extends Statement
   public int syntacticComplexity()
   { if (callExp == null) 
     { return 1; } 
-    return callExp.syntacticComplexity() + 1; 
+
+    int syncomp = callExp.syntacticComplexity(); 
+    if (syncomp > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + callExp); 
+      System.err.println(">>> Recommend OCL refactoring"); 
+    } 
+
+    return syncomp + 1; 
   } 
 
   public int cyclomaticComplexity()
@@ -4374,7 +4389,14 @@ class ImplicitInvocationStatement extends Statement
   public int syntacticComplexity()
   { if (callExp == null) 
     { return 1; } 
-    return callExp.syntacticComplexity() + 1; 
+
+    int syncomp = callExp.syntacticComplexity(); 
+    if (syncomp > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + callExp); 
+      System.err.println(">>> Recommend OCL refactoring"); 
+    } 
+
+    return syncomp + 1; 
   } 
 
   public int cyclomaticComplexity()
@@ -6282,14 +6304,27 @@ class WhileStatement extends Statement
 
     if (loopKind == FOR) 
     { if (loopRange != null) 
-      { int rcomp = loopRange.syntacticComplexity(); 
+      { int rcomp = loopRange.syntacticComplexity();
+
+        if (rcomp > TestParameters.syntacticComplexityLimit)
+        { System.err.println("!!! Code smell (MEL): too high expression complexity (" + rcomp + ") for " + loopRange); 
+          System.err.println(">>> Recommend OCL refactoring"); 
+        } 
+ 
         return res + rcomp + 1; 
       } 
     } 
 
     if (loopTest == null) 
-    { return res + 1; } 
-    return loopTest.syntacticComplexity() + res + 1; 
+    { return res + 1; }
+
+    int syncomp = loopTest.syntacticComplexity(); 
+    if (syncomp > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + loopTest); 
+      System.err.println(">>> Recommend OCL refactoring"); 
+    } 
+ 
+    return syncomp + res + 1; 
   } 
 
   public int cyclomaticComplexity()
@@ -7707,7 +7742,17 @@ class CreationStatement extends Statement
   { return this; } 
 
   public int syntacticComplexity()
-  { return 3; } // depends upon the type really. 
+  { if (initialExpression == null)
+    { return 3; } // depends upon the type really.
+
+    int syncomp = initialExpression.syntacticComplexity(); 
+    if (syncomp > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + initialExpression); 
+      System.err.println(">>> Recommend OCL refactoring");  
+    } 
+
+    return 3 + syncomp; 
+  } 
 
   public int cyclomaticComplexity()
   { return 0; } 
@@ -9838,7 +9883,14 @@ class ErrorStatement extends Statement
 
   public int syntacticComplexity()
   { if (thrownObject != null) 
-    { return 1 + thrownObject.syntacticComplexity(); } 
+    { int syncomp = thrownObject.syntacticComplexity(); 
+      if (syncomp > TestParameters.syntacticComplexityLimit)
+      { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + thrownObject); 
+        System.err.println(">>> Recommend OCL refactoring");  
+      } 
+      return 1 + syncomp; 
+    }
+ 
     return 1;
   } 
 
@@ -10235,7 +10287,13 @@ class AssertStatement extends Statement
   { return this; } 
 
   public int syntacticComplexity()
-  { int res = condition.syntacticComplexity(); 
+  { int res = condition.syntacticComplexity();
+
+    if (res > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + res + ") for " + condition); 
+      System.err.println(">>> Recommend OCL refactoring");  
+    } 
+ 
     res++; 
     if (message != null) 
     { return res + message.syntacticComplexity(); } 
@@ -13581,7 +13639,13 @@ class AssignStatement extends Statement
   }  
 
   public int syntacticComplexity()
-  { return lhs.syntacticComplexity() + rhs.syntacticComplexity() + 1; } 
+  { int syncomp = rhs.syntacticComplexity(); 
+    if (syncomp > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + syncomp + ") for " + rhs); 
+      System.err.println(">>> Recommend OCL refactoring");  
+    } 
+    return lhs.syntacticComplexity() + syncomp + 1; 
+  } 
 
   public int cyclomaticComplexity()
   { return 0; } 
@@ -13933,7 +13997,12 @@ class IfCase
   } 
 
   public int syntacticComplexity()
-  { int res = test.syntacticComplexity(); 
+  { int res = test.syntacticComplexity();
+    if (res > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + res + ") for " + test); 
+      System.err.println(">>> Recommend OCL refactoring");  
+    } 
+ 
     res = res + ifPart.syntacticComplexity();
     return res + 1; 
   }
@@ -14755,6 +14824,12 @@ class ConditionalStatement extends Statement
 
   public int syntacticComplexity()
   { int res = test.syntacticComplexity();
+
+    if (res > TestParameters.syntacticComplexityLimit)
+    { System.err.println("!!! Code smell (MEL): too high expression complexity (" + res + ") for " + test); 
+      System.err.println(">>> Recommend OCL refactoring");  
+    } 
+
     res = res + ifPart.syntacticComplexity(); 
     if (elsePart != null)
     { res = res + elsePart.syntacticComplexity(); }

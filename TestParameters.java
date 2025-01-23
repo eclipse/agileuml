@@ -1,6 +1,6 @@
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -30,7 +30,8 @@ public class TestParameters
 
   /* Settings for flaw/technical debt detection */ 
 
-  public static int cloneSizeLimit = 6;
+  public static int syntacticComplexityLimit = 8; /* for MEL */ 
+  public static int cloneSizeLimit = 6;           /* for DC  */
   public static int statementNestingLimit = 5;  
   public static int cyclomaticComplexityLimit = 10; 
   public static int numberOfDataFeaturesLimit = 20; 
