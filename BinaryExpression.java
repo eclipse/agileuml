@@ -20485,8 +20485,15 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   } 
 
   public Expression simplifyOCL()
-  { // Double iterations ->select(...)->select(...)
-    // replaced
+  { // Double iterations c->select(P)->select(Q)
+    // replaced by c->select(P & Q)
+
+    // c->select(P)->size() = 0 
+    // replaced by c->forAll(not(P))
+  
+    // c->reject(P)->size() = 0 
+    // replaced by c->forAll(P)
+    
 
     Expression lexpr = left.simplifyOCL(); 
     Expression rexpr = right.simplifyOCL(); 
@@ -20501,6 +20508,61 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       return res; 
     } 
 
+    if (operator.equals("=") && "0".equals(right + "") && 
+        left instanceof UnaryExpression)
+    { UnaryExpression arg = (UnaryExpression) left; 
+      String leftop = arg.getOperator(); 
+
+      if ("->size".equals(leftop) && 
+          arg.getArgument() instanceof BinaryExpression)
+      { BinaryExpression leftarg = (BinaryExpression) arg.getArgument(); 
+        String leftargop = leftarg.getOperator(); 
+        Expression leftargleft = leftarg.getLeft();
+        Expression leftargpred = leftarg.getRight();
+ 
+        if (leftargop.equals("->select"))
+        { // s->select(P)->size() = 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+          BinaryExpression res = 
+            new BinaryExpression("->forAll", leftargleft,
+                                 notpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("->reject"))
+        { // s->reject(P)->size() = 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          BinaryExpression res = 
+            new BinaryExpression("->forAll", leftargleft,
+                                 leftargpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("|"))
+        { // s->select(x | P)->size() = 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+          BinaryExpression res = 
+            new BinaryExpression("!", leftargleft,
+                                 notpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("|R"))
+        { // s->reject(x | P)->size() = 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          BinaryExpression res = 
+            new BinaryExpression("!", leftargleft,
+                                 leftargpred); 
+          return res; 
+        } 
+      }
+    }
+
     if (operator.equals("|"))
     { BinaryExpression arg = (BinaryExpression) left; 
       Expression domain = arg.getRight(); 
@@ -20508,7 +20570,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { BinaryExpression lbe = (BinaryExpression) domain; 
 
         if (lbe.operator.equals("->select"))
-        { System.out.println(">> Inefficient nested select: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select: " + this);
           Expression newleft = lbe.getLeft();
           Expression newright = lbe.getRight();
           BasicExpression ref = 
@@ -20522,7 +20584,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
           return new BinaryExpression("|", newdomain, newpred); 
         }  
         else if (lbe.operator.equals("->reject"))
-        { System.out.println(">> Inefficient nested select: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select: " + this);
           Expression newleft = lbe.getLeft(); 
           Expression newright = lbe.getRight();
           BasicExpression ref = 
@@ -20546,7 +20608,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { BinaryExpression lbe = (BinaryExpression) domain; 
 
         if (lbe.operator.equals("->select"))
-        { System.out.println(">> Inefficient nested select/reject: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select/reject: " + this);
           Expression newleft = lbe.getLeft();
           Expression newright = lbe.getRight();
           BasicExpression ref = 
@@ -20561,7 +20623,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
           return new BinaryExpression("|", newdomain, newpred); 
         }  
         else if (lbe.operator.equals("->reject"))
-        { System.out.println(">> Inefficient nested reject: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested reject: " + this);
           Expression newleft = lbe.getLeft(); 
           Expression newright = lbe.getRight();
           BasicExpression ref = 
@@ -20583,7 +20645,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       if (left instanceof BinaryExpression) 
       { BinaryExpression lbe = (BinaryExpression) left; 
         if (lbe.operator.equals("->select"))
-        { System.out.println(">> Inefficient nested select: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select: " + this);
           Expression predicate1 = lbe.getRight(); 
           Expression combinedPred = 
               new BinaryExpression("&", predicate1, right); 
@@ -20595,7 +20657,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
           return res; 
         }
         else if (lbe.operator.equals("->reject"))
-        { System.out.println(">> Inefficient nested select: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select: " + this);
           Expression predicate1 = lbe.getRight();
           Expression pred2 = 
                Expression.negate(predicate1);  
@@ -20615,7 +20677,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       if (left instanceof BinaryExpression) 
       { BinaryExpression lbe = (BinaryExpression) left; 
         if (lbe.operator.equals("->select"))
-        { System.out.println(">> Inefficient nested select: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select: " + this);
           Expression predicate1 = lbe.getRight(); 
           Expression combinedPred = 
               new BinaryExpression("&", 
@@ -20628,7 +20690,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
           return res; 
         }
         else if (lbe.operator.equals("->reject"))
-        { System.out.println(">> Inefficient nested select: " + this);
+        { System.out.println(">> OCL efficiency smell (OES): Inefficient nested select: " + this);
           Expression predicate1 = lbe.getRight();
           Expression pred2 = 
                Expression.negate(predicate1); 
@@ -20656,7 +20718,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   public Map energyUse(Map res, Vector rUses, Vector aUses) 
   { // Double iterations ->select(...)->select(...)
     // are amber flags.
-    // ->select(...)->any() is a red flag.  
+    // ->select(...)->any() is a red flag, likewise 
+    // s->select(...)->size() = 0  
 
     int syn = syntacticComplexity(); 
     if (syn > TestParameters.syntacticComplexityLimit)
@@ -20668,7 +20731,28 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     left.energyUse(res, rUses, aUses); 
     right.energyUse(res, rUses, aUses); 
 
-    if (operator.equals("|") ||
+    if (operator.equals("=") && "0".equals(right + "") && 
+        left instanceof UnaryExpression)
+    { UnaryExpression arg = (UnaryExpression) left; 
+      String leftop = arg.getOperator(); 
+
+      if ("->size".equals(leftop) && 
+          arg.getArgument() instanceof BinaryExpression)
+      { BinaryExpression leftarg = (BinaryExpression) arg.getArgument(); 
+        String leftargop = leftarg.getOperator(); 
+        
+        if (leftargop.equals("->select") || 
+            leftargop.equals("->reject") ||
+            leftargop.equals("|") ||
+            leftargop.equals("|R"))
+        { // s->select(P)->size() = 0
+          aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->forAll");
+          int ascore = (int) res.get("amber"); 
+          res.set("amber", ascore+1);
+        } 
+      }
+    }
+    else if (operator.equals("|") ||
         operator.equals("|R"))
     { BinaryExpression arg = (BinaryExpression) left; 
       Expression domain = arg.getRight(); 
@@ -20679,7 +20763,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
             lbe.operator.equals("|R") ||
             lbe.operator.equals("->select") ||
             lbe.operator.equals("->reject"))
-        { aUses.add("! Nested select/reject iterators (loops) in " + this + " : more efficient to combine conditions");
+        { aUses.add("! OCL efficiency smell (OES): Nested select/reject iterators (loops) in " + this + " : more efficient to combine conditions");
           int ascore = (int) res.get("amber"); 
           res.set("amber", ascore+1); 
         }
@@ -20695,7 +20779,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
             lbe.operator.equals("|R") ||
             lbe.operator.equals("->select") ||
             lbe.operator.equals("->reject"))
-        { aUses.add("! Nested select/reject iterators (loops) in " + this + " : more efficient to combine conditions");
+        { aUses.add("! OCL efficiency smell (OES): Nested select/reject iterators (loops) in " + this + " : more efficient to combine conditions");
           int ascore = (int) res.get("amber"); 
           res.set("amber", ascore+1); 
         }
@@ -20703,7 +20787,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else if ("->sortedBy".equals(operator) || 
              "|sortedBy".equals(operator))
-    { aUses.add("! n*log(n) sorting algorithm used for " + this); 
+    { aUses.add("! OCL efficiency smell (OES): n*log(n) sorting algorithm used for " + this); 
 
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
@@ -20714,7 +20798,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "|concatenateAll".equals(operator) ||
              "->intersectAll".equals(operator) || 
              "|intersectAll".equals(operator))
-    { aUses.add("! High-cost operator in: " + this);
+    { aUses.add("! OCL efficiency smell (OES): High-cost operator in: " + this);
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 
@@ -20722,7 +20806,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              left instanceof BasicExpression && 
              ((BasicExpression) left).isOperationCall())
     { // redundant results computation
-      aUses.add("! Redundant results computation in: " + this);
+      aUses.add("! OCL efficiency smell (OES): Redundant results computation in: " + this);
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 
