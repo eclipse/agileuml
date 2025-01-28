@@ -5,7 +5,7 @@
 * Arrow operators ->op are used consistently for any OCL 
 * operator, not just collection operators. 
 * 
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -376,7 +376,7 @@ MULTILINE_COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
 fragment EscapeSequence
     : '\\' [btnfr"'\\]
     | '\\' ([0-3]? [0-7])? [0-7]
-    | '\\' 'u'+ HexDigit HexDigit HexDigit HexDigit
+    | '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
 
 fragment HexDigits

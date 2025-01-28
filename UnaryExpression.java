@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -749,14 +749,14 @@ public void findClones(java.util.Map clones,
 
         if (lbe.operator.equals("|") ||
             lbe.operator.equals("->select"))
-        { rUses.add("!!! Inefficient col->select(x | P)->any() expression in: " + this + ",\n" + 
+        { rUses.add("!! OCL efficiency smell (OES): Inefficient col->select(x | P)->any() expression in: " + this + ",\n" + 
                     ">>> instead use:    col->any(x | P)");
           int rscore = (int) res.get("red"); 
           res.set("red", rscore+1); 
         }
         else if (lbe.operator.equals("|R") ||
             lbe.operator.equals("->reject"))
-        { rUses.add("!!! Inefficient col->reject(x | P)->any() expression in " + this + ", \n" + 
+        { rUses.add("!! OCL efficiency smell (OES): Inefficient col->reject(x | P)->any() expression in " + this + ", \n" + 
             ">>> instead, use:   col->any(x | not(P))");
           int rscore = (int) res.get("red"); 
           res.set("red", rscore+1); 
@@ -793,7 +793,8 @@ public void findClones(java.util.Map clones,
              argument instanceof BasicExpression && 
              ((BasicExpression) argument).isOperationCall())
     { // redundant results computation
-      aUses.add("! Redundant results computation in: " + this);
+
+      aUses.add("! Possible redundant results computation in: " + this);
       int ascore = (int) res.get("amber"); 
       res.set("amber", ascore+1); 
     } 
@@ -817,7 +818,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("|A", lbe.left, lbe.right); 
 
-          System.out.println("! Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
             this + 
             "\n! Replaced by " + res);
 
@@ -830,7 +831,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("->any", lbe.left, lbe.right); 
 
-          System.out.println("! Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
             this + 
             "\n! Replaced by " + res);
 
@@ -842,7 +843,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("|A", lbe.left, notR); 
 
-          System.out.println("! Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
             this + 
             "\n! Replaced by " + res);
 
@@ -854,7 +855,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("->any", lbe.left, notR); 
 
-          System.out.println("! Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
             this + 
             "\n! Replaced by " + res);
   

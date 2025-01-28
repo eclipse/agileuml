@@ -20493,6 +20493,12 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   
     // c->reject(P)->size() = 0 
     // replaced by c->forAll(P)
+
+    // c->select(P)->size() > 0 
+    // replaced by c->exists(P)
+
+    // c->reject(P)->size() > 0 
+    // replaced by c->exists(not(P))
     
 
     Expression lexpr = left.simplifyOCL(); 
@@ -20558,6 +20564,61 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
           BinaryExpression res = 
             new BinaryExpression("!", leftargleft,
                                  leftargpred); 
+          return res; 
+        } 
+      }
+    }
+
+    if (operator.equals(">") && "0".equals(right + "") && 
+        left instanceof UnaryExpression)
+    { UnaryExpression arg = (UnaryExpression) left; 
+      String leftop = arg.getOperator(); 
+
+      if ("->size".equals(leftop) && 
+          arg.getArgument() instanceof BinaryExpression)
+      { BinaryExpression leftarg = (BinaryExpression) arg.getArgument(); 
+        String leftargop = leftarg.getOperator(); 
+        Expression leftargleft = leftarg.getLeft();
+        Expression leftargpred = leftarg.getRight();
+ 
+        if (leftargop.equals("->select"))
+        { // s->select(P)->size() > 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          BinaryExpression res = 
+            new BinaryExpression("->exists", leftargleft,
+                                 leftargpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("->reject"))
+        { // s->reject(P)->size() > 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+          BinaryExpression res = 
+            new BinaryExpression("->exists", leftargleft,
+                                 notpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("|"))
+        { // s->select(x | P)->size() > 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          BinaryExpression res = 
+            new BinaryExpression("#", leftargleft,
+                                 leftargpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("|R"))
+        { // s->reject(x | P)->size() > 0
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+           UnaryExpression notpred = 
+             new UnaryExpression("not", leftargpred); 
+           BinaryExpression res = 
+            new BinaryExpression("#", leftargleft,
+                                 notpred); 
           return res; 
         } 
       }
@@ -20752,8 +20813,29 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         } 
       }
     }
+    else if (operator.equals(">") && "0".equals(right + "") && 
+        left instanceof UnaryExpression)
+    { UnaryExpression arg = (UnaryExpression) left; 
+      String leftop = arg.getOperator(); 
+
+      if ("->size".equals(leftop) && 
+          arg.getArgument() instanceof BinaryExpression)
+      { BinaryExpression leftarg = (BinaryExpression) arg.getArgument(); 
+        String leftargop = leftarg.getOperator(); 
+        
+        if (leftargop.equals("->select") || 
+            leftargop.equals("->reject") ||
+            leftargop.equals("|") ||
+            leftargop.equals("|R"))
+        { // s->select(P)->size() = 0
+          aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->exists");
+          int ascore = (int) res.get("amber"); 
+          res.set("amber", ascore+1);
+        } 
+      }
+    }
     else if (operator.equals("|") ||
-        operator.equals("|R"))
+             operator.equals("|R"))
     { BinaryExpression arg = (BinaryExpression) left; 
       Expression domain = arg.getRight(); 
       if (domain instanceof BinaryExpression) 
