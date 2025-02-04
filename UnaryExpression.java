@@ -742,7 +742,43 @@ public void findClones(java.util.Map clones,
 
     argument.energyUse(res, rUses, aUses); 
 
-    if (operator.equals("->any"))
+    if (operator.equals("->notEmpty") && 
+        argument instanceof BinaryExpression)
+    { // ->select(P)->notEmpty()  is  ->exists(P)
+      BinaryExpression leftarg = (BinaryExpression) argument; 
+      String leftargop = leftarg.getOperator(); 
+      Expression leftargleft = leftarg.getLeft();
+      Expression leftargpred = leftarg.getRight();
+        
+      if (leftargop.equals("->select") || 
+          leftargop.equals("->reject") ||
+          leftargop.equals("|") ||
+          leftargop.equals("|R"))
+      { rUses.add("!! OCL efficiency smell (OES): Inefficient expression in: " + this + ",\n" + 
+                    ">>> instead use ->exists");
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      }
+    } 
+    else if (operator.equals("->isEmpty") && 
+        argument instanceof BinaryExpression)
+    { // ->select(P)->isEmpty()  is  ->forAll(not(P))
+      BinaryExpression leftarg = (BinaryExpression) argument; 
+      String leftargop = leftarg.getOperator(); 
+      Expression leftargleft = leftarg.getLeft();
+      Expression leftargpred = leftarg.getRight();
+        
+      if (leftargop.equals("->select") || 
+          leftargop.equals("->reject") ||
+          leftargop.equals("|") ||
+          leftargop.equals("|R"))
+      { rUses.add("!! OCL efficiency smell (OES): Inefficient expression in: " + this + ",\n" + 
+                    ">>> instead use ->forAll");
+        int rscore = (int) res.get("red"); 
+        res.set("red", rscore+1); 
+      }
+    } 
+    else if (operator.equals("->any"))
     {
       if (argument instanceof BinaryExpression) 
       { BinaryExpression lbe = (BinaryExpression) argument; 
@@ -799,7 +835,6 @@ public void findClones(java.util.Map clones,
       res.set("amber", ascore+1); 
     } 
 
-
     return res; 
   } 
 
@@ -807,8 +842,108 @@ public void findClones(java.util.Map clones,
   { Expression arg = 
        argument.simplifyOCL(); 
 
-    if (operator.equals("->any"))
-    {
+    if (operator.equals("->notEmpty") && 
+        argument instanceof BinaryExpression)
+    { // ->select(P)->notEmpty()  is  ->exists(P)
+      BinaryExpression leftarg = (BinaryExpression) argument; 
+      String leftargop = leftarg.getOperator(); 
+      Expression leftargleft = leftarg.getLeft();
+      Expression leftargpred = leftarg.getRight();
+        
+      if (leftargop.equals("->select"))
+      { // s->select(P)->notEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        BinaryExpression res = 
+            new BinaryExpression("->exists", leftargleft,
+                                 leftargpred); 
+        return res; 
+      } 
+      else if (leftargop.equals("->reject"))
+      { // s->reject(P)->notEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+        BinaryExpression res = 
+            new BinaryExpression("->exists", leftargleft,
+                                 notpred); 
+        return res; 
+      } 
+      else if (leftargop.equals("|"))
+      { // s->select(x | P)->notEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        BinaryExpression res = 
+            new BinaryExpression("#", leftargleft,
+                                 leftargpred); 
+        return res; 
+      } 
+      else if (leftargop.equals("|R"))
+      { // s->reject(x | P)->notEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        UnaryExpression notpred = 
+             new UnaryExpression("not", leftargpred); 
+        BinaryExpression res = 
+            new BinaryExpression("#", leftargleft,
+                                 notpred); 
+        return res; 
+      } 
+    } 
+    else if (operator.equals("->isEmpty") && 
+        argument instanceof BinaryExpression)
+    { // ->select(P)->isEmpty()  is  ->forAll(not(P))
+      BinaryExpression leftarg = (BinaryExpression) argument; 
+      String leftargop = leftarg.getOperator(); 
+      Expression leftargleft = leftarg.getLeft();
+      Expression leftargpred = leftarg.getRight();
+        
+      if (leftargop.equals("->select"))
+      { // s->select(P)->isEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+        BinaryExpression res = 
+            new BinaryExpression("->forAll", leftargleft,
+                                 notpred); 
+        return res; 
+      } 
+      else if (leftargop.equals("->reject"))
+      { // s->reject(P)->isEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        BinaryExpression res = 
+            new BinaryExpression("->forAll", leftargleft,
+                                 leftargpred); 
+        return res; 
+      } 
+      else if (leftargop.equals("|"))
+      { // s->select(x | P)->isEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+
+        UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+
+        BinaryExpression res = 
+            new BinaryExpression("!", leftargleft,
+                                 notpred); 
+        return res; 
+      } 
+      else if (leftargop.equals("|R"))
+      { // s->reject(x | P)->isEmpty()
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+        BinaryExpression res = 
+            new BinaryExpression("!", leftargleft,
+                                 leftargpred); 
+        return res; 
+      } 
+    } 
+    else if (operator.equals("->any") || operator.equals("->first"))
+    { // ->select(P)->any() should be ->any(P), etc
+
       if (argument instanceof BinaryExpression) 
       { BinaryExpression lbe = (BinaryExpression) argument; 
 
@@ -818,7 +953,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("|A", lbe.left, lbe.right); 
 
-          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient " + operator + " expression: " + 
             this + 
             "\n! Replaced by " + res);
 
@@ -831,7 +966,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("->any", lbe.left, lbe.right); 
 
-          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient " + operator + " expression: " + 
             this + 
             "\n! Replaced by " + res);
 
@@ -843,7 +978,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("|A", lbe.left, notR); 
 
-          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient " + operator + " expression: " + 
             this + 
             "\n! Replaced by " + res);
 
@@ -855,7 +990,7 @@ public void findClones(java.util.Map clones,
           BinaryExpression res = 
             new BinaryExpression("->any", lbe.left, notR); 
 
-          System.out.println(">> OCL efficiency smell (OES): Inefficient ->any operation: " + 
+          System.out.println(">> OCL efficiency smell (OES): Inefficient " + operator + " expression: " + 
             this + 
             "\n! Replaced by " + res);
   
@@ -868,7 +1003,7 @@ public void findClones(java.util.Map clones,
       { // Redundant ->sort operation:  
         // Argument is already sorted.
 
-        System.out.println("! Redundant ->sort operation: " + 
+        System.out.println("! OES: Redundant ->sort operation: " + 
             this + 
             "\n! Argument is already sorted.");
         return arg; 
@@ -904,7 +1039,7 @@ public void findClones(java.util.Map clones,
 
       Vector vuses = variablesUsedIn(vars); 
       if (level > 1 && vuses.size() == 0)
-      { JOptionPane.showInputDialog(">> The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+      { JOptionPane.showInputDialog(">> LCE flaw: The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
           "Use Extract local variable to optimise.");
         refactorELV = true;  
       }

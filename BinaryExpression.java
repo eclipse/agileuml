@@ -3547,8 +3547,10 @@ public void findClones(java.util.Map clones,
     { if (right instanceof BasicExpression)
       { res.add(right); } 
     } // Not quite.  x /: e.r.att can remove an element of r. 
-    else if (operator.equals("->includesAll") || operator.equals("->includes") ||
-             operator.equals("->excludesAll") || operator.equals("->excludes"))
+    else if (operator.equals("->includesAll") || 
+             operator.equals("->includes") ||
+             operator.equals("->excludesAll") || 
+             operator.equals("->excludes"))
     { if (left instanceof BasicExpression)
       { res.add(left); } 
     } 
@@ -5074,7 +5076,7 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("->includes") || 
              operator.equals("->excludes"))
     { type = new Type("boolean",null); 
-      if (!left.isCollection())
+      if (!left.isCollection()) // possibly a map
       { System.err.println("!! LHS of " + this + 
                            " must be a collection"); 
         left.setType(new Type("Sequence", null)); 
@@ -6524,28 +6526,33 @@ public void findClones(java.util.Map clones,
   public boolean conflictsWith(Expression e)
   { if (e instanceof UnaryExpression)
     { UnaryExpression ue = (UnaryExpression) e; 
+
       if ("->isDeleted".equals(ue.operator) && operator.equals(":"))
       { if ((ue.argument + "").equals(left + ""))   // l : e & l->isDeleted()
         { return true; } 
-      if ((ue.argument + "").equals(right + ""))  // l : e & e->isDeleted()
-      { return true; } 
-    } 
-    if ("->isDeleted".equals(ue.operator) && operator.equals("->includes"))
-    { if ((ue.argument + "").equals(right + ""))   // e->includes(l) & l->isDeleted()
-      { return true; } 
-      if ((ue.argument + "").equals(left + ""))  // e->includes(r) & e->isDeleted()
-      { return true; } 
-    } 
-    if ("->isEmpty".equals(ue.operator) && operator.equals(":"))
-    { if ((ue.argument + "").equals(right + ""))  // l : e & e->isEmpty()
-      { return true; } 
-    } 
-    if ("->isEmpty".equals(ue.operator) && operator.equals("->includes"))
-    { if ((ue.argument + "").equals(left + ""))  // e->includes(l) & e->isEmpty()
-      { return true; } 
-    } 
-    return false; 
-  } /* These cases also belong in UnaryExpression */ 
+        if ((ue.argument + "").equals(right + ""))  // l : e & e->isDeleted()
+        { return true; } 
+      } 
+    
+      if ("->isDeleted".equals(ue.operator) && operator.equals("->includes"))
+      { if ((ue.argument + "").equals(right + ""))   // e->includes(l) & l->isDeleted()
+        { return true; } 
+        if ((ue.argument + "").equals(left + ""))  // e->includes(r) & e->isDeleted()
+        { return true; } 
+      }
+ 
+      if ("->isEmpty".equals(ue.operator) && operator.equals(":"))
+      { if ((ue.argument + "").equals(right + ""))  // l : e & e->isEmpty()
+        { return true; } 
+      } 
+    
+      if ("->isEmpty".equals(ue.operator) && operator.equals("->includes"))
+      { if ((ue.argument + "").equals(left + ""))  // e->includes(l) & e->isEmpty()
+        { return true; } 
+      }
+ 
+      return false; 
+    } /* These cases also belong in UnaryExpression */ 
 
   if (e instanceof BinaryExpression)
   { BinaryExpression be = (BinaryExpression) e;
@@ -6599,23 +6606,29 @@ public boolean conflictsWith(String op, Expression el,
     // System.out.println("CONFLCT: " + res); 
     return res; 
   }
+
   if (left.toString().equals(er.toString()) &&
       right.toString().equals(el.toString()))
   { return conflictsReverseOp(operator,op); }
+
   if (operator.equals("="))
   { return conflictsWithEq(op,el,er); }
+
   if (operator.equals(":"))
   { return conflictsWithIn(op,el,er); }
 //  if (comparitors.contains(operator))
 //  { return conflictsWithComp(op,el,er); }
+
   if (operator.equals("&"))  // shouldn't occur
   { return left.conflictsWith(op,el,er) ||
            right.conflictsWith(op,el,er);
   }
+
   if (operator.equals("or"))
   { return left.conflictsWith(op,el,er) &&
            right.conflictsWith(op,el,er);
   }
+
   return false;
 }
 
@@ -7185,9 +7198,17 @@ public boolean conflictsWithIn(String op, Expression el,
       bNeeded = false; 
    
       if (operator.equals("->includes"))
-      { res = lqf + ".contains(" + rw + ")"; }
+      { if (left.isMap())
+        { res = lqf + ".containsKey(" + rw + ")"; } 
+        else 
+        { res = lqf + ".contains(" + rw + ")"; }
+      } 
       else if (operator.equals("->excludes"))
-      { res = "!(" + lqf + ".contains(" + rw + "))"; }
+      { if (left.isMap())
+        { res = "!(" + lqf + ".containsKey(" + rw + "))"; } 
+        else 
+        { res = "!(" + lqf + ".contains(" + rw + "))"; }
+      } 
       else if (operator.equals("->excluding"))
       { res = "Set.subtract(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->excludingAt"))
@@ -7658,9 +7679,17 @@ public boolean conflictsWithIn(String op, Expression el,
       { rss = right.makeSequenceJava6(rw); } 
          
       if (operator.equals("->includes"))
-      { res = lqf + ".contains(" + rw + ")"; }
+      { if (left.isMap())
+        { res = lqf + ".containsKey(" + rw + ")"; } 
+        else 
+        { res = lqf + ".contains(" + rw + ")"; }
+      } 
       else if (operator.equals("->excludes"))
-      { res = "!(" + lqf + ".contains(" + rw + "))"; }
+      { if (left.isMap())
+        { res = "!(" + lqf + ".containsKey(" + rw + "))"; } 
+        else 
+        { res = "!(" + lqf + ".contains(" + rw + "))"; }
+      } 
       else if (operator.equals("->excluding"))
       { res = "Set.subtract(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->excludingAt"))
@@ -7896,7 +7925,11 @@ public boolean conflictsWithIn(String op, Expression el,
     { if (left.isString())
       { return "(" + lqf + ").indexOf(" + rqf + ") >= 0"; } 
       else 
-      { return lqf + ".contains(" + rqf + ")"; }
+      { if (left.isMap())
+        { res = lqf + ".containsKey(" + rqf + ")"; } 
+        else 
+        { res = lqf + ".contains(" + rqf + ")"; }
+      } 
     } 
 
     if (operator.equals("->count") && 
@@ -8154,13 +8187,21 @@ public boolean conflictsWithIn(String op, Expression el,
     { String rss = right.makeSetJava7(rw);
       if (left.isOrdered())
       { rss = right.makeSequenceJava7(rw); } 
-      else if (left.isSorted())
+      else if (left.isSorted() && !left.isMap())
       { rss = right.makeSortedSetJava7(rw); } 
          
       if (operator.equals("->includes"))
-      { res = lqf + ".contains(" + rw + ")"; }
+      { if (left.isMap())
+        { res = lqf + ".containsKey(" + rw + ")"; } 
+        else 
+        { res = lqf + ".contains(" + rw + ")"; }
+      } 
       else if (operator.equals("->excludes"))
-      { res = "!(" + lqf + ".contains(" + rw + "))"; }
+      { if (left.isMap())
+        { res = "!(" + lqf + ".containsKey(" + rw + "))"; } 
+        else 
+        { res = "!(" + lqf + ".contains(" + rw + "))"; }
+      } 
       else if (operator.equals("->excluding"))
       { res = "Ocl.subtract(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->excludingAt"))
@@ -8674,9 +8715,17 @@ public boolean conflictsWithIn(String op, Expression el,
       String rss = right.makeSetCSharp(rw);
         
       if (operator.equals("->includes"))
-      { res = lqf + ".Contains(" + rw + ")"; }
+      { if (left.isMap())
+        { res = lqf + ".ContainsKey(" + rw + ")"; } 
+        else 
+        { res = lqf + ".Contains(" + rw + ")"; }
+      }
       else if (operator.equals("->excludes"))
-      { res = "!(" + lqf + ".Contains(" + rw + "))"; }
+      { if (left.isMap())
+        { res = "!(" + lqf + ".ContainsKey(" + rw + "))"; } 
+        else 
+        { res = "!(" + lqf + ".Contains(" + rw + "))"; }
+      }
       else if (operator.equals("->excluding"))
       { res = "SystemTypes.subtract(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->excludingAt"))
@@ -9281,6 +9330,7 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
       
+      // Also ->includes and ->excludes for map keys
       if (operator.equals("->includes"))
       { res = "UmlRsdsLib<" + lcet + ">::isIn(" + rw + ", " + lqf + ")"; }
       else if (operator.equals("->excludes"))
@@ -20569,6 +20619,62 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       }
     }
 
+    if (operator.equals("=") && "1".equals(right + "") && 
+        left instanceof UnaryExpression)
+    { UnaryExpression arg = (UnaryExpression) left; 
+      String leftop = arg.getOperator(); 
+
+      if ("->size".equals(leftop) && 
+          arg.getArgument() instanceof BinaryExpression)
+      { BinaryExpression leftarg = (BinaryExpression) arg.getArgument(); 
+        String leftargop = leftarg.getOperator(); 
+        Expression leftargleft = leftarg.getLeft();
+        Expression leftargpred = leftarg.getRight();
+ 
+        if (leftargop.equals("->select"))
+        { // s->select(P)->size() = 1
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          BinaryExpression res = 
+            new BinaryExpression("->exists1", leftargleft,
+                                 leftargpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("->reject"))
+        { // s->reject(P)->size() = 1
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+          BinaryExpression res = 
+            new BinaryExpression("->exists1", leftargleft,
+                                 notpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("|"))
+        { // s->select(x | P)->size() = 1
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          BinaryExpression res = 
+            new BinaryExpression("#1", leftargleft,
+                                 leftargpred); 
+          return res; 
+        } 
+        else if (leftargop.equals("|R"))
+        { // s->reject(x | P)->size() = 1
+          System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+          
+          UnaryExpression notpred = 
+            new UnaryExpression("not", leftargpred); 
+          
+          BinaryExpression res = 
+            new BinaryExpression("#1", leftargleft,
+                                 notpred); 
+          return res; 
+        } 
+      }
+    }
+
     if (operator.equals(">") && "0".equals(right + "") && 
         left instanceof UnaryExpression)
     { UnaryExpression arg = (UnaryExpression) left; 
@@ -20808,6 +20914,27 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
             leftargop.equals("|R"))
         { // s->select(P)->size() = 0
           aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->forAll");
+          int ascore = (int) res.get("amber"); 
+          res.set("amber", ascore+1);
+        } 
+      }
+    }
+    else if (operator.equals("=") && "1".equals(right + "") && 
+        left instanceof UnaryExpression)
+    { UnaryExpression arg = (UnaryExpression) left; 
+      String leftop = arg.getOperator(); 
+
+      if ("->size".equals(leftop) && 
+          arg.getArgument() instanceof BinaryExpression)
+      { BinaryExpression leftarg = (BinaryExpression) arg.getArgument(); 
+        String leftargop = leftarg.getOperator(); 
+        
+        if (leftargop.equals("->select") || 
+            leftargop.equals("->reject") ||
+            leftargop.equals("|") ||
+            leftargop.equals("|R"))
+        { // s->select(P)->size() = 0
+          aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->exists1");
           int ascore = (int) res.get("amber"); 
           res.set("amber", ascore+1);
         } 

@@ -15585,6 +15585,25 @@ public void produceCUI(PrintWriter out)
     typeCheck(); 
     typeCheck(); 
     // Generate Python
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ext = (Entity) entities.get(i); 
+
+      if (ext.isComponent() || ext.isDerived()) 
+      { continue; } 
+
+      String ename = ext.getName(); 
+
+      File oclout = new File("output/" + ename + ".km3");  
+      try
+      { PrintWriter eout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(oclout)));
+        eout.println(ext.getKM3());
+        eout.close(); 
+      }
+      catch (Exception _ex) { }  
+    } 
   } 
 
   public void vb2py()
