@@ -1820,11 +1820,13 @@ subscript::
 0 |-->->first()
 -1 |-->->last()
 -2 |-->->front()->last()
+-3 |-->->front()->front()->last()
 _1 |-->->reverse()->at(-(_1))<when> _1 matches -.*
 
 _1 : _2 |-->.subrange(_1+1, _2)<when> _2 test
 : -1 |-->->front()
 : -2 |-->->front()->front()
+: -3 |-->->front()->front()->front()
 : _1 |-->.subrange(1,_1)<when> _1 test
 1 : |-->->tail()
 
