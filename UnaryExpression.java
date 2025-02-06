@@ -1009,11 +1009,40 @@ public void findClones(java.util.Map clones,
         return arg; 
       }
     } 
+    else if (operator.equals("->last") && 
+             argument instanceof UnaryExpression)
+    { // s->front()->last()  is  s->at(s->size() - 1)
+      // s->tail()->last()  is  s->last()
 
+      UnaryExpression leftarg = (UnaryExpression) argument; 
+      String leftargop = leftarg.getOperator(); 
+      Expression leftargleft = leftarg.getArgument();
+
+      if (leftargop.equals("->front"))
+      { System.out.println("! OES: Inefficient ->at operation: " + this); 
+
+        UnaryExpression sze = 
+          new UnaryExpression("->size", leftargleft); 
+        BinaryExpression res = 
+          new BinaryExpression("->at", leftargleft, 
+            new BinaryExpression("-", sze, 
+                               new BasicExpression(1)));
+        return res; 
+      } 
+      else if (leftargop.equals("->tail"))
+      { System.out.println("! OES: Inefficient ->last operation: " + this); 
+        UnaryExpression res = 
+          new UnaryExpression("->last", leftargleft); 
+        return res; 
+      } 
+    }
+  
     UnaryExpression res = (UnaryExpression) clone(); 
     res.argument = arg; 
     return res; 
   } 
+ 
+
 
   public java.util.Map collectionOperatorUses(int level, 
                                       java.util.Map res, 
