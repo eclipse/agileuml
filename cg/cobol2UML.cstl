@@ -1757,7 +1757,7 @@ FROM DATE  |-->(_dte.getYear() mod 100) + "" + _dte.getMonth() + "" + _dte.getDa
 FROM DAY YYYYDDD  |-->
 FROM DAY  |-->
 FROM DAY OF WEEK  |-->
-FROM TIME  |-->
+FROM TIME  |-->OclDate.getSystemTime()
 FROM TIMER  |-->
 FROM TODAYS DATE MMDDYYYY  |-->_dte.getMonth() + "" + _dte.getDate() + "" + _dte.getYear()
 FROM TODAYS DATE  |-->
