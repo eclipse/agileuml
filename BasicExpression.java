@@ -17469,6 +17469,19 @@ public Statement generateDesignSubtract(Expression rhs)
     String s = toString();
     if (vars.contains(s))
     { res.add(s); }  // eg, att, or sig1.sig
+    else if (vars.contains(data))
+    { res.add(data); } 
+    else if (objectRef != null) 
+    { res.addAll(objectRef.variablesUsedIn(vars)); } 
+
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        Vector pvars = par.variablesUsedIn(vars); 
+        res = VectorUtil.union(res,pvars); 
+      } 
+    }  
+
     return res;
   }
 

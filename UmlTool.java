@@ -1037,7 +1037,7 @@ public void findPlugins()
       new JMenuItem("Simplify OCL"); 
     simplifyOCLop.addActionListener(this);
     simplifyOCLop.setToolTipText(
-      "Simplifies OCL expressions where possible");
+      "Simplifies OCL expressions & reduces code where possible");
     qualityMenu.add(simplifyOCLop);
 
     JMenuItem refineMenu = new JMenu("Refinement"); 

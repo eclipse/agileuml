@@ -842,6 +842,9 @@ public void findClones(java.util.Map clones,
   { Expression arg = 
        argument.simplifyOCL(); 
 
+    if (operator.equals("->size"))
+    { return Expression.simplifySize(arg); } 
+
     if (operator.equals("->notEmpty") && 
         argument instanceof BinaryExpression)
     { // ->select(P)->notEmpty()  is  ->exists(P)
@@ -1068,7 +1071,7 @@ public void findClones(java.util.Map clones,
 
       Vector vuses = variablesUsedIn(vars); 
       if (level > 1 && vuses.size() == 0)
-      { JOptionPane.showInputDialog(">> LCE flaw: The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
+      { JOptionPane.showInputDialog(">> (LCE) flaw: The expression " + this + " is independent of the iterator variables " + vars + "\n" + 
           "Use Extract local variable to optimise.");
         refactorELV = true;  
       }
@@ -6688,7 +6691,11 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     { return "_" + argument; }
   
     if (operator.startsWith("->"))
-    { return argument + operator + "()"; } 
+    { String res = argument + operator + "()";
+      if (needsBracket)
+      { return "(" + res + ")"; }
+      return res;
+    } 
 
     if (operator.equals("?") || operator.equals("!"))
     { String res = operator + argument; 
@@ -6902,7 +6909,13 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   { return this; } 
 
   public Expression simplify()
-  { return this; } 
+  { Expression argsimp = argument.simplify(); 
+    if ("->size".equals(operator))
+    { return simplifySize(argsimp); } 
+    UnaryExpression clne = (UnaryExpression) clone(); 
+    clne.argument = argsimp; 
+    return clne; 
+  } 
 
 
   public Expression filter(final Vector vars)

@@ -3155,6 +3155,54 @@ abstract class Expression
     return new BinaryExpression("=>",ante,succ);
   }
 
+  public static Expression simplifySize(Expression arg)
+  { // Integer.subrange(1,n)->size() is n
+    // Integer.subrange(n,m)->size() is m-n+1
+    // s->collect(expr)->size() is s->size()
+    // s->collect(x | expr)->size() is s->size()
+
+    if (arg instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) arg; 
+      if ("Integer".equals(be.getObjectRef() + "") && 
+          "subrange".equals(be.getData()))
+      { Vector parsx = be.getParameters();
+
+        Expression par1 = (Expression) parsx.get(0);  
+        Expression par2 = (Expression) parsx.get(1);
+  
+        if ("1".equals(par1 + ""))
+        { return par2; } 
+        else 
+        { BinaryExpression sze = new BinaryExpression("+", 
+                   new BinaryExpression("-", par2, par1), 
+                   new BasicExpression(1));
+          sze.setBrackets(true); 
+          return sze; 
+        } 
+      }
+    }
+    else if (arg instanceof BinaryExpression)
+    { BinaryExpression bearg = (BinaryExpression) arg; 
+      if ("->collect".equals(bearg.getOperator()))
+      { return simplifySize(bearg.getLeft()); }
+      else if ("|C".equals(bearg.getOperator()))
+      { BinaryExpression leftrng = 
+          (BinaryExpression) bearg.getLeft();
+        return simplifySize(leftrng.getRight()); 
+      }  
+    } 
+    else if (arg instanceof SetExpression)
+    { SetExpression sexpr = (SetExpression) arg; 
+      if (sexpr.isOrdered())
+      { int n = sexpr.size(); 
+        return new BasicExpression(n); 
+      } 
+    } 
+
+    return new UnaryExpression("->size", arg); 
+  } 
+
+
   private static Expression simplifyEq(final Expression e1,
                                        final Expression e2, 
                                        final Vector vars)
