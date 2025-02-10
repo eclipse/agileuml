@@ -64,7 +64,7 @@ class OclDate:
     return self.time < other.time
 
   def getSystemTime() : 
-    return int(time.time())*1000
+    return int(time.time()*1000)
 
   def setSystemTime(t) : 
     pass
@@ -304,6 +304,7 @@ class OclDate:
 # d2 = OclDate.newOclDate_YMD(2023, 11, 1)
 # print(OclDate.daysBetweenDates(d1,d2))
 
+# print(OclDate.getSystemTime())
 
 
 

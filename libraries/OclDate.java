@@ -466,6 +466,8 @@ class OclDate implements Comparable {
     OclDate d2 = OclDate.newOclDate_YMD(2024,11,1); 
     int dd = OclDate.daysBetweenDates(d1,d2); 
     System.out.println(d2.isLeapYear()); 
+	
+	System.out.println(OclDate.getSystemTime()); 
   } 
   
 }
