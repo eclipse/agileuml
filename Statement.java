@@ -227,7 +227,71 @@ abstract class Statement implements Cloneable
               new BinaryExpression("->pow", expr, sze)); 
         return new AssignStatement(lhs, newrhs); 
       }         
+      else if ((lhs + " & " + var).equals("" + rhs))
+      { // lhs := lhs & loopRange->forAll(self)
+
+        Type elemt = rng.getElementType(); 
+        BasicExpression selfvar = 
+          BasicExpression.newVariableBasicExpression(
+                                             "self",elemt); 
+        Expression prd = 
+          new BinaryExpression("->forAll", rng, selfvar); 
+        Expression newrhs = 
+            new BinaryExpression("&", lhs, prd); 
+        return new AssignStatement(lhs, newrhs); 
+      }   
       else if (rhs instanceof BinaryExpression && 
+        ((BinaryExpression) rhs).getOperator().equals("&") &&
+        (((BinaryExpression) rhs).getLeft() + "").equals(lhs + ""))
+      { // lhs := lhs & expr
+        Expression expr = ((BinaryExpression) rhs).getRight(); 
+        Vector vuses = expr.getVariableUses();
+
+        if (VectorUtil.containsEqualString(lhs+"", vuses))
+        { return null; } 
+
+        // lhs := lhs & rng->forAll(var|expr)
+
+        Expression coll = 
+            new BinaryExpression("!", 
+              new BinaryExpression(":", var, rng), expr); 
+        Expression newrhs = 
+            new BinaryExpression("&", lhs, coll); 
+        return new AssignStatement(lhs, newrhs);
+      }         
+      else if ((lhs + " or " + var).equals("" + rhs))
+      { // lhs := lhs or loopRange->exists(self)
+
+        Type elemt = rng.getElementType(); 
+        BasicExpression selfvar = 
+          BasicExpression.newVariableBasicExpression(
+                                             "self",elemt); 
+        Expression prd = 
+          new BinaryExpression("->exists", rng, selfvar); 
+        Expression newrhs = 
+            new BinaryExpression("or", lhs, prd); 
+        return new AssignStatement(lhs, newrhs); 
+      }   
+      else if (rhs instanceof BinaryExpression && 
+        ((BinaryExpression) rhs).getOperator().equals("or") &&
+        (((BinaryExpression) rhs).getLeft() + "").equals(lhs + ""))
+      { // lhs := lhs or expr
+        Expression expr = ((BinaryExpression) rhs).getRight(); 
+        Vector vuses = expr.getVariableUses();
+
+        if (VectorUtil.containsEqualString(lhs+"", vuses))
+        { return null; } 
+
+        // lhs := lhs or rng->exists(var|expr)
+
+        Expression coll = 
+            new BinaryExpression("#", 
+              new BinaryExpression(":", var, rng), expr); 
+        Expression newrhs = 
+            new BinaryExpression("or", lhs, coll); 
+        return new AssignStatement(lhs, newrhs);
+      }         
+    /*  else if (rhs instanceof BinaryExpression && 
         (((BinaryExpression) rhs).getLeft() + "").equals(
                                                     lhs + ""))
       { BinaryExpression brhs = (BinaryExpression) rhs; 
@@ -284,7 +348,7 @@ abstract class Statement implements Cloneable
               new BinaryExpression("->pow", expr, smm)); 
           return new AssignStatement(lhs, newrhs); 
         } 
-      }
+      } */ 
     }
     else if (st instanceof SequenceStatement) 
     { SequenceStatement sq = (SequenceStatement) st; 
@@ -530,6 +594,14 @@ abstract class Statement implements Cloneable
       { // lhs := lhs / loopRange->prd()
         return true; 
       } 
+      else if ((lhs + " & " + var).equals("" + rhs))
+      { // lhs := lhs & loopRange->forAll(self)
+        return true; 
+      } 
+      else if ((lhs + " or " + var).equals("" + rhs))
+      { // lhs := lhs or loopRange->exists(self)
+        return true; 
+      } 
       else if (rhs instanceof BinaryExpression && 
         (((BinaryExpression) rhs).getLeft() + "").equals(
                                                     lhs + ""))
@@ -544,8 +616,10 @@ abstract class Statement implements Cloneable
         { return false; } 
 
         if ("+".equals(oper) || "-".equals(oper) || 
-            "*".equals(oper) || "/".equals(oper))
-        { return true; } 
+            "*".equals(oper) || "/".equals(oper) ||
+            "&".equals(oper) || "or".equals(oper))
+        { return true; }
+ 
         return false;
       } 
     }
