@@ -760,6 +760,21 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newStaticCallExpression(
+                      String cls, String op, Expression par) 
+  { Vector pars = new Vector(); 
+    pars.add(par); 
+    BasicExpression res = new BasicExpression(op);
+    BasicExpression obj = new BasicExpression(cls); 
+    obj.umlkind = CLASSID; 
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.isStatic = true; 
+    res.isEvent = true; 
+    res.parameters = pars; 
+    return res; 
+  } 
+
   public static BasicExpression newStaticCallBasicExpression(
                String f, Expression obj, Expression par) 
   { Vector pars = new Vector(); 

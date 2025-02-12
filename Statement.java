@@ -375,6 +375,7 @@ abstract class Statement implements Cloneable
 
       if (sq.size() == 2)
       { // patterns are I := I + 1; V := V + I
+        // I := I + 1; V := V - I
         // I := I + 1; V := V * I   var /= I
         
         Statement stat1 = sq.getStatement(0); 
@@ -545,6 +546,75 @@ abstract class Statement implements Cloneable
               new AssignStatement(lhs1,
                 new BinaryExpression("-", lhs1, 
                   new BinaryExpression("-", nsum, isum)));
+            AssignStatement asn2 = 
+              new AssignStatement(lhs2, 
+                new BinaryExpression("+", lhs2, rsize)); 
+            SequenceStatement ss = new SequenceStatement(); 
+            ss.addStatement(asn1); 
+            ss.addStatement(asn2);
+
+            JOptionPane.showInputDialog(">> Code reduction of " + st + " to: " + ss);
+ 
+            return ss;    
+          } 
+          else if ((lhs1 + " + 1").equals("" + rhs1) && 
+              (lhs2 + " * " + lhs1).equals("" + rhs2))
+          { // I := I + 1; V := V * I
+            // reduces to V := V * MathLib.factorial(I + n)/
+            //                       MathLib.factorial(I); 
+            //            I := I + n
+
+            Expression rsize = 
+               Expression.simplifySize(rng);
+            Expression rsize1 = 
+                         new BinaryExpression("+", lhs1, rsize);
+            Expression fact1 = 
+              BasicExpression.newStaticCallExpression("MathLib",
+                                            "factorial", rsize1);
+            Expression fact2 = 
+              BasicExpression.newStaticCallExpression("MathLib",
+                                            "factorial", lhs1);
+            
+            BinaryExpression idiv = 
+              new BinaryExpression("/", fact1, fact2);
+            AssignStatement asn1 = 
+              new AssignStatement(lhs2,
+                new BinaryExpression("*", lhs2, idiv));
+            AssignStatement asn2 = 
+              new AssignStatement(lhs1, 
+                new BinaryExpression("+", lhs1, rsize)); 
+            SequenceStatement ss = new SequenceStatement(); 
+            ss.addStatement(asn1); 
+            ss.addStatement(asn2);
+
+            JOptionPane.showInputDialog(">> Code reduction of " + st + " to: " + ss);
+ 
+            return ss;    
+          } 
+          else if ((lhs2 + " + 1").equals("" + rhs2) && 
+              (lhs1 + " * " + lhs2).equals("" + rhs1))
+          { // V := V * I ; I := I + 1
+            // reduces to V := V * (I+n-1)!/I!; 
+            //            I := I + n
+
+            Expression rsize = 
+               Expression.simplifySize(rng);
+            Expression rsize1 = 
+               new BinaryExpression("+", lhs2, 
+                    new BinaryExpression("-", rsize, 
+                           new BasicExpression(1)));
+            Expression fact1 = 
+              BasicExpression.newStaticCallExpression("MathLib",
+                                            "factorial", rsize1);
+            Expression fact2 = 
+              BasicExpression.newStaticCallExpression("MathLib",
+                                            "factorial", lhs2);
+            
+            BinaryExpression idiv = 
+              new BinaryExpression("/", fact1, fact2);
+            AssignStatement asn1 = 
+              new AssignStatement(lhs1,
+                new BinaryExpression("*", lhs1, idiv));
             AssignStatement asn2 = 
               new AssignStatement(lhs2, 
                 new BinaryExpression("+", lhs2, rsize)); 
