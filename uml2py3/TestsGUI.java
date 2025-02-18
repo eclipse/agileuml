@@ -249,6 +249,15 @@ public class TestsGUI extends JFrame implements ActionListener
           } catch (Throwable _thrw) { }
         }
         System.out.println();
+        int[] binaryexpressions_mapRefPlus_counts = new int[100]; 
+        int[] binaryexpressions_mapRefPlus_totals = new int[100]; 
+        for (int _i = 0; _i < _binaryexpressions_instances; _i++)
+        { BinaryExpression _ex = (BinaryExpression) Controller.inst().binaryexpressions.get(_i);
+          try {
+            MutationTest.mapRefPlus_mutation_tests(_ex,binaryexpressions_mapRefPlus_counts, binaryexpressions_mapRefPlus_totals);
+          } catch (Throwable _thrw) { }
+        }
+        System.out.println();
         int[] binaryexpressions_mapBooleanExpression_counts = new int[100]; 
         int[] binaryexpressions_mapBooleanExpression_totals = new int[100]; 
         for (int _i = 0; _i < _binaryexpressions_instances; _i++)
@@ -449,6 +458,15 @@ public class TestsGUI extends JFrame implements ActionListener
         { CollectionExpression _ex = (CollectionExpression) Controller.inst().collectionexpressions.get(_i);
           try {
             MutationTest.mapCollectionExpression_mutation_tests(_ex,collectionexpressions_mapCollectionExpression_counts, collectionexpressions_mapCollectionExpression_totals);
+          } catch (Throwable _thrw) { }
+        }
+        System.out.println();
+        int[] collectionexpressions_toLambdaList_counts = new int[100]; 
+        int[] collectionexpressions_toLambdaList_totals = new int[100]; 
+        for (int _i = 0; _i < _collectionexpressions_instances; _i++)
+        { CollectionExpression _ex = (CollectionExpression) Controller.inst().collectionexpressions.get(_i);
+          try {
+            MutationTest.toLambdaList_mutation_tests(_ex,collectionexpressions_toLambdaList_counts, collectionexpressions_toLambdaList_totals);
           } catch (Throwable _thrw) { }
         }
         System.out.println();
