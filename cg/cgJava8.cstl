@@ -394,8 +394,14 @@ _1->excludes(_2) |-->!(_1.containsKey(_2))<when> _1 Map
 _1->excludes(_2) |-->!(_1.contains(_2))
 _1->excludesAll(_2) |-->Collections.disjoint(_1,_2)
 
+_1->includesKey(_2) |-->_1.containsKey(_2)
+_1->includesValue(_2) |-->_1.containsValue(_2)
+_1->excludesKey(_2) |-->!(_1.containsKey(_2))
+_1->excludesValue(_2) |-->!(_1.containsValue(_2))
+
 _1->including(_2) |-->Ocl.includingSet(_1,_2)<when> _1 Set
 _1->including(_2) |-->Ocl.includingSequence(_1,_2)<when> _1 Sequence
+
 _1->prepend(_2) |-->Ocl.prepend(_1,_2)
 _1->append(_2) |-->Ocl.append(_1,_2)
 _1->excluding(_2) |-->Ocl.excludingSet(_1,_2)<when> _1 Set

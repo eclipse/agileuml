@@ -1704,18 +1704,23 @@ statement::
 _1 |-->_1
 
 
+acceptSystemIn::
+_1 |-->_1 := StringLib.padRightWithInto((OclFile["System.in"]).readLine(), " ", _1`fieldWidth)
+
+
+
 acceptStatement::
-ACCEPT _1 _2 _3 END-ACCEPT  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
-ACCEPT _1 _2 _3  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    try (_1`acceptSystemIn ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+ACCEPT _1 _2 _3  |-->    try (_1`acceptSystemIn ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
 
-ACCEPT _1 _2 END-ACCEPT  |-->    try _1 := (OclFile["System.in"]).readLine() catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
-ACCEPT _1 _2  |-->    try _1 := (OclFile["System.in"]).readLine() catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
+ACCEPT _1 _2 END-ACCEPT  |-->    try _1`acceptSystemIn catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
+ACCEPT _1 _2  |-->    try _1`acceptSystemIn catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
 
-ACCEPT _1 _2 END-ACCEPT  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
-ACCEPT _1 _2  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
+ACCEPT _1 _2 END-ACCEPT  |-->    try (_1`acceptSystemIn ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
+ACCEPT _1 _2  |-->    try (_1`acceptSystemIn ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
 
-ACCEPT _1 END-ACCEPT  |-->    _1 := (OclFile["System.in"]).readLine() ;\n
-ACCEPT _1  |-->    _1 := (OclFile["System.in"]).readLine() ;\n
+ACCEPT _1 END-ACCEPT  |-->    _1`acceptSystemIn ;\n
+ACCEPT _1  |-->    _1`acceptSystemIn ;\n
 
 ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause, _4 notOnExceptionClause
 ACCEPT _1 _2 _3 _4  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause, _4 notOnExceptionClause
@@ -1724,22 +1729,22 @@ ACCEPT _1 _2 _3 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOcl
 ACCEPT _1 _2 _3  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause
 
 ACCEPT _1 _2 _3 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
-ACCEPT _1 _2 _3  |-->(var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
+ACCEPT _1 _2 _3  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
 
 ACCEPT _1 _2 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement
 ACCEPT _1 _2  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement
 
-ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
-ACCEPT _1 _2 _3 _4  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
+ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
+ACCEPT _1 _2 _3 _4  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
 
-ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause
-ACCEPT _1 _2 _3  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n<when>_3 onExceptionClause
+ACCEPT _1 _2 _3  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n<when>_3 onExceptionClause
 
-ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 notOnExceptionClause
-ACCEPT _1 _2 _3  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 notOnExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n<when>_3 notOnExceptionClause
+ACCEPT _1 _2 _3  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n<when>_3 notOnExceptionClause
 
-ACCEPT _1 _2 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n
-ACCEPT _1 _2  |-->    _1 := (OclFile["_2"]).readLine() ;\n
+ACCEPT _1 _2 END-ACCEPT  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n
+ACCEPT _1 _2  |-->    _1 := StringLib.padRightWithInto((OclFile["_2"]).readLine(), " ", _1`fieldWidth) ;\n
 
 ACCEPT _2 _3 _4 _5 END-ACCEPT  |--> <when> _3 acceptMessageCountStatement, _4 onExceptionClause, _5 notOnExceptionClause
 ACCEPT _2 _3 _4 _5  |--> <when> _3 acceptMessageCountStatement, _4 onExceptionClause, _5 notOnExceptionClause
@@ -1752,19 +1757,19 @@ ACCEPT _2 _3  |--> <when> _3 acceptMessageCountStatement
 
 
 acceptFromDateStatement::
-FROM DATE YYYYMMDD  |-->_dte.getYear() + "" + _dte.getMonth() + "" + _dte.getDate()
-FROM DATE  |-->(_dte.getYear() mod 100) + "" + _dte.getMonth() + "" + _dte.getDate()
-FROM DAY YYYYDDD  |-->
-FROM DAY  |-->
-FROM DAY OF WEEK  |-->
-FROM TIME  |-->OclDate.getSystemTime()
-FROM TIMER  |-->
-FROM TODAYS DATE MMDDYYYY  |-->_dte.getMonth() + "" + _dte.getDate() + "" + _dte.getYear()
-FROM TODAYS DATE  |-->
-FROM TODAYS NAME  |-->
-FROM YEAR  |-->"" + _dte.getYear()
-FROM YYYYMMDD  |-->_dte.getYear() + "" + _dte.getMonth() + "" + _dte.getDate()
-FROM YYYYDDD  |-->
+FROM DATE YYYYMMDD  |-->(_dte.getYear() + "" + _dte.getMonth() + "" + _dte.getDate())
+FROM DATE  |-->((_dte.getYear() mod 100) + "" + _dte.getMonth() + "" + _dte.getDate())
+FROM DAY YYYYDDD  |-->_dte.getYearDays()
+FROM DAY  |-->_dte.getYearDays().subrange(3,7)
+FROM DAY OF WEEK  |-->_dte.getDay()
+FROM TIME  |-->(_dte.getHour() + "" + _dte.getMinute() + "" + _dte.getSecond() + "" + (_dte.getMicrosecond()/10000))
+FROM TIMER  |-->("" + ((OclDate.getSystemTime() mod 86400000)/2.4)*1000)->toLong()
+FROM TODAYS DATE MMDDYYYY  |-->(_dte.getMonth() + "" + _dte.getDate() + "" + _dte.getYear())
+FROM TODAYS DATE  |-->(_dte.getMonth() + "" + _dte.getDate() + "" + (_dte.getYear() mod 100))
+FROM TODAYS NAME  |-->_dte.getDayName()
+FROM YEAR  |-->("" + _dte.getYear())
+FROM YYYYMMDD  |-->(_dte.getYear() + "" + _dte.getMonth() + "" + _dte.getDate())
+FROM YYYYDDD  |-->_dte.getYearDays()
 
 
 acceptFromMnemonicStatement::

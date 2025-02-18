@@ -35,6 +35,8 @@ Entry |-->Map
 Pair |-->Map
 Triple |-->Map
 LinkedHashMap |-->Map
+NavigableMap |-->Map
+ConcurrentNavigableMap |-->Map
 
 Vector |-->Sequence
 ArrayList |-->Sequence
@@ -280,6 +282,8 @@ EnumMap _1  |-->Map_1`collectionParameters
 Pair _1 |-->Map(String,OclAny)
 Triple _1 |-->Map(String,OclAny)
 LinkedHashMap _1 |-->Map_1`collectionParameters
+NavigableMap _1 |-->Map_1`collectionParameters
+ConcurrentNavigableMap _1 |-->Map_1`collectionParameters
 
 ArrayList _1 |-->Sequence_1`collectionParameters
 List _1 |-->Sequence_1`collectionParameters
@@ -966,8 +970,8 @@ getLong ( _1 ) |-->->at(_1)->toLong()
 isNull ( _1 ) |-->->at(_1)->oclIsUndefined()
 contains ( _1 ) |-->->values()->includes(_1)
 containsAll ( _1 ) |-->->includesAll(_1)
-containsKey ( _1 ) |-->->keys()->includes(_1)
-containsValue ( _1 ) |-->->values()->includes(_1)
+containsKey ( _1 ) |-->->includesKey(_1)
+containsValue ( _1 ) |-->->includesValue(_1)
 isEmpty ( ) |-->->isEmpty()
 clear ( ) |-->
 clone ( ) |-->->union(Map{})
@@ -3630,6 +3634,8 @@ ImmutableMap _1 |-->Map{}_1`collectionCreationRest
 JsonObject _1 |-->Map{}_1`collectionCreationRest
 JSONObject _1 |-->Map{}_1`collectionCreationRest
 LinkedHashMap _1 |-->Map{}_1`collectionCreationRest
+NavigableMap _1 |-->Map{}_1`collectionCreationRest
+ConcurrentNavigableMap _1 |-->Map{}_1`collectionCreationRest
 
 PrintStream _1 |-->_1`newTextWriter
 FileInputStream _1 |-->_1`newTextReader
@@ -3720,6 +3726,8 @@ HashMap _1 |-->true
 TreeMap _1 |-->true
 EnumMap _1 |-->true
 LinkedHashMap _1 |-->true
+NavigableMap _1 |-->true
+ConcurrentNavigableMap _1 |-->true
 
 _1 _2 |-->false
 _1 |-->false
@@ -3819,6 +3827,8 @@ Entry |-->Map
 Pair |-->Map
 Triple |-->Map
 LinkedHashMap |-->Map
+NavigableMap |-->Map
+ConcurrentNavigableMap |-->Map
 
 Vector |-->Sequence
 ArrayList |-->Sequence
@@ -4029,6 +4039,8 @@ Pair _1 |-->Map{}
 Triple _1 |-->Map{}
 EnumMap _1 |-->Map{}
 LinkedHashMap _1 |-->Map{}
+NavigableMap _1 |-->Map{}
+ConcurrentNavigableMap _1 |-->Map{}
 
 ArrayList _1 |-->Sequence{}
 List _1 |-->Sequence{}
