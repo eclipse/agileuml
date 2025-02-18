@@ -1,5 +1,6 @@
 import java.util.Date;
 import java.util.ArrayList;
+import java.util.HashMap; 
 
 
 class OclDate implements Comparable { 
@@ -10,6 +11,19 @@ class OclDate implements Comparable {
   static final long HOURMS = 3600000L; 
   static final long MINUTEMS = 60000L; 
   static final long SECONDMS = 1000L;  
+  static final HashMap<String,String> dayname;
+  
+  static
+  { dayname = new HashMap<String,String>(); 
+    dayname.put("0","Sunday"); 
+    dayname.put("1","Monday");
+	dayname.put("2","Tuesday");
+	dayname.put("3","Wednesday");
+	dayname.put("4","Thursday"); 
+	dayname.put("5","Friday");
+	dayname.put("6","Saturday");
+	dayname.put("7","Sunday"); 
+  }
    
   static OclDate createOclDate() 
   { OclDate result = new OclDate();
@@ -26,18 +40,23 @@ class OclDate implements Comparable {
   int hour = 0;
   int minute = 0;
   int second = 0;
+  int microsecond = 0; 
 
   public static OclDate newOclDate()
   { Date dd = new Date(); 
     OclDate d = new OclDate();
-    d.time = dd.getTime();
-    d.year = dd.getYear();
-    d.month = dd.getMonth();
+    d.time = dd.getTime(); // milliseconds since 1st January 1970
+    d.year = dd.getYear() + 1900;
+    d.month = dd.getMonth() + 1;
     d.day = dd.getDate(); // day of month
     d.weekday = dd.getDay(); 
     d.hour = dd.getHours(); 
     d.minute = dd.getMinutes(); 
-    d.second = dd.getSeconds();   
+    d.second = dd.getSeconds();
+	 
+	int milliseconds = (int) (d.time % 1000); 
+	d.microsecond = 1000*milliseconds; 
+	  
     OclDate.systemTime = d.time; 
     return d; 
   }
@@ -48,10 +67,10 @@ class OclDate implements Comparable {
     
     OclDate d = new OclDate();
     d.time = t;
-    d.year = dd.getYear();
-    d.month = dd.getMonth();
+    d.year = dd.getYear() + 1900;
+    d.month = dd.getMonth() + 1;
     d.day = dd.getDate(); // day of month
-    d.weekday = dd.getDay(); 
+    d.weekday = dd.getDay(); // 0 is Sunday
     d.hour = dd.getHours(); 
     d.minute = dd.getMinutes(); 
     d.second = dd.getSeconds();   
@@ -156,6 +175,20 @@ class OclDate implements Comparable {
   public int getYear()
   { return year; } 
 
+  public String getYearDays()  
+  { OclDate d0 = newOclDate();
+    d0.month = 1; 
+	d0.day = 1;
+	d0.hour = 0; 
+	d0.minute = 0; 
+	d0.second = 0; 
+    int days = OclDate.daysBetweenDates(d0,this);
+    String zero = "";
+    if (days < 100)  
+    { zero = "0"; }
+    return (year) + zero + days;
+  }
+
   public int getMonth()
   { return month; } 
 
@@ -164,6 +197,9 @@ class OclDate implements Comparable {
 
   public int getDay()
   { return weekday; } 
+  
+  public String getDayName()
+  { return OclDate.dayname.get("" + weekday); }
 
   public int getHours()
   { return hour; } 
@@ -182,6 +218,9 @@ class OclDate implements Comparable {
 
   public int getSecond()
   { return second; } 
+
+  public int getMicrosecond()
+  { return microsecond; } 
 
   public OclDate addYears(int y)
   { long newtime = time + y*YEARMS;
@@ -462,12 +501,24 @@ class OclDate implements Comparable {
   { OclDate.systemTime = t; }
 
   public static void main(String[] args)
-  { OclDate d1 = OclDate.newOclDate_YMD(2023,7,1); 
-    OclDate d2 = OclDate.newOclDate_YMD(2024,11,1); 
-    int dd = OclDate.daysBetweenDates(d1,d2); 
-    System.out.println(d2.isLeapYear()); 
+  { // OclDate d1 = OclDate.newOclDate_YMD(2023,7,1); 
+    // OclDate d2 = OclDate.newOclDate_YMD(2024,11,1); 
+    // int dd = OclDate.daysBetweenDates(d1,d2); 
+    // System.out.println(d2.isLeapYear()); 
+
+    long syst = OclDate.getSystemTime(); 
+	long coboltimer = (long) ((syst % 86400000)/2.4)*1000; 
+	System.out.println(coboltimer); 
+		
+	/* System.out.println(OclDate.getSystemTime()); 
+	OclDate d = OclDate.newOclDate(); 
+	System.out.println(d.getYearDays());
+	System.out.println(d.getDayName());
+	System.out.println(d.getMicrosecond());
 	
-	System.out.println(OclDate.getSystemTime()); 
+	OclDate d1 = OclDate.newOclDate(); 
+	System.out.println(d1.getMicrosecond());
+	   */ 
   } 
   
 }

@@ -8,19 +8,22 @@ class OclDate:
   DAYS = 86400
   HOURS = 3600
   MINUTES = 60
+  dayname = dict({"0": "Sunday", "1": "Monday", "2": "Tuesday", "3": "Wednesday", "4": "Thursday", "5": "Friday", "6": "Saturday", "7": "Sunday"})
 
-  # Time is stored as seconds internally.
+  # Time is stored as seconds, int internally.
 
-  def __init__(self,t = int(time.time())): 
-    self.time = t
+  # t in seconds
+  def __init__(self,t = time.time()): 
+    self.time = int(t)
     self.today = datetime.datetime.fromtimestamp(t)
     self.year = self.today.year
     self.month = self.today.month
     self.day = self.today.day
-    self.weekday = self.today.weekday()
+    self.weekday = self.today.weekday() + 1
     self.hour = self.today.hour
     self.minute = self.today.minute
     self.second = self.today.second
+    self.microsecond = self.today.microsecond
 
   def __lt__(self,other) : 
     return self.time < other.time
@@ -43,19 +46,22 @@ class OclDate:
   def __sub__(self,other) : 
     return self.dayDifference(other)
 
+  # milliseconds
   def getTime(self) : 
     return 1000*self.time
 
+  # set as milliseconds
   def setTime(self,t) : 
     self.time = t/1000
     self.today = datetime.datetime.fromtimestamp(t/1000)
     self.year = self.today.year
     self.month = self.today.month
     self.day = self.today.day
-    self.weekday = self.today.weekday()
+    self.weekday = self.today.weekday() + 1
     self.hour = self.today.hour
     self.minute = self.today.minute
     self.second = self.today.second
+    self.microsecond = self.today.microsecond
 
   def dateAfter(self,other) : 
     return self.time > other.time
@@ -63,6 +69,7 @@ class OclDate:
   def dateBefore(self,other) : 
     return self.time < other.time
 
+  # milliseconds
   def getSystemTime() : 
     return int(time.time()*1000)
 
@@ -70,7 +77,7 @@ class OclDate:
     pass
 
   def newOclDate() : 
-    t = int(time.time()) 
+    t = time.time() 
     d = OclDate(t)
     return d
 
@@ -124,7 +131,18 @@ class OclDate:
     return self.day
 
   def getDay(self) : 
-    return self.today.weekday()
+    return self.today.weekday() + 1
+
+  def getDayName(self) : 
+    return OclDate.dayname[str(self.today.weekday() + 1)]
+
+  def getYearDays(self) : 
+    d0 = OclDate.newOclDate_YMDHMS(self.year,1,1,0,0,0)
+    days = OclDate.daysBetweenDates(d0,self)
+    zero = ""
+    if days < 100 : 
+      zero = "0"
+    return str(self.year) + zero + str(days)
 
   def getHour(self) : 
     return self.hour
@@ -143,6 +161,9 @@ class OclDate:
 
   def getSeconds(self) : 
     return self.second
+
+  def getMicrosecond(self) : 
+    return self.microsecond
 
   def toString(self) : 
     return str(self.year) + "-" + str(self.month) + "-" + str(self.day) + " " + str(self.hour) + ":" + str(self.minute) + ":" + str(self.second)
@@ -306,6 +327,13 @@ class OclDate:
 
 # print(OclDate.getSystemTime())
 
+# d = OclDate.newOclDate()
+# print(d.getYearDays())
+# print(d.getDayName())
+# print(d.getMicrosecond())
+
+# d1 = OclDate.newOclDate()
+# print(d1.getMicrosecond())
 
 
 

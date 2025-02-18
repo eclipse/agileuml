@@ -5,6 +5,7 @@ class OclDate
   stereotype component; 
 
   static attribute systemTime : long; 
+  static attribute dayname : Map(String,String) := Map{ "0" |-> "Sunday", "1" |-> "Monday", "2" |-> "Tuesday", "3" |-> "Wednesday", "4" |-> "Thursday", "5" |-> "Friday", "6" |-> "Saturday", "7" |-> "Sunday" }; 
   
   attribute time : long; 
   attribute year : int; 
@@ -14,6 +15,7 @@ class OclDate
   attribute hour : int; 
   attribute minute : int; 
   attribute second : int; 
+  attribute microsecond : int; 
 
   static operation newOclDate() : OclDate
   pre: true
@@ -21,7 +23,23 @@ class OclDate
 
   static operation newOclDate_String(s : String) : OclDate
   pre: true post: true 
-  activity: var items : Sequence(String) ; items := s->allMatches("[0-9]+"); var d : OclDate; d := OclDate.newOclDate_Time(0) ; if items->size() >= 3 then d.year := items->at(1)->toInteger() ; d.month := items->at(2)->toInteger() ; d.day := items->at(3)->toInteger() else skip ; if items->size() >= 6 then d.hour := items->at(4)->toInteger() ; d.minute := items->at(5)->toInteger() ; d.second := items->at(6)->toInteger() else skip ; return d;
+  activity: 
+    var items : Sequence(String) ; 
+    items := s->allMatches("[0-9]+"); 
+    var d : OclDate; d := OclDate.newOclDate_Time(0) ; 
+    if items->size() >= 3 
+    then 
+      d.year := items->at(1)->toInteger() ; 
+      d.month := items->at(2)->toInteger() ; 
+      d.day := items->at(3)->toInteger() 
+    else skip ; 
+    if items->size() >= 6 
+    then 
+      d.hour := items->at(4)->toInteger() ; 
+      d.minute := items->at(5)->toInteger() ; 
+      d.second := items->at(6)->toInteger() 
+    else skip ; 
+    return d;
 
   static operation newOclDate_Time(t : long) : OclDate
   pre: true
@@ -109,29 +127,55 @@ class OclDate
   pre: true 
   post: result = month; 
 
+  operation getYearDays() : String
+  pre: true 
+  post: true
+  activity: 
+    var d0 : OclDate := OclDate.newOclDate_YMDHMS(year,1,1,0,0,0) ; 
+    var days : int := OclDate.daysBetweenDates(d0,self) ; 
+    var zero : String := "" ; 
+    if days < 100 then zero := "0" else skip ; 
+    return year + zero + days; 
+
   operation getDate() : int
-  pre: true post: result = day; 
+  pre: true 
+  post: result = day; 
 
   operation getDay() : int
-  pre: true post: result = weekday;
+  pre: true 
+  post: result = weekday;
+
+  operation getDayName() : String
+  pre: true 
+  post: result = OclDate.dayname["" + weekday]; 
 
   operation getHour() : int
-  pre: true post: result = hour;
+  pre: true 
+  post: result = hour;
  
   operation getHours() : int
-  pre: true post: result = hour;
+  pre: true 
+  post: result = hour;
 
   operation getMinute() : int
-  pre: true post: result = minute;
+  pre: true 
+  post: result = minute;
 
   operation getMinutes() : int
-  pre: true post: result = minute;
+  pre: true 
+  post: result = minute;
 
   operation getSecond() : int
-  pre: true post: result = second;
+  pre: true 
+  post: result = second;
 
   operation getSeconds() : int
-  pre: true post: result = second;
+  pre: true 
+  post: result = second;
+
+  operation getMicrosecond() : int
+  pre: true 
+  post: result = microsecond; 
 
   operation addYears(y : int) : OclDate
   pre: true 

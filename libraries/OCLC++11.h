@@ -1297,6 +1297,51 @@ public:
     return str.substr(i, j-i+1);
   } 
 
+    static bool includesKey(map<string, _T>* m, string k)
+    {
+      if (m->find(k) == m->end())
+      {
+        return false;
+      }
+      return true; 
+    }
+
+    static bool excludesKey(map<string, _T>* m, string k)
+    {
+        if (m->find(k) == m->end())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    static bool includesValue(map<string, _T>* s, _T val)
+    {
+        for (auto iter = s->begin(); iter != s->end(); ++iter)
+        {
+            _T value = iter->second;
+            if (val == value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool excludesValue(map<string, _T>* s, _T val)
+    {
+        for (auto iter = s->begin(); iter != s->end(); ++iter)
+        {
+            _T value = iter->second;
+            if (val == value)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
   static bool includesAllMap(map<string,_T>* sup, map<string,_T>* sub) 
   { map<string,_T>::iterator iter; 
