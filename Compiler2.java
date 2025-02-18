@@ -6263,16 +6263,22 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
 
       if ("->includes".startsWith(st) || 
+          "->includesKey".startsWith(st) || 
+          "->includesValue".startsWith(st) || 
           "->includesAll".startsWith(st) || 
           "->including".startsWith(st))
       { mess[0] = "arg1->includes(elem) operator on sets, sequences. true if elem is in arg1\n" + 
           " arg1->includesAll(arg2)  true if all arg2 elements are in arg1\n" + 
-          " arg1->including(elem)  The same as arg1->union(Set{elem})"; 
-        return "arg1->includes(elem)  or  arg1->includesAll(arg2)  or  arg1->including(elem)"; 
+          " arg1->including(elem)  The same as arg1->union(Set{elem})\n" + 
+          " mp->includesKey(k)  and  mp->includesValue(v) are for Map mp\n"; 
+
+        return "arg1->includes(elem),  arg1->includesAll(arg2), arg1->including(elem), mp->includesKey(k), mp->includesValue(v)"; 
       }
 
       if ("->excludes".startsWith(st) ||
           "->excludesAll".startsWith(st) ||  
+          "->excludesKey".startsWith(st) || 
+          "->excludesValue".startsWith(st) || 
           "->excluding".startsWith(st) || 
           "->excludingFirst".startsWith(st) ||
           "->excludingAt".startsWith(st))
@@ -6280,8 +6286,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           " arg1->excludesAll(arg2)  true if arg1, arg2 have no common elements\n" + 
           " arg1->excluding(elem)  The same as arg1 - Set{elem}\n" + 
           " arg1->excludingFirst(elem)  Removes first elem from sequence arg1\n" + 
-          " arg1->excludingAt(int)  Removes sequence element at index ind"; 
-        return "arg1->excludes(elem),  arg1->excludesAll(arg2),  arg1->excluding(elem), arg1->excludingFirst(elem) or arg1->excludingAt(int)"; 
+          " arg1->excludingAt(int)  Removes sequence element at index ind\n" + 
+          " mp->excludesKey(k)  and  mp->excludesValue(v) are for Map mp\n"; 
+        return "arg1->excludes(elem),  arg1->excludesAll(arg2),  arg1->excluding(elem), arg1->excludingFirst(elem), arg1->excludingAt(int), mp->includesKey(k), mp->includesValue(v)"; 
       }
     
       if ("->select".startsWith(st))

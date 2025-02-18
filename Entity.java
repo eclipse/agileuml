@@ -12519,14 +12519,17 @@ System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
       String aname = att.getName();
       Type t = att.getType();
       int m = att.getKind();
+
       boolean froz = att.isFrozen(); 
       boolean uniq = att.isUnique(); 
       boolean scope = att.isClassScope(); 
       res = res + aname + " " + t + " " + m + " " + froz + " " + uniq + 
             " " + scope;
+
       if (i < attributes.size() - 1)
       { res = res + " "; }
     }
+
     return res;
   }   // for each op, save name, type, parameters, pre, post
 

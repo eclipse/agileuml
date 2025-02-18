@@ -634,6 +634,10 @@ public void findPlugins()
     eisusecase.addActionListener(this);
     ucMI.add(eisusecase);
 
+    JMenuItem actorMI = new JMenuItem("Actor"); 
+    actorMI.addActionListener(this);
+    createMenu.add(actorMI); 
+
     // and special cases, such as loadXmi, loadCSV
 
     JMenuItem scMI = new JMenuItem("Entity Statemachine");
@@ -1625,6 +1629,10 @@ public void findPlugins()
       }
       else if (label.equals("General Use Case"))
       { ucdArea.addGeneralUseCase(); 
+        saved = false; 
+      }
+      else if (label.equals("Actor"))
+      { ucdArea.addActor(); 
         saved = false; 
       }
       else if (label.equals("Entity Statemachine"))

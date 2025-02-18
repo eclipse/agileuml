@@ -11,9 +11,9 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 2.3
+ * Version information : 2.4
  *
- * Date :  April 2024
+ * Date :  February 2025
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -134,6 +134,7 @@ public class UCDArea extends JPanel
     private Vector generalisations = new Vector(); // of Generalisation
     private Vector useCases = new Vector(); // of OperationDescription or UseCase
     private Vector activities = new Vector(); // of Behaviour
+    private Vector actors = new Vector(); // of Actor
 
     private BComponent bcontroller = null;  // The B Controller
     private Vector families = new Vector(); // of InheritanceFamily
@@ -3129,7 +3130,8 @@ public class UCDArea extends JPanel
     { typ = null; } 
 
 
-    UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
+    UseCase uc = 
+      (UseCase) ModelElement.lookupByName(nme,useCases); 
     if (uc != null) 
     { System.err.println("!! ERROR: Existing use case with name " + nme); 
       return; 
@@ -3202,6 +3204,37 @@ public class UCDArea extends JPanel
     { uc.addStereotype(stereo); }
 	    
     repaint(); 
+  }
+
+  public void addActor(String nme)
+  { Actor act = new Actor(nme); 
+    actors.add(act); 
+    ActorRectData od = 
+      new ActorRectData(10,80*actors.size(),
+                        getForeground(),actors.size()); 
+    od.setName(nme); 
+    od.setModelElement(act); 
+    visuals.add(od); 
+  }
+
+  public void addActor()
+  { 
+    String nme = JOptionPane.showInputDialog("Enter the actor name: "); 
+
+    if (nme == null || "".equals(nme)) 
+    { return; } 
+
+    Actor act = (Actor) ModelElement.lookupByName(nme,actors);
+
+    if (act != null)
+    { System.err.println("!! ERROR: Existing actor with name " + nme); 
+      return; 
+    } 
+    else 
+    { System.out.println(">> New actor: " + nme);  
+      addActor(nme); 
+      repaint(); 
+    } 
   }
 
   public void createBacktrackingSpecification(UseCase usec)
@@ -9036,12 +9069,15 @@ public class UCDArea extends JPanel
   private Association defineAssociation(Flow flw, Entity ent)
   { RectData src = (RectData) flw.getSource();
     RectData trg = (RectData) flw.getTarget();
+
     if (src == null || trg == null)
-    { System.out.println("! Line start or end not over a class");
+    { System.out.println("!! ERROR: Line start or end not over a class");
       return null;
     }
+
     ModelElement me1 = src.getModelElement();
     ModelElement me2 = trg.getModelElement();
+
     if (me1 instanceof Entity && me2 instanceof Entity) 
     { Entity ent1 = (Entity) me1; 
       Entity ent2 = (Entity) me2; 
@@ -9049,6 +9085,7 @@ public class UCDArea extends JPanel
       { System.err.println("! Warning: defining association from interface");
         // return null; 
       }
+
       // Prompt user for target role name and both cards
       if (astDialog == null)
       { astDialog = new AstEditDialog(parent); 
@@ -9063,9 +9100,10 @@ public class UCDArea extends JPanel
      
       String role2 = astDialog.getRole2(); 
       if (role2 == null)
-      { System.out.println("Add cancelled");
+      { System.out.println("! Add cancelled");
         return null;
       }
+
       String card1 = astDialog.getCard1();
       String card2 = astDialog.getCard2(); 
       int c1 = ModelElement.convertCard(card1);
@@ -9093,7 +9131,7 @@ public class UCDArea extends JPanel
       if (c1 == ModelElement.AGGREGATION1)
       { ast.setCard1(ModelElement.ONE); 
         ast.setAggregation(true); 
-        System.out.println("Creating aggregation"); 
+        System.out.println(">> Creating aggregation"); 
       }
       else if (c1 == ModelElement.AGGREGATION01)
       { ast.setCard1(ModelElement.ZEROONE); 
@@ -9104,7 +9142,8 @@ public class UCDArea extends JPanel
       { ast.setCard1(ModelElement.MANY); // assume
         String qualatt = 
           JOptionPane.showInputDialog("Enter qualifier name:");
-        Attribute qatt = new Attribute(qualatt,new Type("String",null),
+        Attribute qatt = 
+          new Attribute(qualatt,new Type("String",null),
                                        ModelElement.INTERNAL); 
         qatt.setElementType(new Type("String", null)); 
         ast.setQualifier(qatt); 
@@ -9113,6 +9152,7 @@ public class UCDArea extends JPanel
       ast.setFrozen(astDialog.getFrozen()); 
       ast.setAddOnly(astDialog.getAddOnly()); 
       ast.setName(nme);  
+
       String stereotypes = astDialog.getStereotypes(); 
       if (stereotypes != null && !(stereotypes.equals("none")))
       { ast.addStereotype(stereotypes); } 
@@ -9127,8 +9167,12 @@ public class UCDArea extends JPanel
       } 
       return ast;
     } 
-    else 
-    { System.out.println("! Association must be drawn between classes"); 
+    else if (me1 instanceof Actor || me2 instanceof Actor)
+    { System.out.println(">> Dependency between actor and use case"); 
+      return null; 
+    } 
+    else  
+    { System.out.println("!! ERROR: Association must be drawn between classes"); 
       return null; 
     } 
   }  // must use these in drawing the line.
@@ -9200,6 +9244,7 @@ public class UCDArea extends JPanel
       }
       return g;
     }
+
     System.out.println("!! ERROR: Generalisation must be drawn " +
                        "between different classes");
     return null;
@@ -9215,6 +9260,7 @@ public class UCDArea extends JPanel
     invariants = new Vector(); 
     componentNames = new Vector(); 
     useCases = new Vector(); 
+    actors = new Vector(); 
   } 
 
   public void setDrawMode(int mode) 
@@ -9307,8 +9353,8 @@ public class UCDArea extends JPanel
   { int x = me.getX(); 
     int y = me.getY(); 
     boolean is_bigger = false;
-    System.out.println(">> Mouse pressed at " + 
-                       x + " " + y); 
+    // System.out.println(">> Mouse pressed at " + 
+    //                    x + " " + y); 
 
     requestFocus();
 
@@ -9387,7 +9433,7 @@ public class UCDArea extends JPanel
         mode = INERT;
         break;
       case OVAL:
-        System.out.println("This is OVAL");
+        System.out.println("Creating a process");
         mode = INERT; 
         break;
       case EDIT:
@@ -9417,7 +9463,7 @@ public class UCDArea extends JPanel
   public void mouseReleased(MouseEvent e)
   { int x = e.getX();
     int y = e.getY();
-    System.out.println(">> Mouse released at " + x + " " + y); 
+    // System.out.println(">> Mouse released at " + x + " " + y); 
     switch (mode) {
     case SLINES:  
       LineData sline = 
@@ -9430,7 +9476,8 @@ public class UCDArea extends JPanel
       } 
       // create Flow for it. 
       Flow flw = new Flow("f" + linecount); 
-      find_src_targ(sline,flw); 
+      find_src_targ(sline,flw);
+ 
       Association ast = defineAssociation(flw,null);
       if (ast != null) 
       { linecount++;
@@ -9439,7 +9486,17 @@ public class UCDArea extends JPanel
         associations.add(ast); 
         sline.setModelElement(ast);
         sline.setWaypoints((Vector) ((Vector) waypoints).clone()); 
-      } 
+      }
+      else
+      { linecount++;
+        System.out.println(">> Creating dependency"); 
+        sline.setFlow(flw);
+        visuals.addElement(sline);
+        // associations.add(ast); 
+        // sline.setModelElement(ast);
+        sline.setWaypoints((Vector) ((Vector) waypoints).clone()); 
+      }
+ 
       firstpress = false;
       mode = INERT; 
       repaint(); 
@@ -13719,7 +13776,8 @@ public void produceCUI(PrintWriter out)
   }
    
     
-  // Saves the class diagram as an *instance model* of UML-RSDS metamodel
+  // Saves the class diagram as an *instance model* of 
+  // UML-RSDS metamodel
   public void saveModelToFile(String f)
   { File file = new File(f);
     // JFileChooser fc = new JFileChooser();
@@ -13860,16 +13918,29 @@ public void produceCUI(PrintWriter out)
     
     for (int i = 0; i < visuals.size(); i++)
     { VisualData vd = (VisualData) visuals.get(i);
-      if (vd instanceof OvalData) { continue; }   // ignore it  
+
+      // System.out.println(vd); 
+
+      if (vd instanceof OvalData) 
+      { continue; }   // ignore it
+  
       ModelElement me = (ModelElement) vd.getModelElement(); 
       if (me == null) { continue; } 
       if (me.isDerived()) { continue; }
 
-      if (vd instanceof RectData) // Entity or Type
+      if (vd instanceof ActorRectData)
+      { if (me instanceof Actor)
+        { out.println("Actor:"); 
+          ActorRectData rd = (ActorRectData) vd;
+          out.println(me.getParameterisedName() + " " + rd.getx() + " " + rd.gety());
+        }
+      }  
+      else if (vd instanceof RectData) // Entity or Type or Actor
       { if (me instanceof Entity) // Don't save derived entities 
         { out.println("Entity:"); } 
         else 
         { out.println("Type:"); } 
+
         RectData rd = (RectData) vd;
         out.println(me.getParameterisedName() + " " + rd.getx() + " " + rd.gety());
         // and all its attributes 
@@ -13896,7 +13967,7 @@ public void produceCUI(PrintWriter out)
                       ld.xend + " " + ld.yend);  
           out.println(saveWaypoints(ld));
         }
-      } 
+      } // or, it is from an actor or to an actor
 
       if (me != null) 
       { out.println(me.saveData()); }  
@@ -16708,7 +16779,8 @@ public void produceCUI(PrintWriter out)
       } 
       else if (s.equals("GeneralUseCase:"))
       { UseCase uc = parseGeneralUseCase(br); 
-        if (uc != null) { useCases.add(uc); } 
+        if (uc != null) 
+        { useCases.add(uc); } 
         // OvalData od = new OvalData(10,80*useCases.size(),getForeground(),useCases.size()); 
         // od.setName(uc.getName()); 
         // od.setModelElement(uc); 
@@ -16719,6 +16791,12 @@ public void produceCUI(PrintWriter out)
         if (bb != null)
         { preactivities.add(bb); } 
       } 
+      else if (s.equals("Actor:"))
+      { Actor act = parseActor(br); 
+        if (act != null)
+        { actors.add(act); } 
+      } 
+
       linecount++; 
     } 
     try { br.close(); } catch(IOException e) { }
@@ -20016,21 +20094,21 @@ public void produceCUI(PrintWriter out)
     try
     { line1 = br.readLine(); }
     catch (Exception e)
-    { System.out.println("Failed to read type name");
+    { System.out.println("!! Failed to read type name");
       return null;
     }
 
     try
     { line2 = br.readLine(); }
     catch (Exception e)
-    { System.out.println("Failed to read type values");
+    { System.out.println("!! Failed to read type values");
       return null;
     }
 
     try
     { line3 = br.readLine(); }
     catch (Exception ee)
-    { System.out.println("Failed to read alias");
+    { System.out.println("!! Failed to read type alias");
       return null;
     }
 
@@ -20052,7 +20130,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     if (line1vals.size() < 3) 
-    { System.out.println("ERROR!: Failed to read type name & coordinates");
+    { System.out.println("ERROR!!: Failed to read type name & coordinates");
       return null;
     }
 
@@ -20062,13 +20140,13 @@ public void produceCUI(PrintWriter out)
     try
     { xx = Integer.parseInt(xs); }
     catch (NumberFormatException nfe)
-    { System.err.println("ERROR!: X coordinate not a number! " + xs);
+    { System.err.println("ERROR!!: X coordinate not a number! " + xs);
       return null;
     }
     try
     { yy = Integer.parseInt(ys); }
     catch (NumberFormatException nfe)
-    { System.err.println("ERROR!: Y coordinate not a number! " + ys);
+    { System.err.println("ERROR!!: Y coordinate not a number! " + ys);
       return null;
     }
 
@@ -20102,7 +20180,7 @@ public void produceCUI(PrintWriter out)
 
     try { line1 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading EIS usecase details failed");
+    { System.err.println("!! Reading EIS usecase details failed");
       return null; 
     }
     StringTokenizer st1 =
@@ -20112,7 +20190,7 @@ public void produceCUI(PrintWriter out)
     { line1vals.add(st1.nextToken()); }
 
     if (line1vals.size() < 3)
-    { System.err.println("No name, entity and op for use case"); 
+    { System.err.println("!! No name, entity and op for use case"); 
       return null; 
     } 
 
@@ -20128,6 +20206,63 @@ public void produceCUI(PrintWriter out)
     { role = (String) line1vals.get(3); }  
     return new PreUseCase(op,ename,role); 
   } 
+
+  private Actor parseActor(BufferedReader br)
+  { String line1; 
+
+    Vector line1vals = new Vector();  // name x y
+
+    try
+    { line1 = br.readLine(); }
+    catch (Exception e)
+    { System.out.println("!! Failed to read actor name");
+      return null;
+    }
+
+    StringTokenizer st = new StringTokenizer(line1); 
+    while (st.hasMoreTokens())
+    { line1vals.add(st.nextToken()); }
+
+    Vector vals = new Vector();
+    int xx, yy; 
+
+    if (line1vals.size() < 3) 
+    { System.out.println("ERROR!!: Failed to read actor name & coordinates");
+      return null;
+    }
+
+    String nme = (String) line1vals.get(0); 
+    String xs = (String) line1vals.get(1);
+    String ys = (String) line1vals.get(2);
+
+    try
+    { xx = Integer.parseInt(xs); }
+    catch (NumberFormatException nfe)
+    { System.err.println("ERROR!!: X coordinate not integer! " + xs);
+      return null;
+    }
+
+    try
+    { yy = Integer.parseInt(ys); }
+    catch (NumberFormatException nfe)
+    { System.err.println("ERROR!!: Y coordinate not integer! " + ys);
+      return null;
+    }
+
+    Actor act = new Actor(nme); 
+    ActorRectData rd = 
+      new ActorRectData(xx,yy,getForeground(),
+                              rectcount);
+    rectcount++;
+    rd.setLabel(nme);
+    rd.setModelElement(act); 
+    visuals.add(rd); 
+    
+    System.out.println(">> Retrieved actor " + act); 
+    return act; 
+  }
+
+
 
   private UseCase parseGeneralUseCase(BufferedReader br)
   { String line1, line2, line3, line4, line5;

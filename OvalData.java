@@ -11,7 +11,7 @@
         Package: GUI
       */
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -92,14 +92,16 @@ class OvalData extends RectForm
     
     FontMetrics fm = g.getFontMetrics(); 
     //compare the size of the name and the width of the rectangle
+
     if (fm.stringWidth(label) + (namex - sourcex) >= width) 
-      { 
-	width = fm.stringWidth(label) + (namex - sourcex) + 5; 
-      }
+    { 
+      width = fm.stringWidth(label) + (namex - sourcex) + 5; 
+    }
+
     if (20 + (namey - sourcey) >= height)
-      { 
-	height = 20 + (namey - sourcey) + 5; 
-      }
+    { 
+      height = 20 + (namey - sourcey) + 5; 
+    }
     
     g.setColor(Color.black);
     g.drawOval(sourcex, sourcey,width - 1, height - 1);

@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -5482,7 +5482,53 @@ public class BSystemTypes extends BComponent
       "    for (int i = 1; i < se->size(); ++i)\n" +
       "    { res = UmlRsdsLib<_T>::intersectionMap(res, (*se)[i]); }\n" +
       "    return res;\n" +
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + 
+      "  static bool includesKey(map<string, _T>* m, string k)\n" +
+      "  { if (m->find(k) == m->end())\n" +
+      "    {\n" +
+      "      return false;\n" +
+      "    }\n" +
+      "    return true;\n" + 
+      "  }\n\n"; 
+
+    res = res + 
+      "  static bool excludesKey(map<string, _T>* m, string k)\n" +
+      "  { if (m->find(k) == m->end())\n" +
+      "    {\n" +
+      "      return true;\n" +
+      "    }\n" +
+      "    return false;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  static bool includesValue(map<string, _T>* s, _T val)\n" +
+      "  {\n" +
+      "    for (auto iter = s->begin(); iter != s->end(); ++iter)\n" +
+      "    {\n" +
+      "      _T value = iter->second;\n" +
+      "      if (val == value)\n" +
+      "      {\n" +
+      "          return true;\n" +
+      "      }\n" +
+      "    }\n" +
+      "    return false;\n" +
+      "  }\n\n";
+
+    res = res + 
+    "  static bool excludesValue(map<string, _T>* s, _T val)\n" +
+    "  {\n" +
+    "    for (auto iter = s->begin(); iter != s->end(); ++iter)\n" +
+    "    {\n" +
+    "       _T value = iter->second;\n" +
+    "       if (val == value)\n" +
+    "       {\n" +
+    "           return false;\n" +
+    "       }\n" +
+    "   }\n" +
+    "   return true;\n" +
+    " }\n\n";
 
     return res; 
   } 
@@ -11248,13 +11294,15 @@ public class BSystemTypes extends BComponent
 	res = res + 
       "  public static boolean includesKey(Map m, Object key) \n" +
       "  { Object val = m.get(key); \n" + 
-      "    if (val == null) { return false; }\n" +
+      "    if (val == null)\n" + 
+      "    { return false; }\n" +
       "    return true;\n" +
       "  }\n\n"; 
     res = res + 
       "  public static boolean excludesKey(Map m, Object key) \n" +
       "  { Object val = m.get(key); \n" + 
-      "    if (val == null) { return true; }\n" +
+      "    if (val == null)\n" + 
+      "    { return true; }\n" +
       "    return false;\n" +
       "  }\n\n"; 
 	res = res + 
@@ -11264,7 +11312,7 @@ public class BSystemTypes extends BComponent
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object v = m.get(x);\n" +
       "      if (v != null && v.equals(val))\n" +
-      "      { return true;  }\n" +
+      "      { return true; }\n" +
       "    }    \n" +
       "    return false;\n" +
       "  }\n\n"; 
@@ -11275,7 +11323,7 @@ public class BSystemTypes extends BComponent
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object v = m.get(x);\n" +
       "      if (v != null && v.equals(val))\n" +
-      "      { return false;  }\n" +
+      "      { return false; }\n" +
       "    }    \n" +
       "    return true;\n" +
       "  }\n\n"; 
@@ -11594,6 +11642,8 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return result;\n" + 
       "  }\n\n";  
+
+    /* No need for includesKey, excludesKey, includesValue, excludesValue as these are operations of java.util.Map */ 
 
     return res; 
   } 

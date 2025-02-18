@@ -4150,8 +4150,8 @@ public void findClones(java.util.Map clones,
       } // NOT sorted
     }
     else if ("|unionAll".equals(operator) || 
-        "|intersectAll".equals(operator) ||
-        "|concatenateAll".equals(operator))
+             "|intersectAll".equals(operator) ||
+             "|concatenateAll".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left; 
       Expression scope = lexp.right;
       Expression vbl = lexp.left; 
@@ -4415,7 +4415,7 @@ public void findClones(java.util.Map clones,
       } 
     } 
     if (operator.equals("->oclIsKindOf".equals(operator) || 
-             "->oclIsTypeOf".equals(operator)))
+                        "->oclIsTypeOf".equals(operator)))
     { type = new Type("boolean",null); 
       type = Type.getTypeFor(right + "", types, entities); 
       if (type == null) 
@@ -5089,6 +5089,29 @@ public void findClones(java.util.Map clones,
         } 
       } 
     }
+    else if (operator.equals("->includesKey") || 
+             operator.equals("->excludesKey") || 
+             operator.equals("->includesValue") || 
+             operator.equals("->excludesValue"))
+    { boolean lmult = left.isMap();
+      type = new Type("boolean",null); 
+      if (lmult) 
+      { }
+      else 
+      { System.err.println("!! TYPE ERROR: LHS of " + this + " must be a map");
+
+        Type leftTyp = new Type("Map", null); 
+        left.setType(leftTyp);
+ 
+        if (operator.endsWith("Value"))
+        { left.setElementType(right.getType()); 
+          leftTyp.setElementType(right.getType()); 
+        } 
+        else 
+        { leftTyp.setKeyType(right.getType()); }  
+      } // deduce type of one side from that of other
+    } 
+
     else if (operator.equals("&") || operator.equals("<=>") || 
              operator.equals("xor") ||  
              operator.equals("or") || operator.equals("=>"))
@@ -5836,8 +5859,10 @@ public void findClones(java.util.Map clones,
     else if (operator.equals("<+"))
     { type = tleft; } // Map override. 
     else if (operator.equals(":") ||
-             operator.equals("<:") || operator.equals("->includesAll") ||
-             operator.equals("/<:") || operator.equals("->excludesAll") ||
+             operator.equals("<:") || 
+             operator.equals("->includesAll") ||
+             operator.equals("/<:") || 
+             operator.equals("->excludesAll") ||
              operator.equals("/:"))
     { boolean rmult = right.isMultiple();
       type = new Type("boolean",null);
@@ -5894,6 +5919,20 @@ public void findClones(java.util.Map clones,
         }
       } // and set one element type to the other when not null
     }
+    else if (operator.equals("->includesKey") || 
+             operator.equals("->excludesKey") || 
+             operator.equals("->includesValue") || 
+             operator.equals("->excludesValue"))
+    { boolean lmult = left.isMap();
+      type = new Type("boolean",null); 
+      if (lmult) 
+      { }
+      else 
+      { System.err.println("!! TYPE ERROR: LHS of " + this + " must be a map");
+       // JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection!", 
+       //                              "Type error", JOptionPane.ERROR_MESSAGE);
+      } // deduce type of one side from that of other
+    } 
     else if (operator.equals("&") || operator.equals("<=>") || 
              operator.equals("xor") ||  
              operator.equals("or") || operator.equals("=>"))
@@ -6867,10 +6906,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Set.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->includesKey"))
-    { return "Set.includesKey(" + lqf + "," + rw + ")"; } 
+    { return lqf + ".containsKey(" + rw + ")"; } 
 
     if (operator.equals("->excludesKey"))
-    { return "Set.excludesKey(" + lqf + "," + rw + ")"; } 
+    { return "!(" + lqf + ".containsKey(" + rw + "))"; } 
 
     if (operator.equals("->apply"))
     { return "(" + lqf + ").apply(" + rqf + ")"; } 
@@ -7111,6 +7150,12 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       return "((" + right + ") " + lqf + ")"; 
     }  
+
+    if (operator.equals("->includesValue"))
+    { return lqf + ".containsValue(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesValue"))
+    { return  "!(" + lqf + ".containsValue(" + rqf + "))"; } 
 
     if (extensionoperators.containsKey(operator))
     { String op = operator;
@@ -7625,6 +7670,18 @@ public boolean conflictsWithIn(String op, Expression el,
       return lqf; 
     } 
 
+    if (operator.equals("->includesKey"))
+    { return lqf + ".containsKey(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesKey"))
+    { return  "!(" + lqf + ".containsKey(" + rqf + "))"; } 
+
+    if (operator.equals("->includesValue"))
+    { return lqf + ".containsValue(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesValue"))
+    { return  "!(" + lqf + ".containsValue(" + rqf + "))"; } 
+
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opjava = Expression.getOperatorJava(op); 
@@ -8133,6 +8190,18 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Ocl.intersection(" + lqf + "," + rqf + ")"; }
     } 
  
+    if (operator.equals("->includesKey"))
+    { return lqf + ".containsKey(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesKey"))
+    { return  "!(" + lqf + ".containsKey(" + rqf + "))"; } 
+
+    if (operator.equals("->includesValue"))
+    { return lqf + ".containsValue(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesValue"))
+    { return  "!(" + lqf + ".containsValue(" + rqf + "))"; } 
+
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opjava = Expression.getOperatorJava(op); 
@@ -8305,12 +8374,14 @@ public boolean conflictsWithIn(String op, Expression el,
     return res;
   } // add brackets if needed
 
+
   public String queryFormCSharp(java.util.Map env, boolean local)
   { String res;
     String cont = "Controller.inst()"; 
 
     if (operator.equals("#") || operator.equals("#LC") || 
-        "->existsLC".equals(operator) || operator.equals("->exists"))
+        "->existsLC".equals(operator) || 
+        operator.equals("->exists"))
     { return existsQueryFormCSharp(env,local); } 
 
     if (operator.equals("#1") || operator.equals("->exists1"))
@@ -8341,7 +8412,8 @@ public boolean conflictsWithIn(String op, Expression el,
     { return collectQueryFormCSharp(lqf,rqf,rprim,env,local); } 
 
     if (operator.equals("->selectMaximals"))
-    { String col = collectQueryFormCSharp(lqf,rqf,rprim,env,local); 
+    { String col = 
+         collectQueryFormCSharp(lqf,rqf,rprim,env,local); 
       if (left.umlkind == CLASSID)
       { lqf = ((BasicExpression) left).classExtentQueryFormCSharp(env,local); }   
       return "SystemTypes.maximalElements(" + lqf + ", " + col + ")"; 
@@ -8650,6 +8722,18 @@ public boolean conflictsWithIn(String op, Expression el,
       return lqf;
     } 
 
+    if (operator.equals("->includesKey"))
+    { return lqf + ".ContainsKey(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesKey"))
+    { return  "!(" + lqf + ".ContainsKey(" + rqf + "))"; } 
+
+    if (operator.equals("->includesValue"))
+    { return lqf + ".ContainsValue(" + rqf + ")"; } 
+        
+    if (operator.equals("->excludesValue"))
+    { return  "!(" + lqf + ".ContainsValue(" + rqf + "))"; } 
+
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opcsharp = Expression.getOperatorCSharp(op); 
@@ -8666,7 +8750,8 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
       { res = composeNeqQueryFormsCSharp(lqf,rqf,lprim,rprim); }
       else if (comparitors.contains(operator))
-      { res = composeComparitorQueryFormsCSharp(lqf,rqf,lprim,rprim); 
+      { res = 
+          composeComparitorQueryFormsCSharp(lqf,rqf,lprim,rprim); 
         bNeeded = needsBracket; 
       } 
       else if (operator.equals("+") || operator.equals("-") || 
@@ -8837,6 +8922,7 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "( " + res + " )"; }
     return res;
   } // add brackets if needed
+
 
   public String queryFormCPP(java.util.Map env, boolean local)
   { String res;
@@ -9275,6 +9361,17 @@ public boolean conflictsWithIn(String op, Expression el,
       return lqf;
     } // plus version for strings
 
+    if (operator.equals("->includesKey"))
+    { return "UmlRsdsLib<" + lcet + ">::includesKey(" + lqf + ", " + rqf + ")"; } 
+        
+    if (operator.equals("->excludesKey"))
+    { return "UmlRsdsLib<" + lcet + ">::excludesKey(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->includesValue"))
+    { return "UmlRsdsLib<" + lcet + ">::includesValue(" + lqf + ", " + rqf + ")"; } 
+        
+    if (operator.equals("->excludesValue"))
+    { return  "UmlRsdsLib<" + lcet + ">::excludesValue(" + lqf + ", " + rqf + ")"; } 
 
     // No extension ops for C++? 
     if (extensionoperators.containsKey(operator))
@@ -9332,9 +9429,17 @@ public boolean conflictsWithIn(String op, Expression el,
       
       // Also ->includes and ->excludes for map keys
       if (operator.equals("->includes"))
-      { res = "UmlRsdsLib<" + lcet + ">::isIn(" + rw + ", " + lqf + ")"; }
+      { if (left.isMap())
+        { res = "UmlRsdsLib<" + lcet + ">::includesKey(" + lqf + ", " + rqf + ")"; } 
+        else 
+        { res = "UmlRsdsLib<" + lcet + ">::isIn(" + rw + ", " + lqf + ")"; }
+      } 
       else if (operator.equals("->excludes"))
-      { res = "!(UmlRsdsLib<" + lcet + ">::isIn(" + rw + ", " + lqf + "))"; }
+      { if (left.isMap())
+        { res = "UmlRsdsLib<" + lcet + ">::excludesKey(" + lqf + ", " + rqf + ")"; } 
+        else 
+        { res = "!(UmlRsdsLib<" + lcet + ">::isIn(" + rw + ", " + lqf + "))"; }
+      }
       else if (operator.equals("->excluding"))
       { String rss = right.makeSetCPP(rw);
         res = "UmlRsdsLib<" + lcet + ">::subtract(" + lqf + "," + rss + ")";  
@@ -9421,7 +9526,8 @@ public boolean conflictsWithIn(String op, Expression el,
         else 
         { res = "(" + lqf + " == " + rqf + ")"; }  
       }
-      else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
+      else if (operator.equals("/=") || operator.equals("!=") || 
+               operator.equals("<>"))
       { if (Type.isCollectionOrEntity(right.getType()))
         { res = "(*(" + ls + ") != *(" + rqf + "))"; } 
         else 
@@ -20619,6 +20725,22 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       }
     }
 
+    if (operator.equals("=") && "0".equals(right + "") && 
+        left instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) left; 
+      String leftop = be.getOperator(); 
+      if (leftop.equals("->count"))
+      { // s->count(x) = 0
+
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+
+        BinaryExpression res = 
+           new BinaryExpression("->excludes", be.getLeft(),
+                                be.getRight()); 
+        return res; 
+      }
+    }
+
     if (operator.equals("=") && "1".equals(right + "") && 
         left instanceof UnaryExpression)
     { UnaryExpression arg = (UnaryExpression) left; 
@@ -20709,6 +20831,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         } 
         else if (leftargop.equals("|"))
         { // s->select(x | P)->size() > 0
+
           System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
           
           BinaryExpression res = 
@@ -20718,15 +20841,31 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         } 
         else if (leftargop.equals("|R"))
         { // s->reject(x | P)->size() > 0
+
           System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
           
-           UnaryExpression notpred = 
+          UnaryExpression notpred = 
              new UnaryExpression("not", leftargpred); 
-           BinaryExpression res = 
-            new BinaryExpression("#", leftargleft,
+          BinaryExpression res = 
+             new BinaryExpression("#", leftargleft,
                                  notpred); 
           return res; 
         } 
+      }
+    }
+
+    if (operator.equals(">") && "0".equals(right + "") && 
+        left instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) left; 
+      String leftop = be.getOperator(); 
+      if (leftop.equals("->count"))
+      { // s->count(x) > 0
+        System.out.println(">> OCL efficiency smell (OES): Inefficient comparison: " + this);
+
+        BinaryExpression res = 
+           new BinaryExpression("->includes", be.getLeft(),
+                                be.getRight()); 
+        return res; 
       }
     }
 
@@ -20886,7 +21025,9 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   { // Double iterations ->select(...)->select(...)
     // are amber flags.
     // ->select(...)->any() is a red flag, likewise 
-    // s->select(...)->size() = 0  
+    // s->select(...)->size() = 0
+    // s->count(x)->size() = 0
+    // mp->keys()->includes(x)  
 
     int syn = syntacticComplexity(); 
     if (syn > TestParameters.syntacticComplexityLimit)
@@ -20913,11 +21054,24 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
             leftargop.equals("|") ||
             leftargop.equals("|R"))
         { // s->select(P)->size() = 0
+
           aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->forAll");
           int ascore = (int) res.get("amber"); 
           res.set("amber", ascore+1);
         } 
       }
+    }
+    else if (operator.equals("=") && "0".equals(right + "") && 
+        left instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) left; 
+      String leftop = be.getOperator(); 
+      if (leftop.equals("->count"))
+      { // s->count(x) = 0
+
+        aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->excludes");
+        int ascore = (int) res.get("amber"); 
+        res.set("amber", ascore+1);
+      } 
     }
     else if (operator.equals("=") && "1".equals(right + "") && 
         left instanceof UnaryExpression)
@@ -20955,11 +21109,24 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
             leftargop.equals("|") ||
             leftargop.equals("|R"))
         { // s->select(P)->size() = 0
+
           aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->exists");
           int ascore = (int) res.get("amber"); 
           res.set("amber", ascore+1);
         } 
       }
+    }
+    else if (operator.equals(">") && "0".equals(right + "") && 
+             left instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) left; 
+      String leftop = be.getOperator(); 
+      if (leftop.equals("->count"))
+      { // s->count(x) > 0
+
+        aUses.add("! >> OCL efficiency smell (OES): Inefficient comparison: " + this + "\n More efficient to use ->includes");
+        int ascore = (int) res.get("amber"); 
+        res.set("amber", ascore+1);
+      } 
     }
     else if (operator.equals("|") ||
              operator.equals("|R"))

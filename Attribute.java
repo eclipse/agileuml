@@ -4,7 +4,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -18,13 +18,18 @@ import javax.swing.JOptionPane;
 public class Attribute extends ModelElement
 { private Type type; 
   private Type elementType; 
-  private int kind;  // SEN, ACT, INTERNAL, DERIVED
+  private int kind;  
+    // SEN = 2, ACT = 7, INTERNAL = 3, DERIVED = 5,
+    // SUMMARY = 8, PASSWORD = 11, HIDDEN = 13
+
   private String initialValue = ""; // default is none
   private Expression initialExpression = null; 
   private boolean unique = false; // true if a primary key
   private boolean frozen = false; // a constant 
   private boolean instanceScope = true; // "static"
-  private int visibility = PRIVATE; // PRIVATE, PUBLIC, PROTECTED, PACKAGE
+  private int visibility = PRIVATE; 
+    // PRIVATE = 1, PUBLIC = 0, PROTECTED = 2, PACKAGE = 3
+
   private Entity entity = null; // owner
   private boolean sorted = false;  // for collection-valued attributes 
 
@@ -34,7 +39,9 @@ public class Attribute extends ModelElement
   private int lower = 1;  
   private int upper = 1; // 0 represents * 
   private String role1 = null;  // for associations represented as properties
-  private int card1 = ModelElement.MANY; 
+  private int card1 = ModelElement.MANY;
+     // MANY = 0, ONE = 1, ZEROONE = -1
+ 
   private Vector parameters = new Vector(); 
   private boolean isArray = false; 
 
@@ -1755,7 +1762,9 @@ public class Attribute extends ModelElement
 
   public boolean needsControllerOp()
   { return !frozen &&
-           (kind == ModelElement.SEN || kind == ModelElement.INTERNAL); }
+      (kind == ModelElement.SEN || 
+       kind == ModelElement.INTERNAL); 
+  }
   // DERIVED are handled locally? 
 
   public void saveEMF(PrintWriter out)
@@ -1768,7 +1777,7 @@ public class Attribute extends ModelElement
     { out.println("    attribute " + getName() + " identity : " + getType() + ";"); } 
     else if (isDerived())
     { out.println("    attribute " + getName() + " derived : " + getType() + ";"); }
-	else 
+    else 
     { out.println("    attribute " + getName() + " : " + getType() + ";"); } 
   } 
 
