@@ -535,11 +535,7 @@ def union(s,t) :
 def unionSequence(s,t) :
   res = []
   res.extend(s)
-  
-  # Add all elements of t that are not in s (Prevents duplicates)
-  new_res = [x for x in t if x not in s]
-  res.extend(new_res)
-
+  res.extend(t)
   return res
 
 
