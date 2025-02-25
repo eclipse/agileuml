@@ -301,6 +301,10 @@ public class Compiler2
         str.equals("select") || str.equals("collect") || 
         str.equals("reject") ||
         str.equals("includes") || str.equals("including") || 
+        str.equals("includesKey") || 
+        str.equals("includesValue") || 
+        str.equals("excludesKey") || 
+        str.equals("excludesValue") || 
         str.equals("excludes") ||
         str.equals("excluding") || str.equals("intersection") || 
         str.equals("union") ||
