@@ -1623,7 +1623,7 @@ class OclMaplet<K,T>
   }
 
   public static <D,R> HashMap<D,R> excludingMapKey(HashMap<D,R> m, D k)
-  { // m - { k |-> m(k) } 
+  { // m - Map{ k |-> m(k) }  O(1) with clone
     HashMap<D,R> res = new HashMap<D,R>();
     res.putAll(m);
     res.remove(k);
@@ -1631,14 +1631,14 @@ class OclMaplet<K,T>
   }
 
   public static <D,R> TreeMap<D,R> excludingMapKey(TreeMap<D,R> m, D k)
-  { // m - { k |-> m(k) } 
+  { // m - Map{ k |-> m(k) }  O(log m.size) should be
     TreeMap<D,R> res = (TreeMap<D,R>) m.clone();
     res.remove(k);
     return res;
   }
 
   public static <D,R> HashMap<D,R> excludingMapValue(HashMap<D,R> m, R v)
-  { // m - { k |-> v }
+  { // m->antirestrict(m->keys()->select(k | m->at(k) = v)) O(m.size)
     HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m.keySet(); 
     
@@ -1652,7 +1652,7 @@ class OclMaplet<K,T>
   }
 
   public static <D,R> TreeMap<D,R> excludingMapValue(TreeMap<D,R> m, R v)
-  { // m - { k |-> v }
+  { // m->antirestrict(m->keys()->select(k | m->at(k) = v))
     TreeMap<D,R> res = new TreeMap<D,R>();
     Set<D> keys = m.keySet(); 
     

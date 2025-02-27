@@ -22,7 +22,9 @@ package orderedMap {
     operation add(k : K , t : T ) : void
     pre: true
     post: true
-    activity: elements := elements->append(k)  ; items->at(k) := t  ;
+    activity: 
+      elements := elements->append(k)  ; 
+      items->at(k) := t  ;
 
    operation remove(i : int) 
    pre: true post: true
