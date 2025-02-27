@@ -6086,6 +6086,10 @@ public void findClones(java.util.Map clones,
     { type = left.getType(); // so inherits sortedness
       elementType = left.getElementType(); 
     } 
+    else if (Type.isMapType(left.getType()))
+    { type = left.getType(); // so inherits sortedness
+      elementType = left.getElementType(); 
+    } 
     else if (left.isMultiple() && left.isOrdered())
     { type = new Type("Sequence",null); 
       elementType = left.elementType; 
@@ -6122,7 +6126,7 @@ public void findClones(java.util.Map clones,
       else if (tleft.equals(tright) && tlname.equals("int"))
       { type = new Type("int",null); }
       else if (type == null)
-      { System.err.println("Warning!: disallowed types in -: " + this); 
+      { System.err.println("! Warning!: disallowed types in -: " + this); 
         // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
         //                               "Type error", JOptionPane.ERROR_MESSAGE);
         type = tleft; 
@@ -8093,7 +8097,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->unionAll"))
     { String col = collectQueryFormJava7(lqf,rqf,rprim,env,local); 
       String jtype = type.getJava7(elementType); 
-      if (left.isOrdered() && (right.isOrdered() || "self".equals(right + "")))
+      if (left.isOrdered() && (right.isOrdered() || 
+          "self".equals(right + "")))
       { return "((" + jtype + ") Ocl.concatenateAll(" + col + "))"; } 
       return "((" + jtype + ") Ocl.unionAll(" + col + "))"; 
     } 
@@ -8199,8 +8204,11 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->includesValue"))
     { return lqf + ".containsValue(" + rqf + ")"; } 
         
-    if (operator.equals("->excludesValue"))
-    { return  "!(" + lqf + ".containsValue(" + rqf + "))"; } 
+    if (operator.equals("->excludingValue"))
+    { return  "Ocl.excludingMapValue(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->excludingKey"))
+    { return  "Ocl.excludingMapKey(" + lqf + ", " + rqf + ")"; } 
 
     if (extensionoperators.containsKey(operator))
     { String op = operator;

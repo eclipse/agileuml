@@ -6286,9 +6286,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "->excluding".startsWith(st) || 
           "->excludingFirst".startsWith(st) ||
           "->excludingAt".startsWith(st))
-      { mess[0] = "arg1->excludes(elem) operator on sets, sequences. true if elem is not in arg1\n" + 
+      { mess[0] = "\n" + 
+          "arg1->excludes(elem) operator on sets, sequences. true if elem is not in arg1\n" + 
           " arg1->excludesAll(arg2)  true if arg1, arg2 have no common elements\n" + 
-          " arg1->excluding(elem)  The same as arg1 - Set{elem}\n" + 
+          " arg1->excluding(elem)  For collection arg1, the same as arg1 - Set{elem}\n" + 
           " arg1->excludingFirst(elem)  Removes first elem from sequence arg1\n" + 
           " arg1->excludingAt(int)  Removes sequence element at index ind\n" + 
           " mp->excludesKey(k)  and  mp->excludesValue(v) are for Map mp\n"; 
@@ -6296,21 +6297,24 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
     
       if ("->select".startsWith(st))
-      { mess[0] = "Selection (filter) operator on sets, sequences and maps.\n" + 
-          "col->select(x | P)  returns collection/map of same type as col.\n" + 
-          "col->selectMaximals(e), col->selectMinimals(e)  return subcollections of col for which e is maximal/minimal";  
+      { mess[0] = "\n" + 
+          "Selection (filter) operator on sets, sequences and maps.\n" + 
+          "col->select(x | P)  returns collection/map of same type as col, of col elements that satisfy P.\n" + 
+          "col->selectMaximals(e), col->selectMinimals(e)  return subcollections of collection col for which e is maximal/minimal";  
         return "arg1->select(x | Predicate)"; 
       }
 
       if ("->reject".startsWith(st))
-      { mess[0] = "Rejection (negative filter) operator on sets, sequences and maps.\n" + 
-          "col->reject(x | P)  returns collection/map of same type as col.";  
+      { mess[0] = "\n" + 
+          "Rejection (negative filter) operator on sets, sequences and maps.\n" + 
+          "col->reject(x | P)  returns collection/map of same type as col, omitting elements that satisfy P.";  
  
         return "arg1->reject(x | Predicate)"; 
       }
 
       if ("->collect".startsWith(st))
-      { mess[0] = "Collection operator on sets and sequences always returns a sequence\n" + 
+      { mess[0] = "\n" + 
+          "Collection operator on sets and sequences always returns a sequence in AgileUML,\n" + 
           "so that duplicated expression values are preserved.\n" + 
           "col->collect(x | e)  returns sequence of all e values for x in col.\n" + 
           "m->collect(x | e)  for Map m returns map with keys k of m, mapped to e value of x = m[k]\n"; 
