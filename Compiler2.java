@@ -306,7 +306,10 @@ public class Compiler2
         str.equals("excludesKey") || 
         str.equals("excludesValue") || 
         str.equals("excludes") ||
-        str.equals("excluding") || str.equals("intersection") || 
+        str.equals("excluding") || 
+        str.equals("excludingKey") || 
+        str.equals("excludingValue") || 
+        str.equals("intersection") || 
         str.equals("union") ||
         str.equals("unionAll") || str.equals("intersectAll") || 
         str.equals("at") ||
@@ -6285,15 +6288,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "->excludesValue".startsWith(st) || 
           "->excluding".startsWith(st) || 
           "->excludingFirst".startsWith(st) ||
-          "->excludingAt".startsWith(st))
+          "->excludingAt".startsWith(st) ||
+          "->excludingKey".startsWith(st) ||
+          "->excludingValue".startsWith(st))
       { mess[0] = "\n" + 
           "arg1->excludes(elem) operator on sets, sequences. true if elem is not in arg1\n" + 
           " arg1->excludesAll(arg2)  true if arg1, arg2 have no common elements\n" + 
           " arg1->excluding(elem)  For collection arg1, the same as arg1 - Set{elem}\n" + 
           " arg1->excludingFirst(elem)  Removes first elem from sequence arg1\n" + 
           " arg1->excludingAt(int)  Removes sequence element at index ind\n" + 
-          " mp->excludesKey(k)  and  mp->excludesValue(v) are for Map mp\n"; 
-        return "arg1->excludes(elem),  arg1->excludesAll(arg2),  arg1->excluding(elem), arg1->excludingFirst(elem), arg1->excludingAt(int), mp->includesKey(k), mp->includesValue(v)"; 
+          " mp->excludesKey(k), mp->excludesValue(v),  mp->excludingKey(k), mp->excludingValue(v) are for Map mp\n"; 
+        return "arg1->excludes(elem),  arg1->excludesAll(arg2),  arg1->excluding(elem), arg1->excludingFirst(elem), arg1->excludingAt(int), mp->excludesKey(k), mp->excludesValue(v), mp->excludingKey(k), mp->excludingValue(v)"; 
       }
     
       if ("->select".startsWith(st))

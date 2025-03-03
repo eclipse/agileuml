@@ -1,7 +1,7 @@
 import java.util.*; 
 
 /******************************
-* Copyright (c) 2003--2023 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2636,6 +2636,7 @@ public class GUIBuilder
   public static String buildTestsGUICSharp(Vector ucs, String sysName, boolean incr, Vector types, Vector entities)
   { String res = "using System;\n" +  
           "using System.Collections;\n" + 
+          "using System.Collections.Generic;\n" + 
           "using System.IO;\n" + 
           "using System.Text;\n" + 
           "using System.Text.RegularExpressions;\n" + 

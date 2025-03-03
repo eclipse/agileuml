@@ -968,6 +968,18 @@ class BinaryExpression extends Expression
     { res.add("->excluding"); }
     else if ("->excluding".equals(op))
     { res.add("->including"); }
+    else if ("->excludingKey".equals(op))
+    { res.add("->excludingValue"); }
+    else if ("->excludingValue".equals(op))
+    { res.add("->excludingKey"); }
+    else if ("->excludesKey".equals(op))
+    { res.add("->includesKey"); }
+    else if ("->includesKey".equals(op))
+    { res.add("->excludesKey"); }
+    else if ("->excludesValue".equals(op))
+    { res.add("->includesValue"); }
+    else if ("->includesValue".equals(op))
+    { res.add("->excludesValue"); }
     else if ("->includes".equals(op))
     { res.add("->excludes"); }
     else if ("->excludes".equals(op))
@@ -1418,7 +1430,9 @@ class BinaryExpression extends Expression
              operator.equals("->includesKey") || 
              operator.equals("->excludesKey") || 
              operator.equals("->includesValue") || 
-             operator.equals("->excludesValue") || 
+             operator.equals("->excludesValue") ||
+             operator.equals("->excludingKey") || 
+             operator.equals("->excludingValue") || 
              operator.equals("->restrict") ||
              operator.equals("->antirestrict") ||  
              operator.equals("->selectMinimals") || 
@@ -1603,6 +1617,8 @@ class BinaryExpression extends Expression
              operator.equals("->excluding") ||
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
+             operator.equals("->excludingKey") ||
+             operator.equals("->excludingValue") ||
              operator.equals("->includes") ||
              operator.equals("->excludes") || 
              operator.equals("->pow") || 
@@ -2632,6 +2648,10 @@ class BinaryExpression extends Expression
         operator.equals("!") || operator.equals("#1") || 
         operator.equals("->excludesAll") ||
         operator.equals("->includesAll") ||
+        operator.equals("->includesKey") ||
+        operator.equals("->includesValue") ||
+        operator.equals("->excludesKey") ||
+        operator.equals("->excludesValue") ||
         operator.equals("->compareTo") || 
         comparitors.contains(operator))
     { return true; } 
@@ -2664,6 +2684,8 @@ class BinaryExpression extends Expression
         operator.equals("->append") || 
         operator.equals("->including") || 
         operator.equals("->restrict") ||
+        operator.equals("->excludingKey") ||
+        operator.equals("->excludingValue") ||
         operator.equals("->antirestrict") || 
         operator.equals("->excludingAt") ||
         operator.equals("->excludingFirst") ||
@@ -4582,6 +4604,29 @@ public void findClones(java.util.Map clones,
         } 
       } 
     } 
+    else if ("->excludingKey".equals(operator) || 
+             "->excludingValue".equals(operator))
+    { if (tleft != null) 
+      { type = tleft; 
+        elementType = left.elementType; 
+      } // sorted if left is sorted
+      else 
+      { type = new Type("Map", null); } 
+
+      if (left.isMap()) { } 
+      else 
+      { System.err.println("!! LHS of " + this + " must be a map"); 
+        Type ftype = new Type("Map", null); 
+        ftype.setElementType(new Type("OclAny", null)); 
+        ftype.setKeyType(right.elementType); 
+        left.setType(ftype); 
+
+        if (left instanceof BasicExpression)
+        { String vname = ((BasicExpression) left).basicString(); 
+          vartypes.put(vname, ftype); 
+        } 
+      } 
+    } 
     else if (operator.equals("->resizeTo"))
     { type = new Type("Ref", null); 
       elementType = left.elementType; 
@@ -5800,7 +5845,9 @@ public void findClones(java.util.Map clones,
       type.elementType = elementType;  
     } 
     else if ("->restrict".equals(operator) || 
-             "->antirestrict".equals(operator))
+             "->antirestrict".equals(operator) || 
+             "->excludingKey".equals(operator) || 
+             "->excludingValue".equals(operator))
     { if (tleft != null) 
       { type = tleft; 
         elementType = left.elementType; 
@@ -6182,7 +6229,7 @@ public void findClones(java.util.Map clones,
     { if ("Sequence".equals(tlname)) 
       { type = tleft; } 
       else 
-      { System.err.println("!! WARNING: ^, ->prepend, ->append can only be applied to a sequence: " + this);  
+      { System.err.println("!! WARNING: ^, ->concatenate, ->prepend, ->append can only be applied to a sequence: " + this);  
         type = new Type("Sequence",null);
         type.elementType = right.getType(); 
       }  
@@ -6259,7 +6306,9 @@ public void findClones(java.util.Map clones,
     }
 
     if (operator.equals("->restrict") ||
-        operator.equals("->antirestrict"))
+        operator.equals("->antirestrict") || 
+        operator.equals("->excludingKey") || 
+        operator.equals("->excludingValue"))
     { if (type == null) 
       { type = new Type("Map", null); 
         type.setSorted(left.isSorted); 
@@ -6286,7 +6335,9 @@ public void findClones(java.util.Map clones,
         operator.equals("->restrict") ||
         operator.equals("->antirestrict") ||
         operator.equals("->excluding") ||
-        operator.equals("->excludingAt") ||                 
+        operator.equals("->excludingAt") ||
+        operator.equals("->excludingKey") || 
+        operator.equals("->excludingValue") ||                 
         operator.equals("->excludingFirst")
        )
     { elementType = etleft;
@@ -6915,6 +6966,12 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->excludesKey"))
     { return "!(" + lqf + ".containsKey(" + rw + "))"; } 
 
+    if (operator.equals("->excludingKey"))
+    { return  "Set.excludingMapKey(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->excludingValue"))
+    { return  "Set.excludingMapValue(" + lqf + ", " + rqf + ")"; } 
+
     if (operator.equals("->apply"))
     { return "(" + lqf + ").apply(" + rqf + ")"; } 
 
@@ -7297,7 +7354,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludesAll"))
       { res = "Set.intersection(" + rss + "," + lqf + ").size() == 0"; 
         bNeeded = true; 
-      } 
+      } // inefficient
       else if (operator.equals("->count"))
       { res = "Set.count(" + lqf + "," + rw + ")"; } 
       else if (operator.equals("->indexOf"))
@@ -7345,7 +7402,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludesAll"))
       { res = "Set.intersection(" + rqf + "," + ls + ").size() == 0";
         bNeeded = true; 
-      } 
+      } // inefficient
       else 
       { res = lqf + " " + operator + " " + rqf; 
         bNeeded = true; 
@@ -7658,8 +7715,11 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "!(" + rqf + " instanceof " + left + ")"; } 
 
     if (left.umlkind == CLASSID && 
-        ((BasicExpression) left).arrayIndex == null && operator.equals("->excludesAll"))  
-    { lqf = ((BasicExpression) left).classExtentQueryFormJava6(env,local);
+        ((BasicExpression) left).arrayIndex == null && 
+        operator.equals("->excludesAll"))  
+    { lqf = 
+        ((BasicExpression) left).classExtentQueryFormJava6(
+                                                  env,local);
       return "Collections.disjoint(" + lqf + "," + rqf + ")"; 
     } 
 
@@ -7685,6 +7745,12 @@ public boolean conflictsWithIn(String op, Expression el,
         
     if (operator.equals("->excludesValue"))
     { return  "!(" + lqf + ".containsValue(" + rqf + "))"; } 
+
+    if (operator.equals("->excludingKey"))
+    { return  "Set.excludingMapKey(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->excludingValue"))
+    { return  "Set.excludingMapValue(" + lqf + ", " + rqf + ")"; } 
 
     if (extensionoperators.containsKey(operator))
     { String op = operator;
@@ -8210,6 +8276,10 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->excludingKey"))
     { return  "Ocl.excludingMapKey(" + lqf + ", " + rqf + ")"; } 
 
+    if (operator.equals("->excludingValue"))
+    { return  "Ocl.excludingMapValue(" + lqf + ", " + rqf + ")"; } 
+
+
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opjava = Expression.getOperatorJava(op); 
@@ -8734,13 +8804,19 @@ public boolean conflictsWithIn(String op, Expression el,
     { return lqf + ".ContainsKey(" + rqf + ")"; } 
         
     if (operator.equals("->excludesKey"))
-    { return  "!(" + lqf + ".ContainsKey(" + rqf + "))"; } 
+    { return "!(" + lqf + ".ContainsKey(" + rqf + "))"; } 
 
     if (operator.equals("->includesValue"))
     { return lqf + ".ContainsValue(" + rqf + ")"; } 
         
     if (operator.equals("->excludesValue"))
-    { return  "!(" + lqf + ".ContainsValue(" + rqf + "))"; } 
+    { return "!(" + lqf + ".ContainsValue(" + rqf + "))"; } 
+
+    if (operator.equals("->excludingKey"))
+    { return "SystemTypes.excludingMapKey(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->excludingValue"))
+    { return "SystemTypes.excludingMapValue(" + lqf + ", " + rqf + ")"; } 
 
     if (extensionoperators.containsKey(operator))
     { String op = operator;
@@ -8858,7 +8934,7 @@ public boolean conflictsWithIn(String op, Expression el,
         else if (operator.equals("/<:"))
         { res = "!(SystemTypes.isSubset(" + lqf + "," + rs + "))"; } 
         else if (operator.equals("->excludesAll"))
-        { res = "SystemTypes.intersection(" + rs + "," + lqf + ").Count == 0"; } 
+        { res = "SystemTypes.excludesAll(" + rs + "," + lqf + ")"; } 
         else if (operator.equals("->including"))
         { res = "SystemTypes.union(" + lqf + "," + rs + ")"; } 
         else if (operator.equals("->excluding"))
@@ -8906,7 +8982,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("/:"))
       { res = "!(" + rqf + ".Contains(" + lw + "))"; }
       else if (operator.equals("->excludesAll"))
-      { res = "(SystemTypes.intersection(" + rqf + "," + ls + ").Count == 0)"; } 
+      { res = "SystemTypes.excludesAll(" + rqf + "," + ls + ")"; } 
       else 
       { res = "(" + lqf + " " + operator + " " + rqf + ")"; 
         // bNeeded = true; 
@@ -9381,6 +9457,12 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->excludesValue"))
     { return  "UmlRsdsLib<" + lcet + ">::excludesValue(" + lqf + ", " + rqf + ")"; } 
 
+    if (operator.equals("->excludingKey"))
+    { return  "UmlRsdsLib<" + lcet + ">::excludingMapKey(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->excludingValue"))
+    { return  "UmlRsdsLib<" + lcet + ">::excludingMapValue(" + lqf + ", " + rqf + ")"; } 
+
     // No extension ops for C++? 
     if (extensionoperators.containsKey(operator))
     { String op = operator;
@@ -9501,7 +9583,11 @@ public boolean conflictsWithIn(String op, Expression el,
         else if (operator.equals("/<:"))
         { res = "!(UmlRsdsLib<" + lcet + ">::isSubset(" + lqf + ", " + rs + "))"; } 
         else if (operator.equals("->excludesAll"))
-        { res = "(UmlRsdsLib<" + lcet + ">::intersection(" + rs + ", " + lqf + ")->size() == 0)"; } 
+        { if (left.isMap() && right.isMap())
+          { res = "UmlRsdsLib<" + lcet + ">::excludesAllMap(" + lqf + "," + rqf + ")"; } 
+          else 
+          { res = "UmlRsdsLib<" + lcet + ">::excludesAll(" + lqf + ", " + rqf + ")"; }
+        }  
         else if (operator.equals("->including"))
         { res = "UmlRsdsLib<" + lcet + ">::unionSet(" + lqf + ", " + rs + ")"; } 
         else if (operator.equals("->excluding"))
@@ -9546,7 +9632,11 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("/:"))
       { res = "!(UmlRsdsLib<" + lcet + ">::isIn(" + lw + ", " + rqf + "))"; }
       else if (operator.equals("->excludesAll"))
-      { res = "(UmlRsdsLib<" + lcet + ">::intersection(" + rqf + ", " + ls + ")->size() == 0)"; } 
+      { if (left.isMap() && right.isMap())
+        { res = "UmlRsdsLib<" + lcet + ">::excludesAllMap(" + lqf + "," + rqf + ")"; } 
+        else  
+        { res = "(UmlRsdsLib<" + lcet + ">::excludesAll(" + lqf + ", " + rqf + ")"; }
+      }  
       else 
       { res = "(" + lqf + " " + operator + " " + rqf + ")"; 
         // bNeeded = true; 
@@ -13578,9 +13668,9 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("->excludesAll"))
     { if (left.isMap())
 	  { res = "Set.excludesAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "(Set.intersection(" + rqf + "," + lqf + ").size() == 0)"; }
-	}        
+     else 
+     { res = "(Set.intersection(" + rqf + "," + lqf + ").size() == 0)"; }
+    } // inefficient        
     else if (operator.equals("^") || operator.equals("->concatenate"))
     { res = "Set.concatenate(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("->symmetricDifference"))
@@ -13643,7 +13733,7 @@ public boolean conflictsWithIn(String op, Expression el,
 	  { res = "Set.excludesAllMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = "Collections.disjoint(" + lqf + "," + rqf + ")"; }
-	}        
+    }        
     else if (operator.equals("^") || operator.equals("->concatenate"))
     { res = "Set.concatenate(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("->symmetricDifference"))
@@ -13774,10 +13864,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = "!(SystemTypes.isSubset(" + lqf + ", " + rqf + "))"; } 
     else if (operator.equals("->excludesAll"))
     { if (left.isMap() && right.isMap())
-	  { res = "SystemTypes.excludesAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "(SystemTypes.intersection(" + rqf + "," + lqf + ").Count == 0)"; }
-	}        
+      { res = "SystemTypes.excludesAllMap(" + lqf + "," + rqf + ")"; } 
+      else 
+      { res = "SystemTypes.excludesAll(" + lqf + "," + rqf + ")"; }
+    }        
     else if (operator.equals("^") || operator.equals("->concatenate"))
     { res = "SystemTypes.concatenate(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("->symmetricDifference"))
@@ -13865,8 +13955,8 @@ public boolean conflictsWithIn(String op, Expression el,
         res = "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::excludesAllMap(" + lqf + "," + rqf + ")";
       } 
       else 
-      { res = "(UmlRsdsLib<" + lcet + ">::intersection(" + rqf + ", " + lqf + ")->size() == 0)"; }
-	}        
+      { res = "UmlRsdsLib<" + lcet + ">::excludesAll(" + lqf + ", " + rqf + ")"; }
+    }        
     else if (operator.equals("^") || operator.equals("->concatenate"))
     { res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + ", " + rqf + ")"; } 
     else if (operator.equals("->symmetricDifference"))
@@ -17321,25 +17411,40 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   public boolean isMultiple()
   { if (operator.equals("\\/") || operator.equals("->union") ||
-        operator.equals("->intersection") || operator.equals("->prepend") ||
-        operator.equals("->including") || operator.equals("->excluding") ||
+        operator.equals("->intersection") || 
+        operator.equals("->prepend") ||
+        operator.equals("->including") || 
+        operator.equals("->excluding") ||
+        operator.equals("->excludingKey") || 
+        operator.equals("->excludingValue") ||
         operator.equals("->excludingAt") || 
         operator.equals("->excludingFirst") || 
-        operator.equals("/\\") || operator.equals("^") || "->concatenate".equals(operator) || operator.equals("->append") ||
+        operator.equals("/\\") || operator.equals("^") || 
+        "->concatenate".equals(operator) || 
+        operator.equals("->append") ||
         (operator.equals("-") && left.isMultiple())) 
     { return true; }
 
-    if (operator.equals("->select") || operator.equals("->reject") ||
-        operator.equals("->closure") || operator.equals("->sortedBy") || 
-        operator.equals("|") || operator.equals("|R") || operator.equals("|C") || 
-        operator.equals("->collect") || operator.equals("->selectMinimals") ||
-        operator.equals("->selectMaximals") || operator.equals("->unionAll") || operator.equals("->concatenateAll") || 
-        operator.equals("->intersectAll") || operator.equals("->symmetricDifference") ||
-        operator.equals("->split") || operator.equals("->allMatches"))
+    if (operator.equals("->select") || 
+        operator.equals("->reject") ||
+        operator.equals("->closure") || 
+        operator.equals("->sortedBy") || 
+        operator.equals("|") || operator.equals("|R") || 
+        operator.equals("|C") || 
+        operator.equals("->collect") || 
+        operator.equals("->selectMinimals") ||
+        operator.equals("->selectMaximals") || 
+        operator.equals("->unionAll") || 
+        operator.equals("->concatenateAll") || 
+        operator.equals("->intersectAll") || 
+        operator.equals("->symmetricDifference") ||
+        operator.equals("->split") || 
+        operator.equals("->allMatches"))
     { return true; } 
 
     // And map operators: 
-    if (operator.equals("->restrict") || operator.equals("->antirestrict")) 
+    if (operator.equals("->restrict") || 
+        operator.equals("->antirestrict")) 
     { return true; } 
 
     if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))
@@ -17366,6 +17471,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("->excluding") ||
         operator.equals("->excludingAt") ||
         operator.equals("->excludingFirst") || 
+        operator.equals("->excludingKey") || 
+        operator.equals("->excludingValue") ||
         operator.equals("/\\") || 
         (operator.equals("-") && left.isMultiple()) ) 
     { return left.isSorted(); }
@@ -21210,6 +21317,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("->append") ||
         operator.equals("->excluding") ||
         operator.equals("->excludingFirst") ||
+        operator.equals("->excludingKey") || 
+        operator.equals("->excludingValue") ||
         operator.equals("->includes") ||
         operator.equals("->excludes") ||
         operator.equals("->includesAll") ||

@@ -10001,6 +10001,7 @@ public class UCDArea extends JPanel
 
     out.println("using System;"); 
     out.println("using System.Collections;"); 
+    out.println("using System.Collections.Generic;"); 
     out.println("using System.IO;"); 
     out.println("using System.Text;"); 
     out.println("using System.Text.RegularExpressions;"); 
@@ -10980,7 +10981,9 @@ public void produceCUI(PrintWriter out)
 
   public void printCSharpHeader(PrintWriter out)
   { out.println("using System;"); 
-    out.println("using System.Collections;"); 
+    out.println("using System.Collections;");
+    out.println("using System.Collections.Generic;"); 
+ 
     out.println("using System.IO;"); 
     out.println("using System.Linq;");
     out.println("using System.Diagnostics;"); 
@@ -11237,7 +11240,9 @@ public void produceCUI(PrintWriter out)
     out2.println("using System;"); 
     out2.println("using System.IO;"); 
     out2.println("using System.Diagnostics;"); 
-    out2.println("using System.Collections;\n\n");
+    out2.println("using System.Collections;");
+    out2.println("using System.Collections.Generic;\n\n"); 
+
     generateSystemTypesCSharp(out2);
   } 
 
@@ -12124,7 +12129,8 @@ public void produceCUI(PrintWriter out)
 
   private void generateSystemTypesCSharp(PrintWriter out)
   { // out.println("using System;"); 
-    // out.println("using System.Collections;\n\n");
+    // out.println("using System.Collections;");
+    // out.println("using System.Collections.Generic;\n\n"); 
 
     // if (systemName != null && systemName.length() > 0)
     // { out.println("namespace " + systemName + " {\n\n"); } 
@@ -12173,17 +12179,42 @@ public void produceCUI(PrintWriter out)
     out.println(BSystemTypes.generateSetEqualsOpCSharp()); 
     out.println("    public static ArrayList addSet(ArrayList a, object x)"); 
     out.println("    { ArrayList res = new ArrayList();"); 
-    out.println("      res.AddRange(a); if (x != null) { res.Add(x); }"); 
-    out.println("      return res; }\n"); 
+    out.println("      res.AddRange(a);"); 
+    out.println("      if (x != null) { res.Add(x); }"); 
+    out.println("      return res; }\n");
+     out.println("    public static SortedSet<T> addSet<T>(SortedSet<T> a, T x)"); 
+     out.println("    {");
+     out.println("      SortedSet<T> res = new SortedSet<T>();");
+     out.println("      res.UnionWith(a); ");
+     out.println("      if (x != null) { res.Add(x); }");
+     out.println("      return res;");
+     out.println("    }\n");
+ 
     out.println("    public static ArrayList makeSet(object x)"); 
     out.println("    { ArrayList res = new ArrayList();"); 
     out.println("      if (x != null) { res.Add(x); }"); 
-    out.println("      return res; }\n"); 
+    out.println("      return res;"); 
+    out.println("    }\n");
+     out.println("    public static SortedSet<T> makeSortedSet<T>(T x)");
+     out.println("    {");
+     out.println("      SortedSet<T> res = new SortedSet<T>();");
+     out.println("      if (x != null) { res.Add(x); }");
+     out.println("      return res;");
+     out.println("    }\n");
+ 
     out.println("    public static ArrayList removeSet(ArrayList a, object x)"); 
     out.println("    { ArrayList res = new ArrayList(); "); 
     out.println("      res.AddRange(a);"); 
     out.println("      while (res.Contains(x)) { res.Remove(x); }"); 
     out.println("      return res; }\n"); 
+
+     out.println("    public static SortedSet<T> removeSet<T>(SortedSet<T> a, T x)");
+     out.println("    {");
+     out.println("       SortedSet<T> res = new SortedSet<T>();");
+     out.println("       res.UnionWith(a);");
+     out.println("       res.Remove(x); ");
+     out.println("       return res;");
+     out.println("    }\n");
     
     String mop = BSystemTypes.generateMaxOpCSharp(); 
     out.println("\n" + mop); 
@@ -27634,6 +27665,8 @@ public void produceCUI(PrintWriter out)
 
       mtout.println("using System;");
       mtout.println("using System.Collections;");
+      mtout.println("using System.Collections.Generic;"); 
+
       mtout.println("using System.IO;");
       mtout.println("using System.Text;");
       mtout.println("using System.Text.RegularExpressions;");
@@ -27732,6 +27765,8 @@ public void produceCUI(PrintWriter out)
   /*
       mtout.println("using System;");
       mtout.println("using System.Collections;");
+      mtout.println("using System.Collections.Generic;"); 
+
       mtout.println("using System.IO;");
       mtout.println("using System.Text;");
       mtout.println("using System.Text.RegularExpressions;");
