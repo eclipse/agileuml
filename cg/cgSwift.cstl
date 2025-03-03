@@ -358,6 +358,15 @@ _1->excludingAt(_2) |-->Ocl.removeAtString(str: _1, ind: _2)<when> _1 String
 _1->excludingAt(_2) |-->Ocl.removeAt(sq: _1, ind: _2)
 _1->excludingFirst(_2) |-->Ocl.removeFirst(sq: _1, x: _2)
 
+_1->includesKey(_2) |-->(_1[_2] != nil)
+_1->excludesKey(_2) |-->(_1[_2] == nil)
+_1->includesValue(_2) |-->Ocl.hasValue(s: _1, v: _2)
+_1->excludesValue(_2) |-->!(Ocl.hasValue(s: _1, v: _2))
+
+_1->excludingKey(_2) |-->Ocl.excludingMapKey(m: _1, k: _2)
+_1->excludingValue(_2) |-->Ocl.excludingMapValue(m: _1, v: _2)
+
+
 _1->hasPrefix(_2) |-->_1.hasPrefix(_2)
 _1->hasSuffix(_2) |-->_1.hasSuffix(_2)
 _1->after(_2) |-->Ocl.after(str: _1, sep: _2)

@@ -349,6 +349,8 @@ _1->at(_2) |-->((_1`elementType) _1.get(_2))<when> _2 not numeric
 
 _1->restrict(_2) |-->Ocl.restrictMap(_1,_2)
 _1->antirestrict(_2) |-->Ocl.antirestrictMap(_1,_2)
+_1->excludingKey(_2) |-->Ocl.excludingMapKey(_1,_2)
+_1->excludingValue(_2) |-->Ocl.excludingMapValue(_1,_2)
 
 _1->select(_2 | _3) |-->Ocl.selectSet(_1,(_2)->{return _3;})<when> _1 Set
 _1->select(_2 | _3) |-->Ocl.selectSequence(_1,(_2)->{return _3;})<when> _1 Sequence

@@ -266,6 +266,7 @@ random _1 |-->_1`randomTrailer
 pickle _1 |-->_1`pickleTrailer
 datetime _1 |-->_1`datetimeTrailer
 asyncio _1 |-->_1`asyncioTrailer
+sqlite3 _1 |-->_1`sqliteTrailer
 
 np _1 |-->_1`numpyTrailer
 np _1 _2 |-->_2`npRandomTrailer<when> _1 matches .random
@@ -374,6 +375,7 @@ atom::
 [ _1 ] |-->_1`sequenceFormation
 { _1 } |-->_1
 ` _1 ` |-->"_1"
+"" _1 "" |-->_1
 - _1 |-->-_1
 
 None |-->null
@@ -860,7 +862,7 @@ trailer::
 . intersection_update _1 |-->->intersection_1
 . difference _1 |--> - _1
 . difference_update _1 |--> - _1
-. isdisjoint _1 |-->->intersection_1->isEmpty()
+. isdisjoint _1 |-->->excludesAll_1
 . issubset _1 |--> <: _1
 . issuperset _1 |-->->includesAll_1
 . symmetric_difference _1 |-->->symmetricDifference_1
@@ -899,6 +901,15 @@ trailer::
 . sleep _1 |-->OclProcess.sleepSeconds_1
 . create_task _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).startProcess()
 . run _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).start()
+
+. cursor _1 |-->.createStatement()
+. commit _1 |-->.commit()
+. rollback _1 |-->.rollback()
+. execute _1 |-->.executeQuery(_1`firstArg)
+. executemany _1 |-->.executeMany(_1`firstArg,_1`secondArg)
+. fetchone _1 |-->.next()
+. fetchall _1 |-->.getElements()
+. close _1 |-->.close()
 
 . deque _1 |-->_1
 . OrderedDict _1 |-->_1
@@ -1143,6 +1154,18 @@ _1 |-->_1`argList<when> _1 arguments
 
 ( ) |-->
 ( _1 ) |-->_1
+
+
+sqliteTrailer::
+. connect _1 |-->OclDatasource.getConnection(_1`firstArg, "", "")
+. complete_statement _1 |-->SQLStatement.isValidSQL(_1`firstArg)
+. enable_callback_tracebacks _1 |-->
+. register_adapter _1 |-->
+. register_converter _1 |-->
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
 
 
 reTrailer::
