@@ -57,6 +57,8 @@ public:
 
   void close();
 
+  void closeFile();
+
   void connect();
 
   OclDatasource* openConnection(); 

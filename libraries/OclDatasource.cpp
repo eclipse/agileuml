@@ -397,6 +397,23 @@ void OclDatasource::close()
   httpConnection = NULL;
 }
 
+void OclDatasource::closeFile()
+{ if (database != NULL)
+  { sqlite3_close(database); }
+  hasLocalSession = FALSE; 
+  url = ""; 
+  host = ""; 
+  file = ""; 
+  port = 0;
+  passwd = "";
+  schema = "";
+  database = NULL; 
+  protocol = ""; 
+  if ( httpRequest != NULL ) WinHttpCloseHandle( httpRequest );
+  if ( httpConnection != NULL ) WinHttpCloseHandle( httpConnection );
+  httpRequest = NULL; 
+  httpConnection = NULL;
+}
 
 void OclDatasource::commit()
 {  }

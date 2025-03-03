@@ -332,6 +332,20 @@ void close_OclDatasource(struct OclDatasource* self)
   self->protocol = ""; 
 }
 
+void closeFile_OclDatasource(struct OclDatasource* self)
+{ if (self->database != NULL)
+  { sqlite3_close(self->database); }
+  self->hasLocalSession = FALSE; 
+  self->url = ""; 
+  self->host = ""; 
+  self->file = ""; 
+  self->port = 0;
+  self->passwd = "";
+  self->schema = "";
+  self->database = NULL; 
+  self->protocol = ""; 
+}
+
 
 void commit_OclDatasource(struct OclDatasource* self)
 {  }

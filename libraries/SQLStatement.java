@@ -70,6 +70,18 @@ class SQLStatement {
     return Types.OTHER; 
   } 
 
+  public static boolean isValidSQL(String stat)
+  { if (stat != null && 
+        stat.length() > 0)
+    { int n = stat.length();
+      int cnt = Ocl.count(stat, "'");  
+      if (stat.charAt(n-1) == ';' && 
+          cnt % 2 == 0)
+      { return true; } 
+    } 
+    return false; 
+  } // quotes are paired
+
   public void close()
   { if (statement != null) 
     { try { 
@@ -276,6 +288,20 @@ class SQLStatement {
     }  
   }
 
+  public void executeMany(String stat, ArrayList dataseq)
+  {
+    if (statement != null && 
+        statement instanceof PreparedStatement) 
+    { try { 
+        for (int i = 0; i < dataseq.size(); i++) 
+        { ArrayList vals = (ArrayList) dataseq.get(i);
+          SQLStatement.setParameters(
+                    (PreparedStatement) statement,vals);  
+          statement.execute(stat);
+        } 
+      } catch (SQLException ex) { } 
+    }  
+  }
 
   public void execute()
   { execute(text); }
@@ -292,6 +318,11 @@ class SQLStatement {
 
   public OclIterator getResultSet()
   { return resultSet;  }
+
+  public static void main(String[] args)
+  { System.out.println(SQLStatement.isValidSQL("SELECT 'foo FROM bar;"));
+    System.out.println(SQLStatement.isValidSQL("SELECT foo ")); 
+  } 
 
 }
 

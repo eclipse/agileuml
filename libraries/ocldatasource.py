@@ -113,6 +113,9 @@ class SQLStatement :
         res[x-1] = None
     return res
 
+  def isValidSQL(stat) : 
+    return sqlite3.complete_statement(stat)
+
   def close(self) :
     if self.statement != None : 
       self.statement.close()
@@ -206,6 +209,18 @@ class SQLStatement :
       pars = SQLStatement.parameterMapToFields(
                     self.maxfield,self.parameters)  
       self.statement.execute(stat,pars)
+      if self.connection != None : 
+        self.connection.commit()
+
+  def executeMany(self, stat, valueseq) :
+    if self.statement != None :
+      if stat == None : 
+        stat = self.text
+      for vals in valueseq : 
+        self.setParameters(vals)
+        pars = SQLStatement.parameterMapToFields(
+                    self.maxfield,self.parameters)  
+        self.statement.execute(stat,pars)
       if self.connection != None : 
         self.connection.commit()
 
@@ -425,6 +440,9 @@ class OclDatasource :
       self.httpConnection.close()
     if self.clientSocket != None : 
       self.clientSocket.close()
+
+  def closeFile(self) :
+    self.close()
 
   def commit(self) :
     if self.con != None : 

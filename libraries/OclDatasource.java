@@ -393,6 +393,8 @@ class OclDatasource {
     } 
   }
 
+  public void closeFile()
+  { this.close(); } 
 
   public void commit()
   { if (connection != null) 

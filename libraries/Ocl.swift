@@ -865,6 +865,14 @@ class Ocl
     return result
   }
 
+  static func hasValue<T>(s : Dictionary<String,T>, v : T) -> Bool
+  { for (_,x) in s
+    { if (x == v)
+      { return true }
+    }
+    return false
+  }
+
   static func exists<T>(s : Dictionary<String,T>, f : (T) -> Bool) -> Bool
   { for (_,v) in s
     { if (f(v))

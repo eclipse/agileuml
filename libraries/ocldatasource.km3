@@ -26,6 +26,11 @@ package ocldatasource {
 
     attribute text : String;
 
+
+    static operation isValidSQL(stat : String) : boolean
+    pre: true 
+    post: (stat->hasSuffix(";") & (stat->count("'") mod 2) = 0 => result = true);  
+
     operation close() 
     pre: true post: true;
 
@@ -69,6 +74,9 @@ package ocldatasource {
     pre: true post: true; 
 
     operation execute(stat : String) : void
+    pre: true post: true; 
+
+    operation executeMany(stat : String, valueseq : Sequence(OclAny)) : void
     pre: true post: true; 
  
     operation execute() : void
@@ -177,6 +185,9 @@ package ocldatasource {
     pre: true post: true; 
 
     operation close() : void
+    pre: true post: true;
+
+    operation closeFile() : void
     pre: true post: true;
 
     operation commit() : void

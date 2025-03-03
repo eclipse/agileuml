@@ -1,0 +1,91 @@
+package orderedMap { 
+
+
+  class OrderedMap<K,T> {
+    attribute elements : Sequence(K);
+    attribute items : Map(K,T);
+
+    query atIndex(i : int) : T
+    pre: i > 0 & i <= elements->size() 
+    post: 
+      result = items->at(elements[i]);
+
+    query at(k : K) : T
+    pre: true
+    post: 
+      result = items->at(k);
+
+    query keys() : Set(K)
+    pre: true
+    post: 
+      result = items->keys();
+
+    query values() : Sequence(T)
+    pre: true
+    post: 
+      result = elements->collect( k | items->at(k) );
+
+    query includesKey(k : K) : boolean
+    pre: true 
+    post: 
+      items->includesKey(k) => result = true; 
+
+    query excludesKey(k : K) : boolean
+    pre: true 
+    post: 
+      items->excludesKey(k) => result = true; 
+
+    query includesValue(v : T) : boolean
+    pre: true 
+    post: 
+      items->includesValue(v) => result = true; 
+
+    query excludesValue(v : T) : boolean
+    pre: true 
+    post: 
+      items->excludesValue(v) => result = true; 
+
+    operation including(k : K , t : T)
+    pre: true
+    post: true
+    activity: 
+      if items->excludesKey(k)
+      then 
+        elements := elements->append(k)
+      else skip; 
+      items[k] := t;
+
+   operation excludingAt(i : int) 
+   pre: i > 0 & i <= elements->size() 
+   post: true
+   activity: 
+     var k : K := elements[i]; 
+     elements := elements->excludingAt(i); 
+     items := items->excludingKey(k); 
+
+   operation excludingKey(k : K) 
+   pre: true 
+   post: true
+   activity: 
+     elements := elements->excluding(k); 
+     items := items->excludingKey(k); 
+
+   operation excludingValue(v : T) 
+   pre: true 
+   post: true
+   activity: 
+     var removed : Set(K) := Set{}; 
+     for k : elements 
+     do 
+       if items[k] = v 
+       then 
+         removed := removed->including(k)
+       else skip;
+     elements := elements - removed; 
+     items := items->antirestrict(removed);  
+         
+  }
+
+
+
+}

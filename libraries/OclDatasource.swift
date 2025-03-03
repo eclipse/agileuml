@@ -412,6 +412,8 @@ class OclDatasource : InternetCallback
     sqlite3_close(self.dbPointer)
   }
 
+  func closeFile() -> Void
+  { self.close() } 
 
   func commit() -> Void
   {
