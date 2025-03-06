@@ -1,4 +1,4 @@
-// C++ OCL library for Visual Studio C++11
+// C++ OCL library for Visual Studio C++19
 
 #undef max
 #undef min

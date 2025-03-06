@@ -9,23 +9,23 @@ import java.util.ListIterator;
 import java.util.Spliterator;
 
 
-class SortedOrderedSet implements Set, List 
-{ private HashSet elementSet = new HashSet(); 
-  private SortedSequence elementSeq = new SortedSequence(); 
+class SortedOrderedSet<T extends Comparable<T>> implements Set<T>, List<T> 
+{ private HashSet<T> elementSet = new HashSet<T>(); 
+  private SortedSequence<T> elementSeq = new SortedSequence<T>(); 
 
   // invariant elementSet = elementSeq.uniqueSet(); 
 
   public SortedOrderedSet() { } 
 
   public SortedOrderedSet(Set col)
-  { elementSet = new HashSet(col); 
-    elementSeq = new SortedSequence(col); 
+  { elementSet = new HashSet<T>(col); 
+    elementSeq = new SortedSequence<T>(col); 
   } 
 
-  public SortedOrderedSet clone()
-  { HashSet elems = (HashSet) elementSet.clone(); 
-    SortedSequence ss = (SortedSequence) elementSeq.clone();
-    SortedOrderedSet sos = new SortedOrderedSet();
+  public SortedOrderedSet<T> clone()
+  { HashSet<T> elems = (HashSet<T>) elementSet.clone(); 
+    SortedSequence<T> ss = (SortedSequence<T>) elementSeq.clone();
+    SortedOrderedSet<T> sos = new SortedOrderedSet<T>();
     sos.elementSet = elems;
     sos.elementSeq = ss; 
     return sos;
@@ -58,10 +58,10 @@ class SortedOrderedSet implements Set, List
   public boolean addAll(Collection col)
   { boolean changed = false; 
     for (Object obj : col)
-    { boolean added = elementSet.add(obj); 
+    { boolean added = elementSet.add((T) obj); 
       if (added) 
       { changed = true; 
-        elementSeq.add(obj);
+        elementSeq.add((T) obj);
       } 
     } 
     return changed;  
@@ -74,13 +74,13 @@ class SortedOrderedSet implements Set, List
   { return elementSet.containsAll(col); }
 
   public boolean remove(Object x)
-  { boolean removed = elementSet.remove(x); 
+  { boolean removed = elementSet.remove((T) x); 
     if (removed)
-    { elementSeq.remove(x); }
+    { elementSeq.remove((T) x); }
     return removed; 
   } 
 
-  public boolean add(Object x)
+  public boolean add(T x)
   { boolean added = elementSet.add(x); 
     if (added) 
     { elementSeq.add(x); } 
@@ -93,7 +93,7 @@ class SortedOrderedSet implements Set, List
   public Object[] toArray(Object[] arr)
   { return elementSeq.toArray(arr); }
 
-  public Set asSet()
+  public Set<T> asSet()
   { return elementSet; } 
 
   public Iterator iterator()
@@ -108,45 +108,46 @@ class SortedOrderedSet implements Set, List
   public Spliterator spliterator()
   { return elementSeq.spliterator(); } 
 
-  public Object get(int i) 
+  public T get(int i) 
   { return elementSeq.get(i); } 
 
-  public List subList(int i, int j)
+  public List<T> subList(int i, int j)
   { return elementSeq.subList(i,j); } 
 
   public int lastIndexOf(Object x)
-  { return elementSeq.lastIndexOf(x); } 
+  { return elementSeq.lastIndexOf((T) x); } 
 
   public int indexOf(Object x)
-  { return elementSeq.indexOf(x); } 
+  { return elementSeq.indexOf((T) x); } 
 
-  public Object remove(int x)
-  { return elementSeq.remove(x); }
+  public T remove(int i)
+  { return elementSeq.remove(i); }
 
-  public void add(int i, Object x)
-  { boolean added = elementSet.add(x); 
+  public void add(int i, T x)
+  { boolean added = elementSet.add((T) x); 
     if (added) 
-    { elementSeq.add(x); }
+    { elementSeq.add((T) x); }
   } // ignores i 
     
-  public Object set(int i, Object x)
-  { boolean added = elementSet.add(x); 
+  // @Override
+  public T set(int i, T x)
+  { boolean added = elementSet.add((T) x); 
     if (added) 
-    { return elementSeq.add(x); }
+    { elementSeq.add(x); }
     return null; 
   } // ignores i 
 
   public String toString()
   { return elementSeq.toString(); }   
 
-  public Object min()
+  public T min()
   { return elementSeq.min(); }
 
-  public Object max()
+  public T max()
   { return elementSeq.max(); }
 
   public int getCount(Object x)
-  { if (elementSet.contains(x))
+  { if (elementSet.contains((T) x))
     { return 1; } 
     return 0; 
   } 
@@ -160,16 +161,19 @@ class SortedOrderedSet implements Set, List
   }    
 
   public static void main(String[] args)
-  { SortedOrderedSet sos = new SortedOrderedSet(); 
+  { SortedOrderedSet<String> sos = new SortedOrderedSet<String>(); 
     sos.add("cc"); sos.add("bb"); 
     sos.add("aa"); sos.add("bb"); sos.add("aa"); 
-    List newelems = new ArrayList(); 
+    System.out.println(sos); 
+	
+    List<String> newelems = new ArrayList<String>(); 
     newelems.add("dd"); newelems.add("cc"); 
     newelems.add("bb");
     sos.addAll(newelems);  
     System.out.println(sos); 
-	sos.remove("bb"); 
-	System.out.println(sos); 
+	
+    sos.remove("bb"); 
+    System.out.println(sos); 
   } 
 }
 
