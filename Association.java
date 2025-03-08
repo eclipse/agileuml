@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.List; 
 
 /******************************
-* Copyright (c) 2003--2024 Kevin Lano
+* Copyright (c) 2003--2025 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -9369,7 +9369,7 @@ String qual = "";
 
     if (isPersistent() && isExplicit()) { } 
     else 
-    { System.err.println("Warning: should only apply this transformation to \n" + 
+    { System.err.println("! Warning: should only apply this transformation to \n" + 
                          "persistent and explicit associations. "); 
     } 
 
@@ -9382,7 +9382,7 @@ String qual = "";
         entity2.addAttribute(bakey); 
       } 
       else 
-      { System.err.println("No primary key in " + entity1); } 
+      { System.err.println("!! ERROR: No primary key in " + entity1); } 
     }
     else if (card2 == ONE && card1 == MANY) 
     { Vector akeys = entity2.getUniqueAttributes(); 
@@ -9393,10 +9393,10 @@ String qual = "";
         entity1.addAttribute(bakey); 
       } 
       else 
-      { System.err.println("No primary key in " + entity2); } 
+      { System.err.println("!! ERROR: No primary key in " + entity2); } 
     }
     else
-    { System.err.println("Not a ONE-MANY association"); } 
+    { System.err.println("!! ERROR: Not a ONE-MANY association"); } 
   }
 
   public void removeManyManyAssociation(UCDArea ucdArea)
@@ -9422,7 +9422,7 @@ String qual = "";
         e.addAttribute(ekey); 
       } 
       else 
-      { System.err.println("No primary key in " + entity1); }
+      { System.err.println("!! ERROR: No primary key in " + entity1); }
       if (bkeys.size() > 0)
       { Attribute bkey = (Attribute) bkeys.get(0); 
         Attribute ekey2 = (Attribute) bkey.clone(); 
@@ -9430,7 +9430,7 @@ String qual = "";
         e.addAttribute(ekey2); 
       } 
       else 
-      { System.err.println("No primary key in " + entity2); }  
+      { System.err.println("!! ERROR: No primary key in " + entity2); }  
       String ename = e.getName().toLowerCase(); 
       Association ast1 = new Association(entity1,e,ONE,MANY,role1,ename + "r"); 
       Association ast2 = new Association(e,entity2,MANY,ONE,"",role2);

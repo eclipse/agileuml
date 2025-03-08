@@ -5728,7 +5728,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
  
     if (operator.equals("lambda") && accumulator != null)
     { String acc = accumulator.getName(); 
-      String acct = accumulator.getType().getCPP(accumulator.getElementType()); 
+      String acct = accumulator.getType().getCPP(
+                           accumulator.getElementType()); 
 	  
       return "[=](" + acct + " " + acc + ") -> " + 
              cargtype + " { return " + qf + "; }"; 
