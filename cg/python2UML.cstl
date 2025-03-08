@@ -877,7 +877,7 @@ trailer::
 . strip _1 |-->->trim()
 . split _1 |-->->split_1
 . replace _1 |-->.replace_1
-. find _1 |-->->indexOf_1 - 1
+. find _1 |-->_1`findQualifier->indexOf(_1`firstArg) - 1
 . startswith _1 |-->->hasPrefix_1
 . endswith _1 |-->->hasSuffix_1
 . isalpha _1 |-->->matches("[a-zA-Z]*")
@@ -942,6 +942,13 @@ trailer::
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
+
+findQualifier::
+( _1 ) |-->_1`findQualifier<when> _1 arglist
+_1 , _2 |-->.substring(_2)
+_1 , _2 , _3 |-->.substring(_2,_3)
+_1 |-->
 
 
 mapQueryForm::
