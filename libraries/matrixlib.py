@@ -274,7 +274,7 @@ class MatrixLib :
     return [float(m1j) * float(m2j) for m1j, m2j in zip(m1, m2)]
 
   def dotProduct(m1: list, m2: list) -> list:
-    return [MatrixLib.dotProduct(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
+    return [MatrixLib.rowDotProduct(sq1, sq2) for sq1, sq2 in zip(m1, m2)]
 
   def rowDotDivision(m1: list, m2: list) -> list:
     if isinstance(m1[0], list):
