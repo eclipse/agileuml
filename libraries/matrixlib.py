@@ -142,6 +142,11 @@ class MatrixLib :
       return [MatrixLib.elementwiseApply(list(_r), f) for _r in m]
     return [f(float(z)) for z in m]
 
+  def selectElements(m: list, f: callable) -> list:
+    if len(m) == 0: return []
+    elif isinstance(m[0], list): return [MatrixLib.selectElements(list(_r), f) for _r in m]
+    else: return [float(z) for z in m if f(float(z))]
+
   def elementwiseNot(m: list) -> list:
     if len(m) == 0:
       return []
